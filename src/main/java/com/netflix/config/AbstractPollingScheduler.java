@@ -1,1 +1,260 @@
-/Users/awang/perforcews/commonlibraries/platform/main/core/src/com/netflix/config/AbstractPollingScheduler.java
+/*
+ *
+ *  Copyright 2012 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
+ */
+package com.netflix.config;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.netflix.config.PollListener.EventType;
+
+
+/**
+ * This class is responsible for scheduling the periodical polling of a configuration source and applying the 
+ * polling result to a Configuration.
+ * <p>
+ * A subclass should supply the specific scheduling logic in {@link #schedule(Runnable)} and {@link #stop()}. 
+ * 
+ * 
+ * @author awang
+ *
+ */
+public abstract class AbstractPollingScheduler {
+    // private final PolledConfigurationSource source;
+    private final boolean ignoreDeletesFromSource;
+    private List<PollListener> listeners = new CopyOnWriteArrayList<PollListener>();
+    private volatile Object checkPoint;
+    private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
+    
+    /**
+     * Create an instance and do an initial load from the configuration source.
+     * 
+     * @param config The Apache Configuration instance where the polling result should be applied
+     * @param source PolledConfigurationSource to get the configuration content
+     * @param ignoreDeletesFromSource true if deletes happened in the configuration source should be ignored 
+     *                  by the Configuration. <b>Warning: </b>If both {@link PollResult#isIncremental()} 
+     *                  and this parameter are false, any property in the configuration that is missing in the
+     *                  polled result will be deleted once the PollResult is applied.
+     *                   
+     * @throws ConfigurationException if any error occurs during the initial load of the configuration source
+     */
+    public AbstractPollingScheduler(boolean ignoreDeletesFromSource) {
+        this.ignoreDeletesFromSource = ignoreDeletesFromSource;
+    }
+
+    public AbstractPollingScheduler() {
+        this.ignoreDeletesFromSource = false;
+    }
+
+    
+    protected synchronized void initialLoad(final PolledConfigurationSource source, final Configuration config) {      
+        PollResult result = null;
+        try {
+            result = source.poll(true, null); 
+            checkPoint = result.getCheckPoint();
+            fireEvent(EventType.POLL_SUCCESS, result, null);
+        } catch (Throwable e) {
+            throw new RuntimeException("Unable to load Properties source from " + source, e);
+        }
+        try {
+            populateProperties(result, config);
+        } catch (Throwable e) {                        
+            throw new RuntimeException("Unable to load Properties", e);            
+        }
+    }
+    
+    /**
+     * Apply the polled result to the configuration.
+     * If the polled result is full result from source, each property in the result is either added to set 
+     * to the configuration, and any property that is in the configuration but not in the result is deleted if ignoreDeletesFromSource
+     * is false. If the polled result is incremental, properties added and changed in the partial result 
+     * are set with the configuration, and deleted properties are deleted form configuration if ignoreDeletesFromSource
+     * is false.
+     * 
+     * @param result Polled result from source
+     */
+    protected void populateProperties(final PollResult result, final Configuration config) {
+        if (result == null || !result.hasChanges()) {
+            return;
+        }
+        if (!result.isIncremental()) {
+            Map<String, Object> props = result.getComplete();
+            if (props == null) {
+                return;
+            }
+            for (Entry<String, Object> entry: props.entrySet()) {
+                addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+            }
+            HashSet<String> existingKeys = new HashSet<String>();
+            for (Iterator<String> i = config.getKeys(); i.hasNext();) {
+                existingKeys.add(i.next());
+            }
+            if (!ignoreDeletesFromSource) {
+                for (String key: existingKeys) {
+                    if (!props.containsKey(key)) {
+                        deleteProperty(key, config);
+                    }
+                }
+            }
+        } else {
+            Map<String, Object> props = result.getAddedSinceLastPoll();
+            if (props != null) {
+                for (Entry<String, Object> entry: props.entrySet()) {
+                    addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+                }
+            }
+            props = result.getChangedSinceLastPoll();
+            if (props != null) {
+                for (Entry<String, Object> entry: props.entrySet()) {
+                    addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+                }
+            }
+            if (!ignoreDeletesFromSource) {
+                props = result.getDeletedSinceLastPoll();
+                if (props != null) {
+                    for (String name: props.keySet()) {
+                        deleteProperty(name, config);
+                    }
+                }            
+            }
+        }
+    }
+    
+    private void addOrChangeProperty(String name, Object newValue, final Configuration config) {
+        if (!config.containsKey(name)) {
+            config.addProperty(name, newValue);
+        } else {
+            Object oldValue = config.getProperty(name);
+            if (newValue != null) {
+                if (!newValue.equals(oldValue)) {
+                    config.setProperty(name, newValue);
+                }
+            } else if (oldValue != null) {
+                config.setProperty(name, null);                
+            }
+        }
+    }
+    
+    private void deleteProperty(String key, final Configuration config) {
+        if (config.containsKey(key)) {
+            config.clearProperty(key);
+        }
+    }
+    
+    /**
+     * Gets the runnable to be scheduled. The implementation does the following
+     * <li>Gets the next check point
+     * <li>call source.poll(fase, checkpoint)
+     * <li>fire event for poll listeners
+     * <li>If success, update the configuration with the polled result
+     * 
+     * @return Runnable to be scheduled in {@link #schedule(Runnable)}
+     */
+    protected Runnable getPollingRunnable(final PolledConfigurationSource source, final Configuration config) {
+        return new Runnable() {
+            public void run() {
+                log.debug("Polling started");
+                PollResult result = null;
+                try {
+                    result = source.poll(false, getNextCheckPoint(checkPoint));
+                    checkPoint = result.getCheckPoint();
+                    fireEvent(EventType.POLL_SUCCESS, result, null);
+                } catch (Throwable e) {
+                    log.error("Error getting result from polling source", e);
+                    fireEvent(EventType.POLL_FAILURE, null, e);
+                    return;
+                }
+                try {
+                    populateProperties(result, config);
+                } catch (Throwable e) {
+                    log.error("Error occured applying properties", e);
+                }                 
+            }
+            
+        };   
+    }
+
+    private void fireEvent(PollListener.EventType eventType, PollResult result, Throwable e) {
+        for (PollListener l: listeners) {
+            try {
+                l.handleEvent(eventType, result, e);
+            } catch(Throwable ex) {
+                log.error("Error in invoking listener", ex);
+            }
+        }
+    }
+
+    /**
+     * Create the runnable and schedule it.
+     * 
+     */
+    public void startPolling(final PolledConfigurationSource source, final Configuration config) {
+        initialLoad(source, config);
+        Runnable r = getPollingRunnable(source, config);
+        schedule(r);
+    }
+    
+    /**
+     * Add the PollLisetner 
+     * 
+     * @param l
+     */
+    public void addPollListener(PollListener l) {
+        if (l!= null) {
+            listeners.add(l);
+        }
+    }
+
+    public void removePollListener(PollListener l) {
+        if (l != null) {
+            listeners.remove(l);
+        }
+    }
+
+    /**
+     * Get the check point used in next {@link PolledConfigurationSource#poll(boolean, Object)}
+     * 
+     * @param lastCheckpoint checkPoint from last {@link PollResult#getCheckPoint()}
+     * @return
+     */
+    protected Object getNextCheckPoint(Object lastCheckpoint) {
+        return lastCheckpoint;
+    }
+
+    /**
+     * Schedule the runnable for polling the configuration source
+     * 
+     * @param pollingRunnable
+     */
+    protected abstract void schedule(Runnable pollingRunnable);
+    
+    /**
+     * Stop the scheduler
+     */
+    public abstract void stop(); 
+    
+}
