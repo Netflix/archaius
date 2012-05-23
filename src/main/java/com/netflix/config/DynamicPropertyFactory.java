@@ -11,7 +11,7 @@ public class DynamicPropertyFactory {
     
     private static DynamicPropertyFactory instance = new DynamicPropertyFactory();
     private volatile static DynamicPropertySupport config = null;
-    private static boolean initializedWithDefaultConfig = false;    
+    private volatile static boolean initializedWithDefaultConfig = false;    
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
     public static final String THROW_MISSING_CONFIGURATION_SOURCE_EXCEPTION = 
         "dynamicProperty.throwMissingConfigurationSourceException";
@@ -34,8 +34,11 @@ public class DynamicPropertyFactory {
     public static boolean isThrowMissingConfigurationSourceException() {
         return throwMissingConfigurationSourceException;
     }
-    
+        
     public static synchronized DynamicPropertyFactory initWithConfigurationSource(DynamicPropertySupport dynamicPropertySupport) {
+        if (dynamicPropertySupport == null) {
+            throw new IllegalArgumentException("dynamicPropertySupport is null");
+        }
         // If the factory is initialized with default configuration, we need to change that
         if (initializedWithDefaultConfig && (config instanceof ConfigurationBackedDynamicPropertySupportImpl)) {
             DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
@@ -59,8 +62,8 @@ public class DynamicPropertyFactory {
             }
             config = null;
         }
-        if (config != null) {
-            throw new IllegalStateException("DynamicPropertyFactory is already initialized with a configuration source: " + config);
+        if (config != null && config != dynamicPropertySupport) {
+            throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
         }
         config = dynamicPropertySupport;
         DynamicProperty.registerWithDynamicPropertySupport(dynamicPropertySupport);
