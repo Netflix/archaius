@@ -24,12 +24,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 
+/**
+ * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
+ * throughput and thread safety.
+ * 
+ * @author awang
+ *
+ */
 public class ConcurrentMapConfiguration extends AbstractConfiguration {
     private final Map<String,Object> props = new ConcurrentHashMap<String,Object>();
     
+    /**
+     * Create an instance with an empty map.
+     */
     public ConcurrentMapConfiguration() {
     }
     
+    /**
+     * Create an instance by copying the properties from an existing Configuration.
+     * Future changes to the Configuration passed in will not be reflected in this
+     * object.
+     * 
+     * @param config Configuration to be copied
+     */
     public ConcurrentMapConfiguration(Configuration config) {
         for (Iterator i = config.getKeys(); i.hasNext();) {
             String name = (String) i.next();

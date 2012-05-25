@@ -29,10 +29,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
- * A polled configuration source based on a set of property files. For each poll,
+ * A polled configuration source based on a set of URLs. For each poll,
  * it always returns the complete union of properties defined in all files. If one property
- * is defined in more than one file, the value in file later on the list will override
- * the value in the previous one. The file format is the one of a Java property file.
+ * is defined in more than one URL, the value in file later on the list will override
+ * the value in the previous one. The content of the URL should conform to the properties file format.
  * 
  * @author awang
  *
@@ -41,15 +41,26 @@ public class URLConfigurationSource implements PolledConfigurationSource {
 
     private final URL[] configUrls;
     
+    /**
+     * System property name to define a set of URLs to be used by the
+     * default constructor. 
+     */
     public static final String CONFIG_URL = "configurationSource.additionalUrls";
     
+    /**
+     * Default configuration file name to be used by default constructor. This file should
+     * be on the classpath. The file name can be overridden by the value of system property
+     * <code>configurationSource.defaultFileName</code>
+     */
+    public static final String DEFAULT_CONFIG_FILE_NAME = "config.properties";
+        
     public static final String DEFAULT_CONFIG_FILE_FROM_CLASSPATH = 
-        System.getProperty("configurationSource.defaultFileName") == null ? "config.properties" : System.getProperty("configurationSource.defaultFileName");
+        System.getProperty("configurationSource.defaultFileName") == null ? DEFAULT_CONFIG_FILE_NAME : System.getProperty("configurationSource.defaultFileName");
     
     /**
-     * Create FileConfigurationSource with a list of property file names.
+     * Create an instance with a list URLs to be used.
      * 
-     * @param fileNames a list of property file names.
+     * @param urls list of URLs to be used
      */
     public URLConfigurationSource(String... urls) {
        configUrls = createUrls(urls);
@@ -70,15 +81,22 @@ public class URLConfigurationSource implements PolledConfigurationSource {
         return urls;        
     }
     
+    /**
+     * Create an instance with a list URLs to be used.
+     * 
+     * @param urls list of URLs to be used
+     */
     public URLConfigurationSource(URL... url) {
         configUrls = url;
     }
     
     /**
-     * Create the FileConfigurationSource for the list of property files specified by 
-     * System property <code>configurationSource.fileNames</code>. If there is more than one
-     * file, they should be separated by comma. Here is a command line example, 
-     * <pre>-DconfigurationSource.fileNames="component1.properties,component2.properties,component3.properties"</pre>
+     * Create the instance for the default list of URLs, which is composed by the following order
+     * 
+     * <ul>
+     * <li>A configuration file (See {@link #DEFAULT_CONFIG_FILE_NAME}) on the classpath
+     * <li>A list of URLs defined by system property (See {@link #CONFIG_URL}) separated by comma <code>","</code>.
+     * </ul>
      */
     public URLConfigurationSource() {
         List<URL> urlList = new ArrayList<URL>();
@@ -130,10 +148,9 @@ public class URLConfigurationSource implements PolledConfigurationSource {
     
     /**
      * Retrieve the content of the property files. For each poll, it always
-     * returns the complete union of properties defined in all files. If one
-     * property is defined in more than one file, the value in file later on the
-     * list will override the value in the previous one. The file format is the
-     * one of a Java property file.
+     * returns the complete union of properties defined in all URLs. If one
+     * property is defined in content of more than one URL, the value in file later on the
+     * list will override the value in the previous one. 
      * 
      * @param initial this parameter is ignored by the implementation
      * @param fullContentRequested this parameter is ignored by the implementation

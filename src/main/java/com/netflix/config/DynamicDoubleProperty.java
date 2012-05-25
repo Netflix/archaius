@@ -17,6 +17,12 @@
  */
 package com.netflix.config;
 
+/**
+ * A DynamicProperty whose value is a double.
+ * 
+ * @author awang
+ *
+ */
 public class DynamicDoubleProperty extends PropertyWrapper<Double> {
     DynamicDoubleProperty(String propName, double defaultValue) {
         super(propName, Double.valueOf(defaultValue));

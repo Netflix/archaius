@@ -19,6 +19,13 @@ package com.netflix.config;
 
 import java.util.IdentityHashMap;
 
+/**
+ * A wrapper around DynamicProperty and associates it with a type.
+ * 
+ * @author awang
+ *
+ * @param <V> The type of the DynamicProperty
+ */
 public abstract class PropertyWrapper<V> {
     protected DynamicProperty prop;
     protected V defaultValue;
@@ -37,6 +44,13 @@ public abstract class PropertyWrapper<V> {
 
     private static final Object DUMMY_VALUE = new Object(); 
     
+    /**
+     * By default, a subclass of PropertyWrapper will automatically register {@link #propertyChanged()} as a callback 
+     * for property value change. This method provide a way for a subclass to avoid this overhead if it is not interested
+     * to get callback.
+     *  
+     * @param c
+     */
     public static final void registerSubClassWithNoCallback(Class<? extends PropertyWrapper<?>> c) {
         SUBCLASSES_WITH_NO_CALLBACK.put(c, DUMMY_VALUE);
     }
@@ -64,6 +78,7 @@ public abstract class PropertyWrapper<V> {
     public String getName() {
         return prop.getName();
     }
+    
     /**
      * Called when the property value is updated.
      * The default does nothing.
@@ -72,6 +87,7 @@ public abstract class PropertyWrapper<V> {
     protected void propertyChanged() {
         // by default, do nothing
     }
+    
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
@@ -80,10 +96,18 @@ public abstract class PropertyWrapper<V> {
         return prop.getChangedTimestamp();
     }
     
+    /**
+     * Add the callback to be triggered when the value of the property is changed
+     * 
+     * @param callback
+     */
     public void addCallback(Runnable callback) {
         prop.addCallback(callback);
     }
     
+    /**
+     * Get current typed value of the property. 
+     */
     public abstract V getValue();
     
     @Override

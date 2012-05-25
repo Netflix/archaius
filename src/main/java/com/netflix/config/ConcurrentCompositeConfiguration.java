@@ -40,7 +40,52 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
 
-
+/**
+ * ConcurrentCompositeConfiguration maintains a list of sub configurations. Configurations with higher priority should be added 
+ * before those with lower priority. 
+ * For example, if configuration contains runtime overrides is added before configuration that 
+ * contains system properties, the final value of property
+ * will be taken from the runtime if both configurations contain the same key. 
+ * <p>
+ * The implementation of this class is based on Apache's CompositeConfiguration. It
+ * allows you to add multiple {@code Configuration}
+ * objects to an aggregated configuration. If you add Configuration1, and then Configuration2,
+ * any properties shared will mean that the value defined by Configuration1
+ * will be returned. If Configuration1 doesn't have the property, then
+ * Configuration2 will be checked. You can add multiple different types or the
+ * same type of properties file.</p>
+ * <p>When querying properties the order in which child configurations have been
+ * added is relevant. To deal with property updates, a so-called <em>in-memory
+ * configuration</em> is used. Per default, such a configuration is created
+ * automatically. All property writes target this special configuration. There
+ * are constructors which allow you to provide a specific in-memory configuration.
+ * If used that way, the in-memory configuration is always the last one in the
+ * list of child configurations. This means that for query operations all other
+ * configurations take precedence.</p>
+ * <p>Alternatively it is possible to mark a child configuration as in-memory
+ * configuration when it is added. In this case the treatment of the in-memory
+ * configuration is slightly different: it remains in the list of child
+ * configurations at the position it was added, i.e. its priority for property
+ * queries can be defined by adding the child configurations in the correct
+ * order.</p>
+ * 
+ * This class adds with the following changes/improvements to ComositeConfiguration:
+ * <ul>
+ * <li>It holds the list of sub configuration on a CopyOnWriteArrayList, which is thread safe and does not throw 
+ * ConcurrentModificationException when it is modified while traversing its iterator.
+ * <li>Its clearPropertyDirect() does not remove any property in the list of sub configurations other than 
+ * the one designated as in memory configuration.
+ * <li>It maintains an additional Map that maps sub configuration to a name.
+ * </ul>
+ * 
+ * When adding configuration to this class, it is recommended to convert it into
+ * {@link ConcurrentMapConfiguration} or ConcurrentCompositeConfiguration using 
+ * {@link com.netflix.config.util.ConfigurationUtils} to achieve
+ * maximal performance and thread safety.
+ * 
+ * @author awang
+ *
+ */
 public class ConcurrentCompositeConfiguration extends AbstractConfiguration 
         implements ConfigurationListener, Cloneable {
 
@@ -139,8 +184,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
 
     /**
      * Adds a new configuration to this combined configuration with an optional
-     * name. The new configuration's properties will be added under the root of
-     * the combined node structure.
+     * name. 
      *
      * @param config the configuration to add (must not be <b>null</b>)
      * @param name the name of this configuration (can be <b>null</b>)
@@ -186,6 +230,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
      * configuration to the new one.
      *
      * @param config the configuration to be added
+     * @param name the name of the configuration to be added
      * @param asInMemory <b>true</b> if this configuration becomes the new
      *        <em>in-memory</em> configuration, <b>false</b> otherwise
      * @since 1.8
@@ -221,21 +266,14 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         }
     }
 
-    private void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
-        AbstractConfiguration toAdd = config;
-        if (config instanceof CombinedConfiguration) {
-            toAdd = com.netflix.config.util.ConfigurationUtils.convertToConcurrentCompositeConfiguration(
-                    (CombinedConfiguration) config);
-        } else  if ((config instanceof PropertiesConfiguration) || (config instanceof HierarchicalConfiguration)) {
-            toAdd = new ConcurrentMapConfiguration(config);
-        } 
+    protected void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
         if (index < 0) {
-            configList.add(toAdd);
+            configList.add(config);
         } else {
-            configList.add(index, toAdd);
+            configList.add(index, config);
         }
         if (name != null) {
-            namedConfigurations.put(name, toAdd);
+            namedConfigurations.put(name, config);
         }
     }
     

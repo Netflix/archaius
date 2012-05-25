@@ -19,6 +19,12 @@ package com.netflix.config;
 
 import com.netflix.config.PropertyWrapper;
 
+/**
+ * A DynamicProperty whose value is an integer
+ * 
+ * @author awang
+ *
+ */
 public class DynamicIntProperty extends PropertyWrapper<Integer> {
     DynamicIntProperty(String propName, int defaultValue) {
         super(propName, Integer.valueOf(defaultValue));
@@ -30,7 +36,6 @@ public class DynamicIntProperty extends PropertyWrapper<Integer> {
 
     @Override
     public Integer getValue() {
-        // TODO Auto-generated method stub
         return get();
     }
 }

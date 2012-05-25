@@ -17,6 +17,12 @@
  */
 package com.netflix.config;
 
+/**
+ * A DynamicProperty whose value is a long.
+ * 
+ * @author awang
+ *
+ */
 public class DynamicLongProperty extends PropertyWrapper<Long> {
     DynamicLongProperty(String propName, long defaultValue) {
         super(propName, Long.valueOf(defaultValue));

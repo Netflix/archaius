@@ -17,16 +17,33 @@
  */
 package com.netflix.config;
 
+/**
+ * A configuration that polls a {@link PolledConfigurationSource} according to the schedule set by a
+ * scheduler. The property values in this configuration will be changed dynamically at runtime if the
+ * value changes in the configuration source.
+ * 
+ * @author awang
+ *
+ */
 public class DynamicConfiguration extends ConcurrentMapConfiguration {
     private final AbstractPollingScheduler scheduler;
     private final PolledConfigurationSource source;
                 
+    /**
+     * 
+     * @param source PolledConfigurationSource to poll
+     * @param scheduler AbstractPollingScheduler whose {@link AbstractPollingScheduler#schedule(Runnable)} will be
+     *                  used to determine the polling schedule
+     */
     public DynamicConfiguration(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
         this.scheduler = scheduler;
         this.source = source;
         scheduler.startPolling(source, this);
     }
     
+    /**
+     * Stops the scheduler
+     */
     public synchronized void stopLoading() {
         scheduler.stop();       
     }

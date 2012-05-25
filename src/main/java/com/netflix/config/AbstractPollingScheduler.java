@@ -51,7 +51,6 @@ public abstract class AbstractPollingScheduler {
     private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
     
     /**
-     * Create an instance and do an initial load from the configuration source.
      * 
      * @param config The Apache Configuration instance where the polling result should be applied
      * @param source PolledConfigurationSource to get the configuration content
@@ -66,11 +65,21 @@ public abstract class AbstractPollingScheduler {
         this.ignoreDeletesFromSource = ignoreDeletesFromSource;
     }
 
+    /**
+     * Create an instance where <code>ignoreDeletesFromSource</code> is set to false. 
+     * 
+     * @See {@link #AbstractPollingScheduler(boolean)}.
+     */
     public AbstractPollingScheduler() {
         this.ignoreDeletesFromSource = false;
     }
 
-    
+    /**
+     * Do an initial poll from the source and apply the result to the configuration.
+     * 
+     * @param source source of the configuration
+     * @param config Configuration to apply the polling result
+     */
     protected synchronized void initialLoad(final PolledConfigurationSource source, final Configuration config) {      
         PollResult result = null;
         try {
@@ -236,10 +245,15 @@ public abstract class AbstractPollingScheduler {
     }
 
     /**
-     * Get the check point used in next {@link PolledConfigurationSource#poll(boolean, Object)}
+     * Get the check point used in next {@link PolledConfigurationSource#poll(boolean, Object)}. 
+     * The check point can be used by the {@link PolledConfigurationSource} to determine 
+     * the set of records to return. For example, a check point can be a time stamp and 
+     * the {@link PolledConfigurationSource} can return the records modified since the time stamp.
+     * This method is called before the poll. The 
+     * default implementation returns the check point received from last poll.
      * 
      * @param lastCheckpoint checkPoint from last {@link PollResult#getCheckPoint()}
-     * @return
+     * @return the check point to be used for the next poll
      */
     protected Object getNextCheckPoint(Object lastCheckpoint) {
         return lastCheckpoint;
@@ -248,7 +262,7 @@ public abstract class AbstractPollingScheduler {
     /**
      * Schedule the runnable for polling the configuration source
      * 
-     * @param pollingRunnable
+     * @param pollingRunnable The runnable to be scheduled.
      */
     protected abstract void schedule(Runnable pollingRunnable);
     

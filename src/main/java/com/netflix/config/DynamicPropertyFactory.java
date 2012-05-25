@@ -24,12 +24,25 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A factory that creates instances of dynamic properties and associates them with an underlying configuration 
+ * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
+ * 
+ * @author awang
+ *
+ */
 public class DynamicPropertyFactory {
     
     private static DynamicPropertyFactory instance = new DynamicPropertyFactory();
     private volatile static DynamicPropertySupport config = null;
     private volatile static boolean initializedWithDefaultConfig = false;    
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
+    
+    /**
+     * System property name that defines whether {@link #getInstance()} should throw 
+     * {@link MissingConfigurationSourceException} if there is no proper configuration source
+     * at the time of call.
+     */
     public static final String THROW_MISSING_CONFIGURATION_SOURCE_EXCEPTION = 
         "dynamicProperty.throwMissingConfigurationSourceException";
     private volatile static boolean throwMissingConfigurationSourceException = 
@@ -37,6 +50,20 @@ public class DynamicPropertyFactory {
 
     private DynamicPropertyFactory() {}
             
+    /**
+     * Initialize the factory with an AbstractConfiguration. 
+     * <p>
+     * The initialization will register a ConfigurationListener with the configuration so that {@link DynamicProperty} 
+     * will receives a callback and refresh its value when a property is changed in the configuration.
+     * <p>
+     * If the factory is already initialized with a default configuration source (see {@link #getInstance()}), it will re-register
+     * itself with the new configuration source passed to this method. Otherwise, this method will throw IllegalArgumentException
+     * if it has been initialized with a different and non-default configuration source. This method should be only called once. 
+     *
+     * @param config Configuration to be attached with DynamicProperty   
+     * @return the instance of DynamicPropertyFactory
+     * @throws IllegalArgumentException if the factory has already been initialized with a non-default configuration source
+     */
     public static synchronized DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
         if (config instanceof DynamicPropertySupport) {
             return initWithConfigurationSource((DynamicPropertySupport) config);    
@@ -44,14 +71,40 @@ public class DynamicPropertyFactory {
         return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
     }
     
+    /**
+     * Set the boolean value to indicate whether {@link #getInstance()} should throw 
+     * {@link MissingConfigurationSourceException} if there is no proper configuration source
+     * at the time of call.
+     * 
+     * @param value to set
+     */
     public static void setThrowMissingConfigurationSourceException(boolean value) {
         throwMissingConfigurationSourceException = value;
     }
     
+    /**
+     * @return the boolean value to indicate whether {@link #getInstance()} should throw 
+     * {@link MissingConfigurationSourceException} if there is no proper configuration source
+     * at the time of call.
+     */
     public static boolean isThrowMissingConfigurationSourceException() {
         return throwMissingConfigurationSourceException;
     }
         
+    /**
+     * Initialize the factory with a {@link DynamicPropertySupport}. 
+     * <p>
+     * The initialization will register a {@link PropertyListener} with the DynamicPropertySupport so that DynamicProperty 
+     * will receives a callback and refresh its value when a property is changed.
+     * <p>
+     * If the factory is already initialized with a default configuration source (see {@link #getInstance()}), it will re-register
+     * itself with the new configuration source passed to this method. Otherwise, this method will throw IllegalArgumentException
+     * if it has been initialized with a non-default configuration source. This method should be only called once. 
+     * 
+     * @param dynamicPropertySupport DynamicPropertySupport to be associated with the DynamicProperty
+     * @return the instance of DynamicPropertyFactory
+     * @throws IllegalArgumentException if the factory has already been initialized with a different and non-default configuration source
+     */
     public static synchronized DynamicPropertyFactory initWithConfigurationSource(DynamicPropertySupport dynamicPropertySupport) {
         if (dynamicPropertySupport == null) {
             throw new IllegalArgumentException("dynamicPropertySupport is null");
@@ -88,6 +141,16 @@ public class DynamicPropertyFactory {
         return instance;
     }
     
+    /**
+     * Get the instance to create dynamic properties. If the factory is not initialized with a configuration source 
+     * (see {@link #initWithConfigurationSource(AbstractConfiguration)} and {@link #initWithConfigurationSource(DynamicPropertySupport)}),
+     * it will fist try to initialize itself with a default {@link DynamicURLConfiguration}, which at a fixed interval polls 
+     * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME} on classpath and a set of URLs specified via a system property
+     * (see {@link URLConfigurationSource#CONFIG_URL}).
+     * 
+     * @return
+     * @throws MissingConfigurationSourceException
+     */
     public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
         if (config == null) {
             synchronized (DynamicPropertyFactory.class) {

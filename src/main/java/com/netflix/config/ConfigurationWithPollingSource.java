@@ -26,13 +26,28 @@ import java.util.Properties;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 
+/**
+ * This class delegates to read/write to an existing configuration but is also attached with 
+ * a dynamic configuration source and polling scheduler so that its properties can be changed dynamically
+ * at runtime.
+ * 
+ * @author awang
+ *
+ */
 public class ConfigurationWithPollingSource implements Configuration {
 
     private final Configuration config;
     private final AbstractPollingScheduler scheduler;
     
-    public ConfigurationWithPollingSource(Configuration config, PolledConfigurationSource source, AbstractPollingScheduler scheduler) 
-             throws ConfigurationException {
+    /**
+     * Create an instance and start polling the configuration source
+     * 
+     * @param config Configuration to delegate to
+     * @param source {@link PolledConfigurationSource} to poll get new/changed properties
+     * @param scheduler AbstractPollingScheduler to provide the polling schedule
+     */
+    public ConfigurationWithPollingSource(Configuration config, PolledConfigurationSource source, 
+            AbstractPollingScheduler scheduler) {
         this.config = config;
         this.scheduler = scheduler;
         scheduler.startPolling(source, this);
@@ -48,19 +63,16 @@ public class ConfigurationWithPollingSource implements Configuration {
     
     @Override
     public void addProperty(String key, Object value) {
-        // TODO Auto-generated method stub
         config.addProperty(key, value);
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
         config.clear();
     }
 
     @Override
     public void clearProperty(String key) {
-        // TODO Auto-generated method stub
         config.clearProperty(key);
     }
 
@@ -73,228 +85,191 @@ public class ConfigurationWithPollingSource implements Configuration {
 
     @Override
     public BigDecimal getBigDecimal(String key, BigDecimal defaultValue) {
-        // TODO Auto-generated method stub
         return config.getBigDecimal(key, defaultValue);
     }
 
     @Override
     public BigDecimal getBigDecimal(String key) {
-        // TODO Auto-generated method stub
         return config.getBigDecimal(key);
     }
 
     @Override
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
-        // TODO Auto-generated method stub
         return config.getBigInteger(key, defaultValue);
     }
 
     @Override
     public BigInteger getBigInteger(String key) {
-        // TODO Auto-generated method stub
         return config.getBigInteger(key);
     }
 
     @Override
     public boolean getBoolean(String key, boolean defaultValue) {
-        // TODO Auto-generated method stub
         return config.getBoolean(key, defaultValue);
     }
 
     @Override
     public Boolean getBoolean(String key, Boolean defaultValue) {
-        // TODO Auto-generated method stub
         return config.getBoolean(key, defaultValue);
     }
 
     @Override
     public boolean getBoolean(String key) {
-        // TODO Auto-generated method stub
         return config.getBoolean(key);
     }
 
     @Override
     public byte getByte(String key, byte defaultValue) {
-        // TODO Auto-generated method stub
         return config.getByte(key, defaultValue);
     }
 
     @Override
     public Byte getByte(String key, Byte defaultValue) {
-        // TODO Auto-generated method stub
         return config.getByte(key, defaultValue);
     }
 
     @Override
     public byte getByte(String key) {
-        // TODO Auto-generated method stub
         return config.getByte(key);
     }
 
     @Override
     public double getDouble(String key, double defaultValue) {
-        // TODO Auto-generated method stub
         return config.getDouble(key, defaultValue);
     }
 
     @Override
     public Double getDouble(String key, Double defaultValue) {
-        // TODO Auto-generated method stub
         return config.getDouble(key, defaultValue);
     }
 
     @Override
     public double getDouble(String key) {
-        // TODO Auto-generated method stub
         return config.getDouble(key);
     }
 
     @Override
     public float getFloat(String key, float defaultValue) {
-        // TODO Auto-generated method stub
         return config.getFloat(key, defaultValue);
     }
 
     @Override
     public Float getFloat(String key, Float defaultValue) {
-        // TODO Auto-generated method stub
         return config.getFloat(key, defaultValue);
     }
 
     @Override
     public float getFloat(String key) {
-        // TODO Auto-generated method stub
         return config.getFloat(key);
     }
 
     @Override
     public int getInt(String key, int defaultValue) {
-        // TODO Auto-generated method stub
         return config.getInt(key, defaultValue);
     }
 
     @Override
     public int getInt(String key) {
-        // TODO Auto-generated method stub
         return config.getInt(key);
     }
 
     @Override
     public Integer getInteger(String key, Integer defaultValue) {
-        // TODO Auto-generated method stub
         return config.getInteger(key, defaultValue);
     }
 
 
     @Override
     public Iterator getKeys() {
-        // TODO Auto-generated method stub
         return config.getKeys();
     }
 
     @Override
     public Iterator getKeys(String prefix) {
-        // TODO Auto-generated method stub
         return config.getKeys(prefix);
     }
 
     @Override
     public List getList(String key, List defaultValue) {
-        // TODO Auto-generated method stub
         return config.getList(key, defaultValue);
     }
 
     @Override
     public List getList(String key) {
-        // TODO Auto-generated method stub
         return config.getList(key);
     }
 
     @Override
     public long getLong(String key, long defaultValue) {
-        // TODO Auto-generated method stub
         return config.getLong(key, defaultValue);
     }
 
     @Override
     public Long getLong(String key, Long defaultValue) {
-        // TODO Auto-generated method stub
         return config.getLong(key, defaultValue);
     }
 
     @Override
     public long getLong(String key) {
-        // TODO Auto-generated method stub
         return config.getLong(key);
     }
 
 
     @Override
     public Properties getProperties(String key) {
-        // TODO Auto-generated method stub
         return config.getProperties(key);
     }
 
     @Override
     public Object getProperty(String arg0) {
-        // TODO Auto-generated method stub
         return config.getProperty(arg0);
     }
 
     @Override
     public short getShort(String key, short defaultValue) {
-        // TODO Auto-generated method stub
         return config.getShort(key, defaultValue);
     }
 
     @Override
     public Short getShort(String key, Short defaultValue) {
-        // TODO Auto-generated method stub
         return config.getShort(key, defaultValue);
     }
 
     @Override
     public short getShort(String key) {
-        // TODO Auto-generated method stub
         return config.getShort(key);
     }
 
     @Override
     public String getString(String key, String defaultValue) {
-        // TODO Auto-generated method stub
         return config.getString(key, defaultValue);
     }
 
     @Override
     public String getString(String key) {
-        // TODO Auto-generated method stub
         return config.getString(key);
     }
 
     @Override
     public String[] getStringArray(String key) {
-        // TODO Auto-generated method stub
         return config.getStringArray(key);
     }
 
 
     @Override
     public boolean isEmpty() {
-        // TODO Auto-generated method stub
         return config.isEmpty();
     }
 
 
     @Override
     public void setProperty(String key, Object value) {
-        // TODO Auto-generated method stub
         config.setProperty(key, value);
     }
 
 
     @Override
     public Configuration subset(String prefix) {
-        // TODO Auto-generated method stub
         return config.subset(prefix);
     }
     
