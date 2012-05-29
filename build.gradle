@@ -34,7 +34,7 @@ pom {
 }
 
 dependencies {
-    compile 'commons-configuration:commons-configuration:1.8'
+    compile 'commons-configuration:commons-configuration:[1.5,1.8]'
     compile 'org.slf4j:slf4j-api:1.6.4'
     testCompile 'junit:junit:4.10'
 }
