@@ -27,7 +27,35 @@ import org.slf4j.LoggerFactory;
 /**
  * A factory that creates instances of dynamic properties and associates them with an underlying configuration 
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
- * 
+ * <p>
+ * It is recommended to initialize this class with a configuration or DynamicPropertySupport before the first call to
+ * {@link #getInstance()}. Otherwise, it will be initialized with a default {@link DynamicURLConfiguration} where 
+ * the configuration source URLs are defined by system properties.  
+ * <p>
+ * Example:<pre>
+ *    import com.netflix.config.DynamicProperty;
+ *
+ *    class MyClass {
+ *        private static DynamicIntProperty maxWaitMillis
+ *            = DynamicPropertyFactory.getInstance().createIntProperty("myclass.sleepMillis", 250);
+ *           // ...
+ *
+ *           // Wait for a configurable amount of time for condition to become true.
+ *           // Note that the time can be changed on-the-fly.
+ *           someCondition.wait(maxWaitMillis.get());
+ *
+ *        // ...
+ *    }
+ * </pre>
+ * <p>
+ * Please note that you should not cache the property value if you expect the value to change on-the-fly. For example,
+ * in the following code the change of the value is ineffective:
+ * <p> 
+ *<pre>
+ *    int maxWaitMillis = DynamicPropertyFactory.getInstance().createIntProperty("myclass.sleepMillis", 250).get();
+ *    // ...
+ *    someCondition.wait(maxWaitMillis);
+ *</pre>
  * @author awang
  *
  */
@@ -182,10 +210,23 @@ public class DynamicPropertyFactory {
         }        
     }
 
+    /**
+     * Create a new property whose value is a string and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicStringProperty createStringProperty(String propName, String defaultValue) {
         return createStringProperty(propName, defaultValue, null);
     }
 
+    /**
+     * Create a new property whose value is a string and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicStringProperty createStringProperty(String propName, String defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicStringProperty property = new DynamicStringProperty(propName, defaultValue);
@@ -193,10 +234,23 @@ public class DynamicPropertyFactory {
         return property;
     }
 
+    /**
+     * Create a new property whose value is an integer and subject to change on-the-fly..
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicIntProperty createIntProperty(String propName, int defaultValue) {
         return createIntProperty(propName, defaultValue, null);
     }
 
+    /**
+     * Create a new property whose value is an integer and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicIntProperty createIntProperty(String propName, int defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicIntProperty property = new DynamicIntProperty(propName, defaultValue);
@@ -204,10 +258,23 @@ public class DynamicPropertyFactory {
         return property;
     }
 
+    /**
+     * Create a new property whose value is a long and subject to change on-the-fly..
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicLongProperty createLongProperty(String propName, long defaultValue) {
         return createLongProperty(propName, defaultValue, null);
     }
 
+    /**
+     * Create a new property whose value is a long and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicLongProperty createLongProperty(String propName, long defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicLongProperty property = new DynamicLongProperty(propName, defaultValue);
@@ -215,10 +282,23 @@ public class DynamicPropertyFactory {
         return property;
     }
     
+    /**
+     * Create a new property whose value is a boolean and subject to change on-the-fly..
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicBooleanProperty createBooleanProperty(String propName, boolean defaultValue) {
         return createBooleanProperty(propName, defaultValue, null);
     }
 
+    /**
+     * Create a new property whose value is a boolean and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicBooleanProperty createBooleanProperty(String propName, boolean defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicBooleanProperty property = new DynamicBooleanProperty(propName, defaultValue);
@@ -226,10 +306,23 @@ public class DynamicPropertyFactory {
         return property;
     }
     
+    /**
+     * Create a new property whose value is a float and subject to change on-the-fly..
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicFloatProperty createFloatProperty(String propName, float defaultValue) {
         return createFloatProperty(propName, defaultValue, null);
     }
 
+    /**
+     * Create a new property whose value is a float and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicFloatProperty createFloatProperty(String propName, float defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicFloatProperty property = new DynamicFloatProperty(propName, defaultValue);
@@ -237,10 +330,23 @@ public class DynamicPropertyFactory {
         return property;
     }
 
+    /**
+     * Create a new property whose value is a double and subject to change on-the-fly..
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     */
     public DynamicDoubleProperty createDoubleProperty(String propName, double defaultValue) {
         return createDoubleProperty(propName, defaultValue, null);
     }
     
+    /**
+     * Create a new property whose value is a double and subject to change on-the-fly.
+     *  
+     * @param propName property name
+     * @param defaultValue default value if the property is not defined in underlying configuration
+     * @param propertyChangeCallback a Runnable to be called when the property is changed
+     */
     public DynamicDoubleProperty createDoubleProperty(String propName, double defaultValue,  final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicDoubleProperty property = new DynamicDoubleProperty(propName, defaultValue);

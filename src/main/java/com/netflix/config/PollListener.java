@@ -17,10 +17,23 @@
  */
 package com.netflix.config;
 
+/**
+ * The listener to be called upon when {@link AbstractPollingScheduler} completes a polling.
+ * 
+ * @author awang
+ *
+ */
 public interface PollListener {
 
     public enum EventType {
         POLL_SUCCESS, POLL_FAILURE
     }
+    /**
+     * This method is called when the listener is invoked after a polling.
+     * 
+     * @param eventType type of the event
+     * @param lastResult the last poll result, null if the poll fails or there is no result 
+     * @param exception any Throwable caught in the last poll, null if the poll is successful
+     */
     public void handleEvent(EventType eventType, PollResult lastResult, Throwable exception);
 }

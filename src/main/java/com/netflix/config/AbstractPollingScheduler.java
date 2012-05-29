@@ -79,6 +79,7 @@ public abstract class AbstractPollingScheduler {
      * 
      * @param source source of the configuration
      * @param config Configuration to apply the polling result
+     * @throws RuntimeException if any error occurs in polling the configuration source
      */
     protected synchronized void initialLoad(final PolledConfigurationSource source, final Configuration config) {      
         PollResult result = null;
@@ -130,20 +131,20 @@ public abstract class AbstractPollingScheduler {
                 }
             }
         } else {
-            Map<String, Object> props = result.getAddedSinceLastPoll();
+            Map<String, Object> props = result.getAdded();
             if (props != null) {
                 for (Entry<String, Object> entry: props.entrySet()) {
                     addOrChangeProperty(entry.getKey(), entry.getValue(), config);
                 }
             }
-            props = result.getChangedSinceLastPoll();
+            props = result.getChanged();
             if (props != null) {
                 for (Entry<String, Object> entry: props.entrySet()) {
                     addOrChangeProperty(entry.getKey(), entry.getValue(), config);
                 }
             }
             if (!ignoreDeletesFromSource) {
-                props = result.getDeletedSinceLastPoll();
+                props = result.getDeleted();
                 if (props != null) {
                     for (String name: props.keySet()) {
                         deleteProperty(name, config);
@@ -218,8 +219,12 @@ public abstract class AbstractPollingScheduler {
     }
 
     /**
-     * Create the runnable and schedule it.
+     * Initiate the first poll of the configuration source and schedule the runnable. This may start a new thread or 
+     * thread pool depending on the implementation of {@link #schedule(Runnable)}.
      * 
+     * @param source Configuration source being polled
+     * @param config Configuration where the properties will be updated
+     * @throws RuntimeException if any error occurs in the initial polling
      */
     public void startPolling(final PolledConfigurationSource source, final Configuration config) {
         initialLoad(source, config);

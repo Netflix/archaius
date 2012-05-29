@@ -40,7 +40,7 @@ public interface DynamicPropertySupport {
     String getString(String propName);
 
     /**
-     * Add the ExpandedConfiguration. This is necessary for the {@link DynamicProperty} to
+     * Add the property change listener. This is necessary for the {@link DynamicProperty} to
      * receive callback once a property is updated in the underlying {@link DynamicPropertySupport}
      * 
      * @param expandedPropertyListener Listener to be added to {@link DynamicPropertySupport}

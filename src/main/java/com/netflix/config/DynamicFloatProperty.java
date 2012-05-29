@@ -18,7 +18,7 @@
 package com.netflix.config;
 
 /**
- * A DynamicProperty whose value is a float.
+ * A dynamic property whose value is a float.
  * 
  * @author awang
  *
@@ -26,6 +26,9 @@ package com.netflix.config;
     DynamicFloatProperty(String propName, float defaultValue) {
         super(propName, Float.valueOf(defaultValue));
     }
+    /**
+     * Get the current value from the underlying DynamicProperty
+     */
     public float get() {
         return prop.getFloat(defaultValue).floatValue();
     }

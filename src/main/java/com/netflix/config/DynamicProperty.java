@@ -52,22 +52,6 @@ import org.slf4j.LoggerFactory;
  * DynamicProperty objects are not subject to normal garbage collection.
  * They should be used only as a static value that lives for the
  * lifetime of the program.
- * <p>
- * Example:<pre>
- *    import com.netflix.config.DynamicProperty;
- *
- *    class MyClass {
- *        private static DynamicProperty.IntProperty maxWaitMillis
- *            = new DynamicProperty.IntProperty("myclass.sleepMillis", 250);
- *        // ...
- *
- *           // Wait for a configurable amount of time for condition to become true.
- *           // Note that the time can be changed on-the-fly.
- *           someCondition.wait(maxWaitMillis.get());
- *
- *        // ...
- *    }
- * </pre>
  *
  * @author slanning 
  */

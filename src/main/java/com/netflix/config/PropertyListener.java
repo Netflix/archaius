@@ -24,7 +24,7 @@ package com.netflix.config;
  * {@link DynamicProperty} registers this type listener with a {@link DynamicPropertySupport} to receive 
  * callbacks on changes so that it can dynamically change a value of a DynamicProperty.
  * 
- * @see DynamicPropertySupport#addConfigurationListener(ExpandedConfigurationListener)
+ * @see {@link DynamicPropertySupport#addConfigurationListener(PropertyListener)} 
  * @author awang
  *
  */

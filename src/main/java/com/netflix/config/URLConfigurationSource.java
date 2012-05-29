@@ -94,8 +94,8 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * Create the instance for the default list of URLs, which is composed by the following order
      * 
      * <ul>
-     * <li>A configuration file (See {@link #DEFAULT_CONFIG_FILE_NAME}) on the classpath
-     * <li>A list of URLs defined by system property (See {@link #CONFIG_URL}) separated by comma <code>","</code>.
+     * <li>A configuration file (default name to be <code>config.properties</code>, see {@link #DEFAULT_CONFIG_FILE_NAME}) on the classpath
+     * <li>A list of URLs defined by system property <code>configurationSource.additionalUrls</code> (See {@link #CONFIG_URL}) separated by comma <code>","</code>.
      * </ul>
      */
     public URLConfigurationSource() {
