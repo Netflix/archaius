@@ -29,10 +29,13 @@ import org.apache.commons.configuration.event.ConfigurationListener;
  * property modification notification from the Apache Configuration, 
  * it translates the {@link ConfigurationEvent} into the corresponding 
  * events for {@link PropertyListener}.
- * <br/></br/>
+ * <p>
  * It also has the capability to pause the event delivery through the {@link #setPauseListener(boolean)} API.
+ * <p> This class is used as an adapter to attach a {@link PropertyListener} to a Configuration so that
+ * methods in the {@link PropertyListener} will be called when there is a change in the configuration.
+ *  
  */
-class ExpandedConfigurationListenerAdapter implements ConfigurationListener
+public class ExpandedConfigurationListenerAdapter implements ConfigurationListener
 {
     /** The wrapped PropertyListener. */
     private PropertyListener expandedListener;
