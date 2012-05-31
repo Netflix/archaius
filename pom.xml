@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.netflix.config</groupId>
-    <artifactId>dynamicproperty</artifactId>
-    <version>0.1.10-SNAPSHOT</version>
+    <artifactId>pablo</artifactId>
+    <version>0.1.11</version>
 
     <parent>
       <groupId>org.sonatype.oss</groupId>
@@ -21,28 +21,10 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:Netflix-Skunkworks/pablo.git</connection>
-        <url>scm:git:git@github.com:Netflix-Skunkworks/pablo.git</url>
-        <developerConnection>scm:git:git@github.com:Netflix-Skunkworks/pablo.git</developerConnection>
+        <connection>scm:git:git@github.com:Netflix/pablo.git</connection>
+        <url>scm:git:git@github.com:Netflix/pablo.git</url>
+        <developerConnection>scm:git:git@github.com:Netflix/pablo.git</developerConnection>
     </scm>
-
-    <profiles>
-        <profile>
-            <id>artifactory</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>netflix-artifactory-snapshots</id>
-                    <name>Netflix Artifactory Snapshots</name>
-                    <url>http://artifacts/libs-snapshots-local</url>
-                </snapshotRepository>
-                <repository>
-                    <id>netflix-artifactory-releases</id>
-                    <name>Netflix Artifactory Releases</name>
-                    <url>http://artifacts/libs-releases-local</url>
-                </repository>
-            </distributionManagement>
-        </profile>
-    </profiles>
 
     <dependencies>
        <dependency>

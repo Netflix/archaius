@@ -20,15 +20,15 @@ apply from: file('gradle/check.gradle')
 // Closure to configure all the POM with extra info, common to all projects
 pom {
     project {
-        url "https://github.com/Netflix-Skunkworks/${githubProjectName}"
+        url "https://github.com/Netflix/${githubProjectName}"
         scm {
-            connection "scm:git:git@github.com:Netflix-Skunkworks/${githubProjectName}.git"
-            url "scm:git:git@github.com:Netflix-Skunkworks/${githubProjectName}.git"
-            developerConnection "scm:git:git@github.com:Netflix-Skunkworks/${githubProjectName}.git"
+            connection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+            url "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+            developerConnection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
         }
         issueManagement {
             system 'github'
-            url "https://github.com/Netflix-Skunkworks/${githubProjectName}/issues"
+            url "https://github.com/Netflix/${githubProjectName}/issues"
         }
     }
 }
