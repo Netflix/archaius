@@ -21,6 +21,9 @@ package com.netflix.config;
  * A configuration that polls a {@link PolledConfigurationSource} according to the schedule set by a
  * scheduler. The property values in this configuration will be changed dynamically at runtime if the
  * value changes in the configuration source.
+ * <p>
+ * This configuration does not allow null as key or value and will throw NullPointerException
+ * when trying to add or set properties with empty key or value.
  * 
  * @author awang
  *
@@ -28,7 +31,7 @@ package com.netflix.config;
 public class DynamicConfiguration extends ConcurrentMapConfiguration {
     private final AbstractPollingScheduler scheduler;
     private final PolledConfigurationSource source;
-                
+        
     /**
      * 
      * @param source PolledConfigurationSource to poll
@@ -38,7 +41,16 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
     public DynamicConfiguration(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
         this.scheduler = scheduler;
         this.source = source;
+        init(source, scheduler);
         scheduler.startPolling(source, this);
+    }
+    
+    /**
+     * Initialize the configuration. This method is called in 
+     * {@link #DynamicConfiguration(PolledConfigurationSource, AbstractPollingScheduler)} 
+     * before the initial polling. The default implementation is empty.
+     */
+    protected void init(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
     }
     
     /**
@@ -50,5 +62,5 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
     
     public PolledConfigurationSource getSource() {
         return source;
-    }
+    }    
 }
