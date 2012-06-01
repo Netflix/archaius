@@ -1,5 +1,5 @@
 // Establish version and status
-ext.releaseVersion = '0.1.1' // TEMPLATE: Set to latest release
+ext.releaseVersion = '0.1.2' // TEMPLATE: Set to latest release
 ext.githubProjectName = 'pablo' // TEMPLATE: change to match github project, if it doesn't match project name
 group = "com.netflix.config" // TEMPLATE: Set to organization of project
 
