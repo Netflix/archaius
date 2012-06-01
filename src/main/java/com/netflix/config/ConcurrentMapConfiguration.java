@@ -56,7 +56,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     }
     
     @Override
-    protected final void addPropertyDirect(String key, Object value) {
+    protected void addPropertyDirect(String key, Object value) {
         props.put(key, value);
     }
     
