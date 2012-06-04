@@ -31,7 +31,19 @@ import org.apache.commons.configuration.Configuration;
 import com.netflix.config.ConcurrentCompositeConfiguration;
 import com.netflix.config.ConcurrentMapConfiguration;
 
+/**
+ * Utility class for configuration.
+ * 
+ * @author awang
+ *
+ */
 public class ConfigurationUtils {
+    /**
+     * Convert CombinedConfiguration into {@link ConcurrentCompositeConfiguration} as the later has better performance
+     * and thread safety. 
+     * 
+     * @param config Configuration to be converted
+     */
     public static ConcurrentCompositeConfiguration convertToConcurrentCompositeConfiguration(CombinedConfiguration config) {
         ConcurrentCompositeConfiguration root = new ConcurrentCompositeConfiguration();
         IdentityHashMap<Configuration, String> reverseMap = new IdentityHashMap<Configuration, String>();
@@ -54,6 +66,14 @@ public class ConfigurationUtils {
         return root;
     }
     
+    /**
+     * Gets all named sub-configuration from a configuration in a map. This method examines each sub-configuration
+     * which is an instance of {@link ConcurrentCompositeConfiguration} or CombinedConfiguration and extract the 
+     * named configurations out of them.
+     *  
+     * @param conf Configuration to get all the named sub-configurations
+     * @return map where key is the name of the sub-configuration and value is the sub-configuration
+     */
     public static Map<String, Configuration> getAllNamedConfiguration(Configuration conf) {
         List<Configuration> toProcess = new ArrayList<Configuration>();
         Map<String, Configuration> map = new HashMap<String, Configuration>();

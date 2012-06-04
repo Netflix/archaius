@@ -27,6 +27,9 @@ import org.apache.commons.configuration.Configuration;
 /**
  * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
  * throughput and thread safety.
+ * <p>
+ * This configuration does not allow null as key or value and will throw NullPointerException
+ * when trying to add or set properties with empty key or value.
  * 
  * @author awang
  *
@@ -56,7 +59,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     }
     
     @Override
-    protected final void addPropertyDirect(String key, Object value) {
+    protected void addPropertyDirect(String key, Object value) {
         props.put(key, value);
     }
     

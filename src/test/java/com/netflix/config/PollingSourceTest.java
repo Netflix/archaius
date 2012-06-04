@@ -140,22 +140,24 @@ public class PollingSourceTest {
         DynamicStringProperty prop2 = new DynamicStringProperty("prop2", null);
         config.addProperty("prop1", "original");
         DummyPollingSource source = new DummyPollingSource(true);  
-        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 10, false);
-        ConfigurationWithPollingSource pollingConfig = new ConfigurationWithPollingSource(config, source,scheduler);
-        assertEquals("original", pollingConfig.getProperty("prop1"));   
+        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 10, true);
+        scheduler.setIgnoreDeletesFromSource(false);
+        // ConfigurationWithPollingSource pollingConfig = new ConfigurationWithPollingSource(config, source,scheduler);
+        scheduler.startPolling(source, config);
+        assertEquals("original", config.getProperty("prop1"));   
         assertEquals("original", prop1.get());   
         source.setAdded("prop2=new");
         Thread.sleep(200);
-        assertEquals("original", pollingConfig.getProperty("prop1"));        
-        assertEquals("new", pollingConfig.getProperty("prop2"));
+        assertEquals("original", config.getProperty("prop1"));        
+        assertEquals("new", config.getProperty("prop2"));
         assertEquals("new", prop2.get());    
         source.setDeleted("prop1=DoesNotMatter");
         source.setChanged("prop2=changed");
         source.setAdded("");
         Thread.sleep(200);
-        assertFalse(pollingConfig.containsKey("prop1"));
+        assertFalse(config.containsKey("prop1"));
         assertNull(prop1.get());
-        assertEquals("changed", pollingConfig.getProperty("prop2"));   
+        assertEquals("changed", config.getProperty("prop2"));   
         assertEquals("changed", prop2.get());
     }
 

@@ -45,7 +45,7 @@ import com.netflix.config.PollListener.EventType;
  */
 public abstract class AbstractPollingScheduler {
     // private final PolledConfigurationSource source;
-    private final boolean ignoreDeletesFromSource;
+    private volatile boolean ignoreDeletesFromSource;
     private List<PollListener> listeners = new CopyOnWriteArrayList<PollListener>();
     private volatile Object checkPoint;
     private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
@@ -274,6 +274,20 @@ public abstract class AbstractPollingScheduler {
     /**
      * Stop the scheduler
      */
-    public abstract void stop(); 
+    public abstract void stop();
+
+    /**
+     * @return if the scheduler ignores deletes from source
+     */
+    public final boolean isIgnoreDeletesFromSource() {
+        return ignoreDeletesFromSource;
+    }
+
+    /**
+     * Set if the scheduler should ignore deletes from source when applying property changes
+     */
+    public final void setIgnoreDeletesFromSource(boolean ignoreDeletesFromSource) {
+        this.ignoreDeletesFromSource = ignoreDeletesFromSource;
+    } 
     
 }
