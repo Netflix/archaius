@@ -233,12 +233,18 @@ public class DynamicProperty {
      * Gets the DynamicProperty for a given property name.
      * This may be a previously constructed object,
      * or an object constructed on-demand to satisfy the request.
+     * 
+     * <p> If the {@link DynamicPropertyFactory} is not initialized with
+     * any configuration source, this method will first 
      *
      * @param propName the name of the property
      * @return a DynamicProperty object that holds the cached value of
      *    the configuration property named {@code propName}
      */
     public static DynamicProperty getInstance(String propName) {
+        // This is to ensure that a configuration source is registered with
+        // DynamicProperty
+        DynamicPropertyFactory.getInstance();
         DynamicProperty prop = ALL_PROPS.get(propName);
         if (prop == null) {
             prop = new DynamicProperty(propName);

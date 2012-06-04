@@ -64,6 +64,7 @@ public class DynamicPropertyFactory {
     private static DynamicPropertyFactory instance = new DynamicPropertyFactory();
     private volatile static DynamicPropertySupport config = null;
     private volatile static boolean initializedWithDefaultConfig = false;    
+    private volatile static boolean initializeWithDefaultConfigFailed = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
     
     /**
@@ -180,7 +181,7 @@ public class DynamicPropertyFactory {
      * @throws MissingConfigurationSourceException
      */
     public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
-        if (config == null) {
+        if (config == null && !initializeWithDefaultConfigFailed) {
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {
                     try {
@@ -196,13 +197,14 @@ public class DynamicPropertyFactory {
                         } else {
                             logger.warn("Error initializing with default configuration source(s).", e);
                         }
+                        initializeWithDefaultConfigFailed = true;
                     }
                 }
             }
         }
         return instance;
-    }
-                    
+    }         
+    
     private static void checkAndWarn(String propName) {
         if (config == null && !Boolean.getBoolean("dynamicPropertyFactory.disableLogging")) {
             logger.warn("DynamicProperty " + propName + " is created without a configuration source for callback. " 

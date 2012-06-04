@@ -109,22 +109,22 @@ public class DynamicPropertyTest {
         DynamicProperty fastProp = DynamicProperty.getInstance(PROP_NAME);
         assertEquals("FastProperty does not have correct name",
                 PROP_NAME, fastProp.getName());
-        assertSame("FastProperty.getInstance did not find the object",
+        assertSame("DynamicProperty.getInstance did not find the object",
                 fastProp, DynamicProperty.getInstance(PROP_NAME));
         //
         String hello = "Hello";
-        assertNull("Unset FastProperty is not null",
+        assertNull("Unset DynamicProperty is not null",
                 fastProp.getString());
-        assertEquals("Unset FastProperty does not default correctly",
+        assertEquals("Unset DynamicProperty does not default correctly",
                      hello, fastProp.getString(hello));
         config.setProperty(PROP_NAME, hello);
-        assertEquals("Set FastProperty does not have correct value",
+        assertEquals("Set DynamicProperty does not have correct value",
                      hello, fastProp.getString());
-        assertEquals("Set FastProperty uses supplied default",
+        assertEquals("Set DynamicProperty uses supplied default",
                      hello, fastProp.getString("not " + hello));
-        assertEquals("Non-integer FastProperty doesn't default on integer fetch",
+        assertEquals("Non-integer DynamicProperty doesn't default on integer fetch",
                      123, fastProp.getInteger(Integer.valueOf(123)).intValue());
-        assertEquals("Non-float FastProperty doesn't default on float fetch",
+        assertEquals("Non-float DynamicProperty doesn't default on float fetch",
                      2.71838f, fastProp.getFloat(Float.valueOf(2.71838f)).floatValue(), 0.001f);
         try {
             fastProp.getFloat();
@@ -136,36 +136,36 @@ public class DynamicPropertyTest {
         String pi = "3.14159";
         String ee = "2.71838";
         config.setProperty(PROP_NAME, pi);
-        assertEquals("Set FastProperty does not have correct value",
+        assertEquals("Set DynamicProperty does not have correct value",
                      pi, fastProp.getString());
-        assertEquals("FastProperty did not property parse float string",
+        assertEquals("DynamicProperty did not property parse float string",
                      3.14159f, fastProp.getFloat(Float.valueOf(0.0f)).floatValue(), 0.001f);
         config.setProperty(PROP_NAME, ee);
-        assertEquals("Set FastProperty does not have correct value",
+        assertEquals("Set DynamicProperty does not have correct value",
                      ee, fastProp.getString());
-        assertEquals("FastProperty did not property parse float string",
+        assertEquals("DynamicProperty did not property parse float string",
                      2.71838f, fastProp.getFloat(Float.valueOf(0.0f)).floatValue(), 0.001f);
         try {
             fastProp.getInteger();
-            fail("Integer fetch of non-integer FastProperty should have failed:  " + fastProp);
+            fail("Integer fetch of non-integer DynamicProperty should have failed:  " + fastProp);
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
         }
-        assertEquals("Integer fetch of non-integer FastProperty did not use default value",
+        assertEquals("Integer fetch of non-integer DynamicProperty did not use default value",
                     -123, fastProp.getInteger(Integer.valueOf(-123)).intValue());
         //
         String devil = "666";
         config.setProperty(PROP_NAME, devil);
-        assertEquals("Changing FastProperty does not result in correct value",
+        assertEquals("Changing DynamicProperty does not result in correct value",
                      devil, fastProp.getString());
-        assertEquals("Integer fetch of changed FastProperty did not return correct value",
+        assertEquals("Integer fetch of changed DynamicProperty did not return correct value",
                      666, fastProp.getInteger().intValue());
         //
         String self = "com.netflix.config.DynamicProperty";
-        assertEquals("Fetch of named class from integer valued FastProperty did not use default",
+        assertEquals("Fetch of named class from integer valued DynamicProperty did not use default",
                      DynamicPropertyTest.class, fastProp.getNamedClass(DynamicPropertyTest.class));
         config.setProperty(PROP_NAME, self);
-        assertEquals("Fetch of named class from FastProperty did not find the class",
+        assertEquals("Fetch of named class from DynamicProperty did not find the class",
                      DynamicProperty.class, fastProp.getNamedClass());
         // Check that clearing a property clears all caches
         config.clearProperty(PROP_NAME);
@@ -241,7 +241,7 @@ public class DynamicPropertyTest {
 
 
     @Test
-    public void testFastPropertyListenerPropertyChangeCallback(){
+    public void testDynamicPropertyListenerPropertyChangeCallback(){
         config.stopLoading();
         DynamicStringProperty listOfCountersToExportProperty =
             new DynamicStringProperty("com.netflix.eds.utils.EdsCounter.listOfCountersToExport", "") {

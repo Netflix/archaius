@@ -38,6 +38,8 @@ public class DynamicFileConfigurationTest {
     
     private DynamicLongProperty longProp = null;
     
+    private static DynamicProperty dynProp = null;
+    
     static File configFile = null;
     static File createConfigFile(String prefix) throws Exception {
         configFile = File.createTempFile(prefix, ".properties");        
@@ -76,6 +78,7 @@ public class DynamicFileConfigurationTest {
         System.setProperty(URLConfigurationSource.CONFIG_URL, path);
         System.setProperty(FixedDelayPollingScheduler.INITIAL_DELAY_PROPERTY, "0");
         System.setProperty(FixedDelayPollingScheduler.DELAY_PROPERTY, "100");
+        dynProp = DynamicProperty.getInstance("dprops1");
         propertyFactory = DynamicPropertyFactory.getInstance();
     }
     
@@ -97,6 +100,7 @@ public class DynamicFileConfigurationTest {
         assertFalse(propertyChanged);
         DynamicDoubleProperty doubleProp = propertyFactory.createDoubleProperty("dprops2", 0.0d);
         assertEquals(123456789, longProp.get());
+        assertEquals(123456789, dynProp.getInteger().intValue());
         assertEquals(79.98, doubleProp.get(), 0.00001d);
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
