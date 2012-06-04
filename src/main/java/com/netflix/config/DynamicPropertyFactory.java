@@ -194,7 +194,7 @@ public class DynamicPropertyFactory {
                     } catch (Throwable e) {
                         if (isThrowMissingConfigurationSourceException()) {
                             throw new MissingConfigurationSourceException("Error initializing with default configuration source(s).", e);
-                        } else {
+                        } else if (!Boolean.getBoolean("dynamicPropertyFactory.disableLogging")) {
                             logger.warn("Error initializing with default configuration source(s).", e);
                         }
                         initializeWithDefaultConfigFailed = true;
