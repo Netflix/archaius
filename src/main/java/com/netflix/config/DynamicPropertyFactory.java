@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
  * <p>
  * It is recommended to initialize this class with a configuration or DynamicPropertySupport before the first call to
- * {@link #getInstance()}. Otherwise, it will be initialized with a default {@link DynamicURLConfiguration} where 
+ * {@link #getInstance()}. Otherwise, it will be lazily initialized with a default {@link DynamicURLConfiguration} where 
  * the configuration source URLs are defined by system properties.  
  * <p>
  * Example:<pre>
@@ -64,7 +64,7 @@ public class DynamicPropertyFactory {
     private static DynamicPropertyFactory instance = new DynamicPropertyFactory();
     private volatile static DynamicPropertySupport config = null;
     private volatile static boolean initializedWithDefaultConfig = false;    
-    private volatile static boolean initializeWithDefaultConfigFailed = false;
+    private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
     
     /**
@@ -76,6 +76,12 @@ public class DynamicPropertyFactory {
         "dynamicProperty.throwMissingConfigurationSourceException";
     private volatile static boolean throwMissingConfigurationSourceException = 
         Boolean.getBoolean(THROW_MISSING_CONFIGURATION_SOURCE_EXCEPTION);
+    
+    /**
+     * System property to determine whether DynamicPropertyFactory should be lazily initialized with 
+     * default configuration for {@link #getInstance()}. Default is false (not set). 
+     */
+    public static final String DISABLE_DEFAULT_CONFIG = "dynamicProperty.disableDefaultConfig";
 
     private DynamicPropertyFactory() {}
             
@@ -170,43 +176,54 @@ public class DynamicPropertyFactory {
         return instance;
     }
     
+    private static boolean shouldInstallDefaultConfig() {
+        return !defaultConfigNotFound && !Boolean.getBoolean(DISABLE_DEFAULT_CONFIG);
+    }
+    
     /**
      * Get the instance to create dynamic properties. If the factory is not initialized with a configuration source 
      * (see {@link #initWithConfigurationSource(AbstractConfiguration)} and {@link #initWithConfigurationSource(DynamicPropertySupport)}),
      * it will fist try to initialize itself with a default {@link DynamicURLConfiguration}, which at a fixed interval polls 
      * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME} on classpath and a set of URLs specified via a system property
      * (see {@link URLConfigurationSource#CONFIG_URL}).
+     * <p>
+     * You can disable the initialization with the default configuration by setting system property {@value #DISABLE_DEFAULT_CONFIG} to "true".
      * 
-     * @return
-     * @throws MissingConfigurationSourceException
+     * @throws MissingConfigurationSourceException if throwMissingConfigurationSourceException is true and 
+     *     an error occurred in creating the default configuration.
      */
     public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
-        if (config == null && !initializeWithDefaultConfigFailed) {
+        if (config == null && shouldInstallDefaultConfig()) {
+            Throwable exception = null;
+            DynamicURLConfiguration defaultConfig = null;
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {
                     try {
-                        DynamicURLConfiguration defaultConfig = new DynamicURLConfiguration();
+                        defaultConfig = new DynamicURLConfiguration();
                         initWithConfigurationSource(defaultConfig);
                         initializedWithDefaultConfig = true;
-                        if (!Boolean.getBoolean("dynamicPropertyFactory.disableLogging")) {
-                            logger.info("DynamicPropertyFactory is initialized with default configuration source(s): " + defaultConfig.getSource());
-                        }
                     } catch (Throwable e) {
-                        if (isThrowMissingConfigurationSourceException()) {
-                            throw new MissingConfigurationSourceException("Error initializing with default configuration source(s).", e);
-                        } else if (!Boolean.getBoolean("dynamicPropertyFactory.disableLogging")) {
-                            logger.warn("Error initializing with default configuration source(s).", e);
-                        }
-                        initializeWithDefaultConfigFailed = true;
+                        defaultConfigNotFound = true;
+                        exception = e;
                     }
                 }
+            }
+            if (exception != null) {
+                if (isThrowMissingConfigurationSourceException()) {
+                    throw new MissingConfigurationSourceException("Error initializing with default configuration source(s).", exception);
+                } else {
+                    logger.warn("Error initializing with default configuration source(s).", exception);
+                }
+            } else {
+                logger.info("DynamicPropertyFactory is initialized with default configuration source(s): " + defaultConfig.getSource());
+
             }
         }
         return instance;
     }         
     
     private static void checkAndWarn(String propName) {
-        if (config == null && !Boolean.getBoolean("dynamicPropertyFactory.disableLogging")) {
+        if (config == null) {
             logger.warn("DynamicProperty " + propName + " is created without a configuration source for callback. " 
                     + "Need to set property " + URLConfigurationSource.CONFIG_URL + " or call DynamicPropertyFactory.initWithConfigurationSource().");
         }        

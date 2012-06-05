@@ -241,7 +241,9 @@ public class DynamicProperty {
     public static DynamicProperty getInstance(String propName) {
         // This is to ensure that a configuration source is registered with
         // DynamicProperty
-        // DynamicPropertyFactory.getInstance();
+        if (dynamicPropertySupportImpl == null) {
+            DynamicPropertyFactory.getInstance();
+        }
         DynamicProperty prop = ALL_PROPS.get(propName);
         if (prop == null) {
             prop = new DynamicProperty(propName);
