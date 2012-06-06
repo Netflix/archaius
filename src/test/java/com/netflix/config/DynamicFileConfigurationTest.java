@@ -91,14 +91,14 @@ public class DynamicFileConfigurationTest {
     
     @Test
     public void testDefaultConfigFile() throws Exception {
-        longProp = propertyFactory.createLongProperty("dprops1", Long.MAX_VALUE, new Runnable() {
+        longProp = propertyFactory.getLongProperty("dprops1", Long.MAX_VALUE, new Runnable() {
             public void run() {
                 propertyChanged = true;
             }
         });
 
         assertFalse(propertyChanged);
-        DynamicDoubleProperty doubleProp = propertyFactory.createDoubleProperty("dprops2", 0.0d);
+        DynamicDoubleProperty doubleProp = propertyFactory.getDoubleProperty("dprops2", 0.0d);
         assertEquals(123456789, longProp.get());
         assertEquals(123456789, dynProp.getInteger().intValue());
         assertEquals(79.98, doubleProp.get(), 0.00001d);
@@ -113,13 +113,13 @@ public class DynamicFileConfigurationTest {
     
     @Test
     public void testSwitchingToConfiguration() throws Exception {
-        longProp = propertyFactory.createLongProperty("dprops1", Long.MAX_VALUE, new Runnable() {
+        longProp = propertyFactory.getLongProperty("dprops1", Long.MAX_VALUE, new Runnable() {
             public void run() {
                 propertyChanged = true;
             }
         });
         AbstractConfiguration newConfig = new ConcurrentMapConfiguration();
-        DynamicStringProperty prop = propertyFactory.createStringProperty("abc", "default");
+        DynamicStringProperty prop = propertyFactory.getStringProperty("abc", "default");
         newConfig.setProperty("abc", "nondefault");
         newConfig.setProperty("dprops1", "0");
         DynamicPropertyFactory.initWithConfigurationSource(newConfig);

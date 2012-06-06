@@ -306,7 +306,7 @@ public class DynamicPropertyTest {
                 meGotCalled = true;
             }            
         };
-        final DynamicStringProperty prop = DynamicPropertyFactory.getInstance().createStringProperty("foo.bar", "xyz", r);
+        final DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty("foo.bar", "xyz", r);
         assertEquals("xyz", prop.get());
         config.setProperty("foo.bar", newValue);
         assertTrue(meGotCalled);

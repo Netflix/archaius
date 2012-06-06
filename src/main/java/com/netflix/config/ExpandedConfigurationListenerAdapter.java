@@ -102,6 +102,7 @@ public class ExpandedConfigurationListenerAdapter implements ConfigurationListen
         // Key identifies node where the Collection of nodes was added, or
         // null if it was at the root.
         case HierarchicalConfiguration.EVENT_ADD_NODES:
+        case ConcurrentCompositeConfiguration.EVENT_CONFIGURATION_SOURCE_CHANGED:    
             expandedListener.configSourceLoaded(source);
             break;
 

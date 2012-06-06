@@ -92,7 +92,11 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
     
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
-
+    
+    public static final int EVENT_CONFIGURATION_SOURCE_CHANGED = 10001;
+    
+    private boolean propagateEventToParent = true;
+    
     /**
      * Configuration that holds in memory stuff.  Inserted as first so any
      * setProperty() override anything else added.
@@ -105,6 +109,44 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
      */
     private boolean inMemoryConfigIsChild = true;
 
+    private ConfigurationListener eventPropagater = new ConfigurationListener() {
+        @Override
+        public void configurationChanged(ConfigurationEvent event) {
+            if (!event.isBeforeUpdate()) {
+                int type = event.getType();
+                String name = event.getPropertyName();
+                Object value = event.getPropertyValue();
+                Object finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
+                switch(type) {
+                case HierarchicalConfiguration.EVENT_ADD_NODES:
+                case AbstractConfiguration.EVENT_CLEAR:
+                case EVENT_CONFIGURATION_SOURCE_CHANGED:
+                    fireEvent(type, name, value, false);
+                    break;
+
+                case AbstractConfiguration.EVENT_ADD_PROPERTY:
+                case AbstractConfiguration.EVENT_SET_PROPERTY:
+                    if (finalValue == null && value == null) {
+                        fireEvent(type, name, null, false);                        
+                    } else if (finalValue != null && finalValue.equals(value)) {
+                        fireEvent(type, name, value, false);
+                    }
+                    break;
+                case AbstractConfiguration.EVENT_CLEAR_PROPERTY:
+                    if (finalValue == null) {
+                        fireEvent(type, name, value, false);                        
+                    } else {
+                        fireEvent(AbstractConfiguration.EVENT_SET_PROPERTY, name, finalValue, false);
+                    }
+                    break;
+                default:
+                    break;
+
+                }
+            }            
+        }        
+    };
+    
     /**
      * Creates an empty CompositeConfiguration object which can then
      * be added some other Configuration files
@@ -114,6 +156,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         clear();
     }
 
+    
     /**
      * Creates a CompositeConfiguration object with a specified <em>in-memory
      * configuration</em>. This configuration will store any changes made to the
@@ -275,6 +318,10 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         if (name != null) {
             namedConfigurations.put(name, config);
         }
+        if (propagateEventToParent) {
+            config.addConfigurationListener(eventPropagater);
+        }
+        fireEvent(EVENT_CONFIGURATION_SOURCE_CHANGED, null, null, false);
     }
     
     
@@ -485,7 +532,8 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         while (it.hasNext() && list.isEmpty())
         {
             Configuration config = it.next();
-            if (config != inMemoryConfiguration && config.containsKey(key))
+            if ((config != inMemoryConfiguration || inMemoryConfigIsChild) 
+                    && config.containsKey(key))
             {
                 appendListProperty(list, config, key);
             }
@@ -717,5 +765,26 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
                 dest.add(value);
             }
         }
+    }
+
+
+    /**
+     * Return whether sub configurations should propagate events to
+     * listeners to this configuration.
+     */
+    public final boolean isPropagateEventToParent() {
+        return propagateEventToParent;
+    }
+
+
+    /**
+     * Set whether sub configurations should propagate events to
+     * listeners to this configuration. This is needed if this configuration
+     * is used as the configuration source of {@link DynamicPropertyFactory}.
+     * 
+     * @param propagateEventToParent value to set
+     */
+    public final void setPropagateEventToParent(boolean propagateEventToParent) {
+        this.propagateEventToParent = propagateEventToParent;
     }
 }

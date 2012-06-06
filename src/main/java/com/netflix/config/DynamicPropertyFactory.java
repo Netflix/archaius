@@ -235,8 +235,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicStringProperty createStringProperty(String propName, String defaultValue) {
-        return createStringProperty(propName, defaultValue, null);
+    public DynamicStringProperty getStringProperty(String propName, String defaultValue) {
+        return getStringProperty(propName, defaultValue, null);
     }
 
     /**
@@ -246,7 +246,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicStringProperty createStringProperty(String propName, String defaultValue, final Runnable propertyChangeCallback) {
+    public DynamicStringProperty getStringProperty(String propName, String defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicStringProperty property = new DynamicStringProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
@@ -259,8 +259,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicIntProperty createIntProperty(String propName, int defaultValue) {
-        return createIntProperty(propName, defaultValue, null);
+    public DynamicIntProperty getIntProperty(String propName, int defaultValue) {
+        return getIntProperty(propName, defaultValue, null);
     }
 
     /**
@@ -270,7 +270,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicIntProperty createIntProperty(String propName, int defaultValue, final Runnable propertyChangeCallback) {
+    public DynamicIntProperty getIntProperty(String propName, int defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicIntProperty property = new DynamicIntProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
@@ -283,8 +283,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicLongProperty createLongProperty(String propName, long defaultValue) {
-        return createLongProperty(propName, defaultValue, null);
+    public DynamicLongProperty getLongProperty(String propName, long defaultValue) {
+        return getLongProperty(propName, defaultValue, null);
     }
 
     /**
@@ -294,7 +294,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicLongProperty createLongProperty(String propName, long defaultValue, final Runnable propertyChangeCallback) {
+    public DynamicLongProperty getLongProperty(String propName, long defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicLongProperty property = new DynamicLongProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
@@ -307,8 +307,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicBooleanProperty createBooleanProperty(String propName, boolean defaultValue) {
-        return createBooleanProperty(propName, defaultValue, null);
+    public DynamicBooleanProperty getBooleanProperty(String propName, boolean defaultValue) {
+        return getBooleanProperty(propName, defaultValue, null);
     }
 
     /**
@@ -318,7 +318,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicBooleanProperty createBooleanProperty(String propName, boolean defaultValue, final Runnable propertyChangeCallback) {
+    public DynamicBooleanProperty getBooleanProperty(String propName, boolean defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicBooleanProperty property = new DynamicBooleanProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
@@ -331,8 +331,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicFloatProperty createFloatProperty(String propName, float defaultValue) {
-        return createFloatProperty(propName, defaultValue, null);
+    public DynamicFloatProperty getFloatProperty(String propName, float defaultValue) {
+        return getFloatProperty(propName, defaultValue, null);
     }
 
     /**
@@ -342,7 +342,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicFloatProperty createFloatProperty(String propName, float defaultValue, final Runnable propertyChangeCallback) {
+    public DynamicFloatProperty getFloatProperty(String propName, float defaultValue, final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicFloatProperty property = new DynamicFloatProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
@@ -355,8 +355,8 @@ public class DynamicPropertyFactory {
      * @param propName property name
      * @param defaultValue default value if the property is not defined in underlying configuration
      */
-    public DynamicDoubleProperty createDoubleProperty(String propName, double defaultValue) {
-        return createDoubleProperty(propName, defaultValue, null);
+    public DynamicDoubleProperty getDoubleProperty(String propName, double defaultValue) {
+        return getDoubleProperty(propName, defaultValue, null);
     }
     
     /**
@@ -366,7 +366,7 @@ public class DynamicPropertyFactory {
      * @param defaultValue default value if the property is not defined in underlying configuration
      * @param propertyChangeCallback a Runnable to be called when the property is changed
      */
-    public DynamicDoubleProperty createDoubleProperty(String propName, double defaultValue,  final Runnable propertyChangeCallback) {
+    public DynamicDoubleProperty getDoubleProperty(String propName, double defaultValue,  final Runnable propertyChangeCallback) {
         checkAndWarn(propName);
         DynamicDoubleProperty property = new DynamicDoubleProperty(propName, defaultValue);
         addCallback(propertyChangeCallback, property);
