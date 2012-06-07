@@ -1,6 +1,6 @@
 // Establish version and status
 ext.releaseVersion = '0.1.2'
-ext.githubProjectName = 'pablo'
+ext.githubProjectName = 'archaius'
 group = 'com.netflix.config'
 
 buildscript {
