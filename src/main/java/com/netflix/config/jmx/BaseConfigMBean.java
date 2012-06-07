@@ -21,6 +21,8 @@ import java.util.Properties;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
+import com.netflix.config.util.ConfigurationUtils;
+
 /**
  * A basic implementation of a Config MBean that allows for operations on
  * properties contained in the <code>AbstractConfiguration</code>.
@@ -38,7 +40,7 @@ public class BaseConfigMBean implements ConfigMBean {
 	
 	@Override
 	public Object obtainProperties() {
-		return new Properties();
+		return ConfigurationUtils.getProperties(config);
 	}
 
 	@Override

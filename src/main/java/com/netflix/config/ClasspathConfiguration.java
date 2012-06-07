@@ -24,7 +24,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,25 +128,20 @@ public class ClasspathConfiguration extends ConcurrentMapConfiguration
     {
         Enumeration<URL> resources = loader.getResources(resourceName);
         boolean loadedResources = false;
-        while (resources.hasMoreElements()) {
-            URL from = resources.nextElement();
-            Properties props = loadProperties(from);
-            String configName = getConfigName(props, from);
-            Configuration config = containerConfiguration.getConfiguration(configName);
-            if (config == null) {
-            	containerConfiguration.addConfiguration(new PropertiesConfiguration(from), configName);
-                log.debug("Added properties from:" + from + " with config name:" + configName);
-            } else {
-                for (Map.Entry entry : props.entrySet()) {
-                    Object key = entry.getKey();
-                    config.setProperty((String) key, entry.getValue());
-                }
-            }
-            loadedResources = true;
-        }
-        if (!loadedResources){
-        	log.debug("Did not find any properties resource in the classpath with name:" + propertiesResourceRelativePath);
-        }
+		while (resources.hasMoreElements()) {
+			URL from = resources.nextElement();
+			Properties props = loadProperties(from);
+			String configName = getConfigName(props, from);
+			containerConfiguration.addConfiguration(
+					new PropertiesConfiguration(from), configName);
+			log.debug("Added properties from:" + from + " with config name:"
+					+ configName);
+			loadedResources = true;
+		}
+		if (!loadedResources) {
+			log.debug("Did not find any properties resource in the classpath with name:"
+					+ propertiesResourceRelativePath);
+		}
     }
 
     private static Properties loadProperties(URL from) throws IOException

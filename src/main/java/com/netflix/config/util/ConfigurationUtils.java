@@ -20,8 +20,10 @@ package com.netflix.config.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -99,6 +101,25 @@ public class ConfigurationUtils {
             }
         }
         return map;
+    }
+    
+    /**
+     * Utility method to obtain <code>Properties</code> given an instance of <code>AbstractConfiguration</code>.
+     * Returns an empty <code>Properties</code> object if the config has no properties or is null.
+     * @param config
+     * @return
+     */
+    public static Properties getProperties(AbstractConfiguration config) {
+ 	   Properties p = new Properties();
+ 	   if (config != null){
+	 	   Iterator<String> it = config.getKeys();
+	 	   
+	 	   while (it.hasNext()){
+	 		   String key = it.next();
+	 		   p.put(key, config.getProperty(key));
+	 	   }
+ 	   }
+  	   return p;
     }
     
 }
