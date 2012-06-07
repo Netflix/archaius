@@ -38,7 +38,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
- * throughput and thread safety.
+ * throughput and thread safety. 
+ * The methods from AbstractConfiguration related to listeners and event generation are rewritten
+ * so that adding/deleting listeners and firing events are no longer synchronized. Therefore,
+ * code in this class is lock free. Also, it catches Throwable when it invokes the listeners, making
+ * it more robust.
  * <p>
  * This configuration does not allow null as key or value and will throw NullPointerException
  * when trying to add or set properties with empty key or value.
