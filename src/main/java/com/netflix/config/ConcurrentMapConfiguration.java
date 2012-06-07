@@ -20,6 +20,7 @@ package com.netflix.config;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -99,5 +100,18 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
             Object value = entry.getValue();
             setProperty(key, value);
         }
+    }
+    
+    /**
+     * Utility method to get a Properties object from this Configuration
+     * @return
+     */
+    public Properties getProperties() {
+    	   Properties p = new Properties();
+    	   Set<Map.Entry<String, Object>> set = props.entrySet();
+    	   for (Map.Entry<String, Object> entry : set) {
+    	     p.put(entry.getKey(), entry.getValue());
+    	   }
+    	   return p;
     }
 }
