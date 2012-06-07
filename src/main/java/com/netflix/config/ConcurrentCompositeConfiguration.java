@@ -19,6 +19,7 @@ package com.netflix.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -28,17 +29,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.CombinedConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationRuntimeException;
 import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.event.ConfigurationErrorListener;
 import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationErrorEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ConcurrentCompositeConfiguration maintains a list of sub configurations. Configurations with higher priority should be added 
@@ -93,9 +97,17 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
     
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
+    private Collection<ConfigurationListener> listeners = new CopyOnWriteArrayList<ConfigurationListener>();
+    
+    private Collection<ConfigurationErrorListener> errorListeners = new CopyOnWriteArrayList<ConfigurationErrorListener>();
+    
+    private AtomicLong detailEventsCount = new AtomicLong();
+    
+    private static final Logger logger = LoggerFactory.getLogger(ConcurrentCompositeConfiguration.class);
+    
     public static final int EVENT_CONFIGURATION_SOURCE_CHANGED = 10001;
     
-    private boolean propagateEventToParent = true;
+    private volatile boolean propagateEventToParent = true;
     
     /**
      * Configuration that holds in memory stuff.  Inserted as first so any
@@ -107,16 +119,16 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
      * Stores a flag whether the current in-memory configuration is also a
      * child configuration.
      */
-    private boolean inMemoryConfigIsChild = true;
+    private volatile boolean inMemoryConfigIsChild = true;
 
     private ConfigurationListener eventPropagater = new ConfigurationListener() {
         @Override
         public void configurationChanged(ConfigurationEvent event) {
-            if (!event.isBeforeUpdate()) {
+            if (!event.isBeforeUpdate() && propagateEventToParent) {
                 int type = event.getType();
                 String name = event.getPropertyName();
                 Object value = event.getPropertyValue();
-                Object finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
+                Object finalValue = null;
                 switch(type) {
                 case HierarchicalConfiguration.EVENT_ADD_NODES:
                 case AbstractConfiguration.EVENT_CLEAR:
@@ -126,6 +138,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
 
                 case AbstractConfiguration.EVENT_ADD_PROPERTY:
                 case AbstractConfiguration.EVENT_SET_PROPERTY:
+                    finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null && value == null) {
                         fireEvent(type, name, null, false);                        
                     } else if (finalValue != null && finalValue.equals(value)) {
@@ -133,6 +146,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
                     }
                     break;
                 case AbstractConfiguration.EVENT_CLEAR_PROPERTY:
+                    finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null) {
                         fireEvent(type, name, value, false);                        
                     } else {
@@ -239,7 +253,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
 
 
     public List<AbstractConfiguration> getConfigurations() {
-        return configList;
+        return Collections.unmodifiableList(configList);
     }
     
     public List<String> getConfigurationNameList()
@@ -262,6 +276,14 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         return list;
     }
     
+    public int getIndexOfConfiguration(AbstractConfiguration config) {
+        return configList.indexOf(config);
+    }        
+    
+    public int getIndexOfInMemoryConfiguration() {
+        return configList.indexOf(inMemoryConfiguration);
+    }
+    
     /**
      * Adds a child configuration and optionally makes it the <em>in-memory
      * configuration</em>. This means that all future property write operations
@@ -278,7 +300,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
      *        <em>in-memory</em> configuration, <b>false</b> otherwise
      * @since 1.8
      */
-    public synchronized void addConfiguration(AbstractConfiguration config, String name, boolean asInMemory)
+    public void addConfiguration(AbstractConfiguration config, String name, boolean asInMemory)
     {
         if (!configList.contains(config))
         {
@@ -306,27 +328,43 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
                 // configList.add(config);
                 addConfigurationAtIndex(config, name, -1);
             }
-        }
-    }
-
-    protected void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
-        if (index < 0) {
-            configList.add(config);
         } else {
-            configList.add(index, config);
+            logger.warn(config + " is not added as it already exits");
         }
-        if (name != null) {
-            namedConfigurations.put(name, config);
+    }
+    
+    public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index, boolean asInMemory) {
+        if (!configList.contains(config)) {
+            if (asInMemory) {
+                replaceInMemoryConfiguration(config);
+                inMemoryConfigIsChild = true;
+            }
+            addConfigurationAtIndex(config, name, index);
+        } else {
+            logger.warn(config + " is not added as it already exits");
         }
-        if (propagateEventToParent) {
+    }
+    
+    public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
+        if (!configList.contains(config)) {
+            if (index < 0) {
+                configList.add(config);
+            } else {
+                configList.add(index, config);
+            }
+            if (name != null) {
+                namedConfigurations.put(name, config);
+            }
             config.addConfigurationListener(eventPropagater);
+            fireEvent(EVENT_CONFIGURATION_SOURCE_CHANGED, null, null, false);
+        } else {
+            logger.warn(config + " is not added as it already exits");
         }
-        fireEvent(EVENT_CONFIGURATION_SOURCE_CHANGED, null, null, false);
     }
     
     
-    public synchronized void addConfigurationAtFront(AbstractConfiguration config, String name) {
-        addConfigurationAtIndex(config, name, 0);
+    public void addConfigurationAtFront(AbstractConfiguration config, String name) {
+            addConfigurationAtIndex(config, name, 0);
     }
     
     /**
@@ -334,7 +372,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
      *
      * @param config The configuration to remove
      */
-    public synchronized boolean removeConfiguration(Configuration config)
+    public  boolean removeConfiguration(Configuration config)
     {
         // Make sure that you can't remove the inMemoryConfiguration from
         // the CompositeConfiguration object       
@@ -345,7 +383,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         return false;
     }
     
-    public synchronized AbstractConfiguration removeConfigurationAt(int index) {
+    public AbstractConfiguration removeConfigurationAt(int index) {
         AbstractConfiguration config = configList.remove(index);
         String nameFound = null;
         for (String name: namedConfigurations.keySet()) {
@@ -398,7 +436,7 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
         configList.clear();
         namedConfigurations.clear();
         // recreate the in memory configuration
-        inMemoryConfiguration = new BaseConfiguration();
+        inMemoryConfiguration = new ConcurrentMapConfiguration();
         inMemoryConfiguration.setThrowExceptionOnMissing(isThrowExceptionOnMissing());
         inMemoryConfiguration.setListDelimiter(getListDelimiter());
         inMemoryConfiguration.setDelimiterParsingDisabled(isDelimiterParsingDisabled());
@@ -787,4 +825,102 @@ public class ConcurrentCompositeConfiguration extends AbstractConfiguration
     public final void setPropagateEventToParent(boolean propagateEventToParent) {
         this.propagateEventToParent = propagateEventToParent;
     }
+
+
+    @Override
+    protected void fireEvent(int type, String propName, Object propValue, boolean beforeUpdate) {
+        if (listeners == null || listeners.size() == 0 || detailEventsCount.get() < 0) {
+            return;
+        }        
+        ConfigurationEvent event = createEvent(type, propName, propValue, beforeUpdate);
+        for (ConfigurationListener l: listeners)
+        {
+            try {
+                l.configurationChanged(event);
+            } catch (Throwable e) {
+                logger.error("Error firing configuration event", e);
+            }
+        }
+    }
+
+    
+    @Override
+    public void addConfigurationListener(ConfigurationListener l) {
+        listeners.add(l);
+    }
+
+
+    @Override
+    public void addErrorListener(ConfigurationErrorListener l) {
+        errorListeners.add(l);
+    }
+
+
+    @Override
+    public void clearConfigurationListeners() {
+        listeners.clear();
+    }
+
+
+    @Override
+    public void clearErrorListeners() {
+        errorListeners.clear();
+    }
+
+
+    @Override
+    public Collection<ConfigurationListener> getConfigurationListeners() {
+        return Collections.unmodifiableCollection(listeners);
+    }
+
+
+    @Override
+    public Collection<ConfigurationErrorListener> getErrorListeners() {
+        return Collections.unmodifiableCollection(errorListeners);
+    }
+
+    @Override
+    public boolean isDetailEvents() {
+        return detailEventsCount.get() > 0;    
+    }
+
+
+    @Override
+    public boolean removeConfigurationListener(ConfigurationListener l) {
+        return listeners.remove(l);
+    }
+
+
+    @Override
+    public boolean removeErrorListener(ConfigurationErrorListener l) {
+        return errorListeners.remove(l);
+    }
+
+
+    @Override
+    public void setDetailEvents(boolean enable) {
+        if (enable) {
+            detailEventsCount.incrementAndGet();
+        } else {
+            detailEventsCount.decrementAndGet();
+        }
+    }
+
+    @Override
+    protected void fireError(int type, String propName, Object propValue, Throwable ex)
+    {
+        if (errorListeners == null || errorListeners.size() == 0) {
+            return;
+        }
+
+        ConfigurationErrorEvent event = createErrorEvent(type, propName, propValue, ex);
+        for (ConfigurationErrorListener l: errorListeners) {
+            try {
+                l.configurationError(event);
+            } catch (Throwable e) {
+                logger.error("Error firing configuration error event", e);
+            }
+        }
+     }
+    
 }

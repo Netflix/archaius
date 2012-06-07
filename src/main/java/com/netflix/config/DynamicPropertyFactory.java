@@ -20,6 +20,7 @@ package com.netflix.config;
 import java.util.Collection;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +67,7 @@ public class DynamicPropertyFactory {
     private volatile static boolean initializedWithDefaultConfig = false;    
     private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
+    private static final String DEFAULT_CONFIG_NAME = "dynamicPropertyFactory.default";
     
     /**
      * System property name that defines whether {@link #getInstance()} should throw 
@@ -104,6 +106,18 @@ public class DynamicPropertyFactory {
             return initWithConfigurationSource((DynamicPropertySupport) config);    
         }
         return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
+    }
+    
+    public static boolean isInitializedWithDefaultConfig() {
+        return initializedWithDefaultConfig;
+    }
+    
+    public static Configuration getBackingConfiguration() {
+        if (config instanceof ConfigurationBackedDynamicPropertySupportImpl) {
+            return ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
+        } else {
+            return null;
+        }
     }
     
     /**
@@ -146,10 +160,11 @@ public class DynamicPropertyFactory {
         }
         // If the factory is initialized with default configuration, we need to change that
         if (initializedWithDefaultConfig && (config instanceof ConfigurationBackedDynamicPropertySupportImpl)) {
-            DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
+            ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
             // stop loading of the configuration
+            DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(DEFAULT_CONFIG_NAME);
             defaultFileConfig.stopLoading();
-            Collection<ConfigurationListener> listeners = defaultFileConfig.getConfigurationListeners();
+            Collection<ConfigurationListener> listeners = defaultConfig.getConfigurationListeners();
             
             // find the listener and remove it so that DynamicProperty will no longer receives 
             // callback from the default configuration source
@@ -163,7 +178,7 @@ public class DynamicPropertyFactory {
                 }
             }
             if (dynamicPropertyListener != null) {
-                defaultFileConfig.removeConfigurationListener(dynamicPropertyListener);
+                defaultConfig.removeConfigurationListener(dynamicPropertyListener);
             }
             config = null;
         }
@@ -195,11 +210,14 @@ public class DynamicPropertyFactory {
     public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
         if (config == null && shouldInstallDefaultConfig()) {
             Throwable exception = null;
-            DynamicURLConfiguration defaultConfig = null;
+            ConcurrentCompositeConfiguration defaultConfig = null;
+            DynamicURLConfiguration defaultURLConfig = null;
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {
                     try {
-                        defaultConfig = new DynamicURLConfiguration();
+                        defaultConfig = new ConcurrentCompositeConfiguration();      
+                        defaultURLConfig = new DynamicURLConfiguration();
+                        defaultConfig.addConfiguration(defaultURLConfig, DEFAULT_CONFIG_NAME);
                         initWithConfigurationSource(defaultConfig);
                         initializedWithDefaultConfig = true;
                     } catch (Throwable e) {
@@ -215,7 +233,7 @@ public class DynamicPropertyFactory {
                     logger.warn("Error initializing with default configuration source(s).", exception);
                 }
             } else {
-                logger.info("DynamicPropertyFactory is initialized with default configuration source(s): " + defaultConfig.getSource());
+                logger.info("DynamicPropertyFactory is initialized with default configuration source(s): " + defaultURLConfig.getSource());
 
             }
         }
