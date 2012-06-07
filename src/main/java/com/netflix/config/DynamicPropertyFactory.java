@@ -112,7 +112,7 @@ public class DynamicPropertyFactory {
         return initializedWithDefaultConfig;
     }
     
-    public static Configuration getBackingConfiguration() {
+    public static Configuration getBackingConfigurationSource() {
         if (config instanceof ConfigurationBackedDynamicPropertySupportImpl) {
             return ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
         } else {

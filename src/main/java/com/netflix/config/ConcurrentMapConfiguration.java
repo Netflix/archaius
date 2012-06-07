@@ -17,14 +17,24 @@
  */
 package com.netflix.config;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.event.ConfigurationErrorEvent;
+import org.apache.commons.configuration.event.ConfigurationErrorListener;
+import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
@@ -38,6 +48,10 @@ import org.apache.commons.configuration.Configuration;
  */
 public class ConcurrentMapConfiguration extends AbstractConfiguration {
     private final Map<String,Object> props = new ConcurrentHashMap<String,Object>();
+    private Collection<ConfigurationListener> listeners = new CopyOnWriteArrayList<ConfigurationListener>();    
+    private Collection<ConfigurationErrorListener> errorListeners = new CopyOnWriteArrayList<ConfigurationErrorListener>();    
+    private AtomicLong detailEventsCount = new AtomicLong();    
+    private static final Logger logger = LoggerFactory.getLogger(ConcurrentMapConfiguration.class);
     
     /**
      * Create an instance with an empty map.
@@ -114,4 +128,101 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     	   }
     	   return p;
     }
+    
+    @Override
+    protected void fireEvent(int type, String propName, Object propValue, boolean beforeUpdate) {
+        if (listeners == null || listeners.size() == 0 || detailEventsCount.get() < 0) {
+            return;
+        }        
+        ConfigurationEvent event = createEvent(type, propName, propValue, beforeUpdate);
+        for (ConfigurationListener l: listeners)
+        {
+            try {
+                l.configurationChanged(event);
+            } catch (Throwable e) {
+                logger.error("Error firing configuration event", e);
+            }
+        }
+    }
+    
+    @Override
+    public void addConfigurationListener(ConfigurationListener l) {
+        listeners.add(l);
+    }
+
+
+    @Override
+    public void addErrorListener(ConfigurationErrorListener l) {
+        errorListeners.add(l);
+    }
+
+
+    @Override
+    public void clearConfigurationListeners() {
+        listeners.clear();
+    }
+
+
+    @Override
+    public void clearErrorListeners() {
+        errorListeners.clear();
+    }
+
+
+    @Override
+    public Collection<ConfigurationListener> getConfigurationListeners() {
+        return Collections.unmodifiableCollection(listeners);
+    }
+
+
+    @Override
+    public Collection<ConfigurationErrorListener> getErrorListeners() {
+        return Collections.unmodifiableCollection(errorListeners);
+    }
+
+    @Override
+    public boolean isDetailEvents() {
+        return detailEventsCount.get() > 0;    
+    }
+
+
+    @Override
+    public boolean removeConfigurationListener(ConfigurationListener l) {
+        return listeners.remove(l);
+    }
+
+
+    @Override
+    public boolean removeErrorListener(ConfigurationErrorListener l) {
+        return errorListeners.remove(l);
+    }
+
+
+    @Override
+    public void setDetailEvents(boolean enable) {
+        if (enable) {
+            detailEventsCount.incrementAndGet();
+        } else {
+            detailEventsCount.decrementAndGet();
+        }
+    }
+
+    @Override
+    protected void fireError(int type, String propName, Object propValue, Throwable ex)
+    {
+        if (errorListeners == null || errorListeners.size() == 0) {
+            return;
+        }
+
+        ConfigurationErrorEvent event = createErrorEvent(type, propName, propValue, ex);
+        for (ConfigurationErrorListener l: errorListeners) {
+            try {
+                l.configurationError(event);
+            } catch (Throwable e) {
+                logger.error("Error firing configuration error event", e);
+            }
+        }
+     }
+    
+
 }
