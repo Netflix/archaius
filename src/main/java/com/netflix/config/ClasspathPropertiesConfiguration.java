@@ -51,21 +51,21 @@ import org.slf4j.LoggerFactory;
  * 
  * @author stonse
  */
-public class ClasspathConfiguration extends ConcurrentMapConfiguration
+public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
 {
 	private static final Logger log = LoggerFactory
-			.getLogger(ClasspathConfiguration.class);
+			.getLogger(ClasspathPropertiesConfiguration.class);
 	
     static String configNameProperty = "config.configName";
     
     static String propertiesResourceRelativePath = "META-INF/conf/config.properties";
     
-    static ClasspathConfiguration instance = null;
+    static ClasspathPropertiesConfiguration instance = null;
     
     static ConcurrentCompositeConfiguration containerConfiguration = null;
     
     /** You can't instantiate this class. */
-    private ClasspathConfiguration()
+    private ClasspathPropertiesConfiguration()
     {
     	
     }
@@ -83,7 +83,7 @@ public class ClasspathConfiguration extends ConcurrentMapConfiguration
 	 * @param configNameProperty
 	 */
 	public static void setConfigNameProperty(String configNameProperty) {
-		ClasspathConfiguration.configNameProperty = configNameProperty;
+		ClasspathPropertiesConfiguration.configNameProperty = configNameProperty;
 	}
 
 	public String getPropertiesResourceRelativePath() {
@@ -96,7 +96,7 @@ public class ClasspathConfiguration extends ConcurrentMapConfiguration
 	 */
 	public static void setPropertiesResourceRelativePath(
 			String propertiesResourceRelativePath) {
-		ClasspathConfiguration.propertiesResourceRelativePath = propertiesResourceRelativePath;
+		ClasspathPropertiesConfiguration.propertiesResourceRelativePath = propertiesResourceRelativePath;
 	}
 
 
@@ -113,7 +113,7 @@ public class ClasspathConfiguration extends ConcurrentMapConfiguration
     {
         try {
             ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            instance = new ClasspathConfiguration();
+            instance = new ClasspathPropertiesConfiguration();
             containerConfiguration = containerConfig; 
             loadResources(loader, propertiesResourceRelativePath);
               
