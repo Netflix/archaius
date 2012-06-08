@@ -4,7 +4,7 @@
 
     <groupId>com.netflix.config</groupId>
     <artifactId>pablo</artifactId>
-    <version>0.1.12</version>
+    <version>0.1.13</version>
 
     <parent>
       <groupId>org.sonatype.oss</groupId>
