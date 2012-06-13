@@ -37,10 +37,8 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.configuration.MapConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ConcurrentMapConfigurationTest {
@@ -224,6 +222,7 @@ public class ConcurrentMapConfigurationTest {
         System.out.println("get property for " + conf + " took " + duration + " ms");
     }
 
+    @Test
     public void testPerformance() {
         MyListener listener = new MyListener();
         BaseConfiguration baseConfig = new BaseConfiguration();

@@ -460,6 +460,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         containerConfiguration.setThrowExceptionOnMissing(isThrowExceptionOnMissing());
         containerConfiguration.setListDelimiter(getListDelimiter());
         containerConfiguration.setDelimiterParsingDisabled(isDelimiterParsingDisabled());
+        containerConfiguration.addConfigurationListener(eventPropagater);
         configList.add(containerConfiguration);
         
         overrideProperties = new ConcurrentMapConfiguration();
@@ -473,18 +474,6 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         invalidate();
     }
 
-    /**
-     * Add this property to the inmemory Configuration.
-     *
-     * @param key The Key to add the property to.
-     * @param token The Value to add.
-     */
-    @Override
-    protected void addPropertyDirect(String key, Object token)
-    {
-        containerConfiguration.addProperty(key, token);
-    }
-
     public void setOverrideProperty(String key, Object finalValue) {
         overrideProperties.setProperty(key, finalValue);
     }
@@ -493,7 +482,20 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         overrideProperties.clearProperty(key);
     }
             
+    @Override
+    public void setProperty(String key, Object value) {
+        containerConfiguration.setProperty(key, value);
+    }
+
+    @Override
+    public void addProperty(String key, Object value) {
+        containerConfiguration.addProperty(key, value);
+    }
     
+    @Override
+    public void clearProperty(String key) {
+        containerConfiguration.clearProperty(key);
+    }
     /**
      * Read property from underlying composite. It first checks if the property has been overridden
      * by {@link #setOverrideProperty(String, Object)}. If so, it returns the value that gets overridden.

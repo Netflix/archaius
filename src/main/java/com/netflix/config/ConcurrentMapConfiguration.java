@@ -76,14 +76,12 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         return map.get(key);
     }
 
-    protected void addPropertyDirect(String key, Object value)
+    protected synchronized void addPropertyDirect(String key, Object value)
     {
         Object previousValue = map.putIfAbsent(key, value);
         if (previousValue == null) {
             return;
-        }
-        previousValue = map.get(key);
-        // in case it gets deleted concurrently
+        }        
         if (previousValue instanceof List)
         {
             // the value is added to the existing list
@@ -92,7 +90,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         else
         {
             // the previous value is replaced by a list containing the previous value and the new value
-            List<Object> list = Collections.synchronizedList(new LinkedList<Object>());
+            List<Object> list = new LinkedList<Object>();
             list.add(previousValue);
             list.add(value);
             map.put(key, list);
@@ -165,11 +163,22 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     public void setProperty(String key, Object value)
     {
         fireEvent(EVENT_SET_PROPERTY, key, value, true);
-        clearPropertyDirect(key);
         if (isDelimiterParsingDisabled()) {
-            addPropertyDirect(key, value);
+            map.put(key, value);
+        } else if ((value instanceof String) && ((String) value).indexOf(getListDelimiter()) < 0) {
+            map.put(key, value);
         } else {
-            addPropertyValues(key, value, getListDelimiter());
+            Iterator it = PropertyConverter.toIterator(value, getListDelimiter());
+            List<Object> list = new LinkedList<Object>();
+            while (it.hasNext())
+            {
+                list.add(it.next());
+            }
+            if (list.size() == 1) {
+                map.put(key, list.get(0));
+            } else {
+                map.put(key, list);
+            }
         }
         fireEvent(EVENT_SET_PROPERTY, key, value, false);
     }
