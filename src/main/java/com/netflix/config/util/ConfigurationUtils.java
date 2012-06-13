@@ -116,7 +116,7 @@ public class ConfigurationUtils {
 	 	   
 	 	   while (it.hasNext()){
 	 		   String key = it.next();
-	 		   p.put(key, config.getProperty(key));
+	 		   p.put(key, config.getString(key));
 	 	   }
  	   }
   	   return p;

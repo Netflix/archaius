@@ -41,20 +41,27 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
- * ConcurrentCompositeConfiguration maintains a list of sub configurations. Configurations with higher priority should be added 
- * before those with lower priority. 
- * For example, if configuration contains runtime overrides is added before configuration that 
- * contains system properties, the final value of property
- * will be taken from the runtime if both configurations contain the same key. 
- * <p>
- * The implementation of this class is based on Apache's CompositeConfiguration. It
- * allows you to add multiple {@code Configuration}
- * objects to an aggregated configuration. If you add Configuration1, and then Configuration2,
- * any properties shared will mean that the value defined by Configuration1
- * will be returned. If Configuration1 doesn't have the property, then
- * Configuration2 will be checked. You can add multiple different types or the
- * same type of properties file.</p>
+ * This class maintains a hierarchy of configurations in a list structure. The order of the list stands for the descending
+ * priority of the configurations when a property value is to be determined.
+ * For example, if you add Configuration1, and then Configuration2,
+ * {@link #getProperty(String)} will return any properties defined by Configuration1.
+ * If Configuration1 doesn't have the property, then
+ * Configuration2 will be checked. </p>
+ * There are two internal configurations for properties that are programmically set:
+ * <ul>
+ * <li>Configuration to hold any property introduced by {@link #addProperty(String, Object)} or {@link #setProperty(String, Object)}
+ * called directly on this class. This configuration will be called "container configuration" as it serves as the container of
+ * such properties. By default, this configuration remains at the last of the configurations list. It can be treated as 
+ * a "base line" configuration that holds hard-coded parameters that can be overridden by any of other configurations added at runtime. 
+ * You can replace this configuration by your own and change the position of the configuration in the list by calling 
+ * {@link #addConfiguration(AbstractConfiguration, String, boolean)} and pass in <code>true</code> for the last parameter.
+ * <li>Configuration to hold properties that are programmatically set to override values from any other 
+ * configurations on the list. As contract to container configuration, this configuration is always consulted first in 
+ * {@link #getProperty(String)}. 
+ * </ul>
+ * 
  * <p>When querying properties the order in which child configurations have been
  * added is relevant. To deal with property updates, a so-called <em>in-memory
  * configuration</em> is used. Per default, such a configuration is created
@@ -84,6 +91,35 @@ import org.slf4j.LoggerFactory;
  * {@link com.netflix.config.util.ConfigurationUtils} to achieve
  * maximal performance and thread safety.
  * 
+ * <p>
+ * Example:
+ * <pre>
+ *   // configuration from local properties file
+  String fileName = "...";
+  ConcurrentMapConfiguration configFromPropertiesFile =
+      new ConcurrentMapConfiguration(new PropertiesConfiguration(fileName));
+  // configuration from system properties
+  ConcurrentMapConfiguration configFromSystemProperties = 
+      new ConcurrentMapConfiguration(new SystemConfiguration());
+  // configuration from a dynamic source
+  PolledConfigurationSource source = createMyOwnSource();
+  AbstractPollingScheduler scheduler = createMyOwnScheduler();
+  DynamicConfiguration dynamicConfiguration =
+      new DynamicConfiguration(source, scheduler);
+  
+  // create a hierarchy of configuration that makes
+  // 1) dynamic configuration source override system properties and,
+  // 2) system properties override properties file
+  ConcurrentCompositeConfiguration finalConfig = new ConcurrentCompositeConfiguration();
+  finalConfig.add(dynamicConfiguration, "dynamicConfig");
+  finalConfig.add(configFromSystemProperties, "systemConfig");
+  finalConfig.add(configFromPropertiesFile, "fileConfig");
+
+  // register with DynamicPropertyFactory so that finalConfig
+  // becomes the source of dynamic properties
+  DynamicPropertyFactory.initWithConfigurationSource(finalConfig);    
+ * </pre>
+ * 
  * @author awang
  *
  */
@@ -100,17 +136,18 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     
     private volatile boolean propagateEventToParent = true;
     
+    private AbstractConfiguration overrideProperties;
+        
     /**
-     * Configuration that holds in memory stuff.  Inserted as first so any
-     * setProperty() override anything else added.
+     * Configuration that holds properties set directly with {@link #setProperty(String, Object)}
      */
-    private AbstractConfiguration inMemoryConfiguration;
+    private AbstractConfiguration containerConfiguration;
 
     /**
      * Stores a flag whether the current in-memory configuration is also a
      * child configuration.
      */
-    private volatile boolean inMemoryConfigIsChild = true;
+    private volatile boolean containerConfigurationChanged = true;
 
     private ConfigurationListener eventPropagater = new ConfigurationListener() {
         @Override
@@ -122,26 +159,26 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
                 Object finalValue = null;
                 switch(type) {
                 case HierarchicalConfiguration.EVENT_ADD_NODES:
-                case AbstractConfiguration.EVENT_CLEAR:
+                case EVENT_CLEAR:
                 case EVENT_CONFIGURATION_SOURCE_CHANGED:
                     fireEvent(type, name, value, false);
                     break;
 
-                case AbstractConfiguration.EVENT_ADD_PROPERTY:
-                case AbstractConfiguration.EVENT_SET_PROPERTY:
+                case EVENT_ADD_PROPERTY:
+                case EVENT_SET_PROPERTY:
                     finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null && value == null) {
-                        fireEvent(type, name, null, false);                        
+                        fireEventDirect(type, name, null, false);                        
                     } else if (finalValue != null && finalValue.equals(value)) {
-                        fireEvent(type, name, value, false);
+                        fireEventDirect(type, name, value, false);
                     }
                     break;
-                case AbstractConfiguration.EVENT_CLEAR_PROPERTY:
+                case EVENT_CLEAR_PROPERTY:
                     finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null) {
-                        fireEvent(type, name, value, false);                        
+                        fireEventDirect(type, name, value, false);                        
                     } else {
-                        fireEvent(AbstractConfiguration.EVENT_SET_PROPERTY, name, finalValue, false);
+                        fireEventDirect(EVENT_SET_PROPERTY, name, finalValue, false);
                     }
                     break;
                 default:
@@ -177,7 +214,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public ConcurrentCompositeConfiguration(AbstractConfiguration inMemoryConfiguration)
     {
         configList.clear();
-        this.inMemoryConfiguration = inMemoryConfiguration;
+        this.containerConfiguration = inMemoryConfiguration;
         configList.add(inMemoryConfiguration);
     }
 
@@ -221,28 +258,38 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     }
 
     /**
-     * Add a configuration.
+     * Add a child configuration without a name. Make a call to {@link #addConfiguration(AbstractConfiguration, String)}
+     * with the name being null.
      *
      * @param config the configuration to add
      */
     public final void addConfiguration(AbstractConfiguration config)
     {
-        addConfiguration(config, null, false);
+        addConfiguration(config, null);
     }
 
     /**
-     * Adds a new configuration to this combined configuration with an optional
-     * name. 
+     * Adds a new child configuration to this configuration with an optional
+     * name. The configuration will be added to the end of the list
+     * if <em>container configuration</em> has been changed to new one or no longer at the end of 
+     * the list. Otherwise it will be added in front of the <em>container configuration</em>.
      *
      * @param config the configuration to add (must not be <b>null</b>)
      * @param name the name of this configuration (can be <b>null</b>)
      */
     public void addConfiguration(AbstractConfiguration config, String name)
     {
-        addConfiguration(config, name,  false);
+        if (containerConfigurationChanged) {
+            addConfigurationAtIndex(config, name, configList.size());
+        } else {
+            addConfigurationAtIndex(config, name, configList.indexOf(containerConfiguration));
+        }
     }
 
 
+    /**
+     * Get the configurations added.
+     */
     public List<AbstractConfiguration> getConfigurations() {
         return Collections.unmodifiableList(configList);
     }
@@ -271,78 +318,60 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return configList.indexOf(config);
     }        
     
-    public int getIndexOfInMemoryConfiguration() {
-        return configList.indexOf(inMemoryConfiguration);
+    public int getIndexOfContainerConfiguration() {
+        return configList.indexOf(containerConfiguration);
     }
     
+    private void checkIndex(int newIndex) {
+        if (newIndex < 0 || newIndex > configList.size()) {
+            throw new IndexOutOfBoundsException(newIndex + " is out of bounds of the size of configuration list " + configList.size());
+        }
+    }
+        
+
     /**
-     * Adds a child configuration and optionally makes it the <em>in-memory
+     * Adds a child configuration and makes it the <em>container
      * configuration</em>. This means that all future property write operations
-     * are executed on this configuration. Note that the current in-memory
-     * configuration is replaced by the new one. If it was created automatically
-     * or passed to the constructor, it is removed from the list of child
-     * configurations! Otherwise, it stays in the list of child configurations
+     * are executed on this configuration. Note that the current container 
+     * configuration stays in the list of child configurations
      * at its current position, but it passes its role as in-memory
      * configuration to the new one.
      *
      * @param config the configuration to be added
      * @param name the name of the configuration to be added
-     * @param asInMemory <b>true</b> if this configuration becomes the new
-     *        <em>in-memory</em> configuration, <b>false</b> otherwise
-     * @since 1.8
+     * @param index index to add this configuration
      */
-    public void addConfiguration(AbstractConfiguration config, String name, boolean asInMemory)
-    {
-        if (!configList.contains(config))
-        {
-            if (asInMemory)
-            {
-                replaceInMemoryConfiguration(config);
-                inMemoryConfigIsChild = true;
-            }
-
-            if (!inMemoryConfigIsChild)
-            {
-                // As the inMemoryConfiguration contains all manually added
-                // keys, we must make sure that it is always last. "Normal", non
-                // composed configurations add their keys at the end of the
-                // configuration and we want to mimic this behavior.
-                // configList.add(configList.indexOf(inMemoryConfiguration),
-                //        config);
-                addConfigurationAtIndex(config, name, configList.indexOf(inMemoryConfiguration));
-            }
-            else
-            {
-                // However, if the in-memory configuration is a regular child,
-                // only the order in which child configurations are added is
-                // relevant
-                // configList.add(config);
-                addConfigurationAtIndex(config, name, -1);
-            }
-        } else {
-            logger.warn(config + " is not added as it already exits");
-        }
-    }
-    
-    public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index, boolean asInMemory) {
+    public void setNewContainerConfiguration(AbstractConfiguration config, String name, int index) {
         if (!configList.contains(config)) {
-            if (asInMemory) {
-                replaceInMemoryConfiguration(config);
-                inMemoryConfigIsChild = true;
-            }
+            checkIndex(index);
+            containerConfigurationChanged = true;
+            containerConfiguration = config;            
             addConfigurationAtIndex(config, name, index);
         } else {
             logger.warn(config + " is not added as it already exits");
-        }
+        }        
     }
     
+    /**
+     * Change the position of the <em>container configuration</em> to a new index.
+     */
+    public void setContainerConfigurationIndex(int newIndex) {
+        if (newIndex < 0 || newIndex >= configList.size()) {
+            throw new IndexOutOfBoundsException("Cannot change to the new index " + newIndex + " in the list of size " + configList.size());
+        } else if (newIndex == configList.indexOf(containerConfiguration)) {
+            // nothing to do
+            return;
+        }
+        
+        containerConfigurationChanged = true;
+        configList.remove(containerConfiguration);
+        configList.add(newIndex, containerConfiguration);
+    }
+        
     public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
         if (!configList.contains(config)) {
-            if (index < 0) {
-                configList.add(config);
-            } else {
-                configList.add(index, config);
-            }
+            checkIndex(index);
+            configList.add(index, config);
             if (name != null) {
                 namedConfigurations.put(name, config);
             }
@@ -367,7 +396,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     {
         // Make sure that you can't remove the inMemoryConfiguration from
         // the CompositeConfiguration object       
-        if (!config.equals(inMemoryConfiguration))
+        if (!config.equals(containerConfiguration))
         {
             return configList.remove((AbstractConfiguration) config);
         }
@@ -427,13 +456,20 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         configList.clear();
         namedConfigurations.clear();
         // recreate the in memory configuration
-        inMemoryConfiguration = new ConcurrentMapConfiguration();
-        inMemoryConfiguration.setThrowExceptionOnMissing(isThrowExceptionOnMissing());
-        inMemoryConfiguration.setListDelimiter(getListDelimiter());
-        inMemoryConfiguration.setDelimiterParsingDisabled(isDelimiterParsingDisabled());
-        configList.add(inMemoryConfiguration);
+        containerConfiguration = new ConcurrentMapConfiguration();
+        containerConfiguration.setThrowExceptionOnMissing(isThrowExceptionOnMissing());
+        containerConfiguration.setListDelimiter(getListDelimiter());
+        containerConfiguration.setDelimiterParsingDisabled(isDelimiterParsingDisabled());
+        configList.add(containerConfiguration);
+        
+        overrideProperties = new ConcurrentMapConfiguration();
+        overrideProperties.setThrowExceptionOnMissing(isThrowExceptionOnMissing());
+        overrideProperties.setListDelimiter(getListDelimiter());
+        overrideProperties.setDelimiterParsingDisabled(isDelimiterParsingDisabled());
+        overrideProperties.addConfigurationListener(eventPropagater);
+        
         fireEvent(EVENT_CLEAR, null, null, false);
-        inMemoryConfigIsChild = false;
+        containerConfigurationChanged = false;
         invalidate();
     }
 
@@ -446,18 +482,34 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     @Override
     protected void addPropertyDirect(String key, Object token)
     {
-        inMemoryConfiguration.addProperty(key, token);
+        containerConfiguration.addProperty(key, token);
     }
 
+    public void setOverrideProperty(String key, Object finalValue) {
+        overrideProperties.setProperty(key, finalValue);
+    }
+    
+    public void clearOverrideProperty(String key) {
+        overrideProperties.clearProperty(key);
+    }
+            
+    
     /**
-     * Read property from underlying composite
+     * Read property from underlying composite. It first checks if the property has been overridden
+     * by {@link #setOverrideProperty(String, Object)}. If so, it returns the value that gets overridden.
+     * Otherwise, it iterates through the list of sub configurations until it finds one that contains the
+     * property and return the value from that sub configuration. It returns null of the property does
+     * not exist.
      *
      * @param key key to use for mapping
      *
-     * @return object associated with the given configuration key.
+     * @return object associated with the given configuration key. null if it does not exist.
      */
     public Object getProperty(String key)
     {
+        if (overrideProperties.containsKey(key)) {
+            return overrideProperties.getProperty(key);
+        }
         Configuration firstMatchingConfiguration = null;
         for (Configuration config : configList)
         {
@@ -536,7 +588,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     @Override
     public void clearPropertyDirect(String key)
     {
-        inMemoryConfiguration.clearProperty(key);
+        containerConfiguration.clearProperty(key);
     }
 
     public boolean containsKey(String key)
@@ -561,7 +613,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         while (it.hasNext() && list.isEmpty())
         {
             Configuration config = it.next();
-            if ((config != inMemoryConfiguration || inMemoryConfigIsChild) 
+            if ((config != containerConfiguration || containerConfigurationChanged) 
                     && config.containsKey(key))
             {
                 appendListProperty(list, config, key);
@@ -570,7 +622,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
         // add all elements from the in memory configuration
         if (list.isEmpty()) {
-            appendListProperty(list, inMemoryConfiguration, key);
+            appendListProperty(list, containerConfiguration, key);
         }
 
         if (list.isEmpty())
@@ -634,7 +686,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      */
     public Configuration getInMemoryConfiguration()
     {
-        return inMemoryConfiguration;
+        return containerConfiguration;
     }
 
     /**
@@ -656,9 +708,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
                     .clone();
             copy.clearConfigurationListeners();
             copy.configList = new LinkedList<AbstractConfiguration>();
-            copy.inMemoryConfiguration = (AbstractConfiguration) ConfigurationUtils
+            copy.containerConfiguration = (AbstractConfiguration) ConfigurationUtils
                     .cloneConfiguration(getInMemoryConfiguration());
-            copy.configList.add(copy.inMemoryConfiguration);
+            copy.configList.add(copy.containerConfiguration);
 
             for (Configuration config : configList)
             {
@@ -689,7 +741,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     @Override
     public void setDelimiterParsingDisabled(boolean delimiterParsingDisabled)
     {
-        inMemoryConfiguration.setDelimiterParsingDisabled(delimiterParsingDisabled);
+        containerConfiguration.setDelimiterParsingDisabled(delimiterParsingDisabled);
         super.setDelimiterParsingDisabled(delimiterParsingDisabled);
     }
 
@@ -703,7 +755,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     @Override
     public void setListDelimiter(char listDelimiter)
     {
-        inMemoryConfiguration.setListDelimiter(listDelimiter);
+        containerConfiguration.setListDelimiter(listDelimiter);
         super.setListDelimiter(listDelimiter);
     }
 
@@ -755,21 +807,6 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     }
 
     /**
-     * Replaces the current in-memory configuration by the given one.
-     *
-     * @param config the new in-memory configuration
-     */
-    private void replaceInMemoryConfiguration(AbstractConfiguration config)
-    {
-        if (!inMemoryConfigIsChild)
-        {
-            // remove current in-memory configuration
-            configList.remove(inMemoryConfiguration);
-        }
-        inMemoryConfiguration = config;
-    }
-
-    /**
      * Adds the value of a property to the given list. This method is used by
      * {@code getList()} for gathering property values from the child
      * configurations.
@@ -815,5 +852,40 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      */
     public final void setPropagateEventFromSubConfigurations(boolean propagateEventToParent) {
         this.propagateEventToParent = propagateEventToParent;
+    }
+    
+    private boolean isFinalValueChanged(String key, Object valueFromContainer) {
+        Object finalValue = getProperty(key);
+        if (finalValue == null && valueFromContainer == null) {
+            return true;
+        } else if (finalValue != null && finalValue.equals(valueFromContainer)) {
+            return true;
+        }
+        return false;
+    }
+
+    private void fireEventDirect(int type, String propName, Object propValue,
+            boolean beforeUpdate) {
+        super.fireEvent(type, propName, propValue, beforeUpdate);
+    }
+
+    @Override
+    protected void fireEvent(int type, String propName, Object propValue,
+            boolean beforeUpdate) {  
+        if (!beforeUpdate) {
+            switch(type) {
+            case EVENT_ADD_PROPERTY:
+            case EVENT_SET_PROPERTY:
+            case EVENT_CLEAR_PROPERTY:
+                if (isFinalValueChanged(propName, propValue)) {
+                    fireEventDirect(type, propName, propValue, false);
+                }
+                break;
+            default:
+                fireEventDirect(type, propName, propValue, false);
+            }
+        } else {
+            fireEventDirect(type, propName, propValue, true);
+        }
     }
 }

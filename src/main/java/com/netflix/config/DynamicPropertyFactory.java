@@ -25,6 +25,10 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.jmx.ConfigJMXManager;
+import com.netflix.config.jmx.ConfigMBean;
+import com.netflix.config.sources.URLConfigurationSource;
+
 /**
  * A factory that creates instances of dynamic properties and associates them with an underlying configuration 
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
@@ -41,6 +45,14 @@ import org.slf4j.LoggerFactory;
  *            = DynamicPropertyFactory.getInstance().createIntProperty("myclass.sleepMillis", 250);
  *           // ...
  *
+ *           // add a callback when this property is changed
+ *           maxWaitMillis.addCallback(new Runnable() {
+ *               public void run() {
+ *                   int currentValue = maxWaitMillis.get();
+ *                   // ...
+ *               }
+ *           });
+ *           // ...
  *           // Wait for a configurable amount of time for condition to become true.
  *           // Note that the time can be changed on-the-fly.
  *           someCondition.wait(maxWaitMillis.get());
@@ -68,6 +80,13 @@ public class DynamicPropertyFactory {
     private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
     private static final String DEFAULT_CONFIG_NAME = "dynamicPropertyFactory.default";
+    /**
+     * Boolean system property to define whether a configuration MBean should be registered with
+     * JMX so that properties can be accessed via JMX console. Default is "unset".
+     */
+    public static final String ENABLE_JMX = "dynamicPropertyFactory.registerConfigWithJMX";
+    private static ConfigMBean configMBean = null;
+
     
     /**
      * System property name that defines whether {@link #getInstance()} should throw 
@@ -104,6 +123,13 @@ public class DynamicPropertyFactory {
     public static synchronized DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
         if (config instanceof DynamicPropertySupport) {
             return initWithConfigurationSource((DynamicPropertySupport) config);    
+        }
+        if (Boolean.getBoolean(ENABLE_JMX)) {
+            try {
+                configMBean = ConfigJMXManager.registerConfigMbean(config);
+            } catch (Exception e) {
+                logger.error("Unable to register with JMX", e);
+            }
         }
         return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
     }
@@ -179,6 +205,13 @@ public class DynamicPropertyFactory {
             }
             if (dynamicPropertyListener != null) {
                 defaultConfig.removeConfigurationListener(dynamicPropertyListener);
+            }
+            if (configMBean != null) {
+                try {
+                    ConfigJMXManager.unRegisterConfigMBean(defaultConfig, configMBean);
+                } catch (Exception e) {
+                    logger.error("Error unregistering with JMX", e);
+                }
             }
             config = null;
         }

@@ -28,6 +28,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.netflix.config.sources.URLConfigurationSource;
+
 import static org.junit.Assert.*;
 
 public class DynamicFileConfigurationTest {

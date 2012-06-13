@@ -15,7 +15,7 @@
  *     limitations under the License.
  *
  */
-package com.netflix.config;
+package com.netflix.config.sources;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+
+import com.netflix.config.PollResult;
+import com.netflix.config.PolledConfigurationSource;
 
 /**
  * A polled configuration source based on a set of URLs. For each poll,

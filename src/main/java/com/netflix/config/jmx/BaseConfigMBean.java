@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
+import com.netflix.config.ConcurrentCompositeConfiguration;
 import com.netflix.config.util.ConfigurationUtils;
 
 /**
@@ -50,17 +51,29 @@ public class BaseConfigMBean implements ConfigMBean {
 
 	@Override
 	public void updateProperty(String key, String value) {
-		config.setProperty(key, value);
+	    if (config instanceof ConcurrentCompositeConfiguration) {
+	        ((ConcurrentCompositeConfiguration) config).setOverrideProperty(key, value);
+	    } else {
+		    config.setProperty(key, value);
+	    }
 	}
 
 	@Override
 	public void clearProperty(String key) {
-		config.clearProperty(key);
+        if (config instanceof ConcurrentCompositeConfiguration) {
+            ((ConcurrentCompositeConfiguration) config).clearOverrideProperty(key);
+        } else {
+		    config.clearProperty(key);
+        }
 	}
 
 	@Override
 	public void addProperty(String key, String value) {
-		config.addProperty(key, value);
+        if (config instanceof ConcurrentCompositeConfiguration) {
+            ((ConcurrentCompositeConfiguration) config).setOverrideProperty(key, value);
+        } else {
+		    config.addProperty(key, value);
+        }
 	}
 
 }

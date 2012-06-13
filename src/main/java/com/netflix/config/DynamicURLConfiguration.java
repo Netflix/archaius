@@ -17,6 +17,8 @@
  */
 package com.netflix.config;
 
+import com.netflix.config.sources.URLConfigurationSource;
+
 public class DynamicURLConfiguration extends DynamicConfiguration {
         
     public DynamicURLConfiguration() {
