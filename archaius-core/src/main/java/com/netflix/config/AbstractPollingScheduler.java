@@ -44,22 +44,17 @@ import com.netflix.config.PollListener.EventType;
  *
  */
 public abstract class AbstractPollingScheduler {
-    // private final PolledConfigurationSource source;
     private volatile boolean ignoreDeletesFromSource;
     private List<PollListener> listeners = new CopyOnWriteArrayList<PollListener>();
     private volatile Object checkPoint;
     private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
     
     /**
-     * 
-     * @param config The Apache Configuration instance where the polling result should be applied
-     * @param source PolledConfigurationSource to get the configuration content
      * @param ignoreDeletesFromSource true if deletes happened in the configuration source should be ignored 
      *                  by the Configuration. <b>Warning: </b>If both {@link PollResult#isIncremental()} 
      *                  and this parameter are false, any property in the configuration that is missing in the
      *                  polled result will be deleted once the PollResult is applied.
      *                   
-     * @throws ConfigurationException if any error occurs during the initial load of the configuration source
      */
     public AbstractPollingScheduler(boolean ignoreDeletesFromSource) {
         this.ignoreDeletesFromSource = ignoreDeletesFromSource;
@@ -68,7 +63,7 @@ public abstract class AbstractPollingScheduler {
     /**
      * Create an instance where <code>ignoreDeletesFromSource</code> is set to false. 
      * 
-     * @See {@link #AbstractPollingScheduler(boolean)}.
+     * @see #AbstractPollingScheduler(boolean)
      */
     public AbstractPollingScheduler() {
         this.ignoreDeletesFromSource = false;

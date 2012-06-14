@@ -50,6 +50,8 @@
     </dependencies>
     
     <build>
+        <sourceDirectory>${basedir}/archaius-core</sourceDirectory>
+        <testSourceDirectory>${basedir}/archaius-core</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -91,7 +93,7 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
+                <artifactId>maven-surefire-plugin</artifactId>                
                 <configuration>
                     <forkMode>always</forkMode>
                 </configuration>

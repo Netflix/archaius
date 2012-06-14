@@ -89,8 +89,8 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * 
      * @param urls list of URLs to be used
      */
-    public URLConfigurationSource(URL... url) {
-        configUrls = url;
+    public URLConfigurationSource(URL... urls) {
+        configUrls = urls;
     }
     
     /**
@@ -156,7 +156,7 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * list will override the value in the previous one. 
      * 
      * @param initial this parameter is ignored by the implementation
-     * @param fullContentRequested this parameter is ignored by the implementation
+     * @param checkPoint this parameter is ignored by the implementation
      * @throws IOException IOException occurred in file operation
      */
     @Override

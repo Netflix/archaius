@@ -266,7 +266,6 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
 
     /**
      * Utility method to get a Properties object from this Configuration
-     * @return
      */
     public Properties getProperties() {
         Properties p = new Properties();

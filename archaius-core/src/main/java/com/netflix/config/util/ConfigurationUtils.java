@@ -106,8 +106,8 @@ public class ConfigurationUtils {
     /**
      * Utility method to obtain <code>Properties</code> given an instance of <code>AbstractConfiguration</code>.
      * Returns an empty <code>Properties</code> object if the config has no properties or is null.
-     * @param config
-     * @return
+     * @param config Configuration to get the properties
+     * @return properties extracted from the configuration
      */
     public static Properties getProperties(AbstractConfiguration config) {
  	   Properties p = new Properties();

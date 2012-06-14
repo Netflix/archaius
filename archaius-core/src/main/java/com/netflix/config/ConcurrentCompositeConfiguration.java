@@ -37,6 +37,7 @@ import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
+import org.apache.commons.configuration.tree.OverrideCombiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,8 +56,8 @@ import org.slf4j.LoggerFactory;
  * called directly on this class. This configuration will be called "container configuration" as it serves as the container of
  * such properties. By default, this configuration remains at the last of the configurations list. It can be treated as 
  * a "base line" configuration that holds hard-coded parameters that can be overridden by any of other configurations added at runtime. 
- * You can replace this configuration by your own and change the position of the configuration in the list by calling 
- * {@link #addConfiguration(AbstractConfiguration, String, boolean)} and pass in <code>true</code> for the last parameter.
+ * You can replace this configuration by your own and change the position of the configuration in the list by calling
+ * {@link #setContainerConfiguration(AbstractConfiguration, String, int)}. 
  * <li>Configuration to hold properties that are programmatically set (using {@link #setOverrideProperty(String, Object)}) to override values from any other 
  * configurations on the list. As contrast to container configuration, this configuration is always consulted first in 
  * {@link #getProperty(String)}. 
@@ -176,37 +177,31 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     
     /**
-     * Creates a CompositeConfiguration object with a specified <em>in-memory
-     * configuration</em>. This configuration will store any changes made to the
-     * {@code CompositeConfiguration}. Note: Use this constructor if you want to
-     * set a special type of in-memory configuration. If you have a
-     * configuration which should act as both a child configuration and as
-     * in-memory configuration, use
-     * {@link #addConfiguration(Configuration, boolean)} with a value of
-     * <b>true</b> instead.
+     * Creates a ConcurrentCompositeConfiguration object with a specified <em>container
+     * configuration</em>. This configuration will store any changes made by {@link #setProperty(String, Object)}
+     * and {@link #addProperty(String, Object)}. 
      *
-     * @param inMemoryConfiguration the in memory configuration to use
+     * @param containerConfiguration the configuration to use as container configuration
      */
-    public ConcurrentCompositeConfiguration(AbstractConfiguration inMemoryConfiguration)
+    public ConcurrentCompositeConfiguration(AbstractConfiguration containerConfiguration)
     {
         configList.clear();
-        this.containerConfiguration = inMemoryConfiguration;
-        configList.add(inMemoryConfiguration);
+        this.containerConfiguration = containerConfiguration;
+        configList.add(containerConfiguration);
     }
 
 
     /**
-     * Creates a CompositeConfiguration with a specified <em>in-memory
+     * Creates a ConcurrentCompositeConfiguration with a specified <em>container
      * configuration</em>, and then adds the given collection of configurations.
      *
-     * @param inMemoryConfiguration the in memory configuration to use
+     * @param containerConfiguration container configuration to use
      * @param configurations        the collection of configurations to add
-     * @see #CompositeConfiguration(Configuration)
      */
-    public ConcurrentCompositeConfiguration(AbstractConfiguration inMemoryConfiguration,
+    public ConcurrentCompositeConfiguration(AbstractConfiguration containerConfiguration,
             Collection<? extends AbstractConfiguration> configurations)
     {
-        this(inMemoryConfiguration);
+        this(containerConfiguration);
 
         if (configurations != null)
         {
@@ -310,7 +305,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * configuration</em>. This means that all future property write operations
      * are executed on this configuration. Note that the current container 
      * configuration stays in the list of child configurations
-     * at its current position, but it passes its role as in-memory
+     * at its current position, but it passes its role as container 
      * configuration to the new one.
      *
      * @param config the configuration to be added
@@ -374,7 +369,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     }
     
     /**
-     * Remove a configuration. The in memory configuration cannot be removed.
+     * Remove a configuration. The container configuration cannot be removed.
      *
      * @param config The configuration to remove
      */
@@ -431,8 +426,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     }
 
     /**
-     * Removes all child configurations and reinitializes the <em>in-memory
-     * configuration</em>. <strong>Attention:</strong> A new in-memory
+     * Removes all child configurations and reinitializes the <em>container 
+     * configuration</em>. <strong>Attention:</strong> A new container
      * configuration is created; the old one is lost.
      */
     @Override
@@ -789,11 +784,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     /**
      * Sets a flag whether added values for string properties should be checked
-     * for the list delimiter. This implementation ensures that the in memory
+     * for the list delimiter. This implementation ensures that the container 
      * configuration is correctly initialized.
      *
      * @param delimiterParsingDisabled the new value of the flag
-     * @since 1.4
      */
     @Override
     public void setDelimiterParsingDisabled(boolean delimiterParsingDisabled)
@@ -804,10 +798,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     /**
      * Sets the character that is used as list delimiter. This implementation
-     * ensures that the in memory configuration is correctly initialized.
+     * ensures that the container configuration is correctly initialized.
      *
      * @param listDelimiter the new list delimiter character
-     * @since 1.4
      */
     @Override
     public void setListDelimiter(char listDelimiter)
@@ -822,22 +815,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * whether they contain the specified key. The following constellations are
      * possible:
      * <ul>
-     * <li>If exactly one child configuration contains the key, this
-     * configuration is returned as the source configuration. This may be the
-     * <em>in memory configuration</em> (this has to be explicitly checked by
-     * the calling application).</li>
+     * <li>If the child configurations contains this key, the first one is returned.</li>
      * <li>If none of the child configurations contain the key, <b>null</b> is
      * returned.</li>
-     * <li>If the key is contained in multiple child configurations or if the
-     * key is <b>null</b>, a {@code IllegalArgumentException} is thrown.
-     * In this case the source configuration cannot be determined.</li>
      * </ul>
      *
      * @param key the key to be checked
      * @return the source configuration of this key
-     * @throws IllegalArgumentException if the source configuration cannot be
-     * determined
-     * @since 1.5
      */
     public Configuration getSource(String key)
     {
@@ -846,21 +830,19 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
             throw new IllegalArgumentException("Key must not be null!");
         }
 
+        if (overrideProperties.containsKey(key)) {
+            return overrideProperties;
+        }
         Configuration source = null;
+        
         for (Configuration conf : configList)
         {
             if (conf.containsKey(key))
             {
-                if (source != null)
-                {
-                    throw new IllegalArgumentException("The key " + key
-                            + " is defined by multiple sources!");
-                }
-                source = conf;
+                return conf;
             }
         }
-
-        return source;
+        return null;
     }
 
     /**

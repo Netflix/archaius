@@ -29,7 +29,6 @@ public interface ConfigMBean {
 	 * <code>Properties</code>, but doing so will make this operation dissapear
 	 * from the JConsole.
 	 * 
-	 * @return
 	 */
 	public Object obtainProperties();
 
@@ -37,7 +36,6 @@ public interface ConfigMBean {
 	/**
 	 * Returns the current value of a property given a key
 	 * @param key
-	 * @return
 	 */
 	public Object getProperty(String key);
 

@@ -21,10 +21,10 @@ package com.netflix.config;
  * Listener that handles property event notifications. It handles events to add a property, set property,
  * remove property, load and clear of the configuration source. 
  * <p>
- * {@link DynamicProperty} registers this type listener with a {@link DynamicPropertySupport} to receive 
+ * {@link DynamicPropertySupport} registers this type listener with a {@link DynamicPropertySupport} to receive 
  * callbacks on changes so that it can dynamically change a value of a DynamicProperty.
  * 
- * @see {@link DynamicPropertySupport#addConfigurationListener(PropertyListener)} 
+ * @see DynamicPropertySupport#addConfigurationListener(PropertyListener)
  * @author awang
  *
  */
