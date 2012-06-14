@@ -20,13 +20,12 @@ package com.netflix.config;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -40,8 +39,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
- * throughput and thread safety. Some methods from AbstractConfiguration are overridden
- * to 
+ * throughput and thread safety. The implementation is lock free for {@link #getProperty(String)}
+ * and {@link #setProperty(String, Object)}, but has some synchronization cost for 
+ * {@link #addProperty(String, Object)} if the object to add is not a String or the key already exists.
+ * <p> 
  * The methods from AbstractConfiguration related to listeners and event generation are overridden
  * so that adding/deleting listeners and firing events are no longer synchronized.
  * Also, it catches Throwable when it invokes the listeners, making
@@ -49,26 +50,47 @@ import org.slf4j.LoggerFactory;
  * <p>
  * This configuration does not allow null as key or value and will throw NullPointerException
  * when trying to add or set properties with empty key or value.
- * 
+ *
  * @author awang
  *
  */
 public class ConcurrentMapConfiguration extends AbstractConfiguration {
-    // make this protected to allow access from sub class 
-    protected final ConcurrentHashMap<String,Object> map;
+    private ConcurrentHashMap<String,Object> map;
     private Collection<ConfigurationListener> listeners = new CopyOnWriteArrayList<ConfigurationListener>();    
     private Collection<ConfigurationErrorListener> errorListeners = new CopyOnWriteArrayList<ConfigurationErrorListener>();    
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentMapConfiguration.class);
-    
+    private static final int NUM_LOCKS = 32;
+    private ReentrantLock[] locks = new ReentrantLock[NUM_LOCKS];
+        
     /**
      * Create an instance with an empty map.
      */
     public ConcurrentMapConfiguration() {
         map = new ConcurrentHashMap<String,Object>();
+        for (int i = 0; i < NUM_LOCKS; i++) {
+            locks[i] = new ReentrantLock();
+        }
     }
     
     public ConcurrentMapConfiguration(Map<String, Object> mapToCopy) {
+        this();
         map = new ConcurrentHashMap<String, Object>(mapToCopy);
+    }
+
+    /**
+     * Create an instance by copying the properties from an existing Configuration.
+     * Future changes to the Configuration passed in will not be reflected in this
+     * object.
+     * 
+     * @param config Configuration to be copied
+     */
+    public ConcurrentMapConfiguration(Configuration config) {
+        this();
+        for (Iterator i = config.getKeys(); i.hasNext();) {
+            String name = (String) i.next();
+            Object value = config.getProperty(name);
+            map.put(name, value);
+        }
     }
 
     public Object getProperty(String key)
@@ -76,24 +98,30 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         return map.get(key);
     }
 
-    protected synchronized void addPropertyDirect(String key, Object value)
+    protected void addPropertyDirect(String key, Object value)
     {
-        Object previousValue = map.putIfAbsent(key, value);
-        if (previousValue == null) {
-            return;
-        }        
-        if (previousValue instanceof List)
-        {
-            // the value is added to the existing list
-            ((List) previousValue).add(value);
-        }
-        else
-        {
-            // the previous value is replaced by a list containing the previous value and the new value
-            List<Object> list = new LinkedList<Object>();
-            list.add(previousValue);
-            list.add(value);
-            map.put(key, list);
+        ReentrantLock lock = locks[Math.abs(key.hashCode()) % NUM_LOCKS];
+        lock.lock();
+        try {
+            Object previousValue = map.putIfAbsent(key, value);
+            if (previousValue == null) {
+                return;
+            }   
+            if (previousValue instanceof List)
+            {
+                // the value is added to the existing list
+                ((List) previousValue).add(value);
+            }
+            else
+            {
+                // the previous value is replaced by a list containing the previous value and the new value
+                List<Object> list = new CopyOnWriteArrayList<Object>();
+                list.add(previousValue);
+                list.add(value);
+                map.put(key, list);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -116,22 +144,6 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     {
         return map.keySet().iterator();
     }
-
-    /**
-     * Create an instance by copying the properties from an existing Configuration.
-     * Future changes to the Configuration passed in will not be reflected in this
-     * object.
-     * 
-     * @param config Configuration to be copied
-     */
-    public ConcurrentMapConfiguration(Configuration config) {
-        this();
-        for (Iterator i = config.getKeys(); i.hasNext();) {
-            String name = (String) i.next();
-            Object value = config.getProperty(name);
-            map.put(name, value);
-        }
-    }
     
 
     /**
@@ -153,6 +165,27 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         }
     }
 
+    public void addProperty(String key, Object value)
+    {
+        fireEvent(EVENT_ADD_PROPERTY, key, value, true);
+        Object previousValue = null;
+        if (isDelimiterParsingDisabled() ||
+                ((value instanceof String) && ((String) value).indexOf(getListDelimiter()) < 0)) {
+            previousValue = map.putIfAbsent(key, value);
+            if (previousValue != null) {
+                addPropertyValues(key, value,
+                        isDelimiterParsingDisabled() ? '\0'
+                                : getListDelimiter());
+            }
+        } else {
+            addPropertyValues(key, value,
+                    isDelimiterParsingDisabled() ? '\0'
+                            : getListDelimiter());
+            
+        }
+        fireEvent(EVENT_ADD_PROPERTY, key, value, false);
+    }
+
     
     /**
      * Override the same method in {@link AbstractConfiguration} to simplify the logic
@@ -169,7 +202,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
             map.put(key, value);
         } else {
             Iterator it = PropertyConverter.toIterator(value, getListDelimiter());
-            List<Object> list = new LinkedList<Object>();
+            List<Object> list = new CopyOnWriteArrayList<Object>();
             while (it.hasNext())
             {
                 list.add(it.next());

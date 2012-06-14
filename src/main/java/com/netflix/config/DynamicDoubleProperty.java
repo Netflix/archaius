@@ -18,7 +18,9 @@
 package com.netflix.config;
 
 /**
- * A dynamic property whose value is a double.
+ * A dynamic property whose value is a double. 
+ * 
+ * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
  * 
  * @author awang
  *

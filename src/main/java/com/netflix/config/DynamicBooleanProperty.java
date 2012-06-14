@@ -19,6 +19,7 @@ package com.netflix.config;
 
 /**
  * A dynamic property that contains boolean value.
+ * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
  * 
  * @author awang
  *

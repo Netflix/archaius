@@ -47,9 +47,9 @@ import org.slf4j.LoggerFactory;
  * priority of the configurations when a property value is to be determined.
  * For example, if you add Configuration1, and then Configuration2,
  * {@link #getProperty(String)} will return any properties defined by Configuration1.
- * If Configuration1 doesn't have the property, then
+ * Only if Configuration1 doesn't have the property, then
  * Configuration2 will be checked. </p>
- * There are two internal configurations for properties that are programmically set:
+ * There are two internal configurations for properties that are programmatically set:
  * <ul>
  * <li>Configuration to hold any property introduced by {@link #addProperty(String, Object)} or {@link #setProperty(String, Object)}
  * called directly on this class. This configuration will be called "container configuration" as it serves as the container of
@@ -57,33 +57,9 @@ import org.slf4j.LoggerFactory;
  * a "base line" configuration that holds hard-coded parameters that can be overridden by any of other configurations added at runtime. 
  * You can replace this configuration by your own and change the position of the configuration in the list by calling 
  * {@link #addConfiguration(AbstractConfiguration, String, boolean)} and pass in <code>true</code> for the last parameter.
- * <li>Configuration to hold properties that are programmatically set to override values from any other 
- * configurations on the list. As contract to container configuration, this configuration is always consulted first in 
+ * <li>Configuration to hold properties that are programmatically set (using {@link #setOverrideProperty(String, Object)}) to override values from any other 
+ * configurations on the list. As contrast to container configuration, this configuration is always consulted first in 
  * {@link #getProperty(String)}. 
- * </ul>
- * 
- * <p>When querying properties the order in which child configurations have been
- * added is relevant. To deal with property updates, a so-called <em>in-memory
- * configuration</em> is used. Per default, such a configuration is created
- * automatically. All property writes target this special configuration. There
- * are constructors which allow you to provide a specific in-memory configuration.
- * If used that way, the in-memory configuration is always the last one in the
- * list of child configurations. This means that for query operations all other
- * configurations take precedence.</p>
- * <p>Alternatively it is possible to mark a child configuration as in-memory
- * configuration when it is added. In this case the treatment of the in-memory
- * configuration is slightly different: it remains in the list of child
- * configurations at the position it was added, i.e. its priority for property
- * queries can be defined by adding the child configurations in the correct
- * order.</p>
- * 
- * This class adds with the following changes/improvements to ComositeConfiguration:
- * <ul>
- * <li>It holds the list of sub configuration on a CopyOnWriteArrayList, which is thread safe and does not throw 
- * ConcurrentModificationException when it is modified while traversing its iterator.
- * <li>Its clearPropertyDirect() does not remove any property in the list of sub configurations other than 
- * the one designated as in memory configuration.
- * <li>It maintains an additional Map that maps sub configuration to a name.
  * </ul>
  * 
  * When adding configuration to this class, it is recommended to convert it into
@@ -340,8 +316,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * @param config the configuration to be added
      * @param name the name of the configuration to be added
      * @param index index to add this configuration
+     * 
+     * @throws IndexOutOfBoundsException
      */
-    public void setNewContainerConfiguration(AbstractConfiguration config, String name, int index) {
+    public void setContainerConfiguration(AbstractConfiguration config, String name, int index) throws IndexOutOfBoundsException {
         if (!configList.contains(config)) {
             checkIndex(index);
             containerConfigurationChanged = true;
@@ -354,8 +332,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     
     /**
      * Change the position of the <em>container configuration</em> to a new index.
+     * 
+     * @throws IndexOutOfBoundsException
      */
-    public void setContainerConfigurationIndex(int newIndex) {
+    public void setContainerConfigurationIndex(int newIndex) throws IndexOutOfBoundsException {
         if (newIndex < 0 || newIndex >= configList.size()) {
             throw new IndexOutOfBoundsException("Cannot change to the new index " + newIndex + " in the list of size " + configList.size());
         } else if (newIndex == configList.indexOf(containerConfiguration)) {
@@ -368,7 +348,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         configList.add(newIndex, containerConfiguration);
     }
         
-    public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) {
+    /**
+     * Add a configuration with a name at a particular index.
+     * 
+     * @throws IndexOutOfBoundsException 
+     */
+    public void addConfigurationAtIndex(AbstractConfiguration config, String name, int index) 
+    throws IndexOutOfBoundsException {
         if (!configList.contains(config)) {
             checkIndex(index);
             configList.add(index, config);
@@ -474,31 +460,56 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         invalidate();
     }
 
+    /**
+     * Override the same property in any other configurations in the list.
+     */
     public void setOverrideProperty(String key, Object finalValue) {
         overrideProperties.setProperty(key, finalValue);
     }
     
+    /**
+     * Remove the overriding property set by {@link #setOverrideProperty(String, Object)}
+     */
     public void clearOverrideProperty(String key) {
         overrideProperties.clearProperty(key);
     }
             
+    /**
+     * Set the property with the <em>container configuration</em>. 
+     * <b>Warning: </b>{@link #getProperty(String)} on this key may not return the same value set by this method
+     * if there is any other configuration that contain the same property and is in front of the 
+     * <em>container configuration</em> in the configurations list.
+     */
     @Override
     public void setProperty(String key, Object value) {
         containerConfiguration.setProperty(key, value);
     }
 
+    /**
+     * Add the property with the <em>container configuration</em>. 
+     * <b>Warning: </b>{@link #getProperty(String)} on this key may not return the same value set by this method
+     * if there is any other configuration that contain the same property and is in front of the 
+     * <em>container configuration</em> in the configurations list.
+     */
     @Override
     public void addProperty(String key, Object value) {
         containerConfiguration.addProperty(key, value);
     }
     
+    /**
+     * Clear the property with the <em>container configuration</em>. 
+     * <b>Warning: </b>{@link #getProperty(String)} on this key may still return some value 
+     * if there is any other configuration that contain the same property and is in front of the 
+     * <em>container configuration</em> in the configurations list.
+     */
+
     @Override
     public void clearProperty(String key) {
         containerConfiguration.clearProperty(key);
     }
     /**
      * Read property from underlying composite. It first checks if the property has been overridden
-     * by {@link #setOverrideProperty(String, Object)}. If so, it returns the value that gets overridden.
+     * by {@link #setOverrideProperty(String, Object)} and if so return the overriding value.
      * Otherwise, it iterates through the list of sub configurations until it finds one that contains the
      * property and return the value from that sub configuration. It returns null of the property does
      * not exist.
@@ -532,9 +543,15 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         }
     }
 
+    /**
+     * Get all the keys contained by sub configurations.
+     */
     public Iterator<String> getKeys()
     {
         Set<String> keys = new LinkedHashSet<String>();
+        for (Iterator<String> it = overrideProperties.getKeys(); it.hasNext();) {
+            keys.add(it.next());
+        }
         for (Configuration config : configList)
         {
             for (Iterator<String> it = config.getKeys(); it.hasNext();)
@@ -546,13 +563,21 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return keys.iterator();
     }
 
+    /**
+     * Get the list of the keys contained in the sub configurations that match the
+     * specified prefix.
+     * 
+     */
     @Override
-    public Iterator<String> getKeys(String key)
+    public Iterator<String> getKeys(String prefix)
     {
         Set<String> keys = new LinkedHashSet<String>();
+        for (Iterator<String> it = overrideProperties.getKeys(prefix); it.hasNext();) {
+            keys.add(it.next());
+        }
         for (Configuration config : configList)
         {
-            for (Iterator<String> it = config.getKeys(key); it.hasNext();)
+            for (Iterator<String> it = config.getKeys(prefix); it.hasNext();)
             {
                 keys.add(it.next());
             }
@@ -574,8 +599,12 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return namedConfigurations.keySet();
     }
     
+    @Override
     public boolean isEmpty()
     {
+        if (overrideProperties.isEmpty()) {
+            return false;
+        }
         for (Configuration config : configList)
         {
             if (!config.isEmpty())
@@ -587,14 +616,21 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return true;
     }
 
+    /**
+     * Check if the any of the sub configurations contains the specified key.
+     *
+     * @param key the key whose presence in this configuration is to be tested
+     *
+     * @return <code>true</code> if the configuration contains a value for this
+     *         key, <code>false</code> otherwise
+     * 
+     */
     @Override
-    public void clearPropertyDirect(String key)
-    {
-        containerConfiguration.clearProperty(key);
-    }
-
     public boolean containsKey(String key)
     {
+        if (overrideProperties.containsKey(key)) {
+            return true;
+        }
         for (Configuration config : configList)
         {
             if (config.containsKey(key))
@@ -605,6 +641,16 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return false;
     }
 
+    /**
+     * Get a List of objects associated with the given configuration key.
+     * If the key doesn't map to an existing object, the default value
+     * is returned.
+     *
+     * @param key The configuration key.
+     * @param defaultValue The default value.
+     * @return The associated List of value.
+     * 
+     */
     @Override
     public List getList(String key, List defaultValue)
     {
@@ -612,6 +658,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
         // add all elements from the first configuration containing the requested key
         Iterator<AbstractConfiguration> it = configList.iterator();
+        if (overrideProperties.containsKey(key)) {
+            appendListProperty(list, overrideProperties, key);
+        }
         while (it.hasNext() && list.isEmpty())
         {
             Configuration config = it.next();
@@ -641,6 +690,14 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return list;
     }
 
+    /**
+     * Get an array of strings associated with the given configuration key.
+     * If the key doesn't map to an existing object an empty array is returned
+     *
+     * @param key The configuration key.
+     * @return The associated string array if key is found.
+     *
+     */
     @Override
     public String[] getStringArray(String key)
     {
@@ -681,12 +738,12 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     }
     
     /**
-     * Returns the &quot;in memory configuration&quot;. In this configuration
+     * Returns the <em>container configuration</em> In this configuration
      * changes are stored.
      *
-     * @return the in memory configuration
+     * @return the container configuration
      */
-    public Configuration getInMemoryConfiguration()
+    public Configuration getContainerConfiguration()
     {
         return containerConfiguration;
     }
@@ -698,8 +755,6 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * otherwise a runtime exception will be thrown. Registered event handlers
      * won't get cloned.
      *
-     * @return the copy
-     * @since 1.3
      */
     @Override
     public Object clone()
@@ -711,12 +766,12 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
             copy.clearConfigurationListeners();
             copy.configList = new LinkedList<AbstractConfiguration>();
             copy.containerConfiguration = (AbstractConfiguration) ConfigurationUtils
-                    .cloneConfiguration(getInMemoryConfiguration());
+                    .cloneConfiguration(getContainerConfiguration());
             copy.configList.add(copy.containerConfiguration);
 
             for (Configuration config : configList)
             {
-                if (config != getInMemoryConfiguration())
+                if (config != getContainerConfiguration())
                 {
                     copy.addConfiguration((AbstractConfiguration) ConfigurationUtils
                             .cloneConfiguration(config));

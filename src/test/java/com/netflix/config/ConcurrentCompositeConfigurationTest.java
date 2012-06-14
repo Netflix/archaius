@@ -20,7 +20,8 @@ public class ConcurrentCompositeConfigurationTest {
         AbstractConfiguration baseConfig = new ConcurrentMapConfiguration();
         baseConfig.addProperty("prop3", "prop3");
         baseConfig.addProperty("prop1", "prop1FromBase");
-        config.setNewContainerConfiguration(containerConfig, "runtime override", 0);
+        // make container configuration the highest priority
+        config.setContainerConfiguration(containerConfig, "container configuration", 0);
         config.addConfiguration(baseConfig, "base configuration");
         assertEquals("prop1", config.getProperty("prop1"));
         assertEquals("prop1", prop1.get());

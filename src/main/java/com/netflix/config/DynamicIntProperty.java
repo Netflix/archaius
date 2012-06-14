@@ -21,6 +21,7 @@ import com.netflix.config.PropertyWrapper;
 
 /**
  * A dynamic property whose value is an integer
+ * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
  * 
  * @author awang
  *
