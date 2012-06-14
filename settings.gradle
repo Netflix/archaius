@@ -1,2 +1,2 @@
 // rootProject.name='archaius'
-include 'core'
+include 'archaius-core'

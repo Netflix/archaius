@@ -7,43 +7,41 @@ status = performingRelease?'release':'snapshot'
 subprojects {
     apply plugin: 'java' // Plugin as major conventions
     tasks.withType(Test) { forkEvery = 1 }
-    // version = "${releaseVersion}${versionPostfix}"
     version = rootProject.version
 
     sourceCompatibility = 1.6
 
-// GRADLE-2087 workaround, perform after java plugin
-    // status = performingRelease?'release':'snapshot'
+    // GRADLE-2087 workaround, perform after java plugin
     status = rootProject.status
 
-task sourcesJar(type: Jar, dependsOn:classes) {
-    classifier = 'sources' 
-    from sourceSets.main.allSource
-}
+    task sourcesJar(type: Jar, dependsOn:classes) {
+        classifier = 'sources' 
+        from sourceSets.main.allSource
+    }
 
-task javadocJar(type: Jar, dependsOn:javadoc) {
-    classifier = 'javadoc'    
-    from javadoc.destinationDir
-}
+    task javadocJar(type: Jar, dependsOn:javadoc) {
+        classifier = 'javadoc'    
+        from javadoc.destinationDir
+    }
 
-configurations {
-    sources
-    javadoc
-}
+    configurations {
+        sources
+        javadoc
+    }
 
-artifacts {
-    add('sources', sourcesJar) {
-        classifier 'sources'
-        type 'sources'
-    } 
-    archives sourcesJar        
-    archives javadocJar   
-    /*
-    add('javadoc',javadocJar) {
-        classifier 'javadoc'
-        type 'javadoc'
-    } */
-}
+    artifacts {
+        add('sources', sourcesJar) {
+            classifier 'sources'
+            type 'sources'
+        } 
+        archives sourcesJar        
+        archives javadocJar   
+        /*
+        add('javadoc',javadocJar) {
+            classifier 'javadoc'
+            type 'javadoc'
+        } */
+    }
 }
 // Generate wrapper, which is distributed as part of source to alleviate the need of installing gradle
 task createWrapper(type: Wrapper) {
