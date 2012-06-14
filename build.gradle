@@ -1,7 +1,7 @@
 // Establish version and status
 ext.releaseVersion = '0.1.4'
 ext.githubProjectName = 'archaius'
-group = 'com.netflix.archaius'
+//group = 'com.netflix.archaius'
 
 buildscript {
     repositories { mavenCentral() }
@@ -33,9 +33,9 @@ subprojects {
         }
       }
    }
-
     group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
 }
+
 
 project(':core') {
     dependencies {
@@ -45,4 +45,3 @@ project(':core') {
         testCompile 'org.apache.derby:derby:10.8.2.2'
     }
 }
-
