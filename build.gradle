@@ -17,9 +17,10 @@ apply from: file('gradle/maven.gradle')
 apply from: file('gradle/check.gradle')
 //apply from: file('gradle/license.gradle') // Waiting for re-release
 
-// Closure to configure all the POM with extra info, common to all projects
-pom {
-    project {
+subprojects {
+    // Closure to configure all the POM with extra info, common to all projects
+    pom {
+      project {
         url "https://github.com/Netflix/${githubProjectName}"
         scm {
             connection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
@@ -30,13 +31,18 @@ pom {
             system 'github'
             url "https://github.com/Netflix/${githubProjectName}/issues"
         }
-    }
+      }
+   }
+
+    group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
 }
 
-dependencies {
-    compile 'commons-configuration:commons-configuration:[1.5,1.8]'
-    compile 'org.slf4j:slf4j-api:1.6.4'
-    testCompile 'junit:junit:4.10'
-    testCompile 'org.apache.derby:derby:10.8.2.2'
+project(':core') {
+    dependencies {
+        compile 'commons-configuration:commons-configuration:[1.5,1.8]'
+        compile 'org.slf4j:slf4j-api:1.6.4'
+        testCompile 'junit:junit:4.10'
+        testCompile 'org.apache.derby:derby:10.8.2.2'
+    }
 }
 
