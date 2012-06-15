@@ -2,7 +2,11 @@ package com.netflix.config;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Test;
 
 public class ConcurrentCompositeConfigurationTest {
@@ -51,5 +55,41 @@ public class ConcurrentCompositeConfigurationTest {
         config.clearProperty("prop3");
         assertEquals("prop3", prop3.get());
         assertEquals("prop3", config.getProperty("prop3"));
+    }
+    
+    @Test
+    public void testContainerConfiguration() {
+        ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();
+        assertEquals(0, config.getIndexOfContainerConfiguration());
+        Configuration originalContainerConfig = config.getContainerConfiguration();
+        AbstractConfiguration config1= new BaseConfiguration();
+        config.addConfiguration(config1, "base");
+        assertEquals(1, config.getIndexOfContainerConfiguration());
+        config.setContainerConfigurationIndex(0);
+        assertEquals(0, config.getIndexOfContainerConfiguration());
+        assertEquals(2, config.getNumberOfConfigurations());
+        AbstractConfiguration config2 = new ConcurrentMapConfiguration();
+        config.addConfigurationAtIndex(config2, "new", 1);
+        AbstractConfiguration config3 = new ConcurrentMapConfiguration();
+        config.setContainerConfiguration(config3, "new container", 2);
+        assertEquals(config3, config.getContainerConfiguration());
+        try {
+            config.setContainerConfigurationIndex(4);
+            fail("expect IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {   
+            assertNotNull(e);
+        }
+        try {
+            config.addConfigurationAtIndex(new BaseConfiguration(), "ignore", 5);
+            fail("expect IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {            
+            assertNotNull(e);
+        }
+        List<AbstractConfiguration> list = config.getConfigurations();
+        assertEquals(originalContainerConfig, list.get(0));
+        assertEquals(config2, list.get(1));
+        assertEquals(config3, list.get(2));
+        assertEquals(config1, list.get(3));
+        assertEquals(4, list.size());
     }
 }

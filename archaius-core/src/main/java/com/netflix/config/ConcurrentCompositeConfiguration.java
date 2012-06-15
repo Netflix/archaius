@@ -143,19 +143,17 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
                 case EVENT_ADD_PROPERTY:
                 case EVENT_SET_PROPERTY:
-                    finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
-                    if (finalValue == null && value == null) {
-                        fireEventDirect(type, name, null, false);                        
-                    } else if (finalValue != null && finalValue.equals(value)) {
-                        fireEventDirect(type, name, value, false);
-                    }
+                    Configuration winningConf = getSource(name);
+                    if (winningConf == event.getSource()) {
+                        fireEvent(type, name, value, false);                        
+                    } 
                     break;
                 case EVENT_CLEAR_PROPERTY:
                     finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null) {
-                        fireEventDirect(type, name, value, false);                        
+                        fireEvent(type, name, value, false);                        
                     } else {
-                        fireEventDirect(EVENT_SET_PROPERTY, name, finalValue, false);
+                        fireEvent(EVENT_SET_PROPERTY, name, finalValue, false);
                     }
                     break;
                 default:
@@ -833,7 +831,6 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         if (overrideProperties.containsKey(key)) {
             return overrideProperties;
         }
-        Configuration source = null;
         
         for (Configuration conf : configList)
         {
@@ -891,40 +888,5 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      */
     public final void setPropagateEventFromSubConfigurations(boolean propagateEventToParent) {
         this.propagateEventToParent = propagateEventToParent;
-    }
-    
-    private boolean isFinalValueChanged(String key, Object valueFromContainer) {
-        Object finalValue = getProperty(key);
-        if (finalValue == null && valueFromContainer == null) {
-            return true;
-        } else if (finalValue != null && finalValue.equals(valueFromContainer)) {
-            return true;
-        }
-        return false;
-    }
-
-    private void fireEventDirect(int type, String propName, Object propValue,
-            boolean beforeUpdate) {
-        super.fireEvent(type, propName, propValue, beforeUpdate);
-    }
-
-    @Override
-    protected void fireEvent(int type, String propName, Object propValue,
-            boolean beforeUpdate) {  
-        if (!beforeUpdate) {
-            switch(type) {
-            case EVENT_ADD_PROPERTY:
-            case EVENT_SET_PROPERTY:
-            case EVENT_CLEAR_PROPERTY:
-                if (isFinalValueChanged(propName, propValue)) {
-                    fireEventDirect(type, propName, propValue, false);
-                }
-                break;
-            default:
-                fireEventDirect(type, propName, propValue, false);
-            }
-        } else {
-            fireEventDirect(type, propName, propValue, true);
-        }
-    }
+    }    
 }

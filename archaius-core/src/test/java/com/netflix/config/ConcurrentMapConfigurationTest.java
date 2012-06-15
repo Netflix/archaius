@@ -95,6 +95,7 @@ public class ConcurrentMapConfigurationTest {
             exectuor.submit(new Runnable()  {
                public void run() {
                    conf.addProperty("key", index);
+                   conf.addProperty("key", "stringValue");
                    doneSignal.countDown();
                    try {
                        Thread.sleep(50);
@@ -109,7 +110,7 @@ public class ConcurrentMapConfigurationTest {
             
         }
         List prop = (List) conf.getProperty("key");
-        assertEquals(1000, prop.size());        
+        assertEquals(2000, prop.size());        
     }
     
     @Test
@@ -206,8 +207,8 @@ public class ConcurrentMapConfigurationTest {
     
     private void testConfigurationAdd(Configuration conf) {
         long start = System.currentTimeMillis();
-        for (int i = 0; i < 1000000; i++) {
-            conf.addProperty("key" + (i % 100), "value");            
+        for (int i = 0; i < 100000; i++) {
+            conf.addProperty("add-key" + i, "value");            
         }
         long duration = System.currentTimeMillis() - start;
         System.out.println("Add property for " + conf + " took " + duration + " ms");
@@ -235,8 +236,7 @@ public class ConcurrentMapConfigurationTest {
         testConfigurationSet(hConfig);
         testConfigurationSet(conf);
         testConfigurationAdd(baseConfig);
-        // this is too slow
-        // testConfigurationAdd(hConfig);
+        testConfigurationAdd(hConfig);
         testConfigurationAdd(conf);
         testConfigurationGet(baseConfig);
         testConfigurationGet(hConfig);
