@@ -17,8 +17,6 @@
  */
 package com.netflix.config.jmx;
 
-import java.util.Properties;
-
 import org.apache.commons.configuration.AbstractConfiguration;
 
 import com.netflix.config.ConcurrentCompositeConfiguration;
@@ -49,6 +47,11 @@ public class BaseConfigMBean implements ConfigMBean {
 		return config.getProperty(key);
 	}
 
+	/**
+	 * Calls <code>config.setProperty()</code>. If the underlying configuration
+	 * is {@link ConcurrentCompositeConfiguration}, it calls {@link ConcurrentCompositeConfiguration#setOverrideProperty(String, Object)}
+	 * instead.
+	 */
 	@Override
 	public void updateProperty(String key, String value) {
 	    if (config instanceof ConcurrentCompositeConfiguration) {
@@ -58,6 +61,13 @@ public class BaseConfigMBean implements ConfigMBean {
 	    }
 	}
 
+    /**
+     * Calls <code>config.clearProperty()</code>. If the underlying configuration
+     * is {@link ConcurrentCompositeConfiguration}, it calls {@link ConcurrentCompositeConfiguration#clearOverrideProperty(String)}
+     * instead. 
+     * <p><b>Warning: </b>{@link ConcurrentCompositeConfiguration#clearOverrideProperty(String)} does not clear the 
+     * property with the whole {@link ConcurrentCompositeConfiguration}, if any other child configurations in it has the same property.
+     */
 	@Override
 	public void clearProperty(String key) {
         if (config instanceof ConcurrentCompositeConfiguration) {
@@ -67,6 +77,11 @@ public class BaseConfigMBean implements ConfigMBean {
         }
 	}
 
+    /**
+     * Calls <code>config.addrProperty()</code>. If the underlying configuration
+     * is {@link ConcurrentCompositeConfiguration}, it calls {@link ConcurrentCompositeConfiguration#setOverrideProperty(String, Object)}
+     * instead.
+     */
 	@Override
 	public void addProperty(String key, String value) {
         if (config instanceof ConcurrentCompositeConfiguration) {

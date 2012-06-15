@@ -25,6 +25,7 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.jmx.BaseConfigMBean;
 import com.netflix.config.jmx.ConfigJMXManager;
 import com.netflix.config.jmx.ConfigMBean;
 import com.netflix.config.sources.URLConfigurationSource;
@@ -34,9 +35,14 @@ import com.netflix.config.sources.URLConfigurationSource;
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
  * <p>
  * It is recommended to initialize this class with a configuration or DynamicPropertySupport before the first call to
- * {@link #getInstance()}. Otherwise, it will be lazily initialized with a default {@link DynamicURLConfiguration} where 
- * the configuration source URLs are defined by system properties.  
+ * {@link #getInstance()}. Otherwise, it will be lazily initialized with a {@link ConcurrentCompositeConfiguration},
+ * where a default {@link DynamicURLConfiguration} will be added. You can also disable installing the default configuration
+ * by setting system property {@value #DISABLE_DEFAULT_CONFIG} to be <code>true</code>.
  * <p>
+ * If system property {@value #ENABLE_JMX} is set to <code>true</code>, when this class is initialized with a configuration,
+ * the configuration will also be exposed to JMX via an instance of {@link BaseConfigMBean}, where you can update the properties
+ * via jconsole.
+ * 
  * Example:<pre>
  *    import com.netflix.config.DynamicProperty;
  *
@@ -134,11 +140,26 @@ public class DynamicPropertyFactory {
         return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
     }
     
+    /**
+     * Return whether the factory is initialized with the default ConcurrentCompositeConfiguration. 
+     */
     public static boolean isInitializedWithDefaultConfig() {
         return initializedWithDefaultConfig;
     }
     
-    public static Configuration getBackingConfigurationSource() {
+    /**
+     * Get the backing configuration from the factory. This can be cased to a {@link ConcurrentCompositeConfiguration}
+     * if the default configuration is installed. 
+     * <p>For example:
+     * <pre>
+     *     Configuration config = DynamicPropertyFactory.getInstance().getBackingConfigurationSource();
+     *     if (DynamicPropertyFactory.isInitializedWithDefaultConfig()) {
+     *         ConcurrentCompositeConfiguration composite = (ConcurrentCompositeConfiguration) config;
+     *         // ...
+     *     }
+     * </pre>
+     */
+    public Configuration getBackingConfigurationSource() {
         if (config instanceof ConfigurationBackedDynamicPropertySupportImpl) {
             return ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
         } else {
@@ -189,7 +210,9 @@ public class DynamicPropertyFactory {
             ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
             // stop loading of the configuration
             DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(DEFAULT_CONFIG_NAME);
-            defaultFileConfig.stopLoading();
+            if (defaultFileConfig != null) {
+                defaultFileConfig.stopLoading();
+            }
             Collection<ConfigurationListener> listeners = defaultConfig.getConfigurationListeners();
             
             // find the listener and remove it so that DynamicProperty will no longer receives 
@@ -247,16 +270,16 @@ public class DynamicPropertyFactory {
             DynamicURLConfiguration defaultURLConfig = null;
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {
+                    defaultConfig = new ConcurrentCompositeConfiguration();      
                     try {
-                        defaultConfig = new ConcurrentCompositeConfiguration();      
                         defaultURLConfig = new DynamicURLConfiguration();
                         defaultConfig.addConfiguration(defaultURLConfig, DEFAULT_CONFIG_NAME);
-                        initWithConfigurationSource(defaultConfig);
-                        initializedWithDefaultConfig = true;
                     } catch (Throwable e) {
                         defaultConfigNotFound = true;
                         exception = e;
                     }
+                    initWithConfigurationSource(defaultConfig);
+                    initializedWithDefaultConfig = true;
                 }
             }
             if (exception != null) {

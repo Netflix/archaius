@@ -45,4 +45,9 @@ project(':archaius-core') {
         testCompile 'org.apache.derby:derby:10.8.2.2'
         testCompile 'log4j:log4j:1.2.16'
     }
+    jar {
+        from('src/main/java') {
+            include 'sampleapp.properties'
+        }
+    }
 }

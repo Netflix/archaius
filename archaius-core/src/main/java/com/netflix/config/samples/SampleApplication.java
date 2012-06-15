@@ -85,6 +85,9 @@ public class SampleApplication extends Thread {
 		// update
 		// these properties too
 		// Register the MBean
+		//
+		// This can be also achieved automatically by setting "true" to
+		// system property "dynamicPropertyFactory.registerConfigWithJMX"
 		configMBean = ConfigJMXManager.registerConfigMbean(myConfiguration);
 
 		// once this application is launched, launch JConsole and navigate to
@@ -92,6 +95,7 @@ public class SampleApplication extends Thread {
 		// Config MBean (under the MBeans tab)
 		System.out
 				.println("Started SampleApplication. Launch JConsole to inspect and update properties");
+        System.out.println("To see how callback work, update property com.netflix.config.samples.SampleApp.SampleBean.sensitiveBeanData from BaseConfigBean in JConsole");
 		
 		SampleBean sampleBean = new SampleBean();
 		System.out.println("SampleBean:" + sampleBean);
