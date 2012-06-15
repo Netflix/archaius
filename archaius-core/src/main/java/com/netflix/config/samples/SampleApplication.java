@@ -28,6 +28,14 @@ import com.netflix.config.jmx.ConfigMBean;
 
 /**
  * A Sample Application built to showcase the usage of Configuration and DynamicProperties
+ * <p>
+ * To run this sample application, add the following jars to your classpath:
+ * <ul>
+ * <li>archaius-core-xxx.jar (latest release/snapshot of archaius-core)
+ * <li>commons-configuration-1.8.jar
+ * <li>commons-lang-2.6.jar
+ * <li>commons-logging-1.1.1.jar
+ * </ul>
  * 
  * @author stonse
  *
