@@ -33,6 +33,7 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
     private final PolledConfigurationSource source;
         
     /**
+     * Create an instance and start polling the configuration source.
      * 
      * @param source PolledConfigurationSource to poll
      * @param scheduler AbstractPollingScheduler whose {@link AbstractPollingScheduler#schedule(Runnable)} will be

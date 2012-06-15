@@ -30,14 +30,14 @@ public class DynamicURLConfiguration extends DynamicConfiguration {
         
     /**
      * Create an instance with default {@link URLConfigurationSource#URLConfigurationSource()} and 
-     * {@link FixedDelayPollingScheduler#FixedDelayPollingScheduler()} 
+     * {@link FixedDelayPollingScheduler#FixedDelayPollingScheduler()} and start polling the source.
      */
     public DynamicURLConfiguration() {
         super(new URLConfigurationSource(), new FixedDelayPollingScheduler());
     }
 
     /**
-     * Create an instance.
+     * Create an instance and start polling the source.
      * 
      * @param initialDelayMillis initial delay in milliseconds used by {@link FixedDelayPollingScheduler}
      * @param delayMillis delay interval in milliseconds used by {@link FixedDelayPollingScheduler}
