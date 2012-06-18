@@ -68,7 +68,7 @@ public class WebApplicationProperties {
 
 	/**
 	 * Initialize. The application should call this method once the Application
-	 * Folder is set using {@link #setAppConfFolder(File)} method.
+	 * Folder is set using {@link #setAppConfFolder(File, String)} method.
 	 * 
 	 * @param appConfFolderFromConfig
 	 * @param baseConfigFileName
@@ -87,7 +87,7 @@ public class WebApplicationProperties {
 	
 	/**
 	 * Initialize.
-	 * The application should call this method once the Application Folder is set using {@link #setAppConfFolder(File)} method.
+	 * The application should call this method once the Application Folder is set using {@link #setAppConfFolder(File, String)} method.
 	 */
 	public static void initialize() {
 		try {
@@ -172,7 +172,6 @@ public class WebApplicationProperties {
 	
 	/**
 	 * Should we load the Library Properties
-	 * @return
 	 */
 	public static boolean shouldLoadLibraryProperties() {
 		return loadLibraryProperties;
@@ -191,7 +190,6 @@ public class WebApplicationProperties {
 
 	/**
 	 * Returns the relative Resource Path of the properties files in the JAR files
-	 * @return
 	 */
 	public static String getLibraryPropertiesResourceRelativePath() {
 		return libraryPropertiesResourceRelativePath;
@@ -209,7 +207,6 @@ public class WebApplicationProperties {
 
 	/**
 	 * Returns all the properties presently available
-	 * @return
 	 */
 	public static Properties getProperties() {
 		return containerConfig.getProperties();
