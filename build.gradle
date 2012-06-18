@@ -51,3 +51,19 @@ project(':archaius-core') {
         }
     }
 }
+
+project(':archaius-samplelibrary') {
+    dependencies {
+        compile 'commons-configuration:commons-configuration:[1.5,1.8]'
+        compile 'org.slf4j:slf4j-api:1.6.4'
+        testCompile 'junit:junit:4.10'
+        testCompile 'log4j:log4j:1.2.16'
+    }
+    jar {
+        from('src/main/java') {
+            include 'META-INF/conf/springbeans.xml'
+	    include 'META-INF/conf/config.properties'
+        }
+    }
+}
+
