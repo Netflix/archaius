@@ -26,7 +26,7 @@ public class DynamicPropertyFactoryTest {
 
     @Test
     public void testGetSource() {
-        Configuration defaultConfig = DynamicPropertyFactory.getInstance().getBackingConfigurationSource();
+        Object defaultConfig = DynamicPropertyFactory.getInstance().getBackingConfigurationSource();
         assertTrue(defaultConfig instanceof ConcurrentCompositeConfiguration);
         assertTrue(DynamicPropertyFactory.isInitializedWithDefaultConfig());
     }

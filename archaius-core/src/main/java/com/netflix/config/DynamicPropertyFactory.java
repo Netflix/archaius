@@ -21,6 +21,7 @@ import java.util.Collection;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ import com.netflix.config.sources.URLConfigurationSource;
  * <p>
  * It is recommended to initialize this class with a configuration or DynamicPropertySupport before the first call to
  * {@link #getInstance()}. Otherwise, it will be lazily initialized with a {@link ConcurrentCompositeConfiguration},
- * where a default {@link DynamicURLConfiguration} will be added. You can also disable installing the default configuration
+ * where a SystemConfiguration and {@link DynamicURLConfiguration} will be added. You can also disable installing the default configuration
  * by setting system property {@value #DISABLE_DEFAULT_CONFIG} to be <code>true</code>.
  * <p>
  * If system property {@value #ENABLE_JMX} is set to <code>true</code>, when this class is initialized with a configuration,
@@ -85,7 +86,9 @@ public class DynamicPropertyFactory {
     private volatile static boolean initializedWithDefaultConfig = false;    
     private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
-    private static final String DEFAULT_CONFIG_NAME = "dynamicPropertyFactory.default";
+    public static final String URL_CONFIG_NAME = "dynamicPropertyFactory.URL_CONFIG";
+    public static final String SYS_CONFIG_NAME = "dynamicPropertyFactory.SYS_CONFIG";
+    
     /**
      * Boolean system property to define whether a configuration MBean should be registered with
      * JMX so that properties can be accessed via JMX console. Default is "unset".
@@ -158,12 +161,15 @@ public class DynamicPropertyFactory {
      *         // ...
      *     }
      * </pre>
+     * 
+     * @return the configuration source that DynamicPropertyFactory is initialized with. This will be an instance of
+     * Configuration, or {@link DynamicPropertySupport}, or null if DynamicPropertyFactory has not been initialized.
      */
-    public Configuration getBackingConfigurationSource() {
+    public static Object getBackingConfigurationSource() {
         if (config instanceof ConfigurationBackedDynamicPropertySupportImpl) {
             return ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
         } else {
-            return null;
+            return config;
         }
     }
     
@@ -209,7 +215,7 @@ public class DynamicPropertyFactory {
         if (initializedWithDefaultConfig && (config instanceof ConfigurationBackedDynamicPropertySupportImpl)) {
             ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
             // stop loading of the configuration
-            DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(DEFAULT_CONFIG_NAME);
+            DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(URL_CONFIG_NAME);
             if (defaultFileConfig != null) {
                 defaultFileConfig.stopLoading();
             }
@@ -254,9 +260,15 @@ public class DynamicPropertyFactory {
     /**
      * Get the instance to create dynamic properties. If the factory is not initialized with a configuration source 
      * (see {@link #initWithConfigurationSource(AbstractConfiguration)} and {@link #initWithConfigurationSource(DynamicPropertySupport)}),
-     * it will fist try to initialize itself with a default {@link DynamicURLConfiguration}, which at a fixed interval polls 
+     * it will fist try to initialize itself with a default {@link ConcurrentCompositeConfiguration}, with the following two 
+     * sub configurations:
+     * <ul>
+     * <li>A SystemConfiguration, which contains all the system properties
+     * <li>A  {@link DynamicURLConfiguration}, which at a fixed interval polls 
      * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME} on classpath and a set of URLs specified via a system property
-     * (see {@link URLConfigurationSource#CONFIG_URL}).
+     * (see {@link URLConfigurationSource#CONFIG_URL}).  
+     * </ul>
+     * Between the two sub-configurations, the SystemConfiguration will take the precedence when determining property values.
      * <p>
      * You can disable the initialization with the default configuration by setting system property {@value #DISABLE_DEFAULT_CONFIG} to "true".
      * 
@@ -273,11 +285,13 @@ public class DynamicPropertyFactory {
                     defaultConfig = new ConcurrentCompositeConfiguration();      
                     try {
                         defaultURLConfig = new DynamicURLConfiguration();
-                        defaultConfig.addConfiguration(defaultURLConfig, DEFAULT_CONFIG_NAME);
+                        defaultConfig.addConfiguration(defaultURLConfig, URL_CONFIG_NAME);
                     } catch (Throwable e) {
                         defaultConfigNotFound = true;
                         exception = e;
                     }
+                    SystemConfiguration sysConfig = new SystemConfiguration();
+                    defaultConfig.addConfigurationAtFront(sysConfig, SYS_CONFIG_NAME);
                     initWithConfigurationSource(defaultConfig);
                     initializedWithDefaultConfig = true;
                 }
