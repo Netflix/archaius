@@ -86,14 +86,14 @@ public class DynamicPropertyFactory {
     private volatile static boolean initializedWithDefaultConfig = false;    
     private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
-    public static final String URL_CONFIG_NAME = "dynamicPropertyFactory.URL_CONFIG";
-    public static final String SYS_CONFIG_NAME = "dynamicPropertyFactory.SYS_CONFIG";
+    public static final String URL_CONFIG_NAME = "archaius.dynamicPropertyFactory.URL_CONFIG";
+    public static final String SYS_CONFIG_NAME = "archaius.dynamicPropertyFactory.SYS_CONFIG";
     
     /**
      * Boolean system property to define whether a configuration MBean should be registered with
      * JMX so that properties can be accessed via JMX console. Default is "unset".
      */
-    public static final String ENABLE_JMX = "dynamicPropertyFactory.registerConfigWithJMX";
+    public static final String ENABLE_JMX = "archaius.dynamicPropertyFactory.registerConfigWithJMX";
     private static ConfigMBean configMBean = null;
 
     
@@ -103,15 +103,21 @@ public class DynamicPropertyFactory {
      * at the time of call.
      */
     public static final String THROW_MISSING_CONFIGURATION_SOURCE_EXCEPTION = 
-        "dynamicProperty.throwMissingConfigurationSourceException";
+        "archaius.dynamicProperty.throwMissingConfigurationSourceException";
     private volatile static boolean throwMissingConfigurationSourceException = 
         Boolean.getBoolean(THROW_MISSING_CONFIGURATION_SOURCE_EXCEPTION);
+    
+    /**
+     * System property to disable adding SystemConfiguration to the default ConcurrentCompositeConfiguration
+     */
+    public static final String DISABLE_DEFAULT_SYS_CONFIG = 
+        "archaius.dynamicProperty.disableSystemConfig";
     
     /**
      * System property to determine whether DynamicPropertyFactory should be lazily initialized with 
      * default configuration for {@link #getInstance()}. Default is false (not set). 
      */
-    public static final String DISABLE_DEFAULT_CONFIG = "dynamicProperty.disableDefaultConfig";
+    public static final String DISABLE_DEFAULT_CONFIG = "archaius.dynamicProperty.disableDefaultConfig";
 
     private DynamicPropertyFactory() {}
             
@@ -263,7 +269,8 @@ public class DynamicPropertyFactory {
      * it will fist try to initialize itself with a default {@link ConcurrentCompositeConfiguration}, with the following two 
      * sub configurations:
      * <ul>
-     * <li>A SystemConfiguration, which contains all the system properties
+     * <li>A SystemConfiguration, which contains all the system properties. You can disable adding this Configuration by setting 
+     * system property {@value #DISABLE_DEFAULT_SYS_CONFIG} to <code>true</code>
      * <li>A  {@link DynamicURLConfiguration}, which at a fixed interval polls 
      * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME} on classpath and a set of URLs specified via a system property
      * (see {@link URLConfigurationSource#CONFIG_URL}).  
@@ -290,8 +297,10 @@ public class DynamicPropertyFactory {
                         defaultConfigNotFound = true;
                         exception = e;
                     }
-                    SystemConfiguration sysConfig = new SystemConfiguration();
-                    defaultConfig.addConfigurationAtFront(sysConfig, SYS_CONFIG_NAME);
+                    if (!Boolean.getBoolean(DISABLE_DEFAULT_SYS_CONFIG)) {
+                        SystemConfiguration sysConfig = new SystemConfiguration();
+                        defaultConfig.addConfigurationAtFront(sysConfig, SYS_CONFIG_NAME);
+                    }
                     initWithConfigurationSource(defaultConfig);
                     initializedWithDefaultConfig = true;
                 }

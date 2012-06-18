@@ -48,7 +48,7 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * System property name to define a set of URLs to be used by the
      * default constructor. 
      */
-    public static final String CONFIG_URL = "configurationSource.additionalUrls";
+    public static final String CONFIG_URL = "archaius.configurationSource.additionalUrls";
     
     /**
      * Default configuration file name to be used by default constructor. This file should
@@ -58,7 +58,7 @@ public class URLConfigurationSource implements PolledConfigurationSource {
     public static final String DEFAULT_CONFIG_FILE_NAME = "config.properties";
         
     public static final String DEFAULT_CONFIG_FILE_FROM_CLASSPATH = 
-        System.getProperty("configurationSource.defaultFileName") == null ? DEFAULT_CONFIG_FILE_NAME : System.getProperty("configurationSource.defaultFileName");
+        System.getProperty("archaius.configurationSource.defaultFileName") == null ? DEFAULT_CONFIG_FILE_NAME : System.getProperty("archaius.configurationSource.defaultFileName");
     
     /**
      * Create an instance with a list URLs to be used.
@@ -98,7 +98,7 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * 
      * <ul>
      * <li>A configuration file (default name to be <code>config.properties</code>, see {@link #DEFAULT_CONFIG_FILE_NAME}) on the classpath
-     * <li>A list of URLs defined by system property <code>configurationSource.additionalUrls</code> (See {@link #CONFIG_URL}) separated by comma <code>","</code>.
+     * <li>A list of URLs defined by system property {@value #CONFIG_URL} with values separated by comma <code>","</code>.
      * </ul>
      */
     public URLConfigurationSource() {

@@ -95,7 +95,7 @@ public class SampleApplication extends Thread {
 		// Register the MBean
 		//
 		// This can be also achieved automatically by setting "true" to
-		// system property "dynamicPropertyFactory.registerConfigWithJMX"
+		// system property "archaius.dynamicPropertyFactory.registerConfigWithJMX"
 		configMBean = ConfigJMXManager.registerConfigMbean(myConfiguration);
 
 		// once this application is launched, launch JConsole and navigate to
