@@ -40,8 +40,9 @@ import com.netflix.config.DynamicPropertyFactory;
 public class SampleApplicationWithDefaultConfiguration {
     static {
         // sampleapp.properties is packaged within the shipped jar file
-        System.setProperty("configurationSource.defaultFileName", "sampleapp.properties");
+        System.setProperty("archaius.configurationSource.defaultFileName", "sampleapp.properties");
         System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
+        System.setProperty("com.netflix.config.samples.SampleApp.SampleBean.sensitiveBeanData", "value from system property");
     }
     
     public static void main(String[] args) {

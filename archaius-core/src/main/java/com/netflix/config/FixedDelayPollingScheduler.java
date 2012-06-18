@@ -38,16 +38,16 @@ public class FixedDelayPollingScheduler extends AbstractPollingScheduler {
     /**
      * System property name to define the initial delay in milliseconds.
      */
-    public static final String INITIAL_DELAY_PROPERTY = "fixedDelayPollingScheduler.initialDelayMills";
+    public static final String INITIAL_DELAY_PROPERTY = "archaius.fixedDelayPollingScheduler.initialDelayMills";
     
     /**
      * System property name to define the delay in milliseconds.
      */
-    public static final String DELAY_PROPERTY = "fixedDelayPollingScheduler.delayMills";
+    public static final String DELAY_PROPERTY = "archaius.fixedDelayPollingScheduler.delayMills";
 
     /**
      * Create an instance with initial delay and delay defined in system properties
-     * <code>fixedDelayPollingScheduler.initialDelayMills</code> and <code>fixedDelayPollingScheduler.delayMills</code>.
+     * {@value #INITIAL_DELAY_PROPERTY} and {@value #DELAY_PROPERTY}
      * The scheduler will delete the property in a configuration if it is absent from the configuration source.
      */
     public FixedDelayPollingScheduler() {
