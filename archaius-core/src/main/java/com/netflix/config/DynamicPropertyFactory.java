@@ -49,7 +49,7 @@ import com.netflix.config.sources.URLConfigurationSource;
  *
  *    class MyClass {
  *        private static DynamicIntProperty maxWaitMillis
- *            = DynamicPropertyFactory.getInstance().createIntProperty("myclass.sleepMillis", 250);
+ *            = DynamicPropertyFactory.getInstance().getIntProperty("myclass.sleepMillis", 250);
  *           // ...
  *
  *           // add a callback when this property is changed
@@ -72,7 +72,7 @@ import com.netflix.config.sources.URLConfigurationSource;
  * in the following code the change of the value is ineffective:
  * <p> 
  *<pre>
- *    int maxWaitMillis = DynamicPropertyFactory.getInstance().createIntProperty("myclass.sleepMillis", 250).get();
+ *    int maxWaitMillis = DynamicPropertyFactory.getInstance().getIntProperty("myclass.sleepMillis", 250).get();
  *    // ...
  *    someCondition.wait(maxWaitMillis);
  *</pre>
