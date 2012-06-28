@@ -32,13 +32,6 @@ public class MissingConfigExceptionTest {
     @Test
     public void testThrowMissingConfigurationSourceException() {
         try {
-            DynamicPropertyFactory.getInstance();
-            fail("MissingConfigurationSourceException expected");
-        } catch (MissingConfigurationSourceException e) {
-            assertNotNull(e);
-        }
-        DynamicPropertyFactory.setThrowMissingConfigurationSourceException(false);
-        try {
             DynamicPropertyFactory.getInstance();            
         } catch (Throwable e) {
             e.printStackTrace();

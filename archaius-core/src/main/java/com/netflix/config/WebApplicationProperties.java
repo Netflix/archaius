@@ -19,6 +19,8 @@ package com.netflix.config;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -211,4 +213,8 @@ public class WebApplicationProperties {
 	public static Properties getProperties() {
 		return containerConfig.getProperties();
 	}
+	
+	
+		
+	
 }
