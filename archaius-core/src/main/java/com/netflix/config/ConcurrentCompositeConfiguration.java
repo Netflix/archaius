@@ -101,7 +101,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration 
-        implements ConfigurationListener, Cloneable {
+        implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
     

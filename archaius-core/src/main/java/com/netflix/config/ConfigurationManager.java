@@ -101,11 +101,11 @@ public class ConfigurationManager {
         InputStream fin = url.openStream();
         props.load(fin);
         fin.close();
-        if (instance instanceof ConcurrentCompositeConfiguration) {
+        if (instance instanceof AggregatedConfiguration) {
             String name = getConfigName(url);
             ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
             config.loadProperties(props);
-            ((ConcurrentCompositeConfiguration) instance).addConfiguration(config, name);
+            ((AggregatedConfiguration) instance).addConfiguration(config, name);
         } else {
             ConfigurationUtils.loadProperties(props, instance);
         }

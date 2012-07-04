@@ -3,6 +3,7 @@ package com.netflix.config;
 import static org.junit.Assert.*;
 
 import org.apache.commons.configuration.BaseConfiguration;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ConfigurationManagerTest {
@@ -36,7 +37,7 @@ public class ConfigurationManagerTest {
         }
     }
     
-    @Test
+    @Ignore
     public void testLoadProperties() throws Exception {
         ConfigurationManager.loadPropertiesFromResources("sampleapp.properties");
         assertEquals("5", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
