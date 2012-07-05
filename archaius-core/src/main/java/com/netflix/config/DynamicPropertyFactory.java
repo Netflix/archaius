@@ -126,7 +126,7 @@ public class DynamicPropertyFactory {
      * @throws IllegalArgumentException if the factory has already been initialized with a non-default configuration source
      */
     public static DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
-        if (ConfigurationManager.isConfigurationInstalled()) {
+        if (ConfigurationManager.isConfigurationInstalled() && config != ConfigurationManager.instance) {
             throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
                     + ConfigurationManager.getConfigInstance());
         }
@@ -204,28 +204,30 @@ public class DynamicPropertyFactory {
         if (dynamicPropertySupport == null) {
             throw new IllegalArgumentException("dynamicPropertySupport is null");
         }
-        if (ConfigurationManager.isConfigurationInstalled()) {
-            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
-                    + ConfigurationManager.getConfigInstance());
-        }
-        if (initializedWithDefaultConfig) {
-            config = null;
-        } else if (config != null && config != dynamicPropertySupport) {
-            throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
-        }
-        config = dynamicPropertySupport;
-        DynamicProperty.registerWithDynamicPropertySupport(dynamicPropertySupport);
         AbstractConfiguration configuration = null;
         if (dynamicPropertySupport instanceof AbstractConfiguration) {
             configuration = (AbstractConfiguration) dynamicPropertySupport;
         } else if (dynamicPropertySupport instanceof ConfigurationBackedDynamicPropertySupportImpl) {
             configuration = ((ConfigurationBackedDynamicPropertySupportImpl) dynamicPropertySupport).getConfiguration();
         }
+        if (initializedWithDefaultConfig) {
+            config = null;
+        } else if (config != null && config != dynamicPropertySupport) {
+            throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
+        }
+        if (ConfigurationManager.isConfigurationInstalled() 
+                && (configuration != null && configuration != ConfigurationManager.instance)) {
+            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
+                    + ConfigurationManager.getConfigInstance());
+        }
         if (configuration != null && configuration != ConfigurationManager.instance) {
             ConfigurationManager.removeDefaultConfiguration();
             ConfigurationManager.instance = configuration;
             ConfigurationManager.configurationInstalled = true;
+            ConfigurationManager.registerConfigBean();
         }
+        config = dynamicPropertySupport;
+        DynamicProperty.registerWithDynamicPropertySupport(dynamicPropertySupport);
         initializedWithDefaultConfig = false;
         return instance;
     }

@@ -1,7 +1,25 @@
+/*
+ *
+ *  Copyright 2012 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
+ */
 package com.netflix.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Properties;
@@ -24,15 +42,23 @@ public class ConfigurationManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
     
     static {
-        String className = System.getProperty("archaius.configuration.class");
-        if (className != null) {
-            try {
+        try {
+            String className = System.getProperty("archaius.default.configuration.class");
+            if (className != null) {
                 instance = (AbstractConfiguration) Class.forName(className).newInstance();
                 configurationInstalled = true;
-            } catch (Exception e) {
-                throw new RuntimeException("Error initializing configuration", e);
+            } else {
+                String factoryName = System.getProperty("archaius.default.configuration.factory");
+                if (factoryName != null) {
+                    Method m = Class.forName(factoryName).getDeclaredMethod("getInstance", new Class[]{});
+                    m.setAccessible(true);
+                    instance = (AbstractConfiguration) m.invoke(null, new Object[]{});
+                    configurationInstalled = true;
+                }
             }
-        } 
+        } catch (Exception e) {
+            throw new RuntimeException("Error initializing configuration", e);
+        }
     }
     
     public static synchronized void install(AbstractConfiguration config) throws IllegalStateException {
@@ -40,18 +66,12 @@ public class ConfigurationManager {
             if (instance != null) {
                 removeDefaultConfiguration();
             }
+            instance = config;
             if (DynamicPropertyFactory.getBackingConfigurationSource() != config) {                
                 DynamicPropertyFactory.initWithConfigurationSource(config);
             }
-            instance = config;
             configurationInstalled = true;
-            if (Boolean.getBoolean(DynamicPropertyFactory.ENABLE_JMX)) {
-                try {
-                    configMBean = ConfigJMXManager.registerConfigMbean(instance);
-                } catch (Exception e) {
-                    logger.error("Unable to register with JMX", e);
-                }
-            }
+            registerConfigBean();
         } else {
             throw new IllegalStateException("A non-default configuration is already installed");
         }
@@ -75,19 +95,22 @@ public class ConfigurationManager {
                         } catch (Throwable e) {
                             logger.warn("Failed to create default dynamic configuration", e);
                         }
-                    }   
-                    if (Boolean.getBoolean(DynamicPropertyFactory.ENABLE_JMX)) {
-                        try {
-                            configMBean = ConfigJMXManager.registerConfigMbean(instance);
-                        } catch (Exception e) {
-                            logger.error("Unable to register with JMX", e);
-                        }
                     }
-
+                    registerConfigBean();
                 }
             }
         }
         return instance;
+    }
+    
+    static void registerConfigBean() {
+        if (Boolean.getBoolean(DynamicPropertyFactory.ENABLE_JMX)) {
+            try {
+                configMBean = ConfigJMXManager.registerConfigMbean(instance);
+            } catch (Exception e) {
+                logger.error("Unable to register with JMX", e);
+            }
+        }        
     }
     
     public static void loadPropertiesFromResources(String path) 
