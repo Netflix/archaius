@@ -24,8 +24,7 @@ public class ClasspathPropertiesConfigurationTest {
     
     @Test
     public void testClasspathConfiguration() throws Exception {
-    	ConcurrentCompositeConfiguration containerConfig = new ConcurrentCompositeConfiguration();
-        ClasspathPropertiesConfiguration.initialize(containerConfig);
+        ClasspathPropertiesConfiguration.initialize();
     }
         
 }

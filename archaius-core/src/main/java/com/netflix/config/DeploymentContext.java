@@ -17,7 +17,7 @@
  */
 package com.netflix.config;
 
-public interface CloudSettings {
+public interface DeploymentContext {
 
     public String getDeploymentEnvironment();
 

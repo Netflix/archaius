@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
@@ -34,12 +35,19 @@ import com.netflix.config.jmx.ConfigJMXManager;
 import com.netflix.config.jmx.ConfigMBean;
 import com.netflix.config.util.ConfigurationUtils;
 
+/**
+ * 
+ * 
+ * @author awang
+ *
+ */
 public class ConfigurationManager {
     
     static volatile AbstractConfiguration instance = null;
     static volatile boolean configurationInstalled = false;
     private static volatile ConfigMBean configMBean = null;
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
+    static volatile DeploymentContext context = null;
     
     static {
         try {
@@ -56,6 +64,20 @@ public class ConfigurationManager {
                     configurationInstalled = true;
                 }
             }
+            String contextClassName = System.getProperty("archaius.default.deploymentContext.class");
+            if (contextClassName != null) {
+                context = (DeploymentContext) Class.forName(className).newInstance();
+            } else {
+                String factoryName = System.getProperty("archaius.default.deploymentContext.factory");
+                if (factoryName != null) {
+                    Method m = Class.forName(factoryName).getDeclaredMethod("getInstance", new Class[]{});
+                    m.setAccessible(true);
+                    context = (DeploymentContext) m.invoke(null, new Object[]{});
+                } else {
+                    context = new DefaultDeploymentContext();
+                }
+            }
+
         } catch (Exception e) {
             throw new RuntimeException("Error initializing configuration", e);
         }
@@ -132,6 +154,23 @@ public class ConfigurationManager {
         } else {
             ConfigurationUtils.loadProperties(props, instance);
         }
+    }
+
+    public static void loadPropertiesFromConfiguration(AbstractConfiguration config) {
+        if (instance instanceof AggregatedConfiguration) {
+            ((AggregatedConfiguration) instance).addConfiguration(config);
+        } else {
+            Properties props = ConfigurationUtils.getProperties(config);
+            ConfigurationUtils.loadProperties(props, instance);
+        }        
+    }
+    
+    public static void setDeploymentContext(DeploymentContext context) {
+        ConfigurationManager.context = context;
+    }
+    
+    public static DeploymentContext getDeploymentContext() {
+        return context;
     }
     
     private static String getConfigName(URL propertyFile)
