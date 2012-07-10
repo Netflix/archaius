@@ -41,9 +41,5 @@ public interface DeploymentContext {
 
     public String getDeploymentRegion();
 
-    public void setDeploymentRegion(String region);
-    
-    public String getTargetCountries();
-    
-    public void setTargetCountries(String countries);
+    public void setDeploymentRegion(String region);    
 }

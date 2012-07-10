@@ -74,7 +74,7 @@ public class ConfigurationManager {
                     m.setAccessible(true);
                     context = (DeploymentContext) m.invoke(null, new Object[]{});
                 } else {
-                    context = new DefaultDeploymentContext();
+                    context = new ConfigurationBasedDeploymentContext();
                 }
             }
 

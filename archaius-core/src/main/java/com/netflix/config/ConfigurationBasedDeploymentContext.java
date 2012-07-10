@@ -17,7 +17,9 @@
  */
 package com.netflix.config;
 
-public class DefaultDeploymentContext implements DeploymentContext {
+import org.apache.commons.configuration.Configuration;
+
+public class ConfigurationBasedDeploymentContext implements DeploymentContext {
 
     private String environment;
     private String dataCenter;
@@ -25,11 +27,15 @@ public class DefaultDeploymentContext implements DeploymentContext {
     private String serverId;
     private String stack;
     private String region;
-    private String countries;
     
     @Override
     public String getDeploymentEnvironment() {
-        return environment;
+        String value = getValueFromConfig("archaius.deployment.environment");
+        if (value != null) {
+            return value;
+        } else {
+            return environment;
+        }
     }
 
     @Override
@@ -39,7 +45,12 @@ public class DefaultDeploymentContext implements DeploymentContext {
 
     @Override
     public String getDeploymentDatacenter() {
-        return dataCenter;
+        String value = getValueFromConfig("archaius.deployment.datacenter");
+        if (value != null) {
+            return value;
+        } else {
+            return dataCenter;
+        }
     }
 
     @Override
@@ -49,7 +60,12 @@ public class DefaultDeploymentContext implements DeploymentContext {
 
     @Override
     public String getApplicationId() {
-        return applicationId;
+        String value = getValueFromConfig("archaius.deployment.applicationId");
+        if (value != null) {
+            return value;
+        } else {
+            return applicationId;
+        }
     }
 
     @Override
@@ -64,12 +80,22 @@ public class DefaultDeploymentContext implements DeploymentContext {
 
     @Override
     public String getDeploymentServerId() {
-        return serverId;
+        String value = getValueFromConfig("archaius.deployment.serverId");
+        if (value != null) {
+            return value;
+        } else {
+            return serverId;
+        }
     }
 
     @Override
     public String getDeploymentStack() {
-        return stack;
+        String value = getValueFromConfig("archaius.deployment.stack");
+        if (value != null) {
+            return value;
+        } else {
+            return stack;
+        }
     }
 
     @Override
@@ -79,22 +105,31 @@ public class DefaultDeploymentContext implements DeploymentContext {
 
     @Override
     public String getDeploymentRegion() {
-        return region;
+        String value = getValueFromConfig("archaius.deployment.region");
+        if (value != null) {
+            return value;
+        } else {
+            return region;
+        }
     }
 
     @Override
     public void setDeploymentRegion(String region) {
         this.region = region;
     }
-
-    @Override
-    public String getTargetCountries() {
-        return countries;
-    }
-
-    @Override
-    public void setTargetCountries(String countries) {
-        this.countries = countries;
+    
+    private String getValueFromConfig(String name) {
+        Configuration conf = ConfigurationManager.getConfigInstance();
+        String value = (String) conf.getProperty(name);
+        if (value != null) {
+            return value;
+        } else {
+            value = System.getProperty(name);
+            if (value != null) {
+                return value;
+            }            
+        }
+        return null;
     }
 
 }
