@@ -61,9 +61,7 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     static String propertiesResourceRelativePath = "META-INF/conf/config.properties";
     
     static ClasspathPropertiesConfiguration instance = null;
-    
-    static ConcurrentCompositeConfiguration containerConfiguration = null;
-    
+        
     /** You can't instantiate this class. */
     private ClasspathPropertiesConfiguration()
     {
@@ -109,12 +107,11 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
       	return instance !=null ? instance.getProperties() : new Properties();
     }
 
-    public static void initialize(ConcurrentCompositeConfiguration containerConfig) 
+    public static void initialize() 
     {
         try {
             ClassLoader loader = Thread.currentThread().getContextClassLoader();
             instance = new ClasspathPropertiesConfiguration();
-            containerConfiguration = containerConfig; 
             loadResources(loader, propertiesResourceRelativePath);
               
         } catch (Exception e) {
@@ -130,12 +127,12 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
         boolean loadedResources = false;
 		while (resources.hasMoreElements()) {
 			URL from = resources.nextElement();
-			Properties props = loadProperties(from);
+			/* Properties props = loadProperties(from);
 			String configName = getConfigName(props, from);
 			containerConfiguration.addConfiguration(
-					new PropertiesConfiguration(from), configName);
-			log.debug("Added properties from:" + from + " with config name:"
-					+ configName);
+					new PropertiesConfiguration(from), configName); */
+			ConfigurationManager.loadPropertiesFromResources(from.getPath());
+			log.debug("Added properties from:" + from + from.getPath());
 			loadedResources = true;
 		}
 		if (!loadedResources) {

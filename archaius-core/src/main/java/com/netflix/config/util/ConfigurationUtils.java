@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.CombinedConfiguration;
@@ -122,4 +123,9 @@ public class ConfigurationUtils {
   	   return p;
     }
     
+    public static void loadProperties(Properties props, Configuration config) {
+        for (Entry<Object, Object> entry: props.entrySet()) {
+            config.setProperty((String) entry.getKey(), entry.getValue());
+        }
+    }
 }
