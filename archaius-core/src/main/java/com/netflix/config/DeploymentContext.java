@@ -17,14 +17,29 @@
  */
 package com.netflix.config;
 
-import org.junit.Test;
+public interface DeploymentContext {
 
-public class ClasspathPropertiesConfigurationTest {
+    public String getDeploymentEnvironment();
 
-    
-    @Test
-    public void testClasspathConfiguration() throws Exception {
-        ClasspathPropertiesConfiguration.initialize();
-    }
-        
+    public void setDeploymentEnvironment(String env);
+
+    public String getDeploymentDatacenter();
+
+    public void setDeploymentDatacenter(String deployedAt);
+
+    public String getApplicationId();
+
+    public void setApplicationId(String appId);
+
+    public void setDeploymentServerId(String serverId);
+
+    public String getDeploymentServerId();
+
+    public String getDeploymentStack();
+
+    public void setDeploymentStack(String stack);
+
+    public String getDeploymentRegion();
+
+    public void setDeploymentRegion(String region);    
 }

@@ -19,6 +19,8 @@ package com.netflix.config;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -62,9 +64,6 @@ public class WebApplicationProperties {
 	static boolean loadLibraryProperties = true;
 	
 	static String libraryPropertiesResourceRelativePath = ClasspathPropertiesConfiguration.propertiesResourceRelativePath;
-
-	static ConcurrentCompositeConfiguration containerConfig = (ConcurrentCompositeConfiguration) DynamicPropertyFactory
-			.getInstance().getBackingConfigurationSource();
 
 	/**
 	 * Initialize. The application should call this method once the Application
@@ -113,7 +112,7 @@ public class WebApplicationProperties {
 	}
 
 	protected static void initClasspathPropertiesConfiguration() {
-		ClasspathPropertiesConfiguration.initialize(containerConfig);
+		ClasspathPropertiesConfiguration.initialize();
 	}
 
 	protected static void initApplicationProperties()
@@ -132,15 +131,9 @@ public class WebApplicationProperties {
 		for (Object prop: overrideprops.keySet()){
 			appConf.setProperty(""+prop, overrideprops.getProperty(""+prop));
 		}
-
-
 		String path = appPropFile.toURI().toURL().toString();
 		System.setProperty(URLConfigurationSource.CONFIG_URL, path);
-		DynamicPropertyFactory dpfInstance = DynamicPropertyFactory
-				.getInstance();
-		System.out.println("Dynamic Properties Backing Source:"
-				+ dpfInstance.getBackingConfigurationSource());
-		containerConfig.addConfiguration(appConf);
+		ConfigurationManager.loadPropertiesFromConfiguration(appConf);
 
 	}
 
@@ -209,6 +202,6 @@ public class WebApplicationProperties {
 	 * Returns all the properties presently available
 	 */
 	public static Properties getProperties() {
-		return containerConfig.getProperties();
+		return ConfigurationUtils.getProperties(ConfigurationManager.getConfigInstance());
 	}
 }

@@ -17,19 +17,10 @@
  */
 package com.netflix.config;
 
-import java.util.Collection;
 
 import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.SystemConfiguration;
-import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.netflix.config.jmx.BaseConfigMBean;
-import com.netflix.config.jmx.ConfigJMXManager;
-import com.netflix.config.jmx.ConfigMBean;
-import com.netflix.config.sources.URLConfigurationSource;
 
 /**
  * A factory that creates instances of dynamic properties and associates them with an underlying configuration 
@@ -94,7 +85,6 @@ public class DynamicPropertyFactory {
      * JMX so that properties can be accessed via JMX console. Default is "unset".
      */
     public static final String ENABLE_JMX = "archaius.dynamicPropertyFactory.registerConfigWithJMX";
-    private static ConfigMBean configMBean = null;
 
     
     /**
@@ -120,7 +110,7 @@ public class DynamicPropertyFactory {
     public static final String DISABLE_DEFAULT_CONFIG = "archaius.dynamicProperty.disableDefaultConfig";
 
     private DynamicPropertyFactory() {}
-            
+                
     /**
      * Initialize the factory with an AbstractConfiguration. 
      * <p>
@@ -135,16 +125,13 @@ public class DynamicPropertyFactory {
      * @return the instance of DynamicPropertyFactory
      * @throws IllegalArgumentException if the factory has already been initialized with a non-default configuration source
      */
-    public static synchronized DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
+    public static DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
+        if (ConfigurationManager.isConfigurationInstalled() && config != ConfigurationManager.instance) {
+            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
+                    + ConfigurationManager.getConfigInstance());
+        }
         if (config instanceof DynamicPropertySupport) {
             return initWithConfigurationSource((DynamicPropertySupport) config);    
-        }
-        if (Boolean.getBoolean(ENABLE_JMX)) {
-            try {
-                configMBean = ConfigJMXManager.registerConfigMbean(config);
-            } catch (Exception e) {
-                logger.error("Unable to register with JMX", e);
-            }
         }
         return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
     }
@@ -217,41 +204,27 @@ public class DynamicPropertyFactory {
         if (dynamicPropertySupport == null) {
             throw new IllegalArgumentException("dynamicPropertySupport is null");
         }
-        // If the factory is initialized with default configuration, we need to change that
-        if (initializedWithDefaultConfig && (config instanceof ConfigurationBackedDynamicPropertySupportImpl)) {
-            ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) ((ConfigurationBackedDynamicPropertySupportImpl) config).getConfiguration();
-            // stop loading of the configuration
-            DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(URL_CONFIG_NAME);
-            if (defaultFileConfig != null) {
-                defaultFileConfig.stopLoading();
-            }
-            Collection<ConfigurationListener> listeners = defaultConfig.getConfigurationListeners();
-            
-            // find the listener and remove it so that DynamicProperty will no longer receives 
-            // callback from the default configuration source
-            ConfigurationListener dynamicPropertyListener = null;
-            for (ConfigurationListener l: listeners) {
-                if (l instanceof ExpandedConfigurationListenerAdapter
-                        && ((ExpandedConfigurationListenerAdapter) l).getListener() 
-                        instanceof DynamicProperty.DynamicPropertyListener) {
-                    dynamicPropertyListener = l;
-                    break;                        
-                }
-            }
-            if (dynamicPropertyListener != null) {
-                defaultConfig.removeConfigurationListener(dynamicPropertyListener);
-            }
-            if (configMBean != null) {
-                try {
-                    ConfigJMXManager.unRegisterConfigMBean(defaultConfig, configMBean);
-                } catch (Exception e) {
-                    logger.error("Error unregistering with JMX", e);
-                }
-            }
-            config = null;
+        AbstractConfiguration configuration = null;
+        if (dynamicPropertySupport instanceof AbstractConfiguration) {
+            configuration = (AbstractConfiguration) dynamicPropertySupport;
+        } else if (dynamicPropertySupport instanceof ConfigurationBackedDynamicPropertySupportImpl) {
+            configuration = ((ConfigurationBackedDynamicPropertySupportImpl) dynamicPropertySupport).getConfiguration();
         }
-        if (config != null && config != dynamicPropertySupport) {
+        if (initializedWithDefaultConfig) {
+            config = null;
+        } else if (config != null && config != dynamicPropertySupport) {
             throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
+        }
+        if (ConfigurationManager.isConfigurationInstalled() 
+                && (configuration != null && configuration != ConfigurationManager.instance)) {
+            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
+                    + ConfigurationManager.getConfigInstance());
+        }
+        if (configuration != null && configuration != ConfigurationManager.instance) {
+            ConfigurationManager.removeDefaultConfiguration();
+            ConfigurationManager.instance = configuration;
+            ConfigurationManager.configurationInstalled = true;
+            ConfigurationManager.registerConfigBean();
         }
         config = dynamicPropertySupport;
         DynamicProperty.registerWithDynamicPropertySupport(dynamicPropertySupport);
@@ -284,36 +257,13 @@ public class DynamicPropertyFactory {
      */
     public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
         if (config == null && shouldInstallDefaultConfig()) {
-            Throwable exception = null;
-            ConcurrentCompositeConfiguration defaultConfig = null;
-            DynamicURLConfiguration defaultURLConfig = null;
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {
-                    defaultConfig = new ConcurrentCompositeConfiguration();      
-                    try {
-                        defaultURLConfig = new DynamicURLConfiguration();
-                        defaultConfig.addConfiguration(defaultURLConfig, URL_CONFIG_NAME);
-                    } catch (Throwable e) {
-                        defaultConfigNotFound = true;
-                        exception = e;
-                    }
-                    if (!Boolean.getBoolean(DISABLE_DEFAULT_SYS_CONFIG)) {
-                        SystemConfiguration sysConfig = new SystemConfiguration();
-                        defaultConfig.addConfigurationAtFront(sysConfig, SYS_CONFIG_NAME);
-                    }
-                    initWithConfigurationSource(defaultConfig);
-                    initializedWithDefaultConfig = true;
+                    AbstractConfiguration config = ConfigurationManager.getConfigInstance();
+                    initWithConfigurationSource(config);
+                    initializedWithDefaultConfig = !ConfigurationManager.isConfigurationInstalled();
+                    logger.info("DynamicPropertyFactory is initialized with configuration sources: " + config);
                 }
-            }
-            if (exception != null) {
-                if (isThrowMissingConfigurationSourceException()) {
-                    throw new MissingConfigurationSourceException("Error initializing with default configuration source(s).", exception);
-                } else {
-                    logger.warn("Error initializing with default configuration source(s).", exception);
-                }
-            } else {
-                logger.info("DynamicPropertyFactory is initialized with default configuration source(s): " + defaultURLConfig.getSource());
-
             }
         }
         return instance;
@@ -321,8 +271,7 @@ public class DynamicPropertyFactory {
     
     private static void checkAndWarn(String propName) {
         if (config == null) {
-            logger.warn("DynamicProperty " + propName + " is created without a configuration source for callback. " 
-                    + "Need to set property " + URLConfigurationSource.CONFIG_URL + " or call DynamicPropertyFactory.initWithConfigurationSource().");
+            logger.warn("DynamicProperty " + propName + " is created without a configuration source for callback.");
         }        
     }
 

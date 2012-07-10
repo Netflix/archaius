@@ -111,6 +111,7 @@ public class DynamicFileConfigurationTest {
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertTrue(propertyChanged);
         assertEquals(Double.MAX_VALUE, doubleProp.get(), 0.01d);
+        assertFalse(ConfigurationManager.isConfigurationInstalled());
     }    
     
     @Test
@@ -128,5 +129,7 @@ public class DynamicFileConfigurationTest {
         Thread.sleep(2000);
         assertEquals("nondefault", prop.get());
         assertEquals(0, longProp.get());
+        assertTrue(newConfig == ConfigurationManager.getConfigInstance());
+        assertTrue(ConfigurationManager.isConfigurationInstalled());
     }
 }
