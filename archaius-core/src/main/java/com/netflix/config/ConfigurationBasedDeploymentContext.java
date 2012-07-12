@@ -19,14 +19,7 @@ package com.netflix.config;
 
 import org.apache.commons.configuration.Configuration;
 
-public class ConfigurationBasedDeploymentContext implements DeploymentContext {
-
-    private String environment;
-    private String dataCenter;
-    private String applicationId;
-    private String serverId;
-    private String stack;
-    private String region;
+public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext {
     
     @Override
     public String getDeploymentEnvironment() {
@@ -34,13 +27,8 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return environment;
+            return super.getDeploymentEnvironment();
         }
-    }
-
-    @Override
-    public void setDeploymentEnvironment(String env) {
-        environment = env;        
     }
 
     @Override
@@ -49,13 +37,8 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return dataCenter;
+            return super.getDeploymentDatacenter();
         }
-    }
-
-    @Override
-    public void setDeploymentDatacenter(String deployedAt) {
-        dataCenter = deployedAt;
     }
 
     @Override
@@ -64,18 +47,8 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return applicationId;
+            return super.getApplicationId();
         }
-    }
-
-    @Override
-    public void setApplicationId(String appId) {
-        applicationId = appId;
-    }
-
-    @Override
-    public void setDeploymentServerId(String serverId) {
-        this.serverId = serverId;
     }
 
     @Override
@@ -84,7 +57,7 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return serverId;
+            return super.getDeploymentServerId();
         }
     }
 
@@ -94,13 +67,8 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return stack;
+            return super.getDeploymentStack();
         }
-    }
-
-    @Override
-    public void setDeploymentStack(String stack) {
-        this.stack = stack;
     }
 
     @Override
@@ -109,13 +77,8 @@ public class ConfigurationBasedDeploymentContext implements DeploymentContext {
         if (value != null) {
             return value;
         } else {
-            return region;
+            return super.getDeploymentRegion();
         }
-    }
-
-    @Override
-    public void setDeploymentRegion(String region) {
-        this.region = region;
     }
     
     private String getValueFromConfig(String name) {

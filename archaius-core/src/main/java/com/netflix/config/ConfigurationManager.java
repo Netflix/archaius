@@ -171,6 +171,10 @@ public class ConfigurationManager {
         }        
     }
     
+    public static void loadProperties(Properties properties) {
+        ConfigurationUtils.loadProperties(properties, instance);
+    }
+    
     public static void setDeploymentContext(DeploymentContext context) {
         ConfigurationManager.context = context;
     }
