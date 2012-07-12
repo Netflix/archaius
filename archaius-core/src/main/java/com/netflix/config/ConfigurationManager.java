@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
@@ -135,6 +134,13 @@ public class ConfigurationManager {
         }        
     }
     
+    static void setDirect(AbstractConfiguration config) {
+        ConfigurationManager.removeDefaultConfiguration();
+        ConfigurationManager.instance = config;
+        ConfigurationManager.configurationInstalled = true;
+        ConfigurationManager.registerConfigBean();
+    }
+    
     public static void loadPropertiesFromResources(String path) 
             throws IOException {
         if (instance == null) {
@@ -232,5 +238,5 @@ public class ConfigurationManager {
             }
         }
         instance = null;        
-    }
+    }    
 }
