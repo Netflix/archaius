@@ -221,15 +221,16 @@ public class DynamicPropertyFactory {
                     + ConfigurationManager.getConfigInstance());
         }
         if (configuration != null && configuration != ConfigurationManager.instance) {
-            ConfigurationManager.removeDefaultConfiguration();
-            ConfigurationManager.instance = configuration;
-            ConfigurationManager.configurationInstalled = true;
-            ConfigurationManager.registerConfigBean();
+            ConfigurationManager.setDirect(configuration);
         }
-        config = dynamicPropertySupport;
-        DynamicProperty.registerWithDynamicPropertySupport(dynamicPropertySupport);
-        initializedWithDefaultConfig = false;
+        setDirect(dynamicPropertySupport);
         return instance;
+    }
+    
+    static void setDirect(DynamicPropertySupport support) {
+        config = support;
+        DynamicProperty.registerWithDynamicPropertySupport(support);
+        initializedWithDefaultConfig = false;        
     }
     
     private static boolean shouldInstallDefaultConfig() {
