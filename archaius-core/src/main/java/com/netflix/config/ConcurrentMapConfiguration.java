@@ -167,6 +167,9 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
 
     public void addProperty(String key, Object value)
     {
+        if (value == null) {
+            throw new NullPointerException("Value for property " + key + " is null");
+        }
         fireEvent(EVENT_ADD_PROPERTY, key, value, true);
         Object previousValue = null;
         if (isDelimiterParsingDisabled() ||
@@ -195,6 +198,9 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     @Override
     public void setProperty(String key, Object value)
     {
+        if (value == null) {
+            throw new NullPointerException("Value for property: " + key + " is null");
+        }
         fireEvent(EVENT_SET_PROPERTY, key, value, true);
         if (isDelimiterParsingDisabled()) {
             map.put(key, value);
