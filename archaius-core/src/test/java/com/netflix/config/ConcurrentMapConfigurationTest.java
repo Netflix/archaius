@@ -242,4 +242,19 @@ public class ConcurrentMapConfigurationTest {
         testConfigurationGet(hConfig);
         testConfigurationGet(conf);
     }
+    
+    @Test
+    public void testNullValue() {
+        ConcurrentMapConfiguration conf = new ConcurrentMapConfiguration();
+        try {
+            conf.setProperty("xyz", null);
+        } catch (NullPointerException e) {
+            assertNotNull(e);
+        }
+        try {
+            conf.addProperty("xyz", null);
+        } catch (NullPointerException e) {
+            assertNotNull(e);
+        }
+    }
 }
