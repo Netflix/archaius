@@ -140,7 +140,7 @@ public class ConfigurationManager {
         ConfigurationManager.configurationInstalled = true;
         ConfigurationManager.registerConfigBean();
     }
-    
+        
     public static void loadPropertiesFromResources(String path) 
             throws IOException {
         if (instance == null) {
@@ -161,7 +161,36 @@ public class ConfigurationManager {
             ConfigurationUtils.loadProperties(props, instance);
         }
     }
+    
+    public static void loadCascadedPropertiesFromResources(String configName) throws IOException {
+        String defaultConfigFileName = configName + ".properties";
+        if (instance == null) {
+            instance = getConfigInstance();
+        }
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        URL url = loader.getResource(defaultConfigFileName);
+        Properties props = new Properties();
+        InputStream fin = url.openStream();
+        props.load(fin);
+        fin.close();
+        String environment = getDeploymentContext().getDeploymentEnvironment();
+        if (environment != null && environment.length() > 0) {
+            String envConfigFileName = configName + "-" + environment + ".properties";
+            url = loader.getResource(envConfigFileName);
+            InputStream fin2 = url.openStream();
+            props.load(fin2);
+            fin2.close();
+        }
+        if (instance instanceof AggregatedConfiguration) {
+            ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
+            config.loadProperties(props);
+            ((AggregatedConfiguration) instance).addConfiguration(config, configName);
+        } else {
+            ConfigurationUtils.loadProperties(props, instance);
+        }
+    }
 
+    
     public static void loadPropertiesFromConfiguration(AbstractConfiguration config) {
         if (instance instanceof AggregatedConfiguration) {
             ((AggregatedConfiguration) instance).addConfiguration(config);
