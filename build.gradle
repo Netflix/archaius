@@ -39,11 +39,15 @@ subprojects {
 
 project(':archaius-core') {
     dependencies {
-        compile 'commons-configuration:commons-configuration:[1.5,1.8]'
+        compile 'commons-configuration:commons-configuration:1.8'
         compile 'org.slf4j:slf4j-api:1.6.4'
         testCompile 'junit:junit:4.10'
         testCompile 'org.apache.derby:derby:10.8.2.2'
-        testCompile 'log4j:log4j:1.2.16'
+        testCompile('log4j:log4j:1.2.15') {
+            exclude group: 'javax.jms', module: 'jms'
+            exclude group: 'com.sun.jdmk', module: 'jmxtools'
+            exclude group: 'com.sun.jmx', module: 'jmxri'
+        }
     }
     jar {
         from('src/main/java') {
@@ -54,10 +58,14 @@ project(':archaius-core') {
 
 project(':archaius-samplelibrary') {
     dependencies {
-        compile 'commons-configuration:commons-configuration:[1.5,1.8]'
+        compile 'commons-configuration:commons-configuration:1.8'
         compile 'org.slf4j:slf4j-api:1.6.4'
         testCompile 'junit:junit:4.10'
-        testCompile 'log4j:log4j:1.2.16'
+        testCompile('log4j:log4j:1.2.15') {
+            exclude group: 'javax.jms', module: 'jms'
+            exclude group: 'com.sun.jdmk', module: 'jmxtools'
+            exclude group: 'com.sun.jmx', module: 'jmxri'            
+        }
     }
     jar {
         from('src/main/java') {

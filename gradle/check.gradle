@@ -15,7 +15,7 @@ subprojects {
     }
 
     // PMD
-    apply plugin: 'pmd'
+    // apply plugin: 'pmd'
     // tasks.withType(Pmd) {  ignoreFailures = true }
 
     apply plugin: 'java'
