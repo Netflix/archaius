@@ -17,6 +17,12 @@
  */
 package com.netflix.config;
 
+/**
+ * An implemenatation of {@link DeploymentContext} with simple setters and getters.
+ * 
+ * @author awang
+ *
+ */
 public class SimpleDeploymentContext implements DeploymentContext {
     private String environment;
     private String dataCenter;
