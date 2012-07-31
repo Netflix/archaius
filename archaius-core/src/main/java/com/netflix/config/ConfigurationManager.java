@@ -35,7 +35,13 @@ import com.netflix.config.jmx.ConfigMBean;
 import com.netflix.config.util.ConfigurationUtils;
 
 /**
- * 
+ * The configuration manager is a central place where it manages the system wide Configuration and
+ * deployment context.
+ * <p>
+ * During initialization, this class will check system property "archaius.default.configuration.class"
+ * and "archaius.default.configuration.factory". If the former is set, it will use the class name to instantiate 
+ * it using its default no-arg constructor. If the later is set, it will call its static method getInstance().
+ * In both cases, the returned Configuration object will be set as the system wide configuration.
  * 
  * @author awang
  *
@@ -82,6 +88,11 @@ public class ConfigurationManager {
         }
     }
     
+    /**
+     * Install the system wide configuration with the ConfigurationManager. This will also install 
+     * the configuration with the {@link DynamicPropertyFactory} by calling {@link DynamicPropertyFactory#initWithConfigurationSource(AbstractConfiguration)}.
+     * This call can be made only once, otherwise IllegalStateException will be thrown.
+     */
     public static synchronized void install(AbstractConfiguration config) throws IllegalStateException {
         if (!configurationInstalled) {
             if (instance != null) {
@@ -102,6 +113,11 @@ public class ConfigurationManager {
         return configurationInstalled;
     }
     
+    /**
+     * Get the current system wide configuration. If there has not been set, it will return a default
+     * {@link ConcurrentCompositeConfiguration} which contains a SystemConfiguration from Apache Commons
+     * Configuration and a {@link DynamicURLConfiguration}.
+     */
     public static AbstractConfiguration getConfigInstance() {
         if (instance == null && !Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_CONFIG)) {
             synchronized (ConfigurationManager.class) {
@@ -141,6 +157,11 @@ public class ConfigurationManager {
         ConfigurationManager.registerConfigBean();
     }
         
+    /**
+     * Load properties from resource file into the system wide configuration
+     * @param path path of the resource
+     * @throws IOException
+     */
     public static void loadPropertiesFromResources(String path) 
             throws IOException {
         if (instance == null) {
@@ -162,6 +183,16 @@ public class ConfigurationManager {
         }
     }
     
+    /**
+     * Load resource configName.properties first. Then load configName-deploymentEnvironment.properties
+     * into the system wide configuration. For example, if configName is "application", and deployment environment
+     * is "test", this API will first load "application.properties", then load "application-test.properties" to
+     * override any property that also exist in "application.properties". 
+     * 
+     * @param configName prefix of the properties file name.
+     * @throws IOException
+     * @see DeploymentContext#getDeploymentEnvironment()
+     */
     public static void loadCascadedPropertiesFromResources(String configName) throws IOException {
         String defaultConfigFileName = configName + ".properties";
         if (instance == null) {
@@ -190,7 +221,9 @@ public class ConfigurationManager {
         }
     }
 
-    
+    /**
+     * Load properties from the specified configuration into system wide configuration
+     */
     public static void loadPropertiesFromConfiguration(AbstractConfiguration config) {
         if (instance instanceof AggregatedConfiguration) {
             ((AggregatedConfiguration) instance).addConfiguration(config);
@@ -200,6 +233,9 @@ public class ConfigurationManager {
         }        
     }
     
+    /**
+     * Load the specified properties into system wide configuration
+     */
     public static void loadProperties(Properties properties) {
         ConfigurationUtils.loadProperties(properties, instance);
     }
