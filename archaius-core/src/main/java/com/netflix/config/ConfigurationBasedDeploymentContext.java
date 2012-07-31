@@ -19,8 +19,21 @@ package com.netflix.config;
 
 import org.apache.commons.configuration.Configuration;
 
+/**
+ * An implementation of {@link DeploymentContext} based on system wide configuration set with
+ * {@link ConfigurationManager}. All the getters will first consult corresponding property
+ * and return the value if set.
+ * 
+ * @author awang
+ *
+ */
 public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext {
     
+    /**
+     * Get the deployment environment. If property "archaius.deployment.environment"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentEnvironment().
+     * 
+     */
     @Override
     public String getDeploymentEnvironment() {
         String value = getValueFromConfig("archaius.deployment.environment");
@@ -31,6 +44,11 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         }
     }
 
+    /**
+     * Get the deployment environment. If property "archaius.deployment.datacenter"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentDatacenter().
+     * 
+     */
     @Override
     public String getDeploymentDatacenter() {
         String value = getValueFromConfig("archaius.deployment.datacenter");
@@ -41,6 +59,10 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         }
     }
 
+    /**
+     * Get the deployment environment. If property "archaius.deployment.applicationId"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getApplicationId().
+     */
     @Override
     public String getApplicationId() {
         String value = getValueFromConfig("archaius.deployment.applicationId");
@@ -51,6 +73,10 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         }
     }
 
+    /**
+     * Get the deployment environment. If property "archaius.deployment.serverId"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentServerId().
+     */
     @Override
     public String getDeploymentServerId() {
         String value = getValueFromConfig("archaius.deployment.serverId");
@@ -61,6 +87,10 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         }
     }
 
+    /**
+     * Get the deployment environment. If property "archaius.deployment.stack"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentStack().
+     */
     @Override
     public String getDeploymentStack() {
         String value = getValueFromConfig("archaius.deployment.stack");
@@ -71,6 +101,10 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         }
     }
 
+    /**
+     * Get the deployment environment. If property "archaius.deployment.region"
+     * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentRegion().
+     */
     @Override
     public String getDeploymentRegion() {
         String value = getValueFromConfig("archaius.deployment.region");

@@ -22,6 +22,9 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.jmx.BaseConfigMBean;
+import com.netflix.config.sources.URLConfigurationSource;
+
 /**
  * A factory that creates instances of dynamic properties and associates them with an underlying configuration 
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
@@ -246,17 +249,14 @@ public class DynamicPropertyFactory {
      * <li>A SystemConfiguration, which contains all the system properties. You can disable adding this Configuration by setting 
      * system property {@value #DISABLE_DEFAULT_SYS_CONFIG} to <code>true</code>
      * <li>A  {@link DynamicURLConfiguration}, which at a fixed interval polls 
-     * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME} on classpath and a set of URLs specified via a system property
+     * a configuration file (see {@link URLConfigurationSource#DEFAULT_CONFIG_FILE_NAME}) on classpath and a set of URLs specified via a system property
      * (see {@link URLConfigurationSource#CONFIG_URL}).  
      * </ul>
      * Between the two sub-configurations, the SystemConfiguration will take the precedence when determining property values.
      * <p>
      * You can disable the initialization with the default configuration by setting system property {@value #DISABLE_DEFAULT_CONFIG} to "true".
-     * 
-     * @throws MissingConfigurationSourceException if throwMissingConfigurationSourceException is true and 
-     *     an error occurred in creating the default configuration.
      */
-    public static DynamicPropertyFactory getInstance() throws MissingConfigurationSourceException {
+    public static DynamicPropertyFactory getInstance() {
         if (config == null && shouldInstallDefaultConfig()) {
             synchronized (DynamicPropertyFactory.class) {
                 if (config == null ) {

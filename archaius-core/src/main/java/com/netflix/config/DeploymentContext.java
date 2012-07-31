@@ -17,12 +17,22 @@
  */
 package com.netflix.config;
 
+/**
+ * An interface to define the deployment context of an application. All attributes
+ * are optional and may return null if unset.
+ */
 public interface DeploymentContext {
 
+    /**
+     * @return the deployment environment. For example "test", "dev", "prod".
+     */
     public String getDeploymentEnvironment();
 
     public void setDeploymentEnvironment(String env);
 
+    /**
+     * @return the name or ID of the data center.
+     */
     public String getDeploymentDatacenter();
 
     public void setDeploymentDatacenter(String deployedAt);
@@ -35,10 +45,20 @@ public interface DeploymentContext {
 
     public String getDeploymentServerId();
 
+    /**
+     * 
+     * @return a vertical stack name where this application is deployed. The stack name
+     * can be used to affect the application's behavior.
+     */
     public String getDeploymentStack();
 
     public void setDeploymentStack(String stack);
 
+    /**
+     * 
+     * @return region of the deployment. In EC2, this could be 
+     * Amazon region "us-east-1", "us-west-1", etc.
+     */
     public String getDeploymentRegion();
 
     public void setDeploymentRegion(String region);    
