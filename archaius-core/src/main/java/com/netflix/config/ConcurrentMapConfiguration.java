@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ConcurrentMapConfiguration extends AbstractConfiguration {
-    private ConcurrentHashMap<String,Object> map;
+    protected ConcurrentHashMap<String,Object> map;
     private Collection<ConfigurationListener> listeners = new CopyOnWriteArrayList<ConfigurationListener>();    
     private Collection<ConfigurationErrorListener> errorListeners = new CopyOnWriteArrayList<ConfigurationErrorListener>();    
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentMapConfiguration.class);
@@ -171,6 +171,11 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
             throw new NullPointerException("Value for property " + key + " is null");
         }
         fireEvent(EVENT_ADD_PROPERTY, key, value, true);
+        addPropertyImpl(key, value);
+        fireEvent(EVENT_ADD_PROPERTY, key, value, false);
+    }
+
+    protected void addPropertyImpl(String key, Object value) {
         Object previousValue = null;
         if (isDelimiterParsingDisabled() ||
                 ((value instanceof String) && ((String) value).indexOf(getListDelimiter()) < 0)) {
@@ -186,9 +191,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
                             : getListDelimiter());
             
         }
-        fireEvent(EVENT_ADD_PROPERTY, key, value, false);
     }
-
     
     /**
      * Override the same method in {@link AbstractConfiguration} to simplify the logic
@@ -199,9 +202,14 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     public void setProperty(String key, Object value)
     {
         if (value == null) {
-            throw new NullPointerException("Value for property: " + key + " is null");
+            throw new NullPointerException("Value for property " + key + " is null");
         }
         fireEvent(EVENT_SET_PROPERTY, key, value, true);
+        setPropertyImpl(key, value);
+        fireEvent(EVENT_SET_PROPERTY, key, value, false);
+    }
+    
+    protected void setPropertyImpl(String key, Object value) {
         if (isDelimiterParsingDisabled()) {
             map.put(key, value);
         } else if ((value instanceof String) && ((String) value).indexOf(getListDelimiter()) < 0) {
@@ -218,10 +226,8 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
             } else {
                 map.put(key, list);
             }
-        }
-        fireEvent(EVENT_SET_PROPERTY, key, value, false);
+        }        
     }
-    
     
     /**
      * Load properties into the configuration. This method iterates through
