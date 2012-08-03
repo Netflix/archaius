@@ -169,6 +169,9 @@ public class ConfigurationManager {
         }
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         URL url = loader.getResource(path);
+        if (url == null) {
+            throw new IOException("Cannot locate " + path + " as a classpath resource.");
+        }
         Properties props = new Properties();
         InputStream fin = url.openStream();
         props.load(fin);
@@ -200,6 +203,9 @@ public class ConfigurationManager {
         }
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         URL url = loader.getResource(defaultConfigFileName);
+        if (url == null) {
+            throw new IOException("Cannot locate " + defaultConfigFileName + " as a classpath resource.");
+        }
         Properties props = new Properties();
         InputStream fin = url.openStream();
         props.load(fin);
@@ -208,9 +214,11 @@ public class ConfigurationManager {
         if (environment != null && environment.length() > 0) {
             String envConfigFileName = configName + "-" + environment + ".properties";
             url = loader.getResource(envConfigFileName);
-            InputStream fin2 = url.openStream();
-            props.load(fin2);
-            fin2.close();
+            if (url != null) {
+                InputStream fin2 = url.openStream();
+                props.load(fin2);
+                fin2.close();
+            }
         }
         if (instance instanceof AggregatedConfiguration) {
             ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
