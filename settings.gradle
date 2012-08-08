@@ -1,4 +1,4 @@
 // rootProject.name='archaius'
 include 'archaius-core'
 include 'archaius-samplelibrary'
-include 'archaius-dynamo'
+include 'archaius-aws'
