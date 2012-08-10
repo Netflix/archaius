@@ -16,6 +16,7 @@ apply from: file('gradle/convention.gradle')
 apply from: file('gradle/maven.gradle')
 apply from: file('gradle/check.gradle')
 //apply from: file('gradle/license.gradle') // Waiting for re-release
+apply plugin: 'scala'
 
 subprojects {
     // Closure to configure all the POM with extra info, common to all projects
@@ -36,6 +37,11 @@ subprojects {
     group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
 }
 
+dependencies {
+    // Libraries needed to run the scala tools
+    scalaTools 'org.scala-lang:scala-compiler:2.9.1'
+    scalaTools 'org.scala-lang:scala-library:2.9.1'
+}
 
 project(':archaius-core') {
     dependencies {
@@ -67,13 +73,17 @@ project(':archaius-aws') {
             exclude group: 'com.sun.jmx', module: 'jmxri'
         }
     }
-    jar {
-        from('src/main/java') {
-            include 'META-INF/conf/springbeans.xml'
-            include 'META-INF/conf/config.properties'
-        }
+}
+
+project(':archaius-scala') {
+    dependencies {
+        compile project(':archaius-core')
+        compile 'org.scala-lang:scala-library:2.9.1'
+        testCompile 'org.scalatest:scalatest_2.9.0:1.8'
     }
 }
+
+
 project(':archaius-samplelibrary') {
     dependencies {
         compile 'commons-configuration:commons-configuration:1.8'
