@@ -16,7 +16,6 @@ apply from: file('gradle/convention.gradle')
 apply from: file('gradle/maven.gradle')
 apply from: file('gradle/check.gradle')
 //apply from: file('gradle/license.gradle') // Waiting for re-release
-apply plugin: 'scala'
 
 subprojects {
     // Closure to configure all the POM with extra info, common to all projects
@@ -35,12 +34,6 @@ subprojects {
         }
     }
     group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
-}
-
-dependencies {
-    // Libraries needed to run the scala tools
-    scalaTools 'org.scala-lang:scala-compiler:2.9.1'
-    scalaTools 'org.scala-lang:scala-library:2.9.1'
 }
 
 project(':archaius-core') {
@@ -76,9 +69,15 @@ project(':archaius-aws') {
 }
 
 project(':archaius-scala') {
+    apply plugin: 'scala'
+
     dependencies {
+        // Libraries needed to run the scala tools
+        scalaTools 'org.scala-lang:scala-compiler:2.9.1-1'
+        scalaTools 'org.scala-lang:scala-library:2.9.1-1'
+
         compile project(':archaius-core')
-        compile 'org.scala-lang:scala-library:2.9.1'
+        compile 'org.scala-lang:scala-library:2.9.1-1'
         testCompile 'org.scalatest:scalatest_2.9.0:1.8'
     }
 }
