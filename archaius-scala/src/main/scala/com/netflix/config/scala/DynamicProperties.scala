@@ -1,5 +1,5 @@
 import com.netflix.config.PropertyWrapper
-import com.netflix.config.scala.{DynamicBooleanProperty, DynamicDoubleProperty, DynamicFloatProperty, DynamicLongProperty}
+import com.netflix.config.scala._
 
 /**
  * User: gorzell
@@ -10,7 +10,7 @@ trait DynamicProperties {
 
   protected def dynamicIntProperty(propertyName: String, default: Int, callback: Runnable): DynamicIntProperty = {
     val prop = new DynamicIntProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
@@ -19,16 +19,16 @@ trait DynamicProperties {
 
   protected def dynamicLongProperty(propertyName: String, default: Long, callback: Runnable): DynamicLongProperty = {
     val prop = new DynamicLongProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
   protected def dynamicLongProperty(propertyName: String, default: Long): DynamicLongProperty =
     dynamicLongProperty(propertyName, default, null)
 
-  protected def dynamicFloatProperty(propertyName: String, default: Float, callback: Runnable): DynamicFloatProperty ={
+  protected def dynamicFloatProperty(propertyName: String, default: Float, callback: Runnable): DynamicFloatProperty = {
     val prop = new DynamicFloatProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
@@ -37,7 +37,7 @@ trait DynamicProperties {
 
   protected def dynamicDoubleProperty(propertyName: String, default: Double, callback: Runnable): DynamicDoubleProperty = {
     val prop = new DynamicDoubleProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
@@ -46,7 +46,7 @@ trait DynamicProperties {
 
   protected def dynamicBooleanProperty(propertyName: String, default: Boolean, callback: Runnable): DynamicBooleanProperty = {
     val prop = new DynamicBooleanProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
@@ -55,7 +55,7 @@ trait DynamicProperties {
 
   protected def dynamicStringProperty(propertyName: String, default: String, callback: Runnable): DynamicStringProperty = {
     val prop = new DynamicStringProperty(propertyName, default)
-    addCallback(callback, prop)
+    prop.addCallback(callback)
     prop
   }
 
