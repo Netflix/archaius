@@ -25,7 +25,7 @@ package com.netflix.config;
  *
  */
 public class DynamicLongProperty extends PropertyWrapper<Long> {
-    DynamicLongProperty(String propName, long defaultValue) {
+    public DynamicLongProperty(String propName, long defaultValue) {
         super(propName, Long.valueOf(defaultValue));
     }
         
