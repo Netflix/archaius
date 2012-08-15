@@ -1,5 +1,5 @@
 // Establish version and status
-ext.releaseVersion = '0.2.3'
+ext.releaseVersion = '0.3.0'
 ext.githubProjectName = 'archaius'
 //group = 'com.netflix.archaius'
 
@@ -20,22 +20,21 @@ apply from: file('gradle/check.gradle')
 subprojects {
     // Closure to configure all the POM with extra info, common to all projects
     pom {
-      project {
-        url "https://github.com/Netflix/${githubProjectName}"
-        scm {
-            connection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
-            url "scm:git:git@github.com:Netflix/${githubProjectName}.git"
-            developerConnection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+        project {
+            url "https://github.com/Netflix/${githubProjectName}"
+            scm {
+                connection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+                url "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+                developerConnection "scm:git:git@github.com:Netflix/${githubProjectName}.git"
+            }
+            issueManagement {
+                system 'github'
+                url "https://github.com/Netflix/${githubProjectName}/issues"
+            }
         }
-        issueManagement {
-            system 'github'
-            url "https://github.com/Netflix/${githubProjectName}/issues"
-        }
-      }
-   }
+    }
     group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
 }
-
 
 project(':archaius-core') {
     dependencies {
@@ -56,6 +55,34 @@ project(':archaius-core') {
     }
 }
 
+project(':archaius-aws') {
+    dependencies {
+        compile project(':archaius-core')
+        compile 'com.amazonaws:aws-java-sdk:1.3.14'
+        testCompile 'junit:junit:4.10'
+        testCompile('log4j:log4j:1.2.15') {
+            exclude group: 'javax.jms', module: 'jms'
+            exclude group: 'com.sun.jdmk', module: 'jmxtools'
+            exclude group: 'com.sun.jmx', module: 'jmxri'
+        }
+    }
+}
+
+project(':archaius-scala') {
+    apply plugin: 'scala'
+
+    dependencies {
+        // Libraries needed to run the scala tools
+        scalaTools 'org.scala-lang:scala-compiler:2.9.1-1'
+        scalaTools 'org.scala-lang:scala-library:2.9.1-1'
+
+        compile project(':archaius-core')
+        compile 'org.scala-lang:scala-library:2.9.1-1'
+        testCompile 'org.scalatest:scalatest_2.9.1:1.8'
+    }
+}
+
+
 project(':archaius-samplelibrary') {
     dependencies {
         compile 'commons-configuration:commons-configuration:1.8'
@@ -64,13 +91,13 @@ project(':archaius-samplelibrary') {
         testCompile('log4j:log4j:1.2.15') {
             exclude group: 'javax.jms', module: 'jms'
             exclude group: 'com.sun.jdmk', module: 'jmxtools'
-            exclude group: 'com.sun.jmx', module: 'jmxri'            
+            exclude group: 'com.sun.jmx', module: 'jmxri'
         }
     }
     jar {
         from('src/main/java') {
             include 'META-INF/conf/springbeans.xml'
-	    include 'META-INF/conf/config.properties'
+            include 'META-INF/conf/config.properties'
         }
     }
 }
