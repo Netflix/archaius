@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicStringProperty => JDynamicStringProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicStringProperty => JDynamicStringProperty}
 
 class DynamicStringProperty(property: String, default: String) {
 
-  private val prop: JDynamicStringProperty = new JDynamicStringProperty(property, default)
+  private val prop = DynamicPropertyFactory.getInstance().getStringProperty(property, default)
 
   def apply(): Option[String] = Option(get())
 

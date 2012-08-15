@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicFloatProperty => JDynamicFloatProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicFloatProperty => JDynamicFloatProperty}
 
 class DynamicFloatProperty(val propertyName: String, val default: Float) {
 
-  private val prop = new JDynamicFloatProperty(propertyName, default)
+  private val prop = DynamicPropertyFactory.getInstance().getFloatProperty(propertyName, default)
 
   def apply(): Option[Float] = Option(get())
 

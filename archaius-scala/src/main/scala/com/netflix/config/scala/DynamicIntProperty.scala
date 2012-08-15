@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicIntProperty => JDynamicIntProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicIntProperty => JDynamicIntProperty}
 
 class DynamicIntProperty(val property: String, val default: Int) {
 
-  private val prop = new JDynamicIntProperty(property, default)
+  private val prop = DynamicPropertyFactory.getInstance().getIntProperty(property, default)
 
   def apply(): Option[Int] = Option(get())
 

@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicBooleanProperty => JDynamicBooleanProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicBooleanProperty => JDynamicBooleanProperty}
 
 class DynamicBooleanProperty(val propertyName: String, val default: Boolean) {
 
-  private val prop = new JDynamicBooleanProperty(propertyName, default)
+  private val prop = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, default)
 
   def apply(): Option[Boolean] = Option(get())
 

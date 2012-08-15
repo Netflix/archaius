@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicDoubleProperty => JDynamicDoubleProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicDoubleProperty => JDynamicDoubleProperty}
 
 class DynamicDoubleProperty(val propertyName: String, val default: Double) {
 
-  private val prop = new JDynamicDoubleProperty(propertyName, default)
+  private val prop = DynamicPropertyFactory.getInstance().getDoubleProperty(propertyName, default)
 
   def apply(): Option[Double] = Option(get())
 

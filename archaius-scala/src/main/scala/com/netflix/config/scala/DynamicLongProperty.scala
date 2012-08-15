@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicLongProperty => JDynamicLongProperty}
+import com.netflix.config.DynamicPropertyFactory
 
 /**
  * User: gorzell
@@ -26,7 +26,7 @@ import com.netflix.config.{DynamicLongProperty => JDynamicLongProperty}
 
 class DynamicLongProperty(val propertyName: String, val default: Long) {
 
-  private val prop = new JDynamicLongProperty(propertyName, default)
+  private val prop = DynamicPropertyFactory.getInstance().getLongProperty(propertyName, default)
 
   def apply(): Option[Long] = Option(get())
 
