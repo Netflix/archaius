@@ -27,7 +27,7 @@ import com.netflix.config.PropertyWrapper;
  *
  */
 public class DynamicIntProperty extends PropertyWrapper<Integer> {
-    public DynamicIntProperty(String propName, int defaultValue) {
+    DynamicIntProperty(String propName, int defaultValue) {
         super(propName, Integer.valueOf(defaultValue));
     }
         

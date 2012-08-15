@@ -24,7 +24,7 @@ package com.netflix.config;
  * @author awang
  *
  */public class DynamicFloatProperty extends PropertyWrapper<Float> {
-    public DynamicFloatProperty(String propName, float defaultValue) {
+    DynamicFloatProperty(String propName, float defaultValue) {
         super(propName, Float.valueOf(defaultValue));
     }
     /**
