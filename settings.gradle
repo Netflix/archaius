@@ -1,3 +1,5 @@
 // rootProject.name='archaius'
 include 'archaius-core'
 include 'archaius-samplelibrary'
+include 'archaius-aws'
+include 'archaius-scala'
