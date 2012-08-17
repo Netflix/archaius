@@ -15,6 +15,8 @@
  *     limitations under the License.
  *
  */
+package com.netflix.config.scala
+
 import com.netflix.config.scala._
 
 /**
