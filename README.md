@@ -12,6 +12,8 @@ Archaius includes a set of configuration management APIs used by Netflix. It pro
 * A Callback mechanism that gets invoked on effective/"winning" property mutations (in the ordered hierarchy of Configurations)
 * A JMX MBean that can be accessed via JConsole to inspect and invoke operations on properties
 * Out of the box, Composite Configurations (With ordered hierarchy) for applications (and most web applications willing to use convention based property file locations)
+* Implementations of dynamic configuration sources for URLs, JDBC and Amazon DynamoDB
+* Scala dynamic property wrappers
 
 Documentation
 --------------
