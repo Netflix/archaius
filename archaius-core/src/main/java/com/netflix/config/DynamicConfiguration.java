@@ -29,8 +29,8 @@ package com.netflix.config;
  *
  */
 public class DynamicConfiguration extends ConcurrentMapConfiguration {
-    private final AbstractPollingScheduler scheduler;
-    private final PolledConfigurationSource source;
+    private AbstractPollingScheduler scheduler;
+    private PolledConfigurationSource source;
         
     /**
      * Create an instance and start polling the configuration source.
@@ -40,16 +40,33 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
      *                  used to determine the polling schedule
      */
     public DynamicConfiguration(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
+        this();
+        startPolling(source, scheduler);
+    }
+    
+    public DynamicConfiguration() {
+        super();
+    }
+    
+    /**
+     * Start polling the configuration source with the specified scheduler.
+     * 
+     * @param source PolledConfigurationSource to poll
+     * @param scheduler AbstractPollingScheduler whose {@link AbstractPollingScheduler#schedule(Runnable)} will be
+     *                  used to determine the polling schedule
+     */
+    public void startPolling(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
         this.scheduler = scheduler;
         this.source = source;
         init(source, scheduler);
-        scheduler.startPolling(source, this);
+        scheduler.startPolling(source, this);        
     }
     
     /**
      * Initialize the configuration. This method is called in 
      * {@link #DynamicConfiguration(PolledConfigurationSource, AbstractPollingScheduler)} 
-     * before the initial polling. The default implementation is empty.
+     * and {@link #startPolling(PolledConfigurationSource, AbstractPollingScheduler)}
+     * before the initial polling. The default implementation does nothing.
      */
     protected void init(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
     }
@@ -58,7 +75,9 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
      * Stops the scheduler
      */
     public synchronized void stopLoading() {
-        scheduler.stop();       
+        if (scheduler != null) {
+            scheduler.stop();
+        }
     }
     
     public PolledConfigurationSource getSource() {

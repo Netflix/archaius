@@ -48,11 +48,6 @@ project(':archaius-core') {
             exclude group: 'com.sun.jmx', module: 'jmxri'
         }
     }
-    jar {
-        from('src/main/java') {
-            include 'sampleapp.properties'
-        }
-    }
 }
 
 project(':archaius-aws') {

@@ -22,11 +22,15 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.netflix.config.PollResult;
 import com.netflix.config.PolledConfigurationSource;
@@ -60,6 +64,8 @@ public class URLConfigurationSource implements PolledConfigurationSource {
     public static final String DEFAULT_CONFIG_FILE_FROM_CLASSPATH = 
         System.getProperty("archaius.configurationSource.defaultFileName") == null ? DEFAULT_CONFIG_FILE_NAME : System.getProperty("archaius.configurationSource.defaultFileName");
     
+    private static final Logger logger = LoggerFactory.getLogger(URLConfigurationSource.class);
+
     /**
      * Create an instance with a list URLs to be used.
      * 
@@ -112,10 +118,13 @@ public class URLConfigurationSource implements PolledConfigurationSource {
             urlList.addAll(Arrays.asList(createUrls(fileNames)));                    
         } 
         if (urlList.size() == 0) { 
-                throw new RuntimeException("System property " + CONFIG_URL + " is undefined and default configuration file " 
-                        + DEFAULT_CONFIG_FILE_FROM_CLASSPATH + " cannot be found on classpath. At least one of them has to be supplied.");
+            configUrls = new URL[0];
+            logger.warn("No URLs will be polled as dynamic configuration sources.");
+            logger.info("To enable URLs as dynamic configuration sources, define System property " 
+                    + CONFIG_URL + " or make " + DEFAULT_CONFIG_FILE_FROM_CLASSPATH + " available on classpath.");
         } else {
             configUrls = urlList.toArray(new URL[urlList.size()]);
+            logger.info("URLs to be used as dynamic configuration source: " + urlList);
         }
     }
     
@@ -135,6 +144,10 @@ public class URLConfigurationSource implements PolledConfigurationSource {
             url = URLConfigurationSource.class.getResource(DEFAULT_CONFIG_FILE_FROM_CLASSPATH);
         }
         return url;
+    }
+    
+    public List<URL> getConfigUrls() {
+        return Collections.unmodifiableList(Arrays.asList(configUrls));
     }
     
     private static final String[] getDefaultFileSources() {
@@ -161,7 +174,10 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      */
     @Override
     public PollResult poll(boolean initial, Object checkPoint)
-            throws IOException {        
+            throws IOException {    
+        if (configUrls == null || configUrls.length == 0) {
+            return PollResult.createFull(null);
+        }
         Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
             Properties props = new Properties();
