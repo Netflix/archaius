@@ -30,10 +30,14 @@ public class DynamicURLConfiguration extends DynamicConfiguration {
         
     /**
      * Create an instance with default {@link URLConfigurationSource#URLConfigurationSource()} and 
-     * {@link FixedDelayPollingScheduler#FixedDelayPollingScheduler()} and start polling the source.
+     * {@link FixedDelayPollingScheduler#FixedDelayPollingScheduler()} and start polling the source
+     * if there is any URLs available for polling.
      */
     public DynamicURLConfiguration() {
-        super(new URLConfigurationSource(), new FixedDelayPollingScheduler());
+        URLConfigurationSource source = new URLConfigurationSource();
+        if (source.getConfigUrls() != null && source.getConfigUrls().size() > 0) {
+            startPolling(source, new FixedDelayPollingScheduler());
+        }
     }
 
     /**
