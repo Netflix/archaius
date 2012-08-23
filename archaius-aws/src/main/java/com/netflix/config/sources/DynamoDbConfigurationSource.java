@@ -64,11 +64,18 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
     private AmazonDynamoDB dbClient;
 
     public DynamoDbConfigurationSource() {
-        dbClient = new AmazonDynamoDBClient(new DefaultAWSCredentialsProviderChain().getCredentials());
+        this(new DefaultAWSCredentialsProviderChain().getCredentials());
     }
 
     public DynamoDbConfigurationSource(AWSCredentials credentials) {
-        dbClient = new AmazonDynamoDBClient(credentials);
+        this(new AmazonDynamoDBClient(credentials));
+    }
+
+    public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
+        this.dbClient = dbClient;
+        String table = tableName.get();
+        Map<String, Object> map = load(table, keyAttributeName.get(), valueAttributeName.get());
+        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
     }
 
     @Override
