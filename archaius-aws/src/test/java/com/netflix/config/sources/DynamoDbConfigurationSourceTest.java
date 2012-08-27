@@ -72,14 +72,53 @@ public class DynamoDbConfigurationSourceTest {
         }
     }
 
+    @Test
+    public void testUpdate() throws Exception {
+        if (dbClient != null) {
+            DynamoDbConfigurationSource testConfigSource = new DynamoDbConfigurationSource();
+
+            updateValues();
+            PollResult result = testConfigSource.poll(true, null);
+            assertEquals(3, result.getComplete().size());
+            assertEquals("vala", result.getComplete().get("test1"));
+            assertEquals("valb", result.getComplete().get("test2"));
+            assertEquals("valc", result.getComplete().get("test3"));
+        }
+    }
+
+    private void updateValues(){
+        Map<String, List<WriteRequest>> requestMap = new HashMap<String, List<WriteRequest>>(1);
+        List<WriteRequest> writeList = new ArrayList<WriteRequest>(3);
+
+        Map<String, AttributeValue> item1 = new HashMap<String, AttributeValue>(1);
+        item1.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test1"));
+        item1.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValue().withS("vala"));
+        writeList.add(new WriteRequest().withPutRequest(new PutRequest().withItem(item1)));
+
+        HashMap<String, AttributeValue> item2 = new HashMap<String, AttributeValue>(1);
+        item2.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test2"));
+        item2.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValue().withS("valb"));
+        writeList.add(new WriteRequest().withPutRequest(new PutRequest().withItem(item2)));
+
+        HashMap<String, AttributeValue> item3 = new HashMap<String, AttributeValue>(1);
+        item3.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test3"));
+        item3.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValue().withS("valc"));
+        writeList.add(new WriteRequest().withPutRequest(new PutRequest().withItem(item3)));
+
+        requestMap.put(tableName, writeList);
+
+        BatchWriteItemRequest request = new BatchWriteItemRequest().withRequestItems(requestMap);
+        dbClient.batchWriteItem(request);
+    }
+
     private static void createTable() throws InterruptedException {
         KeySchemaElement hashKey = new KeySchemaElement()
                 .withAttributeName(DynamoDbConfigurationSource.defaultKeyAttribute).withAttributeType("S");
         KeySchema ks = new KeySchema().withHashKeyElement(hashKey);
 
         ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
-                .withReadCapacityUnits(10L)
-                .withWriteCapacityUnits(10L);
+                .withReadCapacityUnits(1L)
+                .withWriteCapacityUnits(1L);
 
         dbClient.createTable(new CreateTableRequest().withTableName(tableName)
                 .withKeySchema(ks).withProvisionedThroughput(provisionedThroughput));
