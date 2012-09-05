@@ -15,6 +15,7 @@ import java.util.Map;
 public class DynamoDbTestHelper {
 
     static void createTable(AmazonDynamoDB dbClient, String tableName) throws InterruptedException {
+        //TODO check to make sure the table isn't being created or deleted.
         KeySchemaElement hashKey = new KeySchemaElement()
                 .withAttributeName(DynamoDbConfigurationSource.defaultKeyAttribute).withAttributeType("S");
         KeySchema ks = new KeySchema().withHashKeyElement(hashKey);
@@ -64,20 +65,21 @@ public class DynamoDbTestHelper {
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
                 withKey(new Key().withHashKeyElement(new AttributeValue().withS("test1"))).withAttributeUpdates(item1));
 
-        HashMap<String, AttributeValue> item2 = new HashMap<String, AttributeValue>(1);
-        item1.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
+        HashMap<String, AttributeValueUpdate> item2 = new HashMap<String, AttributeValueUpdate>(1);
+        item2.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
                 .withAction(AttributeAction.PUT).withValue(new AttributeValue().withS("valb")));
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
-                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test2"))).withAttributeUpdates(item1));
+                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test2"))).withAttributeUpdates(item2));
 
-        HashMap<String, AttributeValue> item3 = new HashMap<String, AttributeValue>(1);
-        item1.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
+        HashMap<String, AttributeValueUpdate> item3 = new HashMap<String, AttributeValueUpdate>(1);
+        item3.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
                 .withAction(AttributeAction.PUT).withValue(new AttributeValue().withS("valc")));
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
-                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test3"))).withAttributeUpdates(item1));
+                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test3"))).withAttributeUpdates(item3));
     }
 
     static void removeTable(AmazonDynamoDB dbClient, String tableName) {
+        //TODO check to make sure the table isn't being created or deleted.
         if (dbClient != null) {
             dbClient.deleteTable(new DeleteTableRequest().withTableName(tableName));
         }
