@@ -24,8 +24,4 @@ public class DynamicStringListProperty extends DynamicListProperty<String> {
         return value;
     }
     
-    public static void main(String[] args) {
-        DynamicStringListProperty prop = new DynamicStringListProperty("abc", "abc, de", ",\\s+");
-        System.out.println(prop.get());
-    }
 }
