@@ -461,6 +461,9 @@ public class DynamicProperty {
      * when the value of the propety is updated.
      */
     public void addCallback(Runnable r) {
+        if (r == null) {
+            throw new NullPointerException("Cannot add null callback to DynamicProperty");
+        }
         callbacks.add(r);
     }
 
