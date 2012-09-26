@@ -17,8 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.scala._
-import com.netflix.config.{DynamicStringMapProperty, DynamicStringSetProperty, DynamicStringListProperty}
+import com.netflix.config.{DynamicListProperty, DynamicStringMapProperty, DynamicStringSetProperty, DynamicStringListProperty}
 
 /**
  * User: gorzell
@@ -26,6 +25,8 @@ import com.netflix.config.{DynamicStringMapProperty, DynamicStringSetProperty, D
  */
 
 trait DynamicProperties {
+
+  private val DefaultDelimiterRegex = DynamicListProperty.DEFAULT_DELIMITER
 
   protected def dynamicIntProperty(propertyName: String, default: Int,
                                    callback: Runnable = null): DynamicIntProperty = {
@@ -69,22 +70,27 @@ trait DynamicProperties {
     prop
   }
 
-  //TODO add an optional delimiter
-  protected def dynamicStringListProperty(propertyName: String, default: List[String],
+  protected def dynamicStringListProperty(propertyName: String,
+                                          default: List[String],
+                                          delimiterRegex: String = DefaultDelimiterRegex,
                                           callback: Runnable = null): DynamicStringProperty = {
     val prop = new DynamicStringListProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicStringSetProperty(propertyName: String, default: Set[String],
+  protected def dynamicStringSetProperty(propertyName: String,
+                                         default: Set[String],
+                                         delimiterRegex: String = DefaultDelimiterRegex,
                                          callback: Runnable = null): DynamicStringProperty = {
     val prop = new DynamicStringSetProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicStringMapProperty(propertyName: String, default: Map[String, String],
+  protected def dynamicStringMapProperty(propertyName: String,
+                                         default: Map[String, String],
+                                         delimiterRegex: String = DefaultDelimiterRegex,
                                          callback: Runnable = null): DynamicStringProperty = {
     val prop = new DynamicStringMapProperty(propertyName, default)
     prop.addCallback(callback)
