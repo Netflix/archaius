@@ -13,12 +13,12 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
 
     private volatile Map<TKEY,TVAL> values;
     
-    public DynamicMapProperty(String propName, String defaultValue, String pairDelimiterRegex) {
-        super(propName, defaultValue, pairDelimiterRegex);
+    public DynamicMapProperty(String propName, String defaultValue, String mapEntryDelimiterRegex) {
+        super(propName, defaultValue, mapEntryDelimiterRegex);
     }
 
-    public DynamicMapProperty(String propName, Map<TKEY, TVAL> defaultValue, String pairDelimiterRegex) {
-        this(propName, (String) null, pairDelimiterRegex);
+    public DynamicMapProperty(String propName, Map<TKEY, TVAL> defaultValue, String mapEntryDelimiterRegex) {
+        this(propName, (String) null, mapEntryDelimiterRegex);
         if (values == null && defaultValue != null) {
             values = Collections.unmodifiableMap(defaultValue);
         }

@@ -5,8 +5,8 @@ import java.util.Map;
 public class DynamicStringMapProperty extends DynamicMapProperty<String, String> {
 
     public DynamicStringMapProperty(String propName, String defaultValue,
-            String delimiter) {
-        super(propName, defaultValue, delimiter);
+            String mapEntryDelimiterRegex) {
+        super(propName, defaultValue, mapEntryDelimiterRegex);
     }
 
     public DynamicStringMapProperty(String propName, String defaultValue) {
@@ -14,8 +14,8 @@ public class DynamicStringMapProperty extends DynamicMapProperty<String, String>
     }
     
     public DynamicStringMapProperty(String propName, Map<String, String> defaultValue,
-            String delimiter) {
-        super(propName, defaultValue, delimiter);
+            String mapEntryDelimiterRegex) {
+        super(propName, defaultValue, mapEntryDelimiterRegex);
     }
 
     public DynamicStringMapProperty(String propName, Map<String, String> defaultValue) {
@@ -31,10 +31,5 @@ public class DynamicStringMapProperty extends DynamicMapProperty<String, String>
     @Override
     protected String getValue(String value) {
         return value;
-    }
-    
-    public static void main(String[] args) {
-        DynamicStringMapProperty prop = new DynamicStringMapProperty("test", "a=abc,b=xyz");
-        System.out.println(prop.getMap());
-    }
+    }    
 }

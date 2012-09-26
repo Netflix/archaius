@@ -12,11 +12,9 @@ public abstract class DynamicSetProperty<T> {
     private final DynamicStringProperty delegate;
     
     private final String delimiter;
-
-    public static final String DEFAULT_DELIMITER = ",";
         
     public DynamicSetProperty(String propName, String defaultValue) {
-        this(propName, defaultValue, DEFAULT_DELIMITER);
+        this(propName, defaultValue, DynamicListProperty.DEFAULT_DELIMITER);
     }
     
     public DynamicSetProperty(String propName, String defaultValue, String delimiterRegex) {
@@ -39,7 +37,7 @@ public abstract class DynamicSetProperty<T> {
     }
 
     public DynamicSetProperty(String propName, Set<T> defaultValue) {
-        this(propName, defaultValue, DEFAULT_DELIMITER);
+        this(propName, defaultValue, DynamicListProperty.DEFAULT_DELIMITER);
     }
 
     private void propertyChangedInternal() {
