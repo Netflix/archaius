@@ -7,17 +7,17 @@ import java.util.List;
 
 public abstract class DynamicListProperty<T> {
     private volatile List<T> values;
-    
+
     private final DynamicStringProperty delegate;
-    
+
     private final String delimiter;
 
     public static final String DEFAULT_DELIMITER = ",";
-    
+
     public DynamicListProperty(String propName, String defaultValue) {
         this(propName, defaultValue, DEFAULT_DELIMITER);
     }
-    
+
     public DynamicListProperty(String propName, String defaultValue, String delimiterRegex) {
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, defaultValue);
         delimiter = delimiterRegex;
@@ -45,7 +45,7 @@ public abstract class DynamicListProperty<T> {
         load();
         propertyChanged();
     }
-    
+
     protected void propertyChanged() {
     }
 
@@ -63,8 +63,8 @@ public abstract class DynamicListProperty<T> {
             list.add(from(s));
         }
         values = Collections.unmodifiableList(list);
-    }  
-    
+    }
+
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
@@ -72,15 +72,15 @@ public abstract class DynamicListProperty<T> {
     public long getChangedTimestamp() {
         return delegate.getChangedTimestamp();
     }
-    
+
     /**
      * Add the callback to be triggered when the value of the property is changed
-     * 
+     *
      * @param callback
      */
     public void addCallback(Runnable callback) {
-        delegate.addCallback(callback);
+        if (callback != null) delegate.addCallback(callback);
     }
-    
+
     protected abstract T from(String value);
 }

@@ -21,40 +21,39 @@ import java.util.IdentityHashMap;
 
 /**
  * A wrapper around DynamicProperty and associates it with a type.
- * 
- * @author awang
  *
  * @param <V> The type of the DynamicProperty
+ * @author awang
  */
 public abstract class PropertyWrapper<V> {
     protected DynamicProperty prop;
     protected V defaultValue;
-    private static final IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object> SUBCLASSES_WITH_NO_CALLBACK 
-        = new IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object>();
+    private static final IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object> SUBCLASSES_WITH_NO_CALLBACK
+            = new IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object>();
 
     static {
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);    
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);    
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicBooleanProperty.class);    
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicBooleanProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicFloatProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicLongProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicDoubleProperty.class);
     }
 
 
-    private static final Object DUMMY_VALUE = new Object(); 
-    
+    private static final Object DUMMY_VALUE = new Object();
+
     /**
-     * By default, a subclass of PropertyWrapper will automatically register {@link #propertyChanged()} as a callback 
+     * By default, a subclass of PropertyWrapper will automatically register {@link #propertyChanged()} as a callback
      * for property value change. This method provide a way for a subclass to avoid this overhead if it is not interested
      * to get callback.
-     *  
+     *
      * @param c
      */
     public static final void registerSubClassWithNoCallback(Class<? extends PropertyWrapper<?>> c) {
         SUBCLASSES_WITH_NO_CALLBACK.put(c, DUMMY_VALUE);
     }
-    
+
     protected PropertyWrapper(String propName, V defaultValue) {
         this.prop = DynamicProperty.getInstance(propName);
         this.defaultValue = defaultValue;
@@ -68,17 +67,17 @@ public abstract class PropertyWrapper<V> {
         // has the cost of modifying the CopyOnWriteArraySet
         if (!SUBCLASSES_WITH_NO_CALLBACK.containsKey(c)) {
             this.prop.addCallback(new Runnable() {
-                                      public void run() {
-                                          propertyChanged();
-                                      }
-                                  });
+                public void run() {
+                    propertyChanged();
+                }
+            });
         }
     }
-    
+
     public String getName() {
         return prop.getName();
     }
-    
+
     /**
      * Called when the property value is updated.
      * The default does nothing.
@@ -87,7 +86,7 @@ public abstract class PropertyWrapper<V> {
     protected void propertyChanged() {
         // by default, do nothing
     }
-    
+
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
@@ -95,21 +94,21 @@ public abstract class PropertyWrapper<V> {
     public long getChangedTimestamp() {
         return prop.getChangedTimestamp();
     }
-    
+
     /**
      * Add the callback to be triggered when the value of the property is changed
-     * 
+     *
      * @param callback
      */
     public void addCallback(Runnable callback) {
-        prop.addCallback(callback);
+        if (callback != null) prop.addCallback(callback);
     }
-    
+
     /**
-     * Get current typed value of the property. 
+     * Get current typed value of the property.
      */
     public abstract V getValue();
-    
+
     @Override
     public String toString() {
         return "DynamicProperty: {name=" + prop.getName() + ", current value="
