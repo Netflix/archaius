@@ -79,4 +79,31 @@ trait DynamicProperties {
 
   protected def dynamicStringProperty(propertyName: String, default: String): DynamicStringProperty =
     dynamicStringProperty(propertyName, default, null)
+
+  protected def dynamicStringListProperty(propertyName: String, default: List[String], callback: Runnable): DynamicStringProperty = {
+    val prop = new DynamicStringListProperty(propertyName, default)
+    prop.addCallback(callback)
+    prop
+  }
+
+  protected def dynamicStringListProperty(propertyName: String, default: List[String]): DynamicStringProperty =
+    dynamicStringListProperty(propertyName, default, null)
+
+  protected def dynamicStringSetProperty(propertyName: String, default: Set[String], callback: Runnable): DynamicStringProperty = {
+    val prop = new DynamicStringSetProperty(propertyName, default)
+    prop.addCallback(callback)
+    prop
+  }
+
+  protected def dynamicStringSetProperty(propertyName: String, default: Set[String]): DynamicStringProperty =
+    dynamicStringSetProperty(propertyName, default, null)
+
+  protected def dynamicStringMapProperty(propertyName: String, default: Map[String, String], callback: Runnable): DynamicStringProperty = {
+    val prop = new DynamicStringMapProperty(propertyName, default)
+    prop.addCallback(callback)
+    prop
+  }
+
+  protected def dynamicStringMapProperty(propertyName: String, default: Map[String, String]): DynamicStringProperty =
+    dynamicStringMapProperty(propertyName, default, null)
 }

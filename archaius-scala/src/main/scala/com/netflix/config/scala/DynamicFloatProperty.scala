@@ -33,6 +33,6 @@ class DynamicFloatProperty(val propertyName: String, val default: Float) {
   def get(): Float = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }
