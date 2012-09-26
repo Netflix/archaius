@@ -8,15 +8,15 @@ import java.util.Set;
 
 public abstract class DynamicSetProperty<T> {
     private volatile Set<T> values;
-    
+
     private final DynamicStringProperty delegate;
-    
+
     private final String delimiter;
-        
+
     public DynamicSetProperty(String propName, String defaultValue) {
         this(propName, defaultValue, DynamicListProperty.DEFAULT_DELIMITER);
     }
-    
+
     public DynamicSetProperty(String propName, String defaultValue, String delimiterRegex) {
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, defaultValue);
         delimiter = delimiterRegex;
@@ -42,9 +42,9 @@ public abstract class DynamicSetProperty<T> {
 
     private void propertyChangedInternal() {
         load();
-        propertyChanged();        
+        propertyChanged();
     }
-    
+
     protected void propertyChanged() {
     }
 
@@ -62,8 +62,8 @@ public abstract class DynamicSetProperty<T> {
             set.add(from(s));
         }
         values = Collections.unmodifiableSet(set);
-    }  
-    
+    }
+
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
@@ -71,15 +71,15 @@ public abstract class DynamicSetProperty<T> {
     public long getChangedTimestamp() {
         return delegate.getChangedTimestamp();
     }
-    
+
     /**
      * Add the callback to be triggered when the value of the property is changed
-     * 
+     *
      * @param callback
      */
     public void addCallback(Runnable callback) {
-        delegate.addCallback(callback);
+        if (callback != null) delegate.addCallback(callback);
     }
-    
+
     protected abstract T from(String value);
 }

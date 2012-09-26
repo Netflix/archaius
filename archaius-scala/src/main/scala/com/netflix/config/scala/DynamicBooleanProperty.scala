@@ -33,6 +33,6 @@ class DynamicBooleanProperty(val propertyName: String, val default: Boolean) {
   def get(): Boolean = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }

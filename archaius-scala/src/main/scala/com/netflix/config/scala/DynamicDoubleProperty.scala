@@ -33,6 +33,6 @@ class DynamicDoubleProperty(val propertyName: String, val default: Double) {
   def get(): Double = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }
