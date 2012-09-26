@@ -33,6 +33,6 @@ class DynamicLongProperty(val propertyName: String, val default: Long) {
   def get(): Long = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }

@@ -33,6 +33,6 @@ class DynamicStringProperty(property: String, default: String) {
   def get(): String = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }

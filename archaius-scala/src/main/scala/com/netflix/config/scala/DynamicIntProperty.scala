@@ -33,6 +33,6 @@ class DynamicIntProperty(val property: String, val default: Int) {
   def get(): Int = prop.get()
 
   def addCallback(callback: Runnable) {
-    prop.addCallback(callback)
+    if (callback != null) prop.addCallback(callback)
   }
 }
