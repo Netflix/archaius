@@ -17,7 +17,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicListProperty, DynamicStringMapProperty, DynamicStringSetProperty, DynamicStringListProperty}
+import com.netflix.config.DynamicListProperty
 
 /**
  * User: gorzell
@@ -73,8 +73,8 @@ trait DynamicProperties {
   protected def dynamicStringListProperty(propertyName: String,
                                           default: List[String],
                                           delimiterRegex: String = DefaultDelimiterRegex,
-                                          callback: Runnable = null): DynamicStringProperty = {
-    val prop = new DynamicStringListProperty(propertyName, default)
+                                          callback: Runnable = null): DynamicStringListProperty = {
+    val prop = new DynamicStringListProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
   }
@@ -82,8 +82,8 @@ trait DynamicProperties {
   protected def dynamicStringSetProperty(propertyName: String,
                                          default: Set[String],
                                          delimiterRegex: String = DefaultDelimiterRegex,
-                                         callback: Runnable = null): DynamicStringProperty = {
-    val prop = new DynamicStringSetProperty(propertyName, default)
+                                         callback: Runnable = null): DynamicStringSetProperty = {
+    val prop = new DynamicStringSetProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
   }
@@ -91,8 +91,8 @@ trait DynamicProperties {
   protected def dynamicStringMapProperty(propertyName: String,
                                          default: Map[String, String],
                                          delimiterRegex: String = DefaultDelimiterRegex,
-                                         callback: Runnable = null): DynamicStringProperty = {
-    val prop = new DynamicStringMapProperty(propertyName, default)
+                                         callback: Runnable = null): DynamicStringMapProperty = {
+    val prop = new DynamicStringMapProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
   }
