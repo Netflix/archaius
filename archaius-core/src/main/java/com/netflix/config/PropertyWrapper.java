@@ -112,6 +112,6 @@ public abstract class PropertyWrapper<V> {
     @Override
     public String toString() {
         return "DynamicProperty: {name=" + prop.getName() + ", current value="
-                + prop.getString(defaultValue.toString()) + "}";
+                + prop.getString(String.valueOf(defaultValue)) + "}";
     }
 }
