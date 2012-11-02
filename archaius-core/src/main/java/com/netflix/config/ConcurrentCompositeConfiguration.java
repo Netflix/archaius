@@ -20,6 +20,7 @@ package com.netflix.config;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -538,8 +539,12 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     /**
      * Get all the keys contained by sub configurations.
+     * 
+     * @throws ConcurrentModificationException if concurrent modification happens on any sub configuration
+     * when it is iterated to get all the keys
+     * 
      */
-    public Iterator<String> getKeys()
+    public Iterator<String> getKeys() throws ConcurrentModificationException
     {
         Set<String> keys = new LinkedHashSet<String>();
         for (Iterator<String> it = overrideProperties.getKeys(); it.hasNext();) {
@@ -549,13 +554,28 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         {
             for (Iterator<String> it = config.getKeys(); it.hasNext();)
             {
-                keys.add(it.next());
+                try {
+                    keys.add(it.next());
+                } catch (ConcurrentModificationException e) {
+                    logger.error("unexpected exception when iterating the keys for configuration " + config 
+                            + " with name " + getNameForConfiguration(config));
+                    throw e;
+                }
             }
         }
 
         return keys.iterator();
     }
 
+    
+    private String getNameForConfiguration(Configuration config) {
+        for (Map.Entry<String, AbstractConfiguration> entry: namedConfigurations.entrySet()) {
+            if (entry.getValue() == config) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
     /**
      * Get the list of the keys contained in the sub configurations that match the
      * specified prefix.
