@@ -78,7 +78,6 @@ public class DynamicPropertyFactory {
     private static DynamicPropertyFactory instance = new DynamicPropertyFactory();
     private volatile static DynamicPropertySupport config = null;
     private volatile static boolean initializedWithDefaultConfig = false;    
-    private volatile static boolean defaultConfigNotFound = false;
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
     public static final String URL_CONFIG_NAME = "archaius.dynamicPropertyFactory.URL_CONFIG";
     public static final String SYS_CONFIG_NAME = "archaius.dynamicPropertyFactory.SYS_CONFIG";
@@ -129,14 +128,19 @@ public class DynamicPropertyFactory {
      * @throws IllegalArgumentException if the factory has already been initialized with a non-default configuration source
      */
     public static DynamicPropertyFactory initWithConfigurationSource(AbstractConfiguration config) {
-        if (ConfigurationManager.isConfigurationInstalled() && config != ConfigurationManager.instance) {
-            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
-                    + ConfigurationManager.getConfigInstance());
+        synchronized(ConfigurationManager.class) {
+            if (config == null) {
+                throw new NullPointerException("config is null");
+            }
+            if (ConfigurationManager.isConfigurationInstalled() && config != ConfigurationManager.instance) {
+                throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
+                        + ConfigurationManager.getConfigInstance());
+            }
+            if (config instanceof DynamicPropertySupport) {
+                return initWithConfigurationSource((DynamicPropertySupport) config);    
+            }
+            return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
         }
-        if (config instanceof DynamicPropertySupport) {
-            return initWithConfigurationSource((DynamicPropertySupport) config);    
-        }
-        return initWithConfigurationSource(new ConfigurationBackedDynamicPropertySupportImpl(config));
     }
     
     /**
@@ -203,43 +207,43 @@ public class DynamicPropertyFactory {
      * @return the instance of DynamicPropertyFactory
      * @throws IllegalArgumentException if the factory has already been initialized with a different and non-default configuration source
      */
-    public static synchronized DynamicPropertyFactory initWithConfigurationSource(DynamicPropertySupport dynamicPropertySupport) {
-        if (dynamicPropertySupport == null) {
-            throw new IllegalArgumentException("dynamicPropertySupport is null");
+    public static DynamicPropertyFactory initWithConfigurationSource(DynamicPropertySupport dynamicPropertySupport) {
+        synchronized (ConfigurationManager.class) {
+            if (dynamicPropertySupport == null) {
+                throw new IllegalArgumentException("dynamicPropertySupport is null");
+            }
+            AbstractConfiguration configuration = null;
+            if (dynamicPropertySupport instanceof AbstractConfiguration) {
+                configuration = (AbstractConfiguration) dynamicPropertySupport;
+            } else if (dynamicPropertySupport instanceof ConfigurationBackedDynamicPropertySupportImpl) {
+                configuration = ((ConfigurationBackedDynamicPropertySupportImpl) dynamicPropertySupport).getConfiguration();
+            }
+            if (initializedWithDefaultConfig) {
+                config = null;
+            } else if (config != null && config != dynamicPropertySupport) {
+                throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
+            }
+            if (ConfigurationManager.isConfigurationInstalled() 
+                    && (configuration != null && configuration != ConfigurationManager.instance)) {
+                throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
+                        + ConfigurationManager.getConfigInstance());
+            }
+            if (configuration != null && configuration != ConfigurationManager.instance) {
+                ConfigurationManager.setDirect(configuration);
+            }
+            setDirect(dynamicPropertySupport);
+            return instance;
         }
-        AbstractConfiguration configuration = null;
-        if (dynamicPropertySupport instanceof AbstractConfiguration) {
-            configuration = (AbstractConfiguration) dynamicPropertySupport;
-        } else if (dynamicPropertySupport instanceof ConfigurationBackedDynamicPropertySupportImpl) {
-            configuration = ((ConfigurationBackedDynamicPropertySupportImpl) dynamicPropertySupport).getConfiguration();
-        }
-        if (initializedWithDefaultConfig) {
-            config = null;
-        } else if (config != null && config != dynamicPropertySupport) {
-            throw new IllegalStateException("DynamicPropertyFactory is already initialized with a diffrerent configuration source: " + config);
-        }
-        if (ConfigurationManager.isConfigurationInstalled() 
-                && (configuration != null && configuration != ConfigurationManager.instance)) {
-            throw new IllegalStateException("ConfigurationManager is already initialized with configuration " 
-                    + ConfigurationManager.getConfigInstance());
-        }
-        if (configuration != null && configuration != ConfigurationManager.instance) {
-            ConfigurationManager.setDirect(configuration);
-        }
-        setDirect(dynamicPropertySupport);
-        return instance;
     }
     
     static void setDirect(DynamicPropertySupport support) {
-        config = support;
-        DynamicProperty.registerWithDynamicPropertySupport(support);
-        initializedWithDefaultConfig = false;        
+        synchronized(ConfigurationManager.class) {
+            config = support;
+            DynamicProperty.registerWithDynamicPropertySupport(support);
+            initializedWithDefaultConfig = false;     
+        }
     }
-    
-    private static boolean shouldInstallDefaultConfig() {
-        return !defaultConfigNotFound && !Boolean.getBoolean(DISABLE_DEFAULT_CONFIG);
-    }
-    
+        
     /**
      * Get the instance to create dynamic properties. If the factory is not initialized with a configuration source 
      * (see {@link #initWithConfigurationSource(AbstractConfiguration)} and {@link #initWithConfigurationSource(DynamicPropertySupport)}),
@@ -257,13 +261,15 @@ public class DynamicPropertyFactory {
      * You can disable the initialization with the default configuration by setting system property {@value #DISABLE_DEFAULT_CONFIG} to "true".
      */
     public static DynamicPropertyFactory getInstance() {
-        if (config == null && shouldInstallDefaultConfig()) {
-            synchronized (DynamicPropertyFactory.class) {
-                if (config == null ) {
-                    AbstractConfiguration config = ConfigurationManager.getConfigInstance();
-                    initWithConfigurationSource(config);
-                    initializedWithDefaultConfig = !ConfigurationManager.isConfigurationInstalled();
-                    logger.info("DynamicPropertyFactory is initialized with configuration sources: " + config);
+        if (config == null) {
+            synchronized (ConfigurationManager.class) {
+                if (config == null) {
+                    AbstractConfiguration configFromManager = ConfigurationManager.getConfigInstance();
+                    if (configFromManager != null) {
+                        initWithConfigurationSource(configFromManager);
+                        initializedWithDefaultConfig = !ConfigurationManager.isConfigurationInstalled();
+                        logger.info("DynamicPropertyFactory is initialized with configuration sources: " + configFromManager);
+                    }
                 }
             }
         }
