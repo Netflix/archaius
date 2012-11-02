@@ -24,6 +24,9 @@ public class ConfigurationBackedDynamicPropertySupportImpl implements DynamicPro
     private final AbstractConfiguration config;
         
     public ConfigurationBackedDynamicPropertySupportImpl(AbstractConfiguration config) {
+        if (config == null) {
+            throw new NullPointerException("config is null");
+        }
         this.config = config;
     }
     

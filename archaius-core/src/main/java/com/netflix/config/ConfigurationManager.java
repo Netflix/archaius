@@ -49,7 +49,7 @@ import com.netflix.config.util.ConfigurationUtils;
 public class ConfigurationManager {
     
     static volatile AbstractConfiguration instance = null;
-    static volatile boolean configurationInstalled = false;
+    static volatile boolean customConfigurationInstalled = false;
     private static volatile ConfigMBean configMBean = null;
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
     static volatile DeploymentContext context = null;
@@ -59,14 +59,14 @@ public class ConfigurationManager {
             String className = System.getProperty("archaius.default.configuration.class");
             if (className != null) {
                 instance = (AbstractConfiguration) Class.forName(className).newInstance();
-                configurationInstalled = true;
+                customConfigurationInstalled = true;
             } else {
                 String factoryName = System.getProperty("archaius.default.configuration.factory");
                 if (factoryName != null) {
                     Method m = Class.forName(factoryName).getDeclaredMethod("getInstance", new Class[]{});
                     m.setAccessible(true);
                     instance = (AbstractConfiguration) m.invoke(null, new Object[]{});
-                    configurationInstalled = true;
+                    customConfigurationInstalled = true;
                 }
             }
             String contextClassName = System.getProperty("archaius.default.deploymentContext.class");
@@ -94,7 +94,7 @@ public class ConfigurationManager {
      * This call can be made only once, otherwise IllegalStateException will be thrown.
      */
     public static synchronized void install(AbstractConfiguration config) throws IllegalStateException {
-        if (!configurationInstalled) {
+        if (!customConfigurationInstalled) {
             if (instance != null) {
                 removeDefaultConfiguration();
             }
@@ -102,7 +102,7 @@ public class ConfigurationManager {
             if (DynamicPropertyFactory.getBackingConfigurationSource() != config) {                
                 DynamicPropertyFactory.initWithConfigurationSource(config);
             }
-            configurationInstalled = true;
+            customConfigurationInstalled = true;
             registerConfigBean();
         } else {
             throw new IllegalStateException("A non-default configuration is already installed");
@@ -110,7 +110,34 @@ public class ConfigurationManager {
     }
 
     public static synchronized boolean isConfigurationInstalled() {
-        return configurationInstalled;
+        return customConfigurationInstalled;
+    }
+    
+    private static AbstractConfiguration createDefaultConfigInstance() {
+        ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();            
+        if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
+            SystemConfiguration sysConfig = new SystemConfiguration();                
+            config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
+            try {
+                DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
+                config.addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
+            } catch (Throwable e) {
+                logger.warn("Failed to create default dynamic configuration", e);
+            }
+        }
+        return config;
+    }
+    
+    private static AbstractConfiguration getConfigInstance(boolean defaultConfigDisabled) {
+        if (instance == null) {
+            synchronized (ConfigurationManager.class) {
+                if (instance == null && !defaultConfigDisabled) {
+                    instance = createDefaultConfigInstance();
+                    registerConfigBean();
+                }
+            }
+        }
+        return instance;        
     }
     
     /**
@@ -119,28 +146,17 @@ public class ConfigurationManager {
      * Configuration and a {@link DynamicURLConfiguration}.
      */
     public static AbstractConfiguration getConfigInstance() {
-        if (instance == null && !Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_CONFIG)) {
+        if (instance == null) {
             synchronized (ConfigurationManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentCompositeConfiguration();            
-                    if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
-                        SystemConfiguration sysConfig = new SystemConfiguration();                
-                        ((ConcurrentCompositeConfiguration) instance).addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
-                        try {
-                            DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
-                            ((ConcurrentCompositeConfiguration) instance).addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
-                        } catch (Throwable e) {
-                            logger.warn("Failed to create default dynamic configuration", e);
-                        }
-                    }
-                    registerConfigBean();
+                    instance = getConfigInstance(Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_CONFIG));
                 }
             }
         }
         return instance;
     }
     
-    static void registerConfigBean() {
+    private static void registerConfigBean() {
         if (Boolean.getBoolean(DynamicPropertyFactory.ENABLE_JMX)) {
             try {
                 configMBean = ConfigJMXManager.registerConfigMbean(instance);
@@ -150,10 +166,10 @@ public class ConfigurationManager {
         }        
     }
     
-    static void setDirect(AbstractConfiguration config) {
+    static synchronized void setDirect(AbstractConfiguration config) {
         ConfigurationManager.removeDefaultConfiguration();
         ConfigurationManager.instance = config;
-        ConfigurationManager.configurationInstalled = true;
+        ConfigurationManager.customConfigurationInstalled = true;
         ConfigurationManager.registerConfigBean();
     }
         
@@ -281,8 +297,8 @@ public class ConfigurationManager {
         return name;
     }
     
-    static synchronized void removeDefaultConfiguration() {
-        if (instance == null || configurationInstalled) {
+    private static synchronized void removeDefaultConfiguration() {
+        if (instance == null || customConfigurationInstalled) {
             return;
         }
         ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) instance;

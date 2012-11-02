@@ -501,6 +501,7 @@ public class DynamicProperty {
                 return false;
             }
         } catch (Exception e) {
+            e.printStackTrace();
             logger.error("Unable to update property: " + propName, e);
             return false;
         }
