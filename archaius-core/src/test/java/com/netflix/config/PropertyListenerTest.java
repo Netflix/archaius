@@ -11,9 +11,9 @@ public class PropertyListenerTest {
     public void testAddPropertyListener() {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         config.addConfigurationListener(new ExpandedConfigurationListenerAdapter(new MyListener()));
-        config.addConfigurationListener(new MyListener());
+        // config.addConfigurationListener(new MyListener());
         config.setProperty("xyz", "abcc");
-        assertEquals(2, MyListener.count);
+        assertEquals(1, MyListener.count);
     }
 
 }
