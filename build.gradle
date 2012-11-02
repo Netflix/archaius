@@ -1,5 +1,5 @@
 // Establish version and status
-ext.releaseVersion = '0.4.2'
+ext.releaseVersion = '0.4.3'
 ext.githubProjectName = 'archaius'
 //group = 'com.netflix.archaius'
 

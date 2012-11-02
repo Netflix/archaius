@@ -17,9 +17,6 @@
  */
 package com.netflix.config;
 
-import org.apache.commons.configuration.event.ConfigurationEvent;
-import org.apache.commons.configuration.event.ConfigurationListener;
-
 /**
  * An abstract {@link PropertyListener} for use by different
  * components who need to listen for configuration changes. Users only need to
@@ -27,18 +24,12 @@ import org.apache.commons.configuration.event.ConfigurationListener;
  * 
  * @author pkamath
  */
-public abstract class AbstractDynamicPropertyListener implements
-        PropertyListener, ConfigurationListener {
+public abstract class AbstractDynamicPropertyListener implements  PropertyListener {
 
     public enum EventType {
         ADD, SET, CLEAR
     };
-
-    final private ExpandedConfigurationListenerAdapter adapter;
     
-    public AbstractDynamicPropertyListener() {
-        adapter = new ExpandedConfigurationListenerAdapter(this);
-    }
     
     @Override
     public void addProperty(Object source, String name, Object value,
@@ -77,8 +68,4 @@ public abstract class AbstractDynamicPropertyListener implements
     public abstract void handlePropertyEvent(String name, Object value,
             EventType eventType);
     
-    @Override
-    public void configurationChanged(ConfigurationEvent event) {
-        adapter.configurationChanged(event);
-    }
 }
