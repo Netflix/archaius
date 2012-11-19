@@ -108,6 +108,10 @@ public abstract class PropertyWrapper<V> {
      * Get current typed value of the property.
      */
     public abstract V getValue();
+    
+    public DynamicProperty getDynamicProperty() {
+        return prop;
+    }
 
     @Override
     public String toString() {
