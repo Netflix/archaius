@@ -109,7 +109,7 @@ public abstract class PropertyWrapper<V> {
      */
     public abstract V getValue();
     
-    public DynamicProperty getDynamicProeprty() {
+    public DynamicProperty getDynamicProperty() {
         return prop;
     }
 
