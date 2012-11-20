@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -167,6 +169,23 @@ public class ConfigurationManager {
     }
     
     static synchronized void setDirect(AbstractConfiguration config) {
+        if (instance != null) {
+            Collection<ConfigurationListener> listeners = instance.getConfigurationListeners();
+            // transfer listeners
+            if (listeners != null) {
+                for (ConfigurationListener listener: listeners) {
+                    config.addConfigurationListener(listener);
+                }
+            }
+            // transfer properties
+            for (Iterator<String> i = instance.getKeys(); i.hasNext();) {
+                String key = i.next();
+                Object value = config.getProperty(key);
+                if (value != null) {
+                    config.setProperty(key, value);
+                }
+            }
+        }
         ConfigurationManager.removeDefaultConfiguration();
         ConfigurationManager.instance = config;
         ConfigurationManager.customConfigurationInstalled = true;
