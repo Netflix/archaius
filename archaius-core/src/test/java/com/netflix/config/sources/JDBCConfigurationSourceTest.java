@@ -133,7 +133,7 @@ public class JDBCConfigurationSourceTest {
 		assertEquals("default", defaultProp.get());
 		
 		DynamicStringProperty prop1 = DynamicPropertyFactory.getInstance().getStringProperty(
-				"prop1", "value1");
+				"prop1", "default");
 		assertEquals("value1", prop1.get());
 
 	}
