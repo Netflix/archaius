@@ -179,7 +179,7 @@ public class ConfigurationUtils {
         PropertiesConfiguration propConfig = null;
         try {
             propConfig = new OverridingPropertiesConfiguration(startingUrl);
-            logger.info("Loaded properties file " + startingUrl);
+            logger.info("Loaded properties file " + startingUrl);            
         } catch (ConfigurationException e) {
             Throwable cause = e.getCause();
             if (cause instanceof FileNotFoundException) {
@@ -202,7 +202,7 @@ public class ConfigurationUtils {
     public static void copyProperties(Configuration from, Configuration to) {
         for (Iterator<String> i = from.getKeys(); i.hasNext(); ) {
             String key = i.next();
-            if (key != null) {
+            if (key != null) {                
                 Object value = from.getProperty(key);
                 if (value != null) {
                     to.setProperty(key, value);
@@ -232,13 +232,17 @@ public class ConfigurationUtils {
         }
         // make a copy of current existing properties
         ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
-        config.setDelimiterParsingDisabled(true);
         
         // need to have all the properties to interpolate next load property value
         copyProperties(ConfigurationManager.getConfigInstance(), config);
         copyProperties(propConfig, config);
-        String nextLoad = config.getString(nextLoadKeyToUse);
-        // need to clear it for next load
+        // In case this is a list of files to load, always treat the value as a list
+        List<Object> list = config.getList(nextLoadKeyToUse);
+        StringBuilder sb = new StringBuilder();
+        for (Object value: list) {
+            sb.append(value).append(",");
+        }
+        String nextLoad = sb.toString();
         propConfig.clearProperty(nextLoadKeyToUse);
         return nextLoad;
     }    
