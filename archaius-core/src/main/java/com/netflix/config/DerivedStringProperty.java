@@ -60,7 +60,13 @@ public abstract class DerivedStringProperty<D> {
      */
     protected abstract D derive(String value);
 
+    /**
+     * {@link com.netflix.config.PropertyWrapper#propertyChanged()}
+     */
+    protected void propertyChanged() {}
+
     void propertyChangedInternal() {
+        propertyChanged();
         deriveAndSet();
     }
 
