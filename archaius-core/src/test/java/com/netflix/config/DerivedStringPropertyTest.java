@@ -39,9 +39,10 @@ public class DerivedStringPropertyTest {
             }
         };
 
-        p.propertyChanged();
+//        p.propertyChanged();
+        p.propertyChangedInternal();
         assertTrue("derive() was not called", derived.get());
-        assertEquals(String.format("%s/derived", defaultVal), p.getDerived());
+        assertEquals(String.format("%s/derived", defaultVal), p.get());
     }
 
     @Test
@@ -54,8 +55,8 @@ public class DerivedStringPropertyTest {
             }
         };
 
-        p.propertyChanged();
-        assertEquals(null, p.getDerived());
+        p.propertyChangedInternal();
+        assertEquals(null, p.get());
     }
 
 }

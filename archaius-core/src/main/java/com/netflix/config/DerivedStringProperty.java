@@ -27,9 +27,11 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author mhawthorne
  */
-public abstract class DerivedStringProperty<D> extends DynamicStringProperty {
+public abstract class DerivedStringProperty<D> {
 
     private static final Logger log = LoggerFactory.getLogger(DerivedStringProperty.class);
+
+    private final DynamicStringProperty delegate;
 
     /**
      * Holds derived value, which may be null.
@@ -37,14 +39,19 @@ public abstract class DerivedStringProperty<D> extends DynamicStringProperty {
     private final AtomicReference<D> derived = new AtomicReference<D>(null);
 
     public DerivedStringProperty(String name, String defaultValue) {
-        super(name, defaultValue);
+        delegate = DynamicPropertyFactory.getInstance().getStringProperty(name, defaultValue);
         deriveAndSet();
+        delegate.addCallback(new Runnable() {
+            public void run() {
+                propertyChangedInternal();
+            }
+        });
     }
 
     /**
      * Fetches derived value.
      */
-    public D getDerived() {
+    public D get() {
         return derived.get();
     }
 
@@ -53,15 +60,13 @@ public abstract class DerivedStringProperty<D> extends DynamicStringProperty {
      */
     protected abstract D derive(String value);
 
-    @Override
-    protected void propertyChanged() {
-        super.propertyChanged();
+    void propertyChangedInternal() {
         deriveAndSet();
     }
 
     private void deriveAndSet() {
          try {
-            derived.set(derive(this.get()));
+            derived.set(derive(this.delegate.get()));
         } catch (Exception e) {
             log.error("error when deriving initial value", e);
         }
