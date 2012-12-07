@@ -17,6 +17,9 @@
  */
 package com.netflix.config;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * An implemenatation of {@link DeploymentContext} with simple setters and getters.
  * 
@@ -24,70 +27,75 @@ package com.netflix.config;
  *
  */
 public class SimpleDeploymentContext implements DeploymentContext {
-    private String environment;
-    private String dataCenter;
-    private String applicationId;
-    private String serverId;
-    private String stack;
-    private String region;
+    private Map<DeploymentContext.ContextKey, String> map = new ConcurrentHashMap<DeploymentContext.ContextKey, String>();
     
     @Override
     public String getDeploymentEnvironment() {
-        return environment;
+        return map.get(ContextKey.environment);
     }
 
     @Override
     public void setDeploymentEnvironment(String env) {
-        environment = env;        
+        map.put(ContextKey.environment, env);       
     }
 
     @Override
     public String getDeploymentDatacenter() {
-        return dataCenter;
+        return map.get(ContextKey.datacenter);
     }
 
     @Override
     public void setDeploymentDatacenter(String deployedAt) {
-        dataCenter = deployedAt;
+        map.put(ContextKey.datacenter, deployedAt);
     }
 
     @Override
     public String getApplicationId() {
-        return applicationId;
+        return map.get(ContextKey.appId);
     }
 
     @Override
     public void setApplicationId(String appId) {
-        applicationId = appId;
+        map.put(ContextKey.appId, appId);
     }
 
     @Override
     public void setDeploymentServerId(String serverId) {
-        this.serverId = serverId;
+        map.put(ContextKey.serverId, serverId);
     }
 
     @Override
     public String getDeploymentServerId() {
-        return serverId;
+        return map.get(ContextKey.serverId);
     }
 
     @Override
     public String getDeploymentStack() {
-        return stack;
+        return map.get(ContextKey.stack);
     }
 
     @Override
     public void setDeploymentStack(String stack) {
-        this.stack = stack;
+        map.put(ContextKey.stack, stack);
     }
 
     @Override
     public String getDeploymentRegion() {
-        return region;
-    }
+        return map.get(ContextKey.region);
+    }    
 
     @Override
     public void setDeploymentRegion(String region) {
-        this.region = region;
+        map.put(ContextKey.region, region);
+    }
+
+    @Override
+    public String getValue(ContextKey key) {
+        return map.get(key);
+    }
+
+    @Override
+    public void setValue(ContextKey key, String value) {
+        map.put(key, value);
     }    
 }

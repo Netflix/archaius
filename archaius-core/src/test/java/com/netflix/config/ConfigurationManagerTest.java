@@ -45,8 +45,12 @@ public class ConfigurationManagerTest {
     
     @Test
     public void testLoadCascadedProperties() throws Exception {
-        ConfigurationManager.getDeploymentContext().setDeploymentEnvironment("test");
+        SimpleDeploymentContext context = new SimpleDeploymentContext();
+        context.setDeploymentEnvironment("test");
+        context.setDeploymentRegion("us-east-1");
+        ConfigurationManager.setDeploymentContext(context);
         ConfigurationManager.loadCascadedPropertiesFromResources("sampleapp");
-        assertEquals("9", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));        
+        assertEquals("9", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
+        assertEquals("1", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));          
     }
 }

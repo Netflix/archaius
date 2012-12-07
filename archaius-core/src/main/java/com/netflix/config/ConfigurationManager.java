@@ -17,14 +17,16 @@
  */
 package com.netflix.config;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -56,6 +58,10 @@ public class ConfigurationManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
     static volatile DeploymentContext context = null;
     
+    public static final String PROP_NEXT_LOAD = "@next";
+    
+    private static Set<String> loadedPropertiesURLs = new CopyOnWriteArraySet<String>();
+    
     static {
         try {
             String className = System.getProperty("archaius.default.configuration.class");
@@ -73,15 +79,15 @@ public class ConfigurationManager {
             }
             String contextClassName = System.getProperty("archaius.default.deploymentContext.class");
             if (contextClassName != null) {
-                context = (DeploymentContext) Class.forName(className).newInstance();
+                setDeploymentContext((DeploymentContext) Class.forName(className).newInstance());
             } else {
                 String factoryName = System.getProperty("archaius.default.deploymentContext.factory");
                 if (factoryName != null) {
                     Method m = Class.forName(factoryName).getDeclaredMethod("getInstance", new Class[]{});
                     m.setAccessible(true);
-                    context = (DeploymentContext) m.invoke(null, new Object[]{});
+                    setDeploymentContext((DeploymentContext) m.invoke(null, new Object[]{}));
                 } else {
-                    context = new ConfigurationBasedDeploymentContext();
+                    setDeploymentContext(new ConfigurationBasedDeploymentContext());
                 }
             }
 
@@ -90,6 +96,10 @@ public class ConfigurationManager {
         }
     }
     
+    public static Set<String> getLoadedPropertiesURLs() {
+        return loadedPropertiesURLs;
+    }
+
     /**
      * Install the system wide configuration with the ConfigurationManager. This will also install 
      * the configuration with the {@link DynamicPropertyFactory} by calling {@link DynamicPropertyFactory#initWithConfigurationSource(AbstractConfiguration)}.
@@ -97,15 +107,10 @@ public class ConfigurationManager {
      */
     public static synchronized void install(AbstractConfiguration config) throws IllegalStateException {
         if (!customConfigurationInstalled) {
-            if (instance != null) {
-                removeDefaultConfiguration();
-            }
-            instance = config;
+            setDirect(config);
             if (DynamicPropertyFactory.getBackingConfigurationSource() != config) {                
                 DynamicPropertyFactory.initWithConfigurationSource(config);
             }
-            customConfigurationInstalled = true;
-            registerConfigBean();
         } else {
             throw new IllegalStateException("A non-default configuration is already installed");
         }
@@ -118,14 +123,16 @@ public class ConfigurationManager {
     private static AbstractConfiguration createDefaultConfigInstance() {
         ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();            
         if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
-            SystemConfiguration sysConfig = new SystemConfiguration();                
-            config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
             try {
                 DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
                 config.addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
             } catch (Throwable e) {
                 logger.warn("Failed to create default dynamic configuration", e);
             }
+            SystemConfiguration sysConfig = new SystemConfiguration();                
+            config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
+            int index = config.getIndexOfConfiguration(sysConfig);
+            config.setContainerConfigurationIndex(index);
         }
         return config;
     }
@@ -174,14 +181,21 @@ public class ConfigurationManager {
             // transfer listeners
             if (listeners != null) {
                 for (ConfigurationListener listener: listeners) {
+                    if (listener instanceof ExpandedConfigurationListenerAdapter
+                            && ((ExpandedConfigurationListenerAdapter) listener).getListener() 
+                            instanceof DynamicProperty.DynamicPropertyListener) {
+                        // no need to transfer the fast property listener as it should be set later
+                        // with the new configuration
+                        continue;
+                    }
                     config.addConfigurationListener(listener);
                 }
             }
-            // transfer properties
+            // transfer properties which are not in conflict with new configuration
             for (Iterator<String> i = instance.getKeys(); i.hasNext();) {
                 String key = i.next();
-                Object value = config.getProperty(key);
-                if (value != null) {
+                Object value = instance.getProperty(key);
+                if (value != null && !config.containsKey(key)) {
                     config.setProperty(key, value);
                 }
             }
@@ -191,7 +205,7 @@ public class ConfigurationManager {
         ConfigurationManager.customConfigurationInstalled = true;
         ConfigurationManager.registerConfigBean();
     }
-        
+      
     /**
      * Load properties from resource file into the system wide configuration
      * @param path path of the resource
@@ -241,18 +255,16 @@ public class ConfigurationManager {
         if (url == null) {
             throw new IOException("Cannot locate " + defaultConfigFileName + " as a classpath resource.");
         }
-        Properties props = new Properties();
-        InputStream fin = url.openStream();
-        props.load(fin);
-        fin.close();
+        Properties props = getPropertiesFromFile(url);
         String environment = getDeploymentContext().getDeploymentEnvironment();
         if (environment != null && environment.length() > 0) {
             String envConfigFileName = configName + "-" + environment + ".properties";
             url = loader.getResource(envConfigFileName);
             if (url != null) {
-                InputStream fin2 = url.openStream();
-                props.load(fin2);
-                fin2.close();
+                Properties envProps = getPropertiesFromFile(url);
+                if (envProps != null) {
+                    props.putAll(envProps);
+                }
             }
         }
         if (instance instanceof AggregatedConfiguration) {
@@ -285,6 +297,14 @@ public class ConfigurationManager {
     
     public static void setDeploymentContext(DeploymentContext context) {
         ConfigurationManager.context = context;
+        if (instance != null) {
+            for (DeploymentContext.ContextKey key: DeploymentContext.ContextKey.values()) {
+                String value = context.getValue(key);
+                if (value != null) {
+                    instance.setProperty(key.getKey(), value);
+                }
+            }      
+        }
     }
     
     public static DeploymentContext getDeploymentContext() {
@@ -350,5 +370,19 @@ public class ConfigurationManager {
             }
         }
         instance = null;        
-    }    
+    }      
+    
+    public static AbstractConfiguration getConfigFromPropertiesFile(URL startingUrl) 
+    throws FileNotFoundException {
+        return ConfigurationUtils.getConfigFromPropertiesFile(startingUrl,  
+                getLoadedPropertiesURLs(), PROP_NEXT_LOAD);
+    }
+    
+    public static Properties getPropertiesFromFile(URL startingUrl) 
+    throws FileNotFoundException {
+        return ConfigurationUtils.getPropertiesFromFile(startingUrl, getLoadedPropertiesURLs(), PROP_NEXT_LOAD);
+    }
+
+
 }
+
