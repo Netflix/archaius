@@ -66,8 +66,8 @@ public abstract class DerivedStringProperty<D> {
     protected void propertyChanged() {}
 
     void propertyChangedInternal() {
-        propertyChanged();
         deriveAndSet();
+        propertyChanged();
     }
 
     private void deriveAndSet() {
