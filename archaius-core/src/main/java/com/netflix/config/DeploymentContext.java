@@ -22,7 +22,22 @@ package com.netflix.config;
  * are optional and may return null if unset.
  */
 public interface DeploymentContext {
-
+    
+    public enum ContextKey {
+        environment("@environment"), datacenter("@datacenter"), appId("@appId"),
+        serverId("@serverId"), stack("@stack"), region("@region");
+        
+        private String key;
+        
+        ContextKey(String key) {
+            this.key = key;
+        }
+        
+        public String getKey() {
+            return key;
+        }
+    }
+    
     /**
      * @return the deployment environment. For example "test", "dev", "prod".
      */
@@ -51,6 +66,10 @@ public interface DeploymentContext {
      * can be used to affect the application's behavior.
      */
     public String getDeploymentStack();
+    
+    public String getValue(ContextKey key);
+    
+    public void setValue(ContextKey key, String value);
 
     public void setDeploymentStack(String stack);
 
