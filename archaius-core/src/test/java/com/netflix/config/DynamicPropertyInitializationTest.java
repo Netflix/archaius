@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class DynamicPropertyInitializationTest {
     private volatile Object lastModified;
-    
+        
     ConfigurationListener listener = new ConfigurationListener() {
         
         @Override
@@ -37,6 +37,8 @@ public class DynamicPropertyInitializationTest {
         assertEquals("fromNewConfig", prop.get());
         ConfigurationManager.getConfigInstance().setProperty("xyz", "new");
         assertEquals("new", lastModified);
+        assertEquals("new", prop.get());
+        assertEquals(2, newConfig.getConfigurationListeners().size());
     }
 
 }

@@ -181,6 +181,13 @@ public class ConfigurationManager {
             // transfer listeners
             if (listeners != null) {
                 for (ConfigurationListener listener: listeners) {
+                    if (listener instanceof ExpandedConfigurationListenerAdapter
+                            && ((ExpandedConfigurationListenerAdapter) listener).getListener() 
+                            instanceof DynamicProperty.DynamicPropertyListener) {
+                        // no need to transfer the fast property listener as it should be set later
+                        // with the new configuration
+                        continue;
+                    }
                     config.addConfigurationListener(listener);
                 }
             }
