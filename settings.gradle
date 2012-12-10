@@ -2,4 +2,5 @@
 include 'archaius-core'
 include 'archaius-samplelibrary'
 include 'archaius-aws'
+include 'archaius-jclouds'
 include 'archaius-scala'
