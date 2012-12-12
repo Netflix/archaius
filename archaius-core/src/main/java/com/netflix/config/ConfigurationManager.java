@@ -179,6 +179,14 @@ public class ConfigurationManager {
         if (instance != null) {
             Collection<ConfigurationListener> listeners = instance.getConfigurationListeners();
             // transfer listeners
+            // transfer properties which are not in conflict with new configuration
+            for (Iterator<String> i = instance.getKeys(); i.hasNext();) {
+                String key = i.next();
+                Object value = instance.getProperty(key);
+                if (value != null && !config.containsKey(key)) {
+                    config.setProperty(key, value);
+                }
+            }
             if (listeners != null) {
                 for (ConfigurationListener listener: listeners) {
                     if (listener instanceof ExpandedConfigurationListenerAdapter
@@ -189,14 +197,6 @@ public class ConfigurationManager {
                         continue;
                     }
                     config.addConfigurationListener(listener);
-                }
-            }
-            // transfer properties which are not in conflict with new configuration
-            for (Iterator<String> i = instance.getKeys(); i.hasNext();) {
-                String key = i.next();
-                Object value = instance.getProperty(key);
-                if (value != null && !config.containsKey(key)) {
-                    config.setProperty(key, value);
                 }
             }
         }
