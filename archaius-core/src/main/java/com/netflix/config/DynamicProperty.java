@@ -25,6 +25,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.validation.PropertyChangeValidator;
+import com.netflix.config.validation.ValidationException;
+
 /**
  * A cached configuration property value that is automatically
  * updated when the config is changed.
@@ -76,6 +79,8 @@ public class DynamicProperty {
     private String stringValue = null;
     private long changedTime;
     private CopyOnWriteArraySet<Runnable> callbacks = new CopyOnWriteArraySet<Runnable>();
+    private CopyOnWriteArraySet<PropertyChangeValidator> validators = new CopyOnWriteArraySet<PropertyChangeValidator>();
+
 
     /**
      * A cached value of a particular type.
@@ -467,6 +472,13 @@ public class DynamicProperty {
         callbacks.add(r);
     }
 
+    public void addValidator(PropertyChangeValidator validator) {
+        if (validator == null) {
+            throw new NullPointerException("Cannot add null validator to DynamicProperty");            
+        }
+        validators.add(validator);
+    }
+    
     /**
      * Removes a callback to the DynamicProperty so that it will
      * no longer be run when the value of the propety is updated.
@@ -491,6 +503,19 @@ public class DynamicProperty {
         }
     }
 
+    private void validate(String newValue) {
+        for (PropertyChangeValidator v: validators) {
+            try {
+                if (!v.validate(newValue)) {
+                    throw new ValidationException("Validation failed from validator " 
+                            + v.getClass().getName() + " for value " + newValue);
+                }
+            } catch (Throwable e) {
+                throw new ValidationException("Unexpected exception from validator " + v.getClass().getName(), e);
+            }
+        }
+    }
+    
     // return true iff the value actually changed
     private boolean updateValue() {
         String newValue;
@@ -550,6 +575,15 @@ public class DynamicProperty {
         }
         return changed;
     }
+    
+    private static void validate(String propName, Object value) {
+        DynamicProperty prop = ALL_PROPS.get(propName);
+        if (prop != null) {
+            String newValue = (value == null)? null : value.toString();
+            prop.validate(newValue);
+        }
+    }
+
 
     /**
      * A callback object that listens for configuration changes
@@ -565,12 +599,16 @@ public class DynamicProperty {
         public void addProperty(Object source, String name, Object value, boolean beforeUpdate) {
             if (!beforeUpdate) {
                 updateProperty(name, value);
+            } else {
+                validate(name, value);
             }
         }
         @Override
         public void setProperty(Object source, String name, Object value, boolean beforeUpdate) {
             if (!beforeUpdate) {
                 updateProperty(name, value);
+            } else {
+                validate(name, value);
             }
         }
         @Override
