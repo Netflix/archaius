@@ -37,6 +37,8 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.validation.ValidationException;
+
 /**
  * This class uses a ConcurrentHashMap for reading/writing a property to achieve high
  * throughput and thread safety. The implementation is lock free for {@link #getProperty(String)}
@@ -165,7 +167,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         }
     }
 
-    public void addProperty(String key, Object value)
+    public void addProperty(String key, Object value) throws ValidationException
     {
         if (value == null) {
             throw new NullPointerException("Value for property " + key + " is null");
@@ -199,7 +201,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
      * followed by logic to add the property including calling {@link #addPropertyDirect(String, Object)}. 
      */
     @Override
-    public void setProperty(String key, Object value)
+    public void setProperty(String key, Object value) throws ValidationException
     {
         if (value == null) {
             throw new NullPointerException("Value for property " + key + " is null");
@@ -303,6 +305,12 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         {
             try {
                 l.configurationChanged(event);
+            } catch (ValidationException e) {
+                if (beforeUpdate) {
+                    throw e;
+                } else {
+                    logger.error("Unexpected exception", e);                    
+                }
             } catch (Throwable e) {
                 logger.error("Error firing configuration event", e);
             }

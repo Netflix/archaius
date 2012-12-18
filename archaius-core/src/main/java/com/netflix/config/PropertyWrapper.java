@@ -19,6 +19,8 @@ package com.netflix.config;
 
 import java.util.IdentityHashMap;
 
+import com.netflix.config.validation.PropertyChangeValidator;
+
 /**
  * A wrapper around DynamicProperty and associates it with a type.
  *
@@ -26,8 +28,8 @@ import java.util.IdentityHashMap;
  * @author awang
  */
 public abstract class PropertyWrapper<V> {
-    protected DynamicProperty prop;
-    protected V defaultValue;
+    protected final DynamicProperty prop;
+    protected final V defaultValue;
     private static final IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object> SUBCLASSES_WITH_NO_CALLBACK
             = new IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object>();
 
@@ -71,6 +73,12 @@ public abstract class PropertyWrapper<V> {
                     propertyChanged();
                 }
             });
+            this.prop.addValidator(new PropertyChangeValidator() {                
+                @Override
+                public boolean validate(String newValue) {
+                    return PropertyWrapper.this.validate(newValue);
+                }
+            });
         }
     }
 
@@ -78,15 +86,34 @@ public abstract class PropertyWrapper<V> {
         return prop.getName();
     }
 
+    public void addValidator(PropertyChangeValidator v) {
+        if (v != null) {
+            prop.addValidator(v);
+        }
+    }
+    
     /**
      * Called when the property value is updated.
      * The default does nothing.
      * Subclasses are free to override this if desired.
      */
     protected void propertyChanged() {
+        propertyChanged(getValue());
+    }
+
+    /**
+     * Called when the property value is updated.
+     * The default does nothing.
+     * Subclasses are free to override this if desired.
+     */
+    protected void propertyChanged(V newValue) {
         // by default, do nothing
     }
 
+    protected boolean validate(String newValue) {
+        return true;
+    }
+    
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.

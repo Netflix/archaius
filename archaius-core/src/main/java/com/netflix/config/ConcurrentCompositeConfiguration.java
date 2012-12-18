@@ -130,7 +130,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     private ConfigurationListener eventPropagater = new ConfigurationListener() {
         @Override
         public void configurationChanged(ConfigurationEvent event) {
-            if (!event.isBeforeUpdate() && propagateEventToParent) {
+            boolean beforeUpdate = event.isBeforeUpdate();
+            if (propagateEventToParent) {
                 int type = event.getType();
                 String name = event.getPropertyName();
                 Object value = event.getPropertyValue();
@@ -139,22 +140,29 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
                 case HierarchicalConfiguration.EVENT_ADD_NODES:
                 case EVENT_CLEAR:
                 case EVENT_CONFIGURATION_SOURCE_CHANGED:
-                    fireEvent(type, name, value, false);
+                    fireEvent(type, name, value, beforeUpdate);
                     break;
 
                 case EVENT_ADD_PROPERTY:
                 case EVENT_SET_PROPERTY:
-                    Configuration winningConf = getSource(name);
-                    if (winningConf == event.getSource()) {
-                        fireEvent(type, name, value, false);                        
-                    } 
+                    if (beforeUpdate) {
+                        // we want the validators to run even if the source is not
+                        // the winning configuration
+                        fireEvent(type, name, value, beforeUpdate);                                                
+                    } else {
+                        AbstractConfiguration sourceConfig = (AbstractConfiguration) event.getSource();
+                        AbstractConfiguration winningConf = (AbstractConfiguration) getSource(name);
+                        if (winningConf == null || getIndexOfConfiguration(sourceConfig) <= getIndexOfConfiguration(winningConf)) {
+                            fireEvent(type, name, value, beforeUpdate);                        
+                        } 
+                    }
                     break;
                 case EVENT_CLEAR_PROPERTY:
                     finalValue = ConcurrentCompositeConfiguration.this.getProperty(name);
                     if (finalValue == null) {
-                        fireEvent(type, name, value, false);                        
+                        fireEvent(type, name, value, beforeUpdate);                        
                     } else {
-                        fireEvent(EVENT_SET_PROPERTY, name, finalValue, false);
+                        fireEvent(EVENT_SET_PROPERTY, name, finalValue, beforeUpdate);
                     }
                     break;
                 default:
