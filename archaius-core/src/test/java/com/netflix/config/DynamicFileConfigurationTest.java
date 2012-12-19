@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.netflix.config.sources.URLConfigurationSource;
+import com.netflix.config.validation.ValidationException;
 
 import static org.junit.Assert.*;
 
@@ -103,11 +104,10 @@ public class DynamicFileConfigurationTest {
 
         DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
             @Override
-            public boolean validate(String newValue) {
-                if (Integer.parseInt(newValue) >= 0) {
-                    return true;
+            public void validate(String newValue) {
+                if (Integer.parseInt(newValue) < 0) {
+                    throw new ValidationException("Cannot be negative");
                 }
-                return false;
             }
         };
         assertEquals(0, validatedProp.get());

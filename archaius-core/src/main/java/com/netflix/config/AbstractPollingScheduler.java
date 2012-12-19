@@ -166,7 +166,7 @@ public abstract class AbstractPollingScheduler {
                 }
             }
         } catch (ValidationException e) {
-            log.error("Validation failed for property " + name, e);
+            log.warn("Validation failed for property " + name, e);
         }
     }
     
