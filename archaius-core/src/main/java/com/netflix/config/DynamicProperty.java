@@ -506,12 +506,11 @@ public class DynamicProperty {
     private void validate(String newValue) {
         for (PropertyChangeValidator v: validators) {
             try {
-                if (!v.validate(newValue)) {
-                    throw new ValidationException("Validation failed from validator " 
-                            + v.getClass().getName() + " for value " + newValue);
-                }
+                v.validate(newValue);
+            } catch (ValidationException e) {
+                throw e;
             } catch (Throwable e) {
-                throw new ValidationException("Unexpected exception from validator " + v.getClass().getName(), e);
+                throw new ValidationException("Unexpected exception during validation", e);
             }
         }
     }

@@ -75,8 +75,8 @@ public abstract class PropertyWrapper<V> {
             });
             this.prop.addValidator(new PropertyChangeValidator() {                
                 @Override
-                public boolean validate(String newValue) {
-                    return PropertyWrapper.this.validate(newValue);
+                public void validate(String newValue) {
+                    PropertyWrapper.this.validate(newValue);
                 }
             });
         }
@@ -110,8 +110,7 @@ public abstract class PropertyWrapper<V> {
         // by default, do nothing
     }
 
-    protected boolean validate(String newValue) {
-        return true;
+    protected void validate(String newValue) {
     }
     
     /**
