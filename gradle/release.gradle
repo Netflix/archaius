@@ -19,15 +19,15 @@ checkCommitNeeded.dependsOn initScmPlugin
 
 [
     uploadIvyLocal: 'uploadLocal', 
-    uploadArtifactory: 'artifactoryPublish', // Call out to compile against internal repository
-    buildWithArtifactory: 'build' // Build against internal repository
+    uploadArtifactory: ':archaius-core:artifactoryPublish', // Call out to compile against internal repository
+    buildWithArtifactory: ':archaius-core:build' // Build against internal repository
 ].each { key, value ->
     // Call out to compile against internal repository
     task "${key}"(type: GradleBuild) {
         startParameter = project.gradle.startParameter.newInstance()
         startParameter.addInitScript( file('gradle/netflix-oss.gradle') )
         startParameter.getExcludedTaskNames().add('check')
-        tasks = [ 'build', value ]
+        tasks = [ ':archaius-core:build', value ]
     }
 }
 task releaseArtifactory(dependsOn: [checkSnapshotDependencies, uploadArtifactory])
