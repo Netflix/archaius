@@ -1,16 +1,18 @@
 subprojects {
     /*
+    // Checkstyle
     apply plugin: 'checkstyle'
     tasks.withType(Checkstyle) { ignoreFailures = true }
     checkstyle {
         ignoreFailures = true // Waiting on GRADLE-2163
         configFile = rootProject.file('codequality/checkstyle.xml')
-    }*/
+    }
+    */
 
     // FindBugs
     apply plugin: 'findbugs'
     tasks.withType(FindBugs) { 
-         reports.html.enabled true
+        reports.html.enabled true
         reports.xml.enabled false
     }
 
@@ -18,6 +20,11 @@ subprojects {
     // apply plugin: 'pmd'
     // tasks.withType(Pmd) {  ignoreFailures = true }
 
-    apply plugin: 'java'
-    tasks.withType(Test) { forkEvery = 1 }
+    apply plugin: 'cobertura'
+    cobertura {
+        sourceDirs = sourceSets.main.java.srcDirs
+        format = 'html'
+        includes = ['**/*.java', '**/*.groovy']
+        excludes = []
+    }
 }
