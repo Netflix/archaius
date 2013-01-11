@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.config.PollListener.EventType;
+import com.netflix.config.validation.ValidationException;
 
 
 /**
@@ -150,17 +151,22 @@ public abstract class AbstractPollingScheduler {
     }
     
     private void addOrChangeProperty(String name, Object newValue, final Configuration config) {
-        if (!config.containsKey(name)) {
-            config.addProperty(name, newValue);
-        } else {
-            Object oldValue = config.getProperty(name);
-            if (newValue != null) {
-                if (!newValue.equals(oldValue)) {
-                    config.setProperty(name, newValue);
+        // We do not want to abort the operation due to failed validation on one property
+        try {
+            if (!config.containsKey(name)) {
+                config.addProperty(name, newValue);
+            } else {
+                Object oldValue = config.getProperty(name);
+                if (newValue != null) {
+                    if (!newValue.equals(oldValue)) {
+                        config.setProperty(name, newValue);
+                    }
+                } else if (oldValue != null) {
+                    config.setProperty(name, null);                
                 }
-            } else if (oldValue != null) {
-                config.setProperty(name, null);                
             }
+        } catch (ValidationException e) {
+            log.warn("Validation failed for property " + name, e);
         }
     }
     

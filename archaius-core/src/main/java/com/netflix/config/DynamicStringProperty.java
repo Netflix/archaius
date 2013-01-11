@@ -26,7 +26,7 @@ package com.netflix.config;
  */
 public class DynamicStringProperty extends PropertyWrapper<String> {
 
-    DynamicStringProperty(String propName, String defaultValue) {
+    protected DynamicStringProperty(String propName, String defaultValue) {
         super(propName, defaultValue);
     }
 

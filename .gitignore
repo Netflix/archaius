@@ -1,3 +1,5 @@
+archaius-core/MySiteConfiguration/
+
 # Compiled source #
 ###################
 *.com
@@ -34,6 +36,7 @@ Thumbs.db
 # Editor Files #
 ################
 *~
+*.swp
 
 # Gradle Files #
 ################
@@ -44,8 +47,8 @@ Thumbs.db
 */target
 /build
 */build
-#
-# # IntelliJ specific files/directories
+
+# IntelliJ specific files/directories
 out
 .idea
 *.ipr

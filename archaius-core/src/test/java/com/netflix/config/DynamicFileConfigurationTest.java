@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.netflix.config.sources.URLConfigurationSource;
+import com.netflix.config.validation.ValidationException;
 
 import static org.junit.Assert.*;
 
@@ -60,6 +61,8 @@ public class DynamicFileConfigurationTest {
             public void run() {
                 try {
                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), "UTF-8"));
+                    writer.write("abc=-2"); // this property should fail validation but should not affect update of other properties
+                    writer.newLine();
                     writer.write("dprops1=" + String.valueOf(Long.MIN_VALUE)); 
                     writer.newLine();
                     writer.write("dprops2=" + String.valueOf(Double.MAX_VALUE));
@@ -99,6 +102,15 @@ public class DynamicFileConfigurationTest {
             }
         });
 
+        DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
+            @Override
+            public void validate(String newValue) {
+                if (Integer.parseInt(newValue) < 0) {
+                    throw new ValidationException("Cannot be negative");
+                }
+            }
+        };
+        assertEquals(0, validatedProp.get());
         assertFalse(propertyChanged);
         DynamicDoubleProperty doubleProp = propertyFactory.getDoubleProperty("dprops2", 0.0d);
         assertEquals(123456789, longProp.get());
@@ -109,6 +121,7 @@ public class DynamicFileConfigurationTest {
         modifyConfigFile();
         Thread.sleep(1000);
         assertEquals(Long.MIN_VALUE, longProp.get());
+        assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
         assertEquals(Double.MAX_VALUE, doubleProp.get(), 0.01d);
         assertFalse(ConfigurationManager.isConfigurationInstalled());
