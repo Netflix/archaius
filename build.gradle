@@ -71,7 +71,28 @@ project(':archaius-aws') {
             exclude group: 'javax.jms', module: 'jms'
             exclude group: 'com.sun.jdmk', module: 'jmxtools'
             exclude group: 'com.sun.jmx', module: 'jmxri'
+        } 
+    }
+}
+
+project(':archaius-zookeeper') {
+    dependencies {
+        compile project(':archaius-core')
+        compile('org.apache.zookeeper:zookeeper:3.4.5') {
+            exclude group: 'com.sun.jdmk', module: 'jmxtools'
+            exclude group: 'com.sun.jmx', module: 'jmxri'
+            exclude group: 'javax.jms', module: 'jms'
         }
+        compile 'com.netflix.curator:curator-client:1.2.5'
+        compile 'com.netflix.curator:curator-recipes:1.2.5'
+        testCompile 'junit:junit:4.10'
+        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+        testCompile('log4j:log4j:1.2.15') {
+            exclude group: 'com.sun.jdmk', module: 'jmxtools'
+            exclude group: 'com.sun.jmx', module: 'jmxri'
+            exclude group: 'javax.jms', module: 'jms'
+        } 
+        testCompile 'com.netflix.curator:curator-test:1.2.5'
     }
 }
 
@@ -88,7 +109,6 @@ project(':archaius-scala') {
         testCompile 'org.scalatest:scalatest_2.9.1:1.8'
     }
 }
-
 
 project(':archaius-samplelibrary') {
     dependencies {

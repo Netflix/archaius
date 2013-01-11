@@ -24,28 +24,19 @@ import java.util.Map;
  * content of the configuration source, or an incremental one.
  * 
  * @author awang
- *
+ * @author cfregly ({@link ConfigurationUpdateResult}
  */
-public class PollResult {
-
-    private Map<String, Object> complete, added, changed, deleted;
-    private boolean incremental;
-    private Object checkPoint;
+public class PollResult extends ConfigurationUpdateResult {
+    protected final Object checkPoint;
     
-    private PollResult() {
-    }
-
-    private PollResult(Map<String, Object> complete) {
-        this.complete = complete;
-        incremental = false;
+    public PollResult(Map<String, Object> complete) {
+        super(complete);
+        this.checkPoint = null;
     }
     
-    private PollResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted, Object checkPoint) {
-        this.added = added;
-        this.changed = changed;
-        this.deleted = deleted;
+    public PollResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted, Object checkPoint) {
+        super(added, changed, deleted);
         this.checkPoint = checkPoint;
-        incremental = true;
     }
     
     /**
@@ -69,57 +60,6 @@ public class PollResult {
     public static PollResult createIncremental(Map<String, Object> added, 
             Map<String, Object> changed, Map<String, Object> deleted, Object checkPoint) {
         return new PollResult(added, changed, deleted, checkPoint);
-    }
-    
-    /**
-     * Indicate whether this result has any content. If the result is incremental,
-     * this is true if there is any any added, changed or deleted properties. If the result
-     * is complete, this is true if {@link #getComplete()} is null.
-     */
-    public final boolean hasChanges() {
-        if (incremental) {
-            return  (added != null && added.size() > 0)
-                || (changed != null && changed.size() > 0)
-                || (deleted != null && deleted.size() > 0);  
-        } else {
-            return complete != null;
-        }
-    }
-
-    /**
-     * Get complete content from configuration source. null if the result is incremental.
-     * 
-     */
-    public final Map<String, Object> getComplete() {
-        return complete;
-    }
-
-    /**
-     * @return the added properties in the configuration source as a map 
-     */
-    public final Map<String, Object> getAdded() {
-        return added;
-    }
-
-    /**
-     * @return the changed properties in the configuration source as a map 
-     */
-    public final Map<String, Object> getChanged() {
-        return changed;
-    }
-
-    /**
-     * @return the deleted properties in the configuration source as a map 
-     */
-    public final Map<String, Object> getDeleted() {
-        return deleted;
-    }
-    
-    /**
-     * @return whether the result is incremental. false if it is the complete content of the configuration source.
-     */
-    public final boolean isIncremental() {
-        return incremental;
     }
     
     /**

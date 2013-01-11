@@ -1,9 +1,10 @@
 package com.netflix.config;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import org.apache.commons.configuration.BaseConfiguration;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ConfigurationManagerTest {
