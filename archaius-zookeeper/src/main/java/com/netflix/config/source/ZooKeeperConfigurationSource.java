@@ -65,8 +65,8 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
                         byte[] value = data.getData();
                         String stringValue = new String(value, charset);
     
-                        logger.info("received update to pathName [{}], eventType [{}]", path, eventType);
-                        logger.info("key [{}], and value [{}]", key, stringValue);
+                        logger.debug("received update to pathName [{}], eventType [{}]", path, eventType);
+                        logger.debug("key [{}], and value [{}]", key, stringValue);
 
                         // fire event to all listeners
                         Map<String, Object> added = null;
@@ -100,7 +100,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
 
     @Override
     public Map<String, Object> getCurrentData() throws Exception {
-        logger.info("getCurrentData() retrieving current data.");
+        logger.debug("getCurrentData() retrieving current data.");
 
         syncConfig(client, pathChildrenCache, configRootPath);
 
@@ -114,7 +114,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
             all.put(key, new String(value, charset));
         }
 
-        logger.info("getCurrentData() retrieved [{}] config elements.", children.size());
+        logger.debug("getCurrentData() retrieved [{}] config elements.", children.size());
 
         return all;
     }
@@ -140,7 +140,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
      * {@link PathChildrenCache#rebuild()} methods.
      */
     public static synchronized void syncConfig(CuratorFramework client, PathChildrenCache pathChildrenCache, String rootPath) throws Exception {
-        logger.info("syncConfig: started client sync and pathChildrenCache rebuild at ZK root path [{}]", rootPath);
+        logger.debug("syncConfig: started client sync and pathChildrenCache rebuild at ZK root path [{}]", rootPath);
 
         final CountDownLatch syncLatch = new CountDownLatch(1);
 
@@ -171,7 +171,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
                     + "]", exc);
         }
 
-        logger.info("finished sync and pathChildrenCache at config root path [{}]", rootPath);
+        logger.debug("finished sync and pathChildrenCache at config root path [{}]", rootPath);
     }
 
     protected void fireEvent(ConfigurationUpdateResult result) {
@@ -205,11 +205,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
             public void childEvent(final CuratorFramework client, final PathChildrenCacheEvent event) throws Exception {
                 if (event.getData().getPath().equals(path) && 
                         (event.getType() == Type.CHILD_ADDED || event.getType() == Type.CHILD_UPDATED)) {
-
-                    // sync the config for immediate test-assertion purposes
-                    syncConfig(client, pathChildrenCache, configRootPath);
-
-                    logger.info("flipping latch after event [{}] with [{}] count remaining.", event, updateLatch.getCount());
+                    logger.debug("flipping latch after event [{}] with [{}] count remaining.", event, updateLatch.getCount());
                     updateLatch.countDown();
                 }
             }
@@ -257,10 +253,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource 
         PathChildrenCacheListener pathChildrenCacheListener = new PathChildrenCacheListener() {
             public void childEvent(final CuratorFramework client, final PathChildrenCacheEvent event) throws Exception {
                 if (event.getData().getPath().equals(path) && event.getType() == Type.CHILD_REMOVED) {
-                    // sync the config for immediate test-assertion purposes
-                    syncConfig(client, pathChildrenCache, configRootPath);
-                    
-                    logger.info("flipping latch after event [{}] with [{}] count remaining.", event, deleteLatch.getCount());                   
+                    logger.debug("flipping latch after event [{}] with [{}] count remaining.", event, deleteLatch.getCount());                   
                     deleteLatch.countDown();
                 }
             }
