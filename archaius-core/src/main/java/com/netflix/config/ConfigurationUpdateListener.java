@@ -1,7 +1,7 @@
 package com.netflix.config;
 
 /**
- * The listener to be called upon when a {@link WatchedConfigurationSource} completes a polling.
+ * The listener to be called when a {@link WatchedConfigurationSource} receives an update.
  * 
  * @author cfregly
  */
