@@ -10,22 +10,24 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.config.validation.ValidationException;
+
+/**
+ * Apply the {@link ConfigurationUpdateResult} to the configuration.<BR>
+ * 
+ * If the result is a full result from source, each property in the result is added/set in the configuration. Any
+ * property that is in the configuration - but not in the result - is deleted if ignoreDeletesFromSource is false.<BR>
+ * 
+ * If the result is incremental, properties will be added and changed from the partial result in the configuration.
+ * Deleted properties are deleted from configuration iff ignoreDeletesFromSource is false.
+ * 
+ * This code is shared by both {@link AbstractPollingScheduler} and {@link DynamicWatchedConfiguration}.
+ */
 public class DynamicPropertyUpdater {
-    /**
-     * Apply the ConfigurationUpdateResult to the configuration.<BR>
-     * 
-     * If the result is a full result from source, each property in the result is added/set in the configuration. Any
-     * property that is in the configuration - but not in the result - is deleted if ignoreDeletesFromSource is false.<BR>
-     * 
-     * If the result is incremental, properties will be added and changed from the partial result in the configuration.
-     * Deleted properties are deleted from configuration iff ignoreDeletesFromSource is false.
-     */
     private static Logger logger = LoggerFactory.getLogger(DynamicPropertyUpdater.class);
 
     /**
      * Updates the properties in the config param given the contents of the result param.
-     * 
-     * TODO: this is a copy/paste from AbstractPollingScheduler which should be refactored to use this.
      * 
      * @param result
      *            either an incremental or full set of data
@@ -36,14 +38,12 @@ public class DynamicPropertyUpdater {
      */
     public void updateProperties(final ConfigurationUpdateResult result, final Configuration config,
             final boolean ignoreDeletesFromSource) {
-        //Preconditions.checkNotNull(config);
-
         if (result == null || !result.hasChanges()) {
             return;
         }
 
-        logger.trace("incremental result? [{}]", result.isIncremental());
-        logger.trace("ignored deletes from source? [{}]", ignoreDeletesFromSource);
+        logger.debug("incremental result? [{}]", result.isIncremental());
+        logger.debug("ignored deletes from source? [{}]", ignoreDeletesFromSource);
 
         if (!result.isIncremental()) {
             Map<String, Object> props = result.getComplete();
@@ -91,44 +91,45 @@ public class DynamicPropertyUpdater {
     /**
      * Add or update the property in the underlying config depending on if it exists
      * 
-     * TODO: this is a copy/paste from AbstractPollingScheduler which should be refactored to use this.
-     * 
      * @param name
      * @param newValue
      * @param config
      */
-    private void addOrChangeProperty(final String name, final Object newValue, final Configuration config) {
-        if (!config.containsKey(name)) {
-            logger.trace("adding property key [{}], value [{}]", name, newValue);
-
-            config.addProperty(name, newValue);
-        } else {
-            Object oldValue = config.getProperty(name);
-            if (newValue != null) {
-                if (!newValue.equals(oldValue)) {
-                    logger.trace("updating property key [{}], value [{}]", name, newValue);
-
-                    config.setProperty(name, newValue);
+    void addOrChangeProperty(final String name, final Object newValue, final Configuration config) {
+        // We do not want to abort the operation due to failed validation on one property
+        try {
+            if (!config.containsKey(name)) {
+                logger.debug("adding property key [{}], value [{}]", name, newValue);
+    
+                config.addProperty(name, newValue);
+            } else {
+                Object oldValue = config.getProperty(name);
+                if (newValue != null) {
+                    if (!newValue.equals(oldValue)) {
+                        logger.debug("updating property key [{}], value [{}]", name, newValue);
+    
+                        config.setProperty(name, newValue);
+                    }
+                } else if (oldValue != null) {
+                    logger.debug("nulling out property key [{}]", name);
+    
+                    config.setProperty(name, null);
                 }
-            } else if (oldValue != null) {
-                logger.trace("nulling out property key [{}]", name);
-
-                config.setProperty(name, null);
             }
+        } catch (ValidationException e) {
+            logger.warn("Validation failed for property " + name, e);
         }
     }
 
     /**
      * Delete a property in the underlying config
      * 
-     * TODO: this is a copy/paste from AbstractPollingScheduler which should be refactored to use this.
-     * 
      * @param key
      * @param config
      */
-    private void deleteProperty(final String key, final Configuration config) {
+    void deleteProperty(final String key, final Configuration config) {
         if (config.containsKey(key)) {
-            logger.trace("deleting property key [" + key + "]");
+            logger.debug("deleting property key [" + key + "]");
 
             config.clearProperty(key);
         }

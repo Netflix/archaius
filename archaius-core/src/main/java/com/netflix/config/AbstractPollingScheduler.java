@@ -25,13 +25,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.config.PollListener.EventType;
-import com.netflix.config.validation.ValidationException;
 
 
 /**
@@ -39,7 +36,6 @@ import com.netflix.config.validation.ValidationException;
  * polling result to a Configuration.
  * <p>
  * A subclass should supply the specific scheduling logic in {@link #schedule(Runnable)} and {@link #stop()}. 
- * 
  * 
  * @author awang
  *
@@ -49,6 +45,7 @@ public abstract class AbstractPollingScheduler {
     private List<PollListener> listeners = new CopyOnWriteArrayList<PollListener>();
     private volatile Object checkPoint;
     private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
+    private DynamicPropertyUpdater propertyUpdater = new DynamicPropertyUpdater();
     
     /**
      * @param ignoreDeletesFromSource true if deletes happened in the configuration source should be ignored 
@@ -113,7 +110,7 @@ public abstract class AbstractPollingScheduler {
                 return;
             }
             for (Entry<String, Object> entry: props.entrySet()) {
-                addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+                propertyUpdater.addOrChangeProperty(entry.getKey(), entry.getValue(), config);
             }
             HashSet<String> existingKeys = new HashSet<String>();
             for (Iterator<String> i = config.getKeys(); i.hasNext();) {
@@ -122,7 +119,7 @@ public abstract class AbstractPollingScheduler {
             if (!ignoreDeletesFromSource) {
                 for (String key: existingKeys) {
                     if (!props.containsKey(key)) {
-                        deleteProperty(key, config);
+                        propertyUpdater.deleteProperty(key, config);
                     }
                 }
             }
@@ -130,49 +127,23 @@ public abstract class AbstractPollingScheduler {
             Map<String, Object> props = result.getAdded();
             if (props != null) {
                 for (Entry<String, Object> entry: props.entrySet()) {
-                    addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+                    propertyUpdater.addOrChangeProperty(entry.getKey(), entry.getValue(), config);
                 }
             }
             props = result.getChanged();
             if (props != null) {
                 for (Entry<String, Object> entry: props.entrySet()) {
-                    addOrChangeProperty(entry.getKey(), entry.getValue(), config);
+                    propertyUpdater.addOrChangeProperty(entry.getKey(), entry.getValue(), config);
                 }
             }
             if (!ignoreDeletesFromSource) {
                 props = result.getDeleted();
                 if (props != null) {
                     for (String name: props.keySet()) {
-                        deleteProperty(name, config);
+                        propertyUpdater.deleteProperty(name, config);
                     }
                 }            
             }
-        }
-    }
-    
-    private void addOrChangeProperty(String name, Object newValue, final Configuration config) {
-        // We do not want to abort the operation due to failed validation on one property
-        try {
-            if (!config.containsKey(name)) {
-                config.addProperty(name, newValue);
-            } else {
-                Object oldValue = config.getProperty(name);
-                if (newValue != null) {
-                    if (!newValue.equals(oldValue)) {
-                        config.setProperty(name, newValue);
-                    }
-                } else if (oldValue != null) {
-                    config.setProperty(name, null);                
-                }
-            }
-        } catch (ValidationException e) {
-            log.warn("Validation failed for property " + name, e);
-        }
-    }
-    
-    private void deleteProperty(String key, final Configuration config) {
-        if (config.containsKey(key)) {
-            config.clearProperty(key);
         }
     }
     
