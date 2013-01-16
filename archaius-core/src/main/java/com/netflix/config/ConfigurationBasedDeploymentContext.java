@@ -129,4 +129,14 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         return null;
     }
 
+    @Override
+    public String getValue(ContextKey key) {   
+        String value = getValueFromConfig("archaius.deployment." + key.toString());
+        if (value != null) {
+            return value;
+        } else {
+            return super.getValue(key);
+        }
+    }
+
 }
