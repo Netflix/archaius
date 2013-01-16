@@ -5,10 +5,10 @@ package com.netflix.config;
  * 
  * @author cfregly
  */
-public interface ConfigurationUpdateListener {
+public interface WatchedUpdateListener {
     /**
      * Updates the configuration either incrementally or fully depending on the type of
-     * {@link ConfigurationUpdateResult} that is passed.
+     * {@link WatchedUpdateResult} that is passed.
      */
-    public void updateConfiguration(ConfigurationUpdateResult result);
+    public void updateConfiguration(WatchedUpdateResult result);
 }

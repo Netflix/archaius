@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.config.validation.ValidationException;
 
 /**
- * Apply the {@link ConfigurationUpdateResult} to the configuration.<BR>
+ * Apply the {@link WatchedUpdateResult} to the configuration.<BR>
  * 
  * If the result is a full result from source, each property in the result is added/set in the configuration. Any
  * property that is in the configuration - but not in the result - is deleted if ignoreDeletesFromSource is false.<BR>
@@ -36,7 +36,7 @@ public class DynamicPropertyUpdater {
      * @param ignoreDeletesFromSource
      *            if true, deletes will be skipped
      */
-    public void updateProperties(final ConfigurationUpdateResult result, final Configuration config,
+    public void updateProperties(final WatchedUpdateResult result, final Configuration config,
             final boolean ignoreDeletesFromSource) {
         if (result == null || !result.hasChanges()) {
             return;

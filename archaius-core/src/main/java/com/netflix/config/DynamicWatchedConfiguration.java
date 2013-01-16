@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * @author cfregly
  */
 @SuppressWarnings("unchecked")
-public class DynamicWatchedConfiguration extends ConcurrentMapConfiguration implements ConfigurationUpdateListener {
+public class DynamicWatchedConfiguration extends ConcurrentMapConfiguration implements WatchedUpdateListener {
     private final WatchedConfigurationSource source;
     private final boolean ignoreDeletesFromSource;
     private final DynamicPropertyUpdater updater;
@@ -39,7 +39,7 @@ public class DynamicWatchedConfiguration extends ConcurrentMapConfiguration impl
         // get a current snapshot of the config source data
         try {
             Map<String, Object> currentData = source.getCurrentData();
-            ConfigurationUpdateResult result = ConfigurationUpdateResult.createFull(currentData);
+            WatchedUpdateResult result = WatchedUpdateResult.createFull(currentData);
 
             updateConfiguration(result);
         } catch (final Exception exc) {
@@ -47,7 +47,7 @@ public class DynamicWatchedConfiguration extends ConcurrentMapConfiguration impl
         }
 
         // add a listener for subsequent config updates
-        this.source.addConfigurationUpdateListener(this);
+        this.source.addUpdateListener(this);
     }
 
     /**
@@ -62,7 +62,7 @@ public class DynamicWatchedConfiguration extends ConcurrentMapConfiguration impl
     }
 
     @Override
-    public void updateConfiguration(final ConfigurationUpdateResult result) {
+    public void updateConfiguration(final WatchedUpdateResult result) {
         //Preconditions.checkNotNull(result);
 
         updater.updateProperties(result, this, ignoreDeletesFromSource);

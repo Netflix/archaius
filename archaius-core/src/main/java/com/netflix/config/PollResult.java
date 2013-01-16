@@ -24,9 +24,9 @@ import java.util.Map;
  * content of the configuration source, or an incremental one.
  * 
  * @author awang
- * @author cfregly ({@link ConfigurationUpdateResult}
+ * @author cfregly ({@link WatchedUpdateResult}
  */
-public class PollResult extends ConfigurationUpdateResult {
+public class PollResult extends WatchedUpdateResult {
     protected final Object checkPoint;
     
     public PollResult(Map<String, Object> complete) {

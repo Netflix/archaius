@@ -9,25 +9,9 @@ import java.util.Map;
  * @author cfregly
  * @author awang {@link PollResult)
  */
-public class ConfigurationUpdateResult {
+public class WatchedUpdateResult {
     protected final Map<String, Object> complete, added, changed, deleted;
     protected final boolean incremental;
-
-    public ConfigurationUpdateResult(Map<String, Object> complete) {
-        this.complete = complete;
-        this.added = null;
-        this.changed = null;
-        this.deleted = null;
-        this.incremental = false;
-    }
-
-    public ConfigurationUpdateResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted) {
-        this.complete = null;
-        this.added = added;
-        this.changed = changed;
-        this.deleted = deleted;
-        this.incremental = true;
-    }
 
     /**
      * Create a full result that represents the complete content of the configuration source.
@@ -35,8 +19,8 @@ public class ConfigurationUpdateResult {
      * @param complete
      *            map that contains all the properties
      */
-    public static ConfigurationUpdateResult createFull(Map<String, Object> complete) {
-        return new ConfigurationUpdateResult(complete);
+    public static WatchedUpdateResult createFull(Map<String, Object> complete) {
+        return new WatchedUpdateResult(complete);
     }
 
     /**
@@ -49,9 +33,9 @@ public class ConfigurationUpdateResult {
      * @param deleted
      *            properties deleted, in which case the value in the map will be ignored
      */
-    public static ConfigurationUpdateResult createIncremental(Map<String, Object> added, Map<String, Object> changed,
+    public static WatchedUpdateResult createIncremental(Map<String, Object> added, Map<String, Object> changed,
             Map<String, Object> deleted) {
-        return new ConfigurationUpdateResult(added, changed, deleted);
+        return new WatchedUpdateResult(added, changed, deleted);
     }
 
     /**
@@ -101,5 +85,21 @@ public class ConfigurationUpdateResult {
      */
     public final boolean isIncremental() {
         return incremental;
+    }
+    
+    WatchedUpdateResult(Map<String, Object> complete) {
+        this.complete = complete;
+        this.added = null;
+        this.changed = null;
+        this.deleted = null;
+        this.incremental = false;
+    }
+
+    WatchedUpdateResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted) {
+        this.complete = null;
+        this.added = added;
+        this.changed = changed;
+        this.deleted = deleted;
+        this.incremental = true;
     }
 }

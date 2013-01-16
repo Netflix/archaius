@@ -9,18 +9,18 @@ import java.util.Map;
  */
 public interface WatchedConfigurationSource {
     /**
-     * Add {@link ConfigurationUpdateListener} listener
+     * Add {@link WatchedUpdateListener} listener
      * 
      * @param l
      */
-    public void addConfigurationUpdateListener(ConfigurationUpdateListener l);
+    public void addUpdateListener(WatchedUpdateListener l);
 
     /**
-     * Remove {@link ConfigurationUpdateListener} listener
+     * Remove {@link WatchedUpdateListener} listener
      * 
      * @param l
      */
-    public void removeConfigurationUpdateListener(ConfigurationUpdateListener l);
+    public void removeUpdateListener(WatchedUpdateListener l);
 
     /**
      * Get a snapshot of the latest configuration data.<BR>

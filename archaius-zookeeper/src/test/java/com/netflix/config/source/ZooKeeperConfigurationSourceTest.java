@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.netflix.config.ConcurrentCompositeConfiguration;
 import com.netflix.config.ConcurrentMapConfiguration;
 import com.netflix.config.ConfigurationManager;
-import com.netflix.config.ConfigurationUpdateListener;
-import com.netflix.config.ConfigurationUpdateResult;
+import com.netflix.config.WatchedUpdateListener;
+import com.netflix.config.WatchedUpdateResult;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicWatchedConfiguration;
 import com.netflix.curator.framework.CuratorFramework;
@@ -46,6 +46,7 @@ public class ZooKeeperConfigurationSourceTest {
         client.start();
 
         zkConfigSource = new ZooKeeperConfigurationSource(client, CONFIG_ROOT_PATH);
+        zkConfigSource.start();
 
         // setup system properties
         System.setProperty("test.key4", "test.value4-system");
@@ -66,17 +67,17 @@ public class ZooKeeperConfigurationSourceTest {
         compositeConfig.addConfiguration(zkDynamicOverrideConfig, "zk dynamic override configuration");
         compositeConfig.addConfiguration(mapConfig, "map configuration");
 
+        // setup ZK properties
+        setZkProperty("test.key1", "test.value1-zk");
+        setZkProperty("test.key2", "test.value2-zk");
+        setZkProperty("test.key4", "test.value4-zk");
+
         ConfigurationManager.install(compositeConfig);
     }
     
     @Test
     public void testZkOverrideProperty() throws Exception {
-        // setup ZK properties
-        zkConfigSource.setZkProperty("test.key1", "test.value1-zk");
-        zkConfigSource.setZkProperty("test.key2", "test.value2-zk");
-        zkConfigSource.setZkProperty("test.key4", "test.value4-zk");
-
-        // there is an override from ZK, so make sure the overridden value is being returned
+    	// there is an override from ZK, so make sure the overridden value is being returned
         Assert.assertEquals("test.value1-zk", DynamicPropertyFactory.getInstance()
                 .getStringProperty("test.key1", "default").get());
     }
@@ -111,23 +112,29 @@ public class ZooKeeperConfigurationSourceTest {
     }
     
     @Test
-    public void testUpdateZkProperty() throws Exception {        
-        // update the underlying zk property and assert that the new value is picked up
-        final CountDownLatch updateLatch = new CountDownLatch(1);
-        zkConfigSource.addConfigurationUpdateListener(new ConfigurationUpdateListener() {
-            public void updateConfiguration(ConfigurationUpdateResult result) {
-                updateLatch.countDown();
-            }
-        });
-        zkConfigSource.setZkProperty("test.key1", "test.value1-zk-override");
-        updateLatch.await();
+    public void testUpdateZkProperty() throws Exception {                
+        setZkProperty("test.key1", "test.value1-zk-override");
+        
         Assert.assertEquals("test.value1-zk-override", DynamicPropertyFactory.getInstance()
                 .getStringProperty("test.key1", "default").get());
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        server.close();
+    	zkConfigSource.close();
+    	server.close();
         logger.info("Tore down embedded ZK with connect string [{}]", server.getConnectString());
+    }
+    
+    private static void setZkProperty(String key, String value) throws Exception {
+        // update the underlying zk property and assert that the new value is picked up
+        final CountDownLatch updateLatch = new CountDownLatch(1);
+        zkConfigSource.addUpdateListener(new WatchedUpdateListener() {
+            public void updateConfiguration(WatchedUpdateResult result) {
+                updateLatch.countDown();
+            }
+        });
+        zkConfigSource.setZkProperty(key, value);
+        updateLatch.await();
     }
 }
