@@ -50,6 +50,7 @@ public class ZooKeeperConfigurationSourceTest {
 
         // setup system properties
         System.setProperty("test.key4", "test.value4-system");
+        System.setProperty("test.key5", "test.value5-system");
 
         final ConcurrentMapConfiguration systemConfig = new ConcurrentMapConfiguration();
         systemConfig.loadProperties(System.getProperties());
@@ -63,9 +64,9 @@ public class ZooKeeperConfigurationSourceTest {
         mapConfig.addProperty("test.key4", "test.value4-map");
         
         final ConcurrentCompositeConfiguration compositeConfig = new ConcurrentCompositeConfiguration();
-        compositeConfig.addConfiguration(systemConfig, "system configuration");
         compositeConfig.addConfiguration(zkDynamicOverrideConfig, "zk dynamic override configuration");
         compositeConfig.addConfiguration(mapConfig, "map configuration");
+        compositeConfig.addConfiguration(systemConfig, "system configuration");
 
         // setup ZK properties
         setZkProperty("test.key1", "test.value1-zk");
@@ -76,14 +77,14 @@ public class ZooKeeperConfigurationSourceTest {
     }
     
     @Test
-    public void testZkOverrideProperty() throws Exception {
+    public void testZkPropertyOverride() throws Exception {
     	// there is an override from ZK, so make sure the overridden value is being returned
         Assert.assertEquals("test.value1-zk", DynamicPropertyFactory.getInstance()
                 .getStringProperty("test.key1", "default").get());
     }
     
     @Test
-    public void testNoZkOverrideProperty() throws Exception {
+    public void testNoZkPropertyOverride() throws Exception {
         // there's no override, so the map config value should be returned
         Assert.assertEquals("test.value3-map", DynamicPropertyFactory.getInstance().getStringProperty("test.key3", "default")
                 .get());
@@ -97,14 +98,18 @@ public class ZooKeeperConfigurationSourceTest {
     }
     
     @Test
-    public void testSystemOverrideProperty() throws Exception {
-        // there's a system property set, so this should trump the zk and map config overrides
-        Assert.assertEquals("test.value4-system", DynamicPropertyFactory.getInstance().getStringProperty("test.key4", "default")
+    public void testSystemPropertyOverride() throws Exception {
+        // there's a system property set, but this should not trump the zk override
+        Assert.assertEquals("test.value4-zk", DynamicPropertyFactory.getInstance().getStringProperty("test.key4", "default")
+                .get());
+        
+        // there's a system property set, but no other overrides, so should return the system property
+        Assert.assertEquals("test.value5-system", DynamicPropertyFactory.getInstance().getStringProperty("test.key5", "default")
                 .get());
     }
     
     @Test
-    public void testUpdateOverrideProperty() throws Exception {
+    public void testUpdatePropertyOverride() throws Exception {
         // update the map config's property and assert that the value is still the overridden value
         mapConfig.setProperty("test.key1", "prop1");
         Assert.assertEquals("test.value1-zk", DynamicPropertyFactory.getInstance()
