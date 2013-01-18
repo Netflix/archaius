@@ -25,7 +25,7 @@ public interface DeploymentContext {
     
     public enum ContextKey {
         environment("@environment"), datacenter("@datacenter"), appId("@appId"),
-        serverId("@serverId"), stack("@stack"), region("@region");
+        serverId("@serverId"), stack("@stack"), region("@region"), zone("@zone");
         
         private String key;
         
