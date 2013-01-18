@@ -24,20 +24,10 @@ import java.util.Map;
  * content of the configuration source, or an incremental one.
  * 
  * @author awang
- * @author cfregly ({@link WatchedUpdateResult}
+ * @author cfregly {@link WatchedUpdateResult}
  */
 public class PollResult extends WatchedUpdateResult {
     protected final Object checkPoint;
-    
-    public PollResult(Map<String, Object> complete) {
-        super(complete);
-        this.checkPoint = null;
-    }
-    
-    public PollResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted, Object checkPoint) {
-        super(added, changed, deleted);
-        this.checkPoint = checkPoint;
-    }
     
     /**
      * Create a full result that represents the complete content of the configuration source.
@@ -67,5 +57,15 @@ public class PollResult extends WatchedUpdateResult {
      */
     public final Object getCheckPoint() {
         return checkPoint;
+    }
+    
+    PollResult(Map<String, Object> complete) {
+        super(complete);
+        this.checkPoint = null;
+    }
+    
+    PollResult(Map<String, Object> added, Map<String, Object> changed, Map<String, Object> deleted, Object checkPoint) {
+        super(added, changed, deleted);
+        this.checkPoint = checkPoint;
     }
 }
