@@ -170,22 +170,24 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * 
      * @param initial this parameter is ignored by the implementation
      * @param checkPoint this parameter is ignored by the implementation
-     * @throws IOException IOException occurred in file operation
      */
     @Override
-    public PollResult poll(boolean initial, Object checkPoint)
-            throws IOException {    
+    public PollResult poll(boolean initial, Object checkPoint) {    
         if (configUrls == null || configUrls.length == 0) {
             return PollResult.createFull(null);
         }
         Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
             Properties props = new Properties();
-            InputStream fin = url.openStream();
-            props.load(fin);
-            fin.close();
-            for (Entry<Object, Object> entry: props.entrySet()) {
-                map.put((String) entry.getKey(), entry.getValue());
+            try {
+                InputStream fin = url.openStream();
+                props.load(fin);
+                fin.close();
+                for (Entry<Object, Object> entry: props.entrySet()) {
+                    map.put((String) entry.getKey(), entry.getValue());
+                }
+            } catch (IOException e) {
+                logger.error("Unable to load properties from " + url.toString(), e);
             }
         }
         return PollResult.createFull(map);
