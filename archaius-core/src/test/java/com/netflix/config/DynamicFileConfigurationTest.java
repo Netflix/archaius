@@ -22,12 +22,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationListener;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.netflix.config.ListenerTest.Listener;
 import com.netflix.config.sources.URLConfigurationSource;
 import com.netflix.config.validation.ValidationException;
 
@@ -77,6 +81,45 @@ public class DynamicFileConfigurationTest {
         }.start();
     }
 
+	static class Listener implements ConfigurationListener {
+
+		volatile ConfigurationEvent lastEventBeforeUpdate;
+		
+		volatile ConfigurationEvent lastEventAfterUpdate;
+		
+		AtomicInteger counter = new AtomicInteger();
+
+		@Override
+		public void configurationChanged(ConfigurationEvent event) {
+			System.out.println("Event received: " + event.getType() + "," + event.getPropertyName() + "," + event.isBeforeUpdate() + "," + event.getPropertyValue());
+			counter.incrementAndGet();
+			if (event.isBeforeUpdate()) {
+				lastEventBeforeUpdate = event;
+			} else {
+				lastEventAfterUpdate = event;
+			}
+		}
+		
+		public void clear() {
+			lastEventBeforeUpdate = null;
+			lastEventAfterUpdate = null;
+		}
+		
+		public ConfigurationEvent getLastEvent(boolean beforeUpdate) {
+			if (beforeUpdate) {
+				return lastEventBeforeUpdate;
+			} else {
+				return lastEventAfterUpdate;
+			}
+		}
+		
+		public int getCount() {
+			return counter.get();
+		}
+	}
+
+	static Listener listener = new Listener();
+	
     @BeforeClass
     public static void init() throws Exception {
         String path = createConfigFile("configFile").toURI().toURL().toString();
@@ -94,6 +137,7 @@ public class DynamicFileConfigurationTest {
         }
     }
     
+
     @Test
     public void testDefaultConfigFile() throws Exception {
         longProp = propertyFactory.getLongProperty("dprops1", Long.MAX_VALUE, new Runnable() {
@@ -119,12 +163,16 @@ public class DynamicFileConfigurationTest {
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
         modifyConfigFile();
+        ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
         Thread.sleep(1000);
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
         assertEquals(Double.MAX_VALUE, doubleProp.get(), 0.01d);
         assertFalse(ConfigurationManager.isConfigurationInstalled());
+        Thread.sleep(3000);
+        // Only 4 events expected, two each for dprops1 and dprops2
+        assertEquals(4, listener.getCount());
     }    
     
     @Test
