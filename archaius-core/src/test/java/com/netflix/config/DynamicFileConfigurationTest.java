@@ -20,7 +20,6 @@ package com.netflix.config;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,7 +30,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.netflix.config.ListenerTest.Listener;
 import com.netflix.config.sources.URLConfigurationSource;
 import com.netflix.config.validation.ValidationException;
 
