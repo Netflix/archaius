@@ -25,7 +25,7 @@ package com.netflix.config;
  *
  */
 public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
-    protected DynamicBooleanProperty(String propName, boolean defaultValue) {
+    public DynamicBooleanProperty(String propName, boolean defaultValue) {
         super(propName, Boolean.valueOf(defaultValue));
     }
     /**

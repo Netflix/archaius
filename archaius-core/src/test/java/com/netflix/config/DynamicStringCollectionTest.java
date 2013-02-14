@@ -17,13 +17,14 @@ public class DynamicStringCollectionTest {
     @Test
     public void testStringList() {
         DynamicStringListProperty prop = new DynamicStringListProperty("test1", (String) null);
-        assertNull(prop.get());
+        assertTrue(prop.get().isEmpty());
         DynamicStringListProperty prop2 = new DynamicStringListProperty("test1.2", (List<String>) null);
-        assertNull(prop2.get());        
+        assertNull(prop2.get());
+        DynamicStringListProperty prop3 = new DynamicStringListProperty("test1.3", "");
+        assertTrue(prop3.get().isEmpty());        
         List<String> empty = Collections.emptyList();
         prop2 = new DynamicStringListProperty("test1.2", empty);
         assertTrue(prop2.get().isEmpty());        
-
         ConfigurationManager.getConfigInstance().setProperty("test1", "0,1,2,3,4");
         List<String> values = prop.get();
         assertEquals(5, values.size());
@@ -32,6 +33,9 @@ public class DynamicStringCollectionTest {
         }
         prop2 = new DynamicStringListProperty("test1", (List<String>) null);
         assertEquals(5, prop2.get().size());
+        ConfigurationManager.getConfigInstance().setProperty("test1", "");
+        assertTrue(prop.get().isEmpty());
+        
     }
     
     @Test
@@ -62,7 +66,7 @@ public class DynamicStringCollectionTest {
     @Test
     public void testStringSet() {
         DynamicStringSetProperty prop = new DynamicStringSetProperty("test3", (String) null);
-        assertNull(prop.get());
+        assertTrue(prop.get().isEmpty());
         prop = new DynamicStringSetProperty("test3", (Set<String>) null, "\\|");
         assertNull(prop.get());
         ConfigurationManager.getConfigInstance().setProperty("test3", "0|1|2|3|4");
@@ -99,7 +103,7 @@ public class DynamicStringCollectionTest {
     @Test
     public void testStringMap() {
         DynamicStringMapProperty prop = new DynamicStringMapProperty("test5", (String) null);
-        assertNull(prop.getMap());
+        assertTrue(prop.getMap().isEmpty());
         Map<String, String> emptyMap = Collections.emptyMap();
         final Map<String, String> extMap = new HashMap<String, String>();
         prop = new DynamicStringMapProperty("test5", emptyMap) {
