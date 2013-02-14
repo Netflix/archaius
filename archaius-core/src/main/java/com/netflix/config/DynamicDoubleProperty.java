@@ -26,7 +26,7 @@ package com.netflix.config;
  *
  */
 public class DynamicDoubleProperty extends PropertyWrapper<Double> {
-    protected DynamicDoubleProperty(String propName, double defaultValue) {
+    public DynamicDoubleProperty(String propName, double defaultValue) {
         super(propName, Double.valueOf(defaultValue));
     }
         
