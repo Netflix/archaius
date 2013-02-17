@@ -29,7 +29,7 @@ package com.netflix.archaius.samplelibrary;
  * files in the classpath and load all properties located in the above location
  * in each JAR file.
  * 
- * As an example, look at the META-INF/cong/config.properties file of this JAR/library
+ * As an example, look at the META-INF/conf/config.properties file of this JAR/library
  * 
  * @author stonse
  * 

@@ -142,4 +142,12 @@ public abstract class DynamicSetProperty<T> {
      * 
      */
     protected abstract T from(String value);
+
+    /**
+     * Getter for the property name
+     * @return
+     */
+    public String getName(){
+        return delegate.getName();
+    }
 }
