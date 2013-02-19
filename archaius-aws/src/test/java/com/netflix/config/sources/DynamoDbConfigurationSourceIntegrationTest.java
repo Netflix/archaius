@@ -56,7 +56,7 @@ public class DynamoDbConfigurationSourceIntegrationTest {
         if (dbClient != null) removeTable(dbClient, tableName);
     }
 
-    @Test
+    //@Test
     public void testPoll() throws Exception {
         if (dbClient != null) {
             DynamoDbConfigurationSource testConfigSource = new DynamoDbConfigurationSource();
@@ -68,7 +68,7 @@ public class DynamoDbConfigurationSourceIntegrationTest {
         }
     }
 
-    @Test
+    //@Test
     public void testUpdate() throws Exception {
         if (dbClient != null) {
             DynamoDbConfigurationSource testConfigSource = new DynamoDbConfigurationSource();

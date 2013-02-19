@@ -42,7 +42,7 @@ public class DynamoBackedConfigurationIntegrationTest {
         if (dbClient != null) removeTable(dbClient, tableName);
     }
 
-    @Test
+    //@Test
     public void testPropertyChange() throws Exception{
         System.setProperty("com.netflix.config.dynamo.tableName", tableName);
         if (dbClient != null) {

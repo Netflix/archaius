@@ -1,0 +1,124 @@
+package com.netflix.config.sources;
+
+import com.amazonaws.services.dynamodb.AmazonDynamoDB;
+import com.amazonaws.services.dynamodb.model.AttributeValue;
+import com.amazonaws.services.dynamodb.model.ScanRequest;
+import com.amazonaws.services.dynamodb.model.ScanResult;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
+import static org.mockito.Mockito.*;
+
+/**
+ * User: gorzell
+ * Date: 1/17/13
+ * Time: 10:18 AM
+ * You should write something useful here.
+ */
+public class DynamoDbMocks {
+
+    static final String defaultKeyAttribute = AbstractDynamoDbConfigurationSource.defaultKeyAttribute;
+    static final String defaultValueAttribute = AbstractDynamoDbConfigurationSource.defaultValueAttribute;
+    static final String defaultContextKeyAttribute = DynamoDbDeploymentContextTableCache.defaultContextKeyAttribute;
+    static final String defaultContextValueAttribute = DynamoDbDeploymentContextTableCache.defaultContextValueAttribute;
+
+    //public static AmazonDynamoDB mockContextDbClient = mock(AmazonDynamoDB.class);
+
+
+    public static ScanRequest basicScanRequest = new ScanRequest()
+            .withTableName("testTableBasic")
+            .withExclusiveStartKey(null);
+    public static Collection<Map<String, AttributeValue>> basicResultValues1 = new LinkedList<Map<String, AttributeValue>>();
+    public static Collection<Map<String, AttributeValue>> basicResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static ScanResult basicScanResult1;
+    public static ScanResult basicScanResult2;
+
+    public static ScanRequest contextScanRequest = new ScanRequest()
+            .withTableName("testTableContext")
+            .withExclusiveStartKey(null);
+    public static Collection<Map<String, AttributeValue>> contextResultValues1 = new LinkedList<Map<String, AttributeValue>>();
+    public static Collection<Map<String, AttributeValue>> contextResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static ScanResult contextScanResult1;
+    public static ScanResult contextScanResult2;
+
+
+    static {
+        //Basic results config
+        Map<String, AttributeValue> basicRow1 = new HashMap<String, AttributeValue>();
+        basicRow1.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
+        basicRow1.put(defaultValueAttribute, new AttributeValue().withS("bar"));
+        basicResultValues1.add(basicRow1);
+
+        Map<String, AttributeValue> basicRow2 = new HashMap<String, AttributeValue>();
+        basicRow2.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
+        basicRow2.put(defaultValueAttribute, new AttributeValue().withS("goo"));
+        basicResultValues1.add(basicRow2);
+
+        Map<String, AttributeValue> basicRow3 = new HashMap<String, AttributeValue>();
+        basicRow3.put(defaultKeyAttribute, new AttributeValue().withS("boo"));
+        basicRow3.put(defaultValueAttribute, new AttributeValue().withS("who"));
+        basicResultValues1.add(basicRow3);
+
+        //Result2
+        Map<String, AttributeValue> updatedBasicRow = new HashMap<String, AttributeValue>();
+        updatedBasicRow.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
+        updatedBasicRow.put(defaultValueAttribute, new AttributeValue().withS("foo"));
+        basicResultValues2.add(updatedBasicRow);
+
+        basicResultValues2.add(basicRow1);
+        basicResultValues2.add(updatedBasicRow);
+        basicResultValues2.add(basicRow3);
+
+        basicScanResult1 = new ScanResult().withItems(basicResultValues1).withLastEvaluatedKey(null);
+        basicScanResult2 = new ScanResult().withItems(basicResultValues2).withLastEvaluatedKey(null);
+
+        //DeploymentContext results config
+        Map<String, AttributeValue> contextRow1 = new HashMap<String, AttributeValue>();
+        contextRow1.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
+        contextRow1.put(defaultValueAttribute, new AttributeValue().withS("bar"));
+        contextRow1.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow1.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
+        contextResultValues1.add(contextRow1);
+
+        Map<String, AttributeValue> contextRow2 = new HashMap<String, AttributeValue>();
+        contextRow2.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
+        contextRow2.put(defaultValueAttribute, new AttributeValue().withS("bar"));
+        contextRow2.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow2.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
+        contextResultValues1.add(contextRow2);
+
+        Map<String, AttributeValue> contextRow3 = new HashMap<String, AttributeValue>();
+        contextRow3.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
+        contextRow3.put(defaultValueAttribute, new AttributeValue().withS("bar"));
+        contextRow3.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow3.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
+        contextResultValues1.add(contextRow3);
+
+        //Result2
+        Map<String, AttributeValue> contextRow4 = new HashMap<String, AttributeValue>();
+        contextRow4.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
+        contextRow4.put(defaultValueAttribute, new AttributeValue().withS("foo"));
+        contextRow4.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow4.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
+        contextResultValues2.add(contextRow3);
+
+        Map<String, AttributeValue> updatedContextRow = new HashMap<String, AttributeValue>();
+        updatedContextRow.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
+        updatedContextRow.put(defaultValueAttribute, new AttributeValue().withS("foo"));
+        updatedContextRow.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        updatedContextRow.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
+        contextResultValues2.add(updatedContextRow);
+
+        contextResultValues2.add(contextRow1);
+        contextResultValues2.add(contextRow2);
+        contextResultValues2.add(contextRow4);
+
+        contextScanResult1 = new ScanResult().withItems(contextResultValues1);
+        contextScanResult2 = new ScanResult().withItems(contextResultValues2);
+
+        //when(mockContextDbClient.scan(notNull(ScanRequest.class))).thenReturn(contextScanResult1, contextScanResult2);
+    }
+}
