@@ -33,7 +33,7 @@ import org.junit.Test;
  * User: gorzell
  * Date: 8/7/12
  */
-public class DynamoDbConfigurationSourceTest {
+public class DynamoDbConfigurationSourceIntegrationTest {
     private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
     private static AmazonDynamoDB dbClient;
 

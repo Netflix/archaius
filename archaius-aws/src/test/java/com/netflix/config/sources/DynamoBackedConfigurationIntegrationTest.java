@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
  * User: gorzell
  * Date: 8/23/12
  */
-public class DynamoBackedConfigurationTest {
+public class DynamoBackedConfigurationIntegrationTest {
     private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
     private static AmazonDynamoDB dbClient;
 
