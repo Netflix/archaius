@@ -4,7 +4,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
 
-import static com.netflix.config.sources.DynamoDbTestHelper.*;
+import static com.netflix.config.sources.DynamoDbIntegrationTestHelper.*;
 
 import com.netflix.config.*;
 import org.junit.AfterClass;

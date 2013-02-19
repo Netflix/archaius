@@ -22,7 +22,7 @@ import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
 import com.netflix.config.PollResult;
 
-import static com.netflix.config.sources.DynamoDbTestHelper.*;
+import static com.netflix.config.sources.DynamoDbIntegrationTestHelper.*;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.AfterClass;
