@@ -1,16 +1,12 @@
 package com.netflix.config.sources;
 
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.model.AttributeValue;
-import com.amazonaws.services.dynamodb.model.ScanRequest;
 import com.amazonaws.services.dynamodb.model.ScanResult;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-
-import static org.mockito.Mockito.*;
 
 /**
  * User: gorzell
@@ -25,24 +21,15 @@ public class DynamoDbMocks {
     static final String defaultContextKeyAttribute = DynamoDbDeploymentContextTableCache.defaultContextKeyAttribute;
     static final String defaultContextValueAttribute = DynamoDbDeploymentContextTableCache.defaultContextValueAttribute;
 
-    //public static AmazonDynamoDB mockContextDbClient = mock(AmazonDynamoDB.class);
+    public static final Collection<Map<String, AttributeValue>> basicResultValues1 = new LinkedList<Map<String, AttributeValue>>();
+    public static final Collection<Map<String, AttributeValue>> basicResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static final ScanResult basicScanResult1;
+    public static final ScanResult basicScanResult2;
 
-
-    public static ScanRequest basicScanRequest = new ScanRequest()
-            .withTableName("testTableBasic")
-            .withExclusiveStartKey(null);
-    public static Collection<Map<String, AttributeValue>> basicResultValues1 = new LinkedList<Map<String, AttributeValue>>();
-    public static Collection<Map<String, AttributeValue>> basicResultValues2 = new LinkedList<Map<String, AttributeValue>>();
-    public static ScanResult basicScanResult1;
-    public static ScanResult basicScanResult2;
-
-    public static ScanRequest contextScanRequest = new ScanRequest()
-            .withTableName("testTableContext")
-            .withExclusiveStartKey(null);
-    public static Collection<Map<String, AttributeValue>> contextResultValues1 = new LinkedList<Map<String, AttributeValue>>();
-    public static Collection<Map<String, AttributeValue>> contextResultValues2 = new LinkedList<Map<String, AttributeValue>>();
-    public static ScanResult contextScanResult1;
-    public static ScanResult contextScanResult2;
+    public static final Collection<Map<String, AttributeValue>> contextResultValues1 = new LinkedList<Map<String, AttributeValue>>();
+    public static final Collection<Map<String, AttributeValue>> contextResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static final ScanResult contextScanResult1;
+    public static final ScanResult contextScanResult2;
 
 
     static {
@@ -79,21 +66,21 @@ public class DynamoDbMocks {
         Map<String, AttributeValue> contextRow1 = new HashMap<String, AttributeValue>();
         contextRow1.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
         contextRow1.put(defaultValueAttribute, new AttributeValue().withS("bar"));
-        contextRow1.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow1.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         contextRow1.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues1.add(contextRow1);
 
         Map<String, AttributeValue> contextRow2 = new HashMap<String, AttributeValue>();
-        contextRow2.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
-        contextRow2.put(defaultValueAttribute, new AttributeValue().withS("bar"));
-        contextRow2.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow2.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
+        contextRow2.put(defaultValueAttribute, new AttributeValue().withS("goo"));
+        contextRow2.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         contextRow2.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues1.add(contextRow2);
 
         Map<String, AttributeValue> contextRow3 = new HashMap<String, AttributeValue>();
-        contextRow3.put(defaultKeyAttribute, new AttributeValue().withS("foo"));
-        contextRow3.put(defaultValueAttribute, new AttributeValue().withS("bar"));
-        contextRow3.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow3.put(defaultKeyAttribute, new AttributeValue().withS("boo"));
+        contextRow3.put(defaultValueAttribute, new AttributeValue().withS("who"));
+        contextRow3.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         contextRow3.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues1.add(contextRow3);
 
@@ -101,14 +88,14 @@ public class DynamoDbMocks {
         Map<String, AttributeValue> contextRow4 = new HashMap<String, AttributeValue>();
         contextRow4.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
         contextRow4.put(defaultValueAttribute, new AttributeValue().withS("foo"));
-        contextRow4.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        contextRow4.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         contextRow4.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
         contextResultValues2.add(contextRow3);
 
         Map<String, AttributeValue> updatedContextRow = new HashMap<String, AttributeValue>();
         updatedContextRow.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
         updatedContextRow.put(defaultValueAttribute, new AttributeValue().withS("foo"));
-        updatedContextRow.put(defaultContextKeyAttribute, new AttributeValue().withS("@environment"));
+        updatedContextRow.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         updatedContextRow.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
         contextResultValues2.add(updatedContextRow);
 
@@ -118,7 +105,5 @@ public class DynamoDbMocks {
 
         contextScanResult1 = new ScanResult().withItems(contextResultValues1);
         contextScanResult2 = new ScanResult().withItems(contextResultValues2);
-
-        //when(mockContextDbClient.scan(notNull(ScanRequest.class))).thenReturn(contextScanResult1, contextScanResult2);
     }
 }

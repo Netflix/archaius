@@ -53,6 +53,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         super(new DefaultAWSCredentialsProviderChain().getCredentials());
         initialDelayMillis = 30000;
         delayMillis = 60000;
+        //TODO load the inital version of the table
         start();
     }
 

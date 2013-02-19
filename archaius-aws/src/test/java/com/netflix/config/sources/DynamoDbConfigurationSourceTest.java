@@ -34,7 +34,7 @@ public class DynamoDbConfigurationSourceTest {
     @Test
     public void testUpdate() throws Exception {
         AmazonDynamoDB mockBasicDbClient = mock(AmazonDynamoDB.class);
-        when(mockBasicDbClient.scan(any(ScanRequest.class))).thenReturn(DynamoDbMocks.basicScanResult1, DynamoDbMocks.basicScanResult1, DynamoDbMocks.basicScanResult2);
+        when(mockBasicDbClient.scan(any(ScanRequest.class))).thenReturn(DynamoDbMocks.basicScanResult1, DynamoDbMocks.basicScanResult2);
 
         DynamoDbConfigurationSource testConfigSource = new DynamoDbConfigurationSource(mockBasicDbClient);
 

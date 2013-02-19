@@ -51,11 +51,15 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
 
     public AbstractDynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
         this.dbClient = dbClient;
-        String table = tableName.get();
-        loadPropertiesFromTable(table);
-        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
     }
 
     protected abstract Map<String, T> loadPropertiesFromTable(String table);
 
+    //TODO Javadoc
+    public void validateDb(){
+        String table = tableName.get();
+
+        loadPropertiesFromTable(table);
+        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
+    }
 }
