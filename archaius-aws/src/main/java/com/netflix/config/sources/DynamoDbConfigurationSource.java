@@ -39,54 +39,23 @@ import java.util.Map;
  * User: gorzell
  * Date: 8/6/12
  */
-public class DynamoDbConfigurationSource implements PolledConfigurationSource {
+public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSource<Object> implements PolledConfigurationSource {
     private static final Logger log = LoggerFactory.getLogger(DynamoDbConfigurationSource.class);
 
-    //Property names
-    static final String tablePropertyName = "com.netflix.config.dynamo.tableName";
-    static final String keyAttributePropertyName = "com.netflix.config.dynamo.keyAttributeName";
-    static final String valueAttributePropertyName = "com.netflix.config.dynamo.valueAttributeName";
-
-    //Property defaults
-    static final String defaultTable = "archaiusProperties";
-    static final String defaultKeyAttribute = "key";
-    static final String defaultValueAttribute = "value";
-
-    //Dynamic Properties
-    private DynamicStringProperty tableName = DynamicPropertyFactory.getInstance()
-            .getStringProperty(tablePropertyName, defaultTable);
-    private DynamicStringProperty keyAttributeName = DynamicPropertyFactory.getInstance()
-            .getStringProperty(keyAttributePropertyName, defaultKeyAttribute);
-    private DynamicStringProperty valueAttributeName = DynamicPropertyFactory.getInstance()
-            .getStringProperty(valueAttributePropertyName, defaultValueAttribute);
-
-
-    private AmazonDynamoDB dbClient;
-
     public DynamoDbConfigurationSource() {
-        this(new DefaultAWSCredentialsProviderChain().getCredentials());
+        super(new DefaultAWSCredentialsProviderChain().getCredentials());
     }
 
     public DynamoDbConfigurationSource(AWSCredentials credentials) {
-        this(new AmazonDynamoDBClient(credentials));
+        super(new AmazonDynamoDBClient(credentials));
     }
 
     public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
-        this.dbClient = dbClient;
-        String table = tableName.get();
-        load(table, keyAttributeName.get(), valueAttributeName.get());
-        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
+        super(dbClient);
     }
 
     @Override
-    public PollResult poll(boolean initial, Object checkPoint) throws Exception {
-        String table = tableName.get();
-        Map<String, Object> map = load(table, keyAttributeName.get(), valueAttributeName.get());
-        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
-        return PollResult.createFull(map);
-    }
-
-    private synchronized Map<String, Object> load(String table, String key, String val) {
+    protected synchronized Map<String, Object> loadPropertiesFromTable(String table) {
         Map<String, Object> propertyMap = new HashMap<String, Object>();
         Key lastKeyEvaluated = null;
         do {
@@ -95,10 +64,18 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
                     .withExclusiveStartKey(lastKeyEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
-                propertyMap.put(item.get(key).getS(), item.get(val).getS());
+                propertyMap.put(item.get(keyAttributeName.get()).getS(), item.get(valueAttributeName.get()).getS());
             }
             lastKeyEvaluated = result.getLastEvaluatedKey();
         } while (lastKeyEvaluated != null);
         return propertyMap;
+    }
+
+    @Override
+    public PollResult poll(boolean initial, Object checkPoint) throws Exception {
+        String table = tableName.get();
+        Map<String, Object> map = loadPropertiesFromTable(table);
+        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
+        return PollResult.createFull(map);
     }
 }
