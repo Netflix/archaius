@@ -53,7 +53,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         super(new DefaultAWSCredentialsProviderChain().getCredentials());
         initialDelayMillis = 30000;
         delayMillis = 60000;
-        //TODO load the inital version of the table
         start();
     }
 
@@ -91,6 +90,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     private void start() {
+        cachedTable = loadPropertiesFromTable(tableName.get());
         schedule(getPollingRunnable());
     }
 
@@ -119,11 +119,15 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
                     .withExclusiveStartKey(lastKeyEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
-                propertyMap.put(item.get(keyAttributeName.get()).getS(),
+                String keyVal = item.get(keyAttributeName.get()).getS();
+                String contextKey = item.get(contextKeyAttributeName.get()).getS();
+                String contextVal = item.get(contextValueAttributeName.get()).getS();
+                String key = keyVal + ";" + contextKey +";" + contextVal;
+                propertyMap.put(key,
                         new PropertyWithDeploymentContext(
-                                DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()),
-                                item.get(contextValueAttributeName.get()).getS(),
-                                item.get(keyAttributeName.get()).getS(),
+                                DeploymentContext.ContextKey.valueOf(contextKey),
+                                contextVal,
+                                keyVal,
                                 item.get(valueAttributeName.get()).getS()
                         ));
             }

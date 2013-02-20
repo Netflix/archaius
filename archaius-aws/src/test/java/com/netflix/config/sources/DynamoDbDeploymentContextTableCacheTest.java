@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -18,24 +19,44 @@ import static org.mockito.Mockito.*;
  * You should write something useful here.
  */
 public class DynamoDbDeploymentContextTableCacheTest {
+    private static final PropertyWithDeploymentContext test1 =
+            new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
+                    "test", "foo", "bar");
+    private static final PropertyWithDeploymentContext test2 =
+            new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
+                    "test", "goo", "goo");
+    private static final PropertyWithDeploymentContext test3 =
+            new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
+                    "prod", "goo", "foo");
+    private static final PropertyWithDeploymentContext test4 =
+            new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
+                    "prod", "goo", "foo");
+    private static final PropertyWithDeploymentContext test5 =
+            new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
+                    "test", "boo", "who");
 
     @Test
     public void testPoll() throws Exception {
         AmazonDynamoDB mockContextDbClient = mock(AmazonDynamoDB.class);
 
-        //3 of the first config to cover: object creation, threadRun at 0 delay, load properties
-        when(mockContextDbClient.scan(any(ScanRequest.class))).thenReturn(DynamoDbMocks.contextScanResult1);
-        DynamoDbDeploymentContextTableCache cache = new DynamoDbDeploymentContextTableCache(mockContextDbClient, 0, 1000);
+        when(mockContextDbClient.scan(any(ScanRequest.class))).thenReturn(DynamoDbMocks.contextScanResult1,
+                DynamoDbMocks.contextScanResult2);
+        DynamoDbDeploymentContextTableCache cache = new DynamoDbDeploymentContextTableCache(mockContextDbClient, 100, 100);
 
         Collection<PropertyWithDeploymentContext> props = cache.getProperties();
-        assertEquals(0, props.size());
+        assertEquals(3, props.size());
+        assertTrue(props.contains(test1));
+        assertTrue(props.contains(test2));
+        assertTrue(props.contains(test5));
 
-        Thread.sleep(50);
+        Thread.sleep(150);
 
         props = cache.getProperties();
-        assertEquals(3, props.size());
-        //assertEquals("bar", result.getComplete().get("foo"));
-        //assertEquals("goo", result.getComplete().get("goo"));
-        //assertEquals("who", result.getComplete().get("boo"));
+        assertEquals(4, props.size());
+        assertTrue(props.contains(test1));
+        assertTrue(props.contains(test3));
+        assertTrue(props.contains(test4));
+        assertTrue(props.contains(test5));
+
     }
 }

@@ -85,24 +85,25 @@ public class DynamoDbMocks {
         contextResultValues1.add(contextRow3);
 
         //Result2
+        contextResultValues2.add(contextRow1);
+        contextResultValues2.add(contextRow3);
+
         Map<String, AttributeValue> contextRow4 = new HashMap<String, AttributeValue>();
         contextRow4.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
         contextRow4.put(defaultValueAttribute, new AttributeValue().withS("foo"));
         contextRow4.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
         contextRow4.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
-        contextResultValues2.add(contextRow3);
+        contextResultValues2.add(contextRow4);
 
         Map<String, AttributeValue> updatedContextRow = new HashMap<String, AttributeValue>();
         updatedContextRow.put(defaultKeyAttribute, new AttributeValue().withS("goo"));
         updatedContextRow.put(defaultValueAttribute, new AttributeValue().withS("foo"));
         updatedContextRow.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
-        updatedContextRow.put(defaultContextValueAttribute, new AttributeValue().withS("prod"));
+        updatedContextRow.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues2.add(updatedContextRow);
 
-        contextResultValues2.add(contextRow1);
-        contextResultValues2.add(contextRow2);
-        contextResultValues2.add(contextRow4);
 
+        //Create results from initialized values
         contextScanResult1 = new ScanResult().withItems(contextResultValues1);
         contextScanResult2 = new ScanResult().withItems(contextResultValues2);
     }
