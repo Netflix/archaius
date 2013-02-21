@@ -35,16 +35,19 @@ import org.junit.Test;
  */
 public class DynamoDbConfigurationSourceTest {
     private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
+    private static final String endpoint = "dynamodb.us-west-2.amazonaws.com";
     private static AmazonDynamoDB dbClient;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         try {
             dbClient = new AmazonDynamoDBClient(new DefaultAWSCredentialsProviderChain().getCredentials());
+            dbClient.setEndpoint(endpoint);
         } catch (Exception e) {
             e.printStackTrace();
         }
         System.setProperty("com.netflix.config.dynamo.tableName", tableName);
+        System.setProperty("com.netflix.config.dynamo.endpoint", endpoint);
         if (dbClient != null) {
             createTable(dbClient, tableName);
             addElements(dbClient, tableName);

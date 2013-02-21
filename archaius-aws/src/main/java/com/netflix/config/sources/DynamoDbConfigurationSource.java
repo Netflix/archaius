@@ -46,11 +46,13 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
     static final String tablePropertyName = "com.netflix.config.dynamo.tableName";
     static final String keyAttributePropertyName = "com.netflix.config.dynamo.keyAttributeName";
     static final String valueAttributePropertyName = "com.netflix.config.dynamo.valueAttributeName";
+    static final String endpointPropertyName = "com.netflix.config.dynamo.endpoint";
 
     //Property defaults
     static final String defaultTable = "archaiusProperties";
     static final String defaultKeyAttribute = "key";
     static final String defaultValueAttribute = "value";
+    static final String defaultEndpoint = "dynamodb.us-east-1.amazonaws.com";
 
     //Dynamic Properties
     private DynamicStringProperty tableName = DynamicPropertyFactory.getInstance()
@@ -59,6 +61,8 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
             .getStringProperty(keyAttributePropertyName, defaultKeyAttribute);
     private DynamicStringProperty valueAttributeName = DynamicPropertyFactory.getInstance()
             .getStringProperty(valueAttributePropertyName, defaultValueAttribute);
+    private DynamicStringProperty endpointName = DynamicPropertyFactory.getInstance()
+            .getStringProperty(endpointPropertyName, defaultEndpoint);
 
 
     private AmazonDynamoDB dbClient;
@@ -73,9 +77,11 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
 
     public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
         this.dbClient = dbClient;
+        String endpoint = endpointName.get();
+        this.dbClient.setEndpoint(endpoint);
         String table = tableName.get();
         load(table, keyAttributeName.get(), valueAttributeName.get());
-        log.info("Successfully polled Dynamo for a new configuration based on table:" + table);
+        log.info("Successfully polled Dynamo for a new configuration based on table:" + table + " at endpoint: " + endpoint);
     }
 
     @Override
