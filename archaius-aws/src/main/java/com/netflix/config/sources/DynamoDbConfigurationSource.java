@@ -78,7 +78,7 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
     public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
         this.dbClient = dbClient;
         String endpoint = endpointName.get();
-        dbClient.setEndpoint(endpoint);
+        this.dbClient.setEndpoint(endpoint);
         String table = tableName.get();
         load(table, keyAttributeName.get(), valueAttributeName.get());
         log.info("Successfully polled Dynamo for a new configuration based on table:" + table + " at endpoint: " + endpoint);
