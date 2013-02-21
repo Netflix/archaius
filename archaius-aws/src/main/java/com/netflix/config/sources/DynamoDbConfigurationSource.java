@@ -17,7 +17,9 @@
  */
 package com.netflix.config.sources;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
@@ -64,11 +66,27 @@ public class DynamoDbConfigurationSource implements PolledConfigurationSource {
     private AmazonDynamoDB dbClient;
 
     public DynamoDbConfigurationSource() {
-        this(new DefaultAWSCredentialsProviderChain().getCredentials());
+        this(new AmazonDynamoDBClient());
     }
 
-    public DynamoDbConfigurationSource(AWSCredentials credentials) {
-        this(new AmazonDynamoDBClient(credentials));
+    public DynamoDbConfigurationSource(ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(clientConfiguration));
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentials awsCredentials) {
+        this(new AmazonDynamoDBClient(awsCredentials));
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentials awsCredentials, ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(awsCredentials, clientConfiguration));
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentialsProvider awsCredentialsProvider) {
+        this(new AmazonDynamoDBClient(awsCredentialsProvider));
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentialsProvider awsCredentialsProvider, ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(awsCredentialsProvider, clientConfiguration));
     }
 
     public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
