@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DynamoBackedConfigurationTest {
     private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
-    private static final String endpoint = "dynamodb.us-west-2.amazonaws.com";
+    private static final String endpoint = "dynamodb.us-west-1.amazonaws.com";
     private static AmazonDynamoDB dbClient;
 
     @BeforeClass
