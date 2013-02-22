@@ -15,7 +15,7 @@ import java.util.Map;
  * User: gorzell
  * Date: 1/17/13
  * Time: 10:18 AM
- * Some of the basic plumbing for a polling source that talks to Dynamo.
+ * Some of the basic plumbing and properties for a polling source that talks to Dynamo.
  */
 public abstract class AbstractDynamoDbConfigurationSource <T> {
     private static final Logger log = LoggerFactory.getLogger(DynamoDbConfigurationSource.class);

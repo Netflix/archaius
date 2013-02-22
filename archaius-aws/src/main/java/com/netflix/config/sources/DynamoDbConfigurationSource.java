@@ -38,6 +38,8 @@ import java.util.Map;
 /**
  * User: gorzell
  * Date: 8/6/12
+ * This source can be used for basic Dynamo support where there is no scoping of the properties.  It assume that you
+ * provide a table with just key value pairs and the last value read wins if there are multiple rows with the same key.
  */
 public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSource<Object> implements PolledConfigurationSource {
     private static final Logger log = LoggerFactory.getLogger(DynamoDbConfigurationSource.class);

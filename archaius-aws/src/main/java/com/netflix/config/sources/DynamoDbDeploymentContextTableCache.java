@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
  * User: gorzell
  * Date: 1/17/13
  * Time: 10:18 AM
- * You should write something useful here.
+ * This leverages some of the semantics of the PollingSource in order to have one place where the full table scan from
+ * Dynamo is cached.  It is mean to be consumed but a number of DeploymentContext aware sources to keep them from all
+ * having to load the table separately.
  */
 public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigurationSource<PropertyWithDeploymentContext> {
     private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
@@ -49,6 +51,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     private ScheduledExecutorService executor;
     private volatile Map<String, PropertyWithDeploymentContext> cachedTable = new HashMap<String, PropertyWithDeploymentContext>();
 
+
     public DynamoDbDeploymentContextTableCache() {
         super(new DefaultAWSCredentialsProviderChain().getCredentials());
         initialDelayMillis = 30000;
@@ -56,6 +59,12 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         start();
     }
 
+    /**
+     *
+     * @param credentials
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
     public DynamoDbDeploymentContextTableCache(AWSCredentials credentials, int initialDelayMillis, int delayMillis) {
         super(new AmazonDynamoDBClient(credentials));
         this.initialDelayMillis = initialDelayMillis;
@@ -63,6 +72,12 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         start();
     }
 
+    /**
+     *
+     * @param dbClient
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
     public DynamoDbDeploymentContextTableCache(AmazonDynamoDB dbClient, int initialDelayMillis, int delayMillis) {
         super(dbClient);
         this.initialDelayMillis = initialDelayMillis;
@@ -82,6 +97,9 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         executor.scheduleWithFixedDelay(runnable, initialDelayMillis, delayMillis, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Stop polling the source table
+     */
     public void stop() {
         if (executor != null) {
             executor.shutdown();
@@ -109,6 +127,12 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         };
     }
 
+    /**
+     * Scan the table in dynamo and create a map with the results.  In this case the map has a complex type as the value,
+     * so that Deployment Context is taken into account.
+     * @param table
+     * @return
+     */
     @Override
     protected Map<String, PropertyWithDeploymentContext> loadPropertiesFromTable(String table) {
         Map<String, PropertyWithDeploymentContext> propertyMap = new HashMap<String, PropertyWithDeploymentContext>();
@@ -136,6 +160,10 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         return propertyMap;
     }
 
+    /**
+     * Get the current values in the cache.
+     * @return
+     */
     public Collection<PropertyWithDeploymentContext> getProperties(){
         return cachedTable.values();
     }

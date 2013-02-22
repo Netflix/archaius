@@ -12,7 +12,7 @@ import java.util.Map;
  * User: gorzell
  * Date: 1/17/13
  * Time: 10:18 AM
- * You should write something useful here.
+ * A set of mock dynamo values/responses that can be used in unit tests.
  */
 public class DynamoDbMocks {
 
