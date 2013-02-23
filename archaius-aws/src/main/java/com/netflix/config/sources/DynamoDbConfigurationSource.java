@@ -17,8 +17,9 @@
  */
 package com.netflix.config.sources;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodb.model.AttributeValue;
@@ -45,11 +46,27 @@ public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSo
     private static final Logger log = LoggerFactory.getLogger(DynamoDbConfigurationSource.class);
 
     public DynamoDbConfigurationSource() {
-        super(new DefaultAWSCredentialsProviderChain().getCredentials());
+        super();
+    }
+
+    public DynamoDbConfigurationSource(ClientConfiguration clientConfiguration) {
+        super(clientConfiguration);
     }
 
     public DynamoDbConfigurationSource(AWSCredentials credentials) {
-        super(new AmazonDynamoDBClient(credentials));
+        super(credentials);
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentials credentials, ClientConfiguration clientConfiguration) {
+        super(credentials, clientConfiguration);
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentialsProvider credentialsProvider) {
+        super(credentialsProvider);
+    }
+
+    public DynamoDbConfigurationSource(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration) {
+        super(credentialsProvider, clientConfiguration);
     }
 
     public DynamoDbConfigurationSource(AmazonDynamoDB dbClient) {

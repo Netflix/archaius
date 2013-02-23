@@ -1,7 +1,8 @@
 package com.netflix.config.sources;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
 import com.netflix.config.DynamicPropertyFactory;
@@ -42,11 +43,27 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
     protected AmazonDynamoDB dbClient;
 
     public AbstractDynamoDbConfigurationSource() {
-        this(new DefaultAWSCredentialsProviderChain().getCredentials());
+        this(new AmazonDynamoDBClient());
+    }
+
+    public AbstractDynamoDbConfigurationSource(ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(clientConfiguration));
     }
 
     public AbstractDynamoDbConfigurationSource(AWSCredentials credentials) {
         this(new AmazonDynamoDBClient(credentials));
+    }
+
+    public AbstractDynamoDbConfigurationSource(AWSCredentials credentials, ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(credentials, clientConfiguration));
+    }
+
+    public AbstractDynamoDbConfigurationSource(AWSCredentialsProvider credentialsProvider) {
+        this(new AmazonDynamoDBClient(credentialsProvider));
+    }
+
+    public AbstractDynamoDbConfigurationSource(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration) {
+        this(new AmazonDynamoDBClient(credentialsProvider, clientConfiguration));
     }
 
     public AbstractDynamoDbConfigurationSource(AmazonDynamoDB dbClient) {

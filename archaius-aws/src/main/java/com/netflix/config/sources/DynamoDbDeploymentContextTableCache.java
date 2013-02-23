@@ -1,7 +1,8 @@
 package com.netflix.config.sources;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodb.model.AttributeValue;
@@ -45,6 +46,10 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     private final DynamicStringProperty contextValueAttributeName = DynamicPropertyFactory.getInstance()
             .getStringProperty(contextValueAttributePropertyName, defaultContextValueAttribute);
 
+    // Delay defaults
+    static final int defaultInitialDelayMillis = 30000;
+    static final int defaultDelayMillis = 60000;
+
     private final int initialDelayMillis;
     private final int delayMillis;
 
@@ -53,10 +58,48 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
 
 
     public DynamoDbDeploymentContextTableCache() {
-        super(new DefaultAWSCredentialsProviderChain().getCredentials());
-        initialDelayMillis = 30000;
-        delayMillis = 60000;
+        this(defaultInitialDelayMillis, defaultDelayMillis);
+    }
+
+    /**
+     *
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
+    public DynamoDbDeploymentContextTableCache(int initialDelayMillis, int delayMillis) {
+        super();
+        this.initialDelayMillis = initialDelayMillis;
+        this.delayMillis = delayMillis;
         start();
+    }
+
+    /**
+     *
+     * @param clientConfiguration
+     */
+    public DynamoDbDeploymentContextTableCache(ClientConfiguration clientConfiguration) {
+        this(clientConfiguration, defaultInitialDelayMillis, defaultDelayMillis);
+    }
+
+    /**
+     *
+     * @param clientConfiguration
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
+    public DynamoDbDeploymentContextTableCache(ClientConfiguration clientConfiguration, int initialDelayMillis, int delayMillis) {
+        super(clientConfiguration);
+        this.initialDelayMillis = initialDelayMillis;
+        this.delayMillis = delayMillis;
+        start();
+    }
+
+    /**
+     *
+     * @param credentials
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentials credentials) {
+        this(credentials, defaultInitialDelayMillis, defaultDelayMillis);
     }
 
     /**
@@ -66,10 +109,85 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
      * @param delayMillis
      */
     public DynamoDbDeploymentContextTableCache(AWSCredentials credentials, int initialDelayMillis, int delayMillis) {
-        super(new AmazonDynamoDBClient(credentials));
+        super(credentials);
         this.initialDelayMillis = initialDelayMillis;
         this.delayMillis = delayMillis;
         start();
+    }
+
+    /**
+     *
+     * @param credentials
+     * @param clientConfiguration
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentials credentials, ClientConfiguration clientConfiguration) {
+        this(credentials, clientConfiguration, defaultInitialDelayMillis, defaultDelayMillis);
+    }
+
+    /**
+     *
+     * @param credentials
+     * @param clientConfiguration
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentials credentials, ClientConfiguration clientConfiguration, int initialDelayMillis, int delayMillis) {
+        super(credentials, clientConfiguration);
+        this.initialDelayMillis = initialDelayMillis;
+        this.delayMillis = delayMillis;
+        start();
+    }
+
+    /**
+     *
+     * @param credentialsProvider
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentialsProvider credentialsProvider) {
+        this(credentialsProvider, defaultInitialDelayMillis, defaultDelayMillis);
+    }
+
+    /**
+     *
+     * @param credentialsProvider
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentialsProvider credentialsProvider, int initialDelayMillis, int delayMillis) {
+        super(credentialsProvider);
+        this.initialDelayMillis = initialDelayMillis;
+        this.delayMillis = delayMillis;
+        start();
+    }
+
+    /**
+     *
+     * @param credentialsProvider
+     * @param clientConfiguration
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration) {
+        this(credentialsProvider, clientConfiguration, defaultInitialDelayMillis, defaultDelayMillis);
+    }
+
+    /**
+     *
+     * @param credentialsProvider
+     * @param clientConfiguration
+     * @param initialDelayMillis
+     * @param delayMillis
+     */
+    public DynamoDbDeploymentContextTableCache(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, int initialDelayMillis, int delayMillis) {
+        super(credentialsProvider, clientConfiguration);
+        this.initialDelayMillis = initialDelayMillis;
+        this.delayMillis = delayMillis;
+        start();
+    }
+
+    /**
+     *
+     * @param dbClient
+     */
+    public DynamoDbDeploymentContextTableCache(AmazonDynamoDB dbClient) {
+        this(dbClient, defaultInitialDelayMillis, defaultDelayMillis);
     }
 
     /**
