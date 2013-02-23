@@ -62,7 +62,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param initialDelayMillis
      * @param delayMillis
      */
@@ -74,7 +73,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param clientConfiguration
      */
     public DynamoDbDeploymentContextTableCache(ClientConfiguration clientConfiguration) {
@@ -82,7 +80,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param clientConfiguration
      * @param initialDelayMillis
      * @param delayMillis
@@ -95,7 +92,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentials
      */
     public DynamoDbDeploymentContextTableCache(AWSCredentials credentials) {
@@ -103,7 +99,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentials
      * @param initialDelayMillis
      * @param delayMillis
@@ -116,7 +111,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentials
      * @param clientConfiguration
      */
@@ -125,7 +119,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentials
      * @param clientConfiguration
      * @param initialDelayMillis
@@ -139,7 +132,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentialsProvider
      */
     public DynamoDbDeploymentContextTableCache(AWSCredentialsProvider credentialsProvider) {
@@ -147,7 +139,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentialsProvider
      * @param initialDelayMillis
      * @param delayMillis
@@ -160,7 +151,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentialsProvider
      * @param clientConfiguration
      */
@@ -169,7 +159,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param credentialsProvider
      * @param clientConfiguration
      * @param initialDelayMillis
@@ -183,7 +172,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param dbClient
      */
     public DynamoDbDeploymentContextTableCache(AmazonDynamoDB dbClient) {
@@ -191,7 +179,6 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     }
 
     /**
-     *
      * @param dbClient
      * @param initialDelayMillis
      * @param delayMillis
@@ -248,6 +235,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     /**
      * Scan the table in dynamo and create a map with the results.  In this case the map has a complex type as the value,
      * so that Deployment Context is taken into account.
+     *
      * @param table
      * @return
      */
@@ -262,9 +250,11 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
-                String contextKey = item.get(contextKeyAttributeName.get()).getS();
-                String contextVal = item.get(contextValueAttributeName.get()).getS();
-                String key = keyVal + ";" + contextKey +";" + contextVal;
+
+                //Need to deal with the fact that these attributes might not exist
+                String contextKey = item.containsKey(contextKeyAttributeName.get()) ? item.get(contextKeyAttributeName.get()).getS() : null;
+                String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
+                String key = keyVal + ";" + contextKey + ";" + contextVal;
                 propertyMap.put(key,
                         new PropertyWithDeploymentContext(
                                 DeploymentContext.ContextKey.valueOf(contextKey),
@@ -280,9 +270,10 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
 
     /**
      * Get the current values in the cache.
+     *
      * @return
      */
-    public Collection<PropertyWithDeploymentContext> getProperties(){
+    public Collection<PropertyWithDeploymentContext> getProperties() {
         return cachedTable.values();
     }
 }

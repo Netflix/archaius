@@ -17,13 +17,14 @@ import java.util.Map;
 public class DynamoDbDeploymentContextConfigurationSource implements PolledConfigurationSource {
     private final DynamoDbDeploymentContextTableCache tableCache;
     private final DeploymentContext.ContextKey contextKey;
-    private final AbstractConfiguration cfg = ConfigurationManager.getConfigInstance();
+    private final DeploymentContext deploymentContext = ConfigurationManager.getDeploymentContext();
 
 
     /**
      * The configuration will be filtered based on the contextKey.
      * @param tableCache
-     * @param contextKey
+     * @param contextKey - Null can be used as a wild card to match the absence of a context key for the property.
+     *                   The result would be that this source with a null key would pick up "global" properties.
      */
     public DynamoDbDeploymentContextConfigurationSource(DynamoDbDeploymentContextTableCache tableCache, DeploymentContext.ContextKey contextKey) {
         this.tableCache = tableCache;
@@ -35,8 +36,11 @@ public class DynamoDbDeploymentContextConfigurationSource implements PolledConfi
         Map<String, Object> map = new HashMap<String, Object>();
 
         for(PropertyWithDeploymentContext prop: tableCache.getProperties()){
-            if(prop.getContextKey() == contextKey &&
-                    prop.getContextValue().equalsIgnoreCase(cfg.getString(prop.getContextKey().getKey()))){
+            if(prop.getContextKey() == contextKey && prop.getContextValue() == null){
+                map.put(prop.getPropertyName(), prop.getPropertyValue());
+            }
+            else if(prop.getContextKey() == contextKey &&
+                    prop.getContextValue().equalsIgnoreCase(deploymentContext.getValue(contextKey))){
                 map.put(prop.getPropertyName(), prop.getPropertyValue());
             }
         }
