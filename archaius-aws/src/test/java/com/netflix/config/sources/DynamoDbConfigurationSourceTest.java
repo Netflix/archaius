@@ -17,8 +17,6 @@ import static org.mockito.Mockito.*;
  * Time: 10:18 AM
  * You should write something useful here.
  */
-// temporarily disabled due to possible AWS key access issue 
-@Ignore
 public class DynamoDbConfigurationSourceTest {
 
     @Test
