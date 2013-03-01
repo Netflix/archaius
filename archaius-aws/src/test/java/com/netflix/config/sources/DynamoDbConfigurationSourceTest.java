@@ -27,12 +27,15 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * User: gorzell
  * Date: 8/7/12
  */
+// temporarily disabled due to possible AWS key access issue 
+@Ignore
 public class DynamoDbConfigurationSourceTest {
     private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
     private static AmazonDynamoDB dbClient;
