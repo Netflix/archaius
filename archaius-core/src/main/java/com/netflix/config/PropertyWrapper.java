@@ -19,7 +19,11 @@ package com.netflix.config;
 
 import java.util.IdentityHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.netflix.config.validation.PropertyChangeValidator;
+import com.netflix.config.validation.ValidationException;
 
 /**
  * A wrapper around DynamicProperty and associates it with a type.
@@ -32,7 +36,8 @@ public abstract class PropertyWrapper<V> {
     protected final V defaultValue;
     private static final IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object> SUBCLASSES_WITH_NO_CALLBACK
             = new IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object>();
-
+    private static final Logger logger = LoggerFactory.getLogger(PropertyWrapper.class);
+    
     static {
         PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);
@@ -79,6 +84,14 @@ public abstract class PropertyWrapper<V> {
                     PropertyWrapper.this.validate(newValue);
                 }
             });
+            try {
+            	if (this.prop.getString() != null) {
+            	    this.validate(this.prop.getString());
+            	}
+            } catch (ValidationException e) {
+            	logger.warn("Error validating property at initialization. Will fallback to default value.", e);
+            	prop.updateValue(defaultValue);
+            }
         }
     }
 
