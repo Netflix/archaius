@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodb.model.ScanRequest;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.PollResult;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

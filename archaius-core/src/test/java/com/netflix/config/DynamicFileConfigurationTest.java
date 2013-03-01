@@ -53,6 +53,8 @@ public class DynamicFileConfigurationTest {
         writer.newLine();
         writer.write("dprops2=79.98");
         writer.newLine();
+        writer.write("abc=-2"); // this property should fail validation but should not affect update of other properties
+        writer.newLine();
         writer.close();
         System.err.println(configFile.getPath() + " created");
         return configFile;
@@ -63,7 +65,7 @@ public class DynamicFileConfigurationTest {
             public void run() {
                 try {
                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), "UTF-8"));
-                    writer.write("abc=-2"); // this property should fail validation but should not affect update of other properties
+                    writer.write("abc=-8"); // this property should fail validation but should not affect update of other properties
                     writer.newLine();
                     writer.write("dprops1=" + String.valueOf(Long.MIN_VALUE)); 
                     writer.newLine();

@@ -28,3 +28,7 @@ subprojects {
         excludes = []
     }
 }
+
+project(':archaius-samplelibrary') {
+    tasks.withType(FindBugs) { ignoreFailures = true }
+}
