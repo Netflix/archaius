@@ -34,6 +34,9 @@ public class DynamoDbDeploymentContextTableCacheTest {
     private static final PropertyWithDeploymentContext test5 =
             new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment,
                     "test", "boo", "who");
+    private static final PropertyWithDeploymentContext test6 =
+            new PropertyWithDeploymentContext(null,
+                    null, "foo", "bar");
 
     @Test
     public void testPoll() throws Exception {
@@ -44,19 +47,20 @@ public class DynamoDbDeploymentContextTableCacheTest {
         DynamoDbDeploymentContextTableCache cache = new DynamoDbDeploymentContextTableCache(mockContextDbClient, 100, 100);
 
         Collection<PropertyWithDeploymentContext> props = cache.getProperties();
-        assertEquals(3, props.size());
+        assertEquals(4, props.size());
         assertTrue(props.contains(test1));
         assertTrue(props.contains(test2));
         assertTrue(props.contains(test5));
+        assertTrue(props.contains(test6));
 
         Thread.sleep(150);
 
         props = cache.getProperties();
-        assertEquals(4, props.size());
+        assertEquals(5, props.size());
         assertTrue(props.contains(test1));
         assertTrue(props.contains(test3));
         assertTrue(props.contains(test4));
         assertTrue(props.contains(test5));
-
+        assertTrue(props.contains(test6));
     }
 }

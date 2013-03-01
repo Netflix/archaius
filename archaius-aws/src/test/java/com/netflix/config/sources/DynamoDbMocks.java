@@ -84,6 +84,8 @@ public class DynamoDbMocks {
         contextRow3.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues1.add(contextRow3);
 
+        contextResultValues1.add(basicRow1);
+
         //Result2
         contextResultValues2.add(contextRow1);
         contextResultValues2.add(contextRow3);
@@ -102,6 +104,7 @@ public class DynamoDbMocks {
         updatedContextRow.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
         contextResultValues2.add(updatedContextRow);
 
+        contextResultValues2.add(basicRow1);
 
         //Create results from initialized values
         contextScanResult1 = new ScanResult().withItems(contextResultValues1);

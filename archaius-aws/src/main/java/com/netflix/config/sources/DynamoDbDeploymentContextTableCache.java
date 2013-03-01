@@ -252,12 +252,12 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
                 String keyVal = item.get(keyAttributeName.get()).getS();
 
                 //Need to deal with the fact that these attributes might not exist
-                String contextKey = item.containsKey(contextKeyAttributeName.get()) ? item.get(contextKeyAttributeName.get()).getS() : null;
+                DeploymentContext.ContextKey contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
                 String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
                 String key = keyVal + ";" + contextKey + ";" + contextVal;
                 propertyMap.put(key,
                         new PropertyWithDeploymentContext(
-                                DeploymentContext.ContextKey.valueOf(contextKey),
+                                contextKey,
                                 contextVal,
                                 keyVal,
                                 item.get(valueAttributeName.get()).getS()

@@ -23,25 +23,11 @@ import static org.mockito.Mockito.*;
  * You should write something useful here.
  */
 public class DynamoDbDeploymentContextConfigurationSourceTest {
-    private static Map<String, Object> propMap1;
-    private static Map<String, Object> propMap2;
     private static Collection<PropertyWithDeploymentContext> propCollection1;
     private static Collection<PropertyWithDeploymentContext> propCollection2;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        //Setup first map
-        propMap1 = new HashMap<String, Object>();
-        propMap1.put("foo", "bar");
-        propMap1.put("goo", "foo");
-        propMap1.put("boo", "who");
-
-        //Setup second map
-        propMap2 = new HashMap<String, Object>();
-        propMap2.put("foo", "bar");
-        propMap2.put("goo", "goo");
-        propMap2.put("boo", "who");
-
         propCollection1 = new LinkedList<PropertyWithDeploymentContext>();
         propCollection1.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "test", "foo", "bar"));
         propCollection1.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "test", "goo", "goo"));
@@ -53,8 +39,7 @@ public class DynamoDbDeploymentContextConfigurationSourceTest {
         propCollection2.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "prod", "goo", "foo"));
         propCollection2.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "test", "boo", "who"));
 
-        ConfigurationManager.getConfigInstance().setProperty("@environment", "test");
-
+        ConfigurationManager.getConfigInstance().setProperty("archaius.deployment.environment", "test");
     }
 
     @AfterClass

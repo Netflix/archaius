@@ -43,7 +43,9 @@ public class PropertyWithDeploymentContext {
         PropertyWithDeploymentContext that = (PropertyWithDeploymentContext) o;
 
         if (contextKey != that.contextKey) return false;
-        if (!contextValue.equals(that.contextValue)) return false;
+        if (contextKey == null) {
+            if (contextValue != that.contextValue) return false;
+        } else if (!contextValue.equals(that.contextValue)) return false;
         if (!propertyName.equals(that.propertyName)) return false;
         if (!propertyValue.equals(that.propertyValue)) return false;
 
