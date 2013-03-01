@@ -12,7 +12,7 @@ import java.util.Map;
  * User: gorzell
  * Date: 9/5/12
  */
-public class DynamoDbTestHelper {
+public class DynamoDbIntegrationTestHelper {
 
     static void createTable(AmazonDynamoDB dbClient, String tableName) throws InterruptedException {
         //TODO check to make sure the table isn't being created or deleted.
