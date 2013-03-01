@@ -533,7 +533,7 @@ public class DynamicProperty {
     }
 
     // return true iff the value actually changed
-    private boolean updateValue(Object newValue) {
+    boolean updateValue(Object newValue) {
         String nv = (newValue == null) ? null : newValue.toString();
         synchronized (lock) {
             if ((nv == null && stringValue == null)
