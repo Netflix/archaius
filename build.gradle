@@ -41,6 +41,7 @@ project(':archaius-aws') {
         compile project(':archaius-core')
         compile 'com.amazonaws:aws-java-sdk:1.3.31'
         testCompile 'junit:junit:4.10'
+        testCompile 'org.mockito:mockito-all:1.9.5'
         testCompile 'org.slf4j:slf4j-simple:1.6.4'
     }
 }
