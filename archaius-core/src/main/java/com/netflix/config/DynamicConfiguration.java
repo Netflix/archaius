@@ -55,7 +55,7 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
      * @param scheduler AbstractPollingScheduler whose {@link AbstractPollingScheduler#schedule(Runnable)} will be
      *                  used to determine the polling schedule
      */
-    public void startPolling(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
+    public synchronized void startPolling(PolledConfigurationSource source, AbstractPollingScheduler scheduler) {
         this.scheduler = scheduler;
         this.source = source;
         init(source, scheduler);

@@ -1,70 +1,45 @@
 package com.netflix.config.sources;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
-
-import static com.netflix.config.sources.DynamoDbTestHelper.*;
-
+import com.amazonaws.services.dynamodb.model.ScanRequest;
 import com.netflix.config.*;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-
-
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 /**
  * User: gorzell
- * Date: 8/23/12
+ * Date: 1/17/13
+ * Time: 10:18 AM
+ * You should write something useful here.
  */
 public class DynamoBackedConfigurationTest {
-    private static final String tableName = DynamoDbConfigurationSource.defaultTable + "UNITTEST";
-    private static AmazonDynamoDB dbClient;
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        try {
-            dbClient = new AmazonDynamoDBClient(new DefaultAWSCredentialsProviderChain().getCredentials());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.setProperty("com.netflix.config.dynamo.tableName", tableName);
-        if (dbClient != null) {
-            createTable(dbClient, tableName);
-            addElements(dbClient, tableName);
-        }
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        if (dbClient != null) removeTable(dbClient, tableName);
-    }
-
     @Test
-    public void testPropertyChange() throws Exception{
-        System.setProperty("com.netflix.config.dynamo.tableName", tableName);
-        if (dbClient != null) {
-            DynamoDbConfigurationSource source = new DynamoDbConfigurationSource(dbClient);
-            FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 1000, false);
-            DynamicConfiguration dynamicConfig = new DynamicConfiguration(source, scheduler);
-            ConfigurationManager.loadPropertiesFromConfiguration(dynamicConfig);
+    public void testPropertyChange() throws Exception {
+        AmazonDynamoDB mockBasicDbClient = mock(AmazonDynamoDB.class);
 
-            DynamicStringProperty test1 = DynamicPropertyFactory.getInstance().getStringProperty("test1","");
-            DynamicStringProperty test2 = DynamicPropertyFactory.getInstance().getStringProperty("test2","");
-            DynamicStringProperty test3 = DynamicPropertyFactory.getInstance().getStringProperty("test3","");
+        //3 of the first config to cover: object creation, threadRun at 0 delay, load properties
+        when(mockBasicDbClient.scan(any(ScanRequest.class))).thenReturn(DynamoDbMocks.basicScanResult1,
+                DynamoDbMocks.basicScanResult1, DynamoDbMocks.basicScanResult1, DynamoDbMocks.basicScanResult2);
+        DynamoDbConfigurationSource source = new DynamoDbConfigurationSource(mockBasicDbClient);
 
-            assertEquals("val1", test1.get());
-            assertEquals("val2", test2.get());
-            assertEquals("val3", test3.get());
+        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 500, false);
+        DynamicConfiguration dynamicConfig = new DynamicConfiguration(source, scheduler);
+        ConfigurationManager.loadPropertiesFromConfiguration(dynamicConfig);
 
-            updateValues(dbClient, tableName);
-            Thread.sleep(5000);
+        DynamicStringProperty test1 = DynamicPropertyFactory.getInstance().getStringProperty("foo", "");
+        DynamicStringProperty test2 = DynamicPropertyFactory.getInstance().getStringProperty("goo", "");
+        DynamicStringProperty test3 = DynamicPropertyFactory.getInstance().getStringProperty("boo", "");
 
-            assertEquals("vala", test1.get());
-            assertEquals("valb", test2.get());
-            assertEquals("valc", test3.get());
-        }
+        assertEquals("bar", test1.get());
+        assertEquals("goo", test2.get());
+        assertEquals("who", test3.get());
+
+        Thread.sleep(1000);
+
+        assertEquals("bar", test1.get());
+        assertEquals("foo", test2.get());
+        assertEquals("who", test3.get());
     }
 }
