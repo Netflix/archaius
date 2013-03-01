@@ -22,55 +22,59 @@ import com.netflix.config.DynamicListProperty
 /**
  * User: gorzell
  * Date: 8/6/12
+ *
+ * @deprecated You should use the object instead.
+ * @since 0.5.5
  */
 
+@deprecated("You should use the object instead.", "0.5.5")
 trait DynamicProperties {
 
   private val DefaultDelimiterRegex = DynamicListProperty.DEFAULT_DELIMITER
 
-  protected def dynamicIntProperty(propertyName: String, default: Int,
+  def dynamicIntProperty(propertyName: String, default: Int,
                                    callback: Runnable = null): DynamicIntProperty = {
     val prop = new DynamicIntProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicLongProperty(propertyName: String, default: Long,
+  def dynamicLongProperty(propertyName: String, default: Long,
                                     callback: Runnable = null): DynamicLongProperty = {
     val prop = new DynamicLongProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicFloatProperty(propertyName: String, default: Float,
+  def dynamicFloatProperty(propertyName: String, default: Float,
                                      callback: Runnable = null): DynamicFloatProperty = {
     val prop = new DynamicFloatProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicDoubleProperty(propertyName: String, default: Double,
+  def dynamicDoubleProperty(propertyName: String, default: Double,
                                       callback: Runnable = null): DynamicDoubleProperty = {
     val prop = new DynamicDoubleProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicBooleanProperty(propertyName: String, default: Boolean,
+  def dynamicBooleanProperty(propertyName: String, default: Boolean,
                                        callback: Runnable = null): DynamicBooleanProperty = {
     val prop = new DynamicBooleanProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicStringProperty(propertyName: String, default: String,
+  def dynamicStringProperty(propertyName: String, default: String,
                                       callback: Runnable = null): DynamicStringProperty = {
     val prop = new DynamicStringProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
-  protected def dynamicStringListProperty(propertyName: String,
+  def dynamicStringListProperty(propertyName: String,
                                           default: List[String],
                                           delimiterRegex: String = DefaultDelimiterRegex,
                                           callback: Runnable = null): DynamicStringListProperty = {
@@ -79,7 +83,7 @@ trait DynamicProperties {
     prop
   }
 
-  protected def dynamicStringSetProperty(propertyName: String,
+  def dynamicStringSetProperty(propertyName: String,
                                          default: Set[String],
                                          delimiterRegex: String = DefaultDelimiterRegex,
                                          callback: Runnable = null): DynamicStringSetProperty = {
@@ -88,7 +92,7 @@ trait DynamicProperties {
     prop
   }
 
-  protected def dynamicStringMapProperty(propertyName: String,
+  def dynamicStringMapProperty(propertyName: String,
                                          default: Map[String, String],
                                          delimiterRegex: String = DefaultDelimiterRegex,
                                          callback: Runnable = null): DynamicStringMapProperty = {
@@ -97,3 +101,5 @@ trait DynamicProperties {
     prop
   }
 }
+
+object DynamicProperties extends DynamicProperties{}
