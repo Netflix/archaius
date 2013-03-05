@@ -53,6 +53,13 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * default constructor. 
      */
     public static final String CONFIG_URL = "archaius.configurationSource.additionalUrls";
+
+    /**
+     * System property to define if failure to retrieve properties from one source should fail 
+     * quickly instead of retrieving from subsequent sources.
+     */
+    public static final boolean FAIL_FAST =
+        System.getProperty("archaius.urlConfigurationSource.failFast") == null ? true : Boolean.parseBoolean("archaius.urlConfigurationSource.failFast");
     
     /**
      * Default configuration file name to be used by default constructor. This file should
@@ -170,9 +177,11 @@ public class URLConfigurationSource implements PolledConfigurationSource {
      * 
      * @param initial this parameter is ignored by the implementation
      * @param checkPoint this parameter is ignored by the implementation
+     * @throws IOException IOException occurred in file operation
      */
     @Override
-    public PollResult poll(boolean initial, Object checkPoint) {    
+    public PollResult poll(boolean initial, Object checkPoint)
+            throws IOException {    
         if (configUrls == null || configUrls.length == 0) {
             return PollResult.createFull(null);
         }
@@ -188,6 +197,9 @@ public class URLConfigurationSource implements PolledConfigurationSource {
                 }
             } catch (IOException e) {
                 logger.error("Unable to load properties from " + url.toString(), e);
+                if (FAIL_FAST) {
+                    throw e;
+                }
             }
         }
         return PollResult.createFull(map);
