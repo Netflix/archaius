@@ -78,7 +78,7 @@ public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSo
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
                     .withExclusiveStartKey(lastKeysEvaluated);
-            ScanResult result = dbClient.scan(scanRequest);
+            ScanResult result = dbScanWithThroughputBackOff(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 propertyMap.put(item.get(keyAttributeName.get()).getS(), item.get(valueAttributeName.get()).getS());
             }
