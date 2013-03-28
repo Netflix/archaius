@@ -40,7 +40,7 @@ public class ConfigurationManagerTest {
     
     @Test
     public void testLoadProperties() throws Exception {
-        ConfigurationManager.loadPropertiesFromResources("sampleapp.properties");
+        ConfigurationManager.loadPropertiesFromResources("test.properties");
         assertEquals("5", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
     }
     
@@ -50,8 +50,10 @@ public class ConfigurationManagerTest {
         context.setDeploymentEnvironment("test");
         context.setDeploymentRegion("us-east-1");
         ConfigurationManager.setDeploymentContext(context);
-        ConfigurationManager.loadCascadedPropertiesFromResources("sampleapp");
+        ConfigurationManager.loadCascadedPropertiesFromResources("test");
         assertEquals("9", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
-        assertEquals("1", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));          
+        assertEquals("1", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));
+        ConfigurationManager.loadAppOverrideProperties("override");
+        assertEquals("200", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));
     }
 }
