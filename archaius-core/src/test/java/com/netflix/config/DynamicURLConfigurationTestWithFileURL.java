@@ -9,7 +9,7 @@ public class DynamicURLConfigurationTestWithFileURL {
     
     @BeforeClass
     public static void init() {
-        System.setProperty("archaius.configurationSource.defaultFileName", "sampleapp.properties");
+        System.setProperty("archaius.configurationSource.defaultFileName", "test.properties");
     }
     
     @Test
