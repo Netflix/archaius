@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import com.netflix.config.jmx.ConfigJMXManager;
 import com.netflix.config.jmx.ConfigMBean;
 import com.netflix.config.util.ConfigurationUtils;
-import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
 
 /**
  * The configuration manager is a central place where it manages the system wide Configuration and
