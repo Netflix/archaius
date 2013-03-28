@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.config.jmx.ConfigJMXManager;
 import com.netflix.config.jmx.ConfigMBean;
 import com.netflix.config.util.ConfigurationUtils;
+import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
 
 /**
  * The configuration manager is a central place where it manages the system wide Configuration and
@@ -59,6 +61,8 @@ public class ConfigurationManager {
     static volatile DeploymentContext context = null;
     
     public static final String PROP_NEXT_LOAD = "@next";
+    private static final String PROP_NEXT_LOAD_NFLX = "netflixconfiguration.properties.nextLoad";
+    public static final String APPLICATION_PROPERTIES = "APPLICATION_PROPERTIES";
     
     private static Set<String> loadedPropertiesURLs = new CopyOnWriteArraySet<String>();
     
@@ -121,19 +125,23 @@ public class ConfigurationManager {
     }
     
     private static AbstractConfiguration createDefaultConfigInstance() {
-        ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();            
+        ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();  
+        int indexForContainerConfig = 0;
+        try {
+            DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
+            config.addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
+            indexForContainerConfig = config.getIndexOfConfiguration(defaultURLConfig);
+        } catch (Throwable e) {
+            logger.warn("Failed to create default dynamic configuration", e);
+        }
         if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
-            try {
-                DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
-                config.addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
-            } catch (Throwable e) {
-                logger.warn("Failed to create default dynamic configuration", e);
-            }
             SystemConfiguration sysConfig = new SystemConfiguration();                
             config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
-            int index = config.getIndexOfConfiguration(sysConfig);
-            config.setContainerConfigurationIndex(index);
+            indexForContainerConfig = config.getIndexOfConfiguration(sysConfig);
         }
+        config.setContainerConfigurationIndex(indexForContainerConfig);
+        ConcurrentCompositeConfiguration appOverrideConfig = new ConcurrentCompositeConfiguration();
+        config.addConfiguration(appOverrideConfig, APPLICATION_PROPERTIES);
         return config;
     }
     
@@ -246,6 +254,17 @@ public class ConfigurationManager {
      * @see DeploymentContext#getDeploymentEnvironment()
      */
     public static void loadCascadedPropertiesFromResources(String configName) throws IOException {
+        Properties props = loadCascadedProperties(configName);
+        if (instance instanceof AggregatedConfiguration) {
+            ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
+            config.loadProperties(props);
+            ((AggregatedConfiguration) instance).addConfiguration(config, configName);
+        } else {
+            ConfigurationUtils.loadProperties(props, instance);
+        }
+    }
+
+    private static Properties loadCascadedProperties(String configName) throws IOException {
         String defaultConfigFileName = configName + ".properties";
         if (instance == null) {
             instance = getConfigInstance();
@@ -267,15 +286,26 @@ public class ConfigurationManager {
                 }
             }
         }
-        if (instance instanceof AggregatedConfiguration) {
-            ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
-            config.loadProperties(props);
-            ((AggregatedConfiguration) instance).addConfiguration(config, configName);
-        } else {
-            ConfigurationUtils.loadProperties(props, instance);
-        }
+        return props;
     }
-
+    
+    public static void loadAppOverrideProperties(String appConfigName) throws IOException {
+        AbstractConfiguration config = getConfigInstance();
+        Properties props = loadCascadedProperties(appConfigName);
+        if (config instanceof AggregatedConfiguration) {
+            AggregatedConfiguration aggregated = (AggregatedConfiguration) config;
+            Configuration appConfig = aggregated.getConfiguration(APPLICATION_PROPERTIES);
+            if (appConfig != null) {
+                ConfigurationUtils.loadProperties(props, appConfig);
+                return;
+            } 
+        }
+        // The configuration instance is not an aggregated configuration or it does
+        // not have designated configuration for application properties - just add
+        // the properties using config.setProperty()
+        ConfigurationUtils.loadProperties(props, config);        
+    }
+    
     /**
      * Load properties from the specified configuration into system wide configuration
      */
@@ -375,12 +405,12 @@ public class ConfigurationManager {
     public static AbstractConfiguration getConfigFromPropertiesFile(URL startingUrl) 
     throws FileNotFoundException {
         return ConfigurationUtils.getConfigFromPropertiesFile(startingUrl,  
-                getLoadedPropertiesURLs(), PROP_NEXT_LOAD);
+                getLoadedPropertiesURLs(), PROP_NEXT_LOAD, PROP_NEXT_LOAD_NFLX);
     }
     
     public static Properties getPropertiesFromFile(URL startingUrl) 
     throws FileNotFoundException {
-        return ConfigurationUtils.getPropertiesFromFile(startingUrl, getLoadedPropertiesURLs(), PROP_NEXT_LOAD);
+        return ConfigurationUtils.getPropertiesFromFile(startingUrl, getLoadedPropertiesURLs(), PROP_NEXT_LOAD, PROP_NEXT_LOAD_NFLX);
     }
 
 
