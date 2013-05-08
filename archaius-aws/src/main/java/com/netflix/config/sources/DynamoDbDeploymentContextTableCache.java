@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * having to load the table separately.
  */
 public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigurationSource<PropertyWithDeploymentContext> {
-    private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
+    private static Logger log = LoggerFactory.getLogger(DynamoDbDeploymentContextTableCache.class);
 
     //Property names
     static final String contextKeyAttributePropertyName = "com.netflix.config.dynamo.contextKeyAttributeName";
@@ -194,7 +194,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "pollingConfigurationSource");
+                Thread t = new Thread(r, "pollingDynamoTableCache");
                 t.setDaemon(true);
                 return t;
             }
@@ -220,7 +220,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     private Runnable getPollingRunnable() {
         return new Runnable() {
             public void run() {
-                log.debug("Polling started");
+                log.debug("Dynamo cached polling started");
                 try {
                     Map<String, PropertyWithDeploymentContext> newMap = loadPropertiesFromTable(tableName.get());
                     cachedTable = newMap;
