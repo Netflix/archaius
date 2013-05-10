@@ -1,18 +1,5 @@
 package com.netflix.config.sources;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodb.model.AttributeValue;
-import com.amazonaws.services.dynamodb.model.Key;
-import com.amazonaws.services.dynamodb.model.ScanRequest;
-import com.amazonaws.services.dynamodb.model.ScanResult;
-import com.netflix.config.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +7,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.dynamodb.AmazonDynamoDB;
+import com.amazonaws.services.dynamodb.model.AttributeValue;
+import com.amazonaws.services.dynamodb.model.Key;
+import com.amazonaws.services.dynamodb.model.ScanRequest;
+import com.amazonaws.services.dynamodb.model.ScanResult;
+import com.netflix.config.AbstractPollingScheduler;
+import com.netflix.config.DeploymentContext;
+import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.config.DynamicStringProperty;
+import com.netflix.config.PropertyWithDeploymentContext;
+import com.netflix.config.sources.AbstractDynamoDbConfigurationSource;
 
 /**
  * User: gorzell
@@ -30,21 +35,17 @@ import java.util.concurrent.TimeUnit;
  * having to load the table separately.
  */
 public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigurationSource<PropertyWithDeploymentContext> {
-    private static Logger log = LoggerFactory.getLogger(DynamoDbDeploymentContextTableCache.class);
+    private static Logger log = LoggerFactory.getLogger(AbstractPollingScheduler.class);
 
     //Property names
-    static final String contextKeyAttributePropertyName = "com.netflix.config.dynamo.contextKeyAttributeName";
-    static final String contextValueAttributePropertyName = "com.netflix.config.dynamo.contextValueAttributeName";
+    static final String contextKeyAttributePropertyName = "com.netflix.config.dynamo.contextAttributeName";
 
     //Property defaults
-    static final String defaultContextKeyAttribute = "contextKey";
-    static final String defaultContextValueAttribute = "contextValue";
+    static final String defaultContextKeyAttribute = "context";
 
     //Dynamic Properties
-    private final DynamicStringProperty contextKeyAttributeName = DynamicPropertyFactory.getInstance()
+    private final DynamicStringProperty contextAttributeName = DynamicPropertyFactory.getInstance()
             .getStringProperty(contextKeyAttributePropertyName, defaultContextKeyAttribute);
-    private final DynamicStringProperty contextValueAttributeName = DynamicPropertyFactory.getInstance()
-            .getStringProperty(contextValueAttributePropertyName, defaultContextValueAttribute);
 
     // Delay defaults
     static final int defaultInitialDelayMillis = 30000;
@@ -194,7 +195,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
         executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "pollingDynamoTableCache");
+                Thread t = new Thread(r, "pollingConfigurationSource");
                 t.setDaemon(true);
                 return t;
             }
@@ -220,7 +221,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     private Runnable getPollingRunnable() {
         return new Runnable() {
             public void run() {
-                log.debug("Dynamo cached polling started");
+                log.debug("Polling started");
                 try {
                     Map<String, PropertyWithDeploymentContext> newMap = loadPropertiesFromTable(tableName.get());
                     cachedTable = newMap;
@@ -250,10 +251,28 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
+                
+                DeploymentContext.ContextKey contextKey;
+                String contextVal;
 
-                //Need to deal with the fact that these attributes might not exist
-                DeploymentContext.ContextKey contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
-                String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
+                String compoundContextKeyValue = item.get(contextAttributeName.get()).getS();
+                if (compoundContextKeyValue.equals("global"))
+                {
+                	contextKey = null;
+                	contextVal = null;
+                }
+                else
+                {
+                	String[] splitUpKey = compoundContextKeyValue.split("=");
+                	if (splitUpKey.length != 2)
+                	{
+                		log.warn("Invalid context format: " + compoundContextKeyValue);
+                		continue;
+                	}
+                	contextKey = DeploymentContext.ContextKey.valueOf(splitUpKey[0]);
+                	contextVal = splitUpKey[1];
+                }
+                
                 String key = keyVal + ";" + contextKey + ";" + contextVal;
                 propertyMap.put(key,
                         new PropertyWithDeploymentContext(
