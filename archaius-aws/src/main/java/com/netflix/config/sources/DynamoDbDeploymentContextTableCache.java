@@ -35,16 +35,21 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     //Property names
     static final String contextKeyAttributePropertyName = "com.netflix.config.dynamo.contextKeyAttributeName";
     static final String contextValueAttributePropertyName = "com.netflix.config.dynamo.contextValueAttributeName";
+    static final String contextAttributePropertyName = "com.netflix.config.dynamo.contextAttributeName";
 
     //Property defaults
     static final String defaultContextKeyAttribute = "contextKey";
     static final String defaultContextValueAttribute = "contextValue";
+    static final String defaultContextAttribute = "context";
 
     //Dynamic Properties
     private final DynamicStringProperty contextKeyAttributeName = DynamicPropertyFactory.getInstance()
             .getStringProperty(contextKeyAttributePropertyName, defaultContextKeyAttribute);
     private final DynamicStringProperty contextValueAttributeName = DynamicPropertyFactory.getInstance()
             .getStringProperty(contextValueAttributePropertyName, defaultContextValueAttribute);
+    private final DynamicStringProperty contextAttributeName = DynamicPropertyFactory.getInstance()
+            .getStringProperty(contextAttributePropertyName, defaultContextAttribute);
+
 
     // Delay defaults
     static final int defaultInitialDelayMillis = 30000;
@@ -251,9 +256,37 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
 
-                //Need to deal with the fact that these attributes might not exist
-                DeploymentContext.ContextKey contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
-                String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
+                DeploymentContext.ContextKey contextKey;
+                String contextVal;
+
+                //We support storing contextKey and contextValue either as a pair or merged into one field
+                if (item.containsKey(contextAttributeName.get()))
+                {
+                    String compoundContextKeyValue = item.get(contextAttributeName.get()).getS();                       
+                    if (compoundContextKeyValue.equals("global"))
+                    {
+                        contextKey = null;
+                        contextVal = null;
+                    }
+                    else
+                    {
+                        String[] splitUpKey = compoundContextKeyValue.split("=");
+                        if (splitUpKey.length != 2)
+                        {
+                            log.warn(String.format("Invalid context format <%s> for key <%s>=<%s> - ignoring entry", compoundContextKeyValue, keyVal, item.get(valueAttributeName.get()).getS()));
+                            continue;
+                        }
+                        contextKey = DeploymentContext.ContextKey.valueOf(splitUpKey[0]);
+                        contextVal = splitUpKey[1];
+                    }
+                }
+                else
+                {
+                    //Need to deal with the fact that these attributes might not exist
+                    contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
+                    contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
+                }
+
                 String key = keyVal + ";" + contextKey + ";" + contextVal;
                 propertyMap.put(key,
                         new PropertyWithDeploymentContext(
