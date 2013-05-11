@@ -54,10 +54,11 @@ public class PropertyWithDeploymentContext {
 
     @Override
     public int hashCode() {
-        int result = contextKey.hashCode();
-        result = 31 * result + contextValue.hashCode();
-        result = 31 * result + propertyName.hashCode();
+        int result = propertyName.hashCode();
         result = 31 * result + propertyValue.hashCode();
+        result = 31 * result + (contextKey != null ? contextKey.hashCode() : 0);
+        result = 31 * result + (contextValue != null ? contextValue.hashCode() : 0);
+         
         return result;
     }
 }
