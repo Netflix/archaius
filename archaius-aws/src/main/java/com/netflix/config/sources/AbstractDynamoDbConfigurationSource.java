@@ -19,7 +19,7 @@ import java.util.Map;
  * Some of the basic plumbing and properties for a polling source that talks to Dynamo.
  */
 public abstract class AbstractDynamoDbConfigurationSource <T> {
-    private static final Logger log = LoggerFactory.getLogger(DynamoDbConfigurationSource.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractDynamoDbConfigurationSource.class);
 
     //Property names
     static final String tablePropertyName = "com.netflix.config.dynamo.tableName";
