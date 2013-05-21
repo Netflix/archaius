@@ -28,11 +28,18 @@ class DynamicBooleanProperty(val propertyName: String, val default: Boolean) {
 
   private val prop = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, default)
 
-  def apply(): Option[Boolean] = Option(get())
+  def apply(): Option[Boolean] = Option(get)
 
-  def get(): Boolean = prop.get()
+  def get: Boolean = prop.get()
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)
+  }
+
+  def ifEnabled[T] (r: => T): Option[T] = {
+    prop.get match {
+      case true => Some(r)
+      case false => None
+    }
   }
 }
