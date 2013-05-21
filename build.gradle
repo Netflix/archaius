@@ -82,6 +82,7 @@ project(':archaius-scala') {
         compile project(':archaius-core')
         compile 'org.scala-lang:scala-library:2.10.0'
         testCompile 'org.scalatest:scalatest_2.10.0:1.8'
+        testCompile 'junit:junit:4.10'
     }
 }
 
