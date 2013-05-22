@@ -88,7 +88,28 @@ public class DynamicContextualPropertyTest {
         }
         ConfigurationManager.getConfigInstance().setProperty("key1", invalidJson);
         // should not throw exception and just return default
-        assertEquals(0, prop.getValue().intValue());
+        assertEquals(0, prop.getValue().intValue());       
+    }
+    
+    @Test
+    public void testSingleTextValue() {
+        ConfigurationManager.getConfigInstance().setProperty("key2", "5");
+        DynamicContextualProperty<Integer> prop = null;
+        try {
+            prop = new DynamicContextualProperty<Integer>("key2", 0);
+            assertEquals(5, prop.getValue().intValue());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected exception");
+        }
+        ConfigurationManager.getConfigInstance().setProperty("key2", "10");
+        assertEquals(10, prop.getValue().intValue());       
+
+        ConfigurationManager.getConfigInstance().setProperty("key2", "Invalid");
+        assertEquals(0, prop.getValue().intValue());       
         
+        String json = "[{\"value\":2}]";
+        ConfigurationManager.getConfigInstance().setProperty("key2", json);
+        assertEquals(2, prop.getValue().intValue());        
     }
 }
