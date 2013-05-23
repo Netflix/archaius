@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Optional;
 import com.netflix.config.validation.PropertyChangeValidator;
 import com.netflix.config.validation.ValidationException;
 
@@ -169,7 +170,7 @@ public class DynamicProperty {
 
     private static final String[] TRUE_VALUES =  { "true",  "t", "yes", "y", "on"  };
     private static final String[] FALSE_VALUES = { "false", "f", "no",  "n", "off" };
-
+    
     /*
      * Cached translated values
      */
@@ -454,6 +455,34 @@ public class DynamicProperty {
         return classValue.getValue(defaultValue);
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getCachedValue(Class<T> objectType) {
+        T result = null;
+        try {
+            if (Integer.class.equals(objectType)) {
+                result = (T) integerValue.getValue();
+            } else if (String.class.equals(objectType)) {
+                result = (T) cachedStringValue.getValue();
+            } else if (Boolean.class.equals(objectType)) {
+                result = (T) booleanValue.getValue();
+            } else if (Float.class.equals(objectType)) {
+                result = (T) floatValue.getValue();
+            } else if (Double.class.equals(objectType)) {
+                result = (T) doubleValue.getValue();
+            } else if (Long.class.equals(objectType)) {
+                result = (T) longValue.getValue();
+            } else if (Class.class.equals(objectType)) {
+                result = (T) classValue.getValue();            
+            }
+        } catch (Exception e) {            
+        }
+        if (result == null) {
+            return Optional.absent();
+        } else {
+            return Optional.of(result);
+        }
+    }
+    
     /*
      * Updating the cached value
      */
