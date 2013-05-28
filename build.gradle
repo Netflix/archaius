@@ -18,6 +18,7 @@ apply from: file('gradle/release.gradle')
 
 subprojects {
     dependencies {
+        compile 'com.google.code.findbugs:findbugs:2.0.0'
         testCompile('log4j:log4j:1.2.16')
     }
     group = "com.netflix.${githubProjectName}" 
@@ -30,7 +31,9 @@ project(':archaius-core') {
     dependencies {
         compile 'commons-configuration:commons-configuration:1.8'
         compile 'org.slf4j:slf4j-api:1.6.4'
-        compile 'com.google.guava:guava:11.0.2'        
+        compile 'com.google.guava:guava:11.0.2'    
+        compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.11'    
+        compile 'org.codehaus.jackson:jackson-core-asl:1.9.11'    
         testCompile 'junit:junit:4.10'
         testCompile 'org.apache.derby:derby:10.8.2.2'        
     }

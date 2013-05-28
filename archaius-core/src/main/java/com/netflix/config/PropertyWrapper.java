@@ -32,8 +32,9 @@ import com.netflix.config.validation.ValidationException;
 public abstract class PropertyWrapper<V> {
     protected final DynamicProperty prop;
     protected final V defaultValue;
-    private static final IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object> SUBCLASSES_WITH_NO_CALLBACK
-            = new IdentityHashMap<Class<? extends PropertyWrapper<?>>, Object>();
+    @SuppressWarnings("rawtypes")
+    private static final IdentityHashMap<Class<? extends PropertyWrapper>, Object> SUBCLASSES_WITH_NO_CALLBACK
+            = new IdentityHashMap<Class<? extends PropertyWrapper>, Object>();
     private static final Logger logger = LoggerFactory.getLogger(PropertyWrapper.class);
     
     static {
@@ -55,10 +56,10 @@ public abstract class PropertyWrapper<V> {
      *
      * @param c
      */
-    public static final void registerSubClassWithNoCallback(Class<? extends PropertyWrapper<?>> c) {
+    public static final void registerSubClassWithNoCallback(@SuppressWarnings("rawtypes") Class<? extends PropertyWrapper> c) {
         SUBCLASSES_WITH_NO_CALLBACK.put(c, DUMMY_VALUE);
     }
-
+    
     protected PropertyWrapper(String propName, V defaultValue) {
         this.prop = DynamicProperty.getInstance(propName);
         this.defaultValue = defaultValue;
