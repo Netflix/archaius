@@ -17,11 +17,24 @@ package com.netflix.config;
 
 import com.google.common.base.Function;
 
+/**
+ * A property wrapper that can be used to derive any type of data as property value 
+ * from string format.
+ * 
+ * @author awang
+ *
+ * @param <T> Type of the property value
+ */
 public class StringDerivedProperty<T> extends PropertyWrapper<T> {
     protected final Function<String, T> deriveFunction;
     
     private volatile T derivedValue;
     
+    /**
+     * Create an instance of the property wrapper.
+     *  
+     * @param deriveFunction the function used to parse the string format into the desired data type.
+     */
     public StringDerivedProperty(String propName, T defaultValue, Function<String, T> deriveFunction) {
         super(propName, defaultValue);
         this.deriveFunction = deriveFunction;
