@@ -26,9 +26,9 @@ class DynamicDoubleProperty(val propertyName: String, val default: Double) {
 
   private val prop = DynamicPropertyFactory.getInstance().getDoubleProperty(propertyName, default)
 
-  def apply(): Option[Double] = Option(get())
+  def apply: Option[Double] = Option(get)
 
-  def get(): Double = prop.get()
+  def get: Double = prop.get
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)

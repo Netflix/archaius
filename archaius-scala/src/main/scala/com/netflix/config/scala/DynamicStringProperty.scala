@@ -26,9 +26,9 @@ class DynamicStringProperty(property: String, default: String) {
 
   private val prop = DynamicPropertyFactory.getInstance().getStringProperty(property, default)
 
-  def apply(): Option[String] = Option(get())
+  def apply: Option[String] = Option(get)
 
-  def get(): String = prop.get()
+  def get: String = prop.get
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)

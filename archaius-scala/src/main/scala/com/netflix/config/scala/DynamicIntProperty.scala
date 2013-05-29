@@ -26,9 +26,9 @@ class DynamicIntProperty(val property: String, val default: Int) {
 
   private val prop = DynamicPropertyFactory.getInstance().getIntProperty(property, default)
 
-  def apply(): Option[Int] = Option(get())
+  def apply: Option[Int] = Option(get)
 
-  def get(): Int = prop.get()
+  def get: Int = prop.get
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)
