@@ -26,9 +26,9 @@ class DynamicLongProperty(val propertyName: String, val default: Long) {
 
   private val prop = DynamicPropertyFactory.getInstance().getLongProperty(propertyName, default)
 
-  def apply(): Option[Long] = Option(get())
+  def apply: Option[Long] = Option(get)
 
-  def get(): Long = prop.get()
+  def get: Long = prop.get
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)
