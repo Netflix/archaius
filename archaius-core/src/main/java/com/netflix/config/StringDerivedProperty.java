@@ -26,18 +26,18 @@ import com.google.common.base.Function;
  * @param <T> Type of the property value
  */
 public class StringDerivedProperty<T> extends PropertyWrapper<T> {
-    protected final Function<String, T> deriveFunction;
+    protected final Function<String, T> decoder;
     
     private volatile T derivedValue;
     
     /**
      * Create an instance of the property wrapper.
      *  
-     * @param deriveFunction the function used to parse the string format into the desired data type.
+     * @param decoder the function used to parse the string format into the desired data type.
      */
-    public StringDerivedProperty(String propName, T defaultValue, Function<String, T> deriveFunction) {
+    public StringDerivedProperty(String propName, T defaultValue, Function<String, T> decoder) {
         super(propName, defaultValue);
-        this.deriveFunction = deriveFunction;
+        this.decoder = decoder;
         propertyChangedInternal();
     }
 
@@ -46,7 +46,7 @@ public class StringDerivedProperty<T> extends PropertyWrapper<T> {
         if (stringValue == null) {
             derivedValue = defaultValue;
         } else {
-            derivedValue = deriveFunction.apply(stringValue);
+            derivedValue = decoder.apply(stringValue);
         }        
     }
     
