@@ -307,6 +307,9 @@ public class ConfigurationManager {
      * Load properties from the specified configuration into system wide configuration
      */
     public static void loadPropertiesFromConfiguration(AbstractConfiguration config) {
+        if (instance == null) {
+            instance = getConfigInstance();
+        }
         if (instance instanceof AggregatedConfiguration) {
             ((AggregatedConfiguration) instance).addConfiguration(config);
         } else {
@@ -319,6 +322,9 @@ public class ConfigurationManager {
      * Load the specified properties into system wide configuration
      */
     public static void loadProperties(Properties properties) {
+        if (instance == null) {
+            instance = getConfigInstance();
+        }
         ConfigurationUtils.loadProperties(properties, instance);
     }
     
