@@ -26,9 +26,9 @@ class DynamicFloatProperty(val propertyName: String, val default: Float) {
 
   private val prop = DynamicPropertyFactory.getInstance().getFloatProperty(propertyName, default)
 
-  def apply(): Option[Float] = Option(get())
+  def apply: Option[Float] = Option(get)
 
-  def get(): Float = prop.get()
+  def get: Float = prop.get
 
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)
