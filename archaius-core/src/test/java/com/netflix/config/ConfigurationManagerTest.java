@@ -21,7 +21,10 @@ import static org.junit.Assert.fail;
 
 import org.apache.commons.configuration.BaseConfiguration;
 import org.junit.Test;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConfigurationManagerTest {
 
     static DynamicStringProperty prop1 = DynamicPropertyFactory.getInstance().getStringProperty("prop1", null);

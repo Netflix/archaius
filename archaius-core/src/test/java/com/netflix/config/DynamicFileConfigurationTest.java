@@ -26,13 +26,16 @@ import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.netflix.config.sources.URLConfigurationSource;
 import com.netflix.config.validation.ValidationException;
 
 import static org.junit.Assert.*;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DynamicFileConfigurationTest {
 
     boolean propertyChanged = false;
