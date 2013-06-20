@@ -98,7 +98,7 @@ public class BlobStoreBackedConfigurationTest {
       assertEquals("val3", test3.get());
 
       update();
-      Thread.sleep(1000);
+      Thread.sleep(1250);
 
       assertEquals("vala", test1.get());
       assertEquals("valb", test2.get());

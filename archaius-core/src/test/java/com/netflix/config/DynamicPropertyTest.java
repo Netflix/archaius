@@ -26,7 +26,10 @@ import java.io.OutputStreamWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DynamicPropertyTest {
 
     static File configFile;    
@@ -79,7 +82,7 @@ public class DynamicPropertyTest {
     }
     
     @Test
-    public void testFileBased() throws Exception {
+    public void testAsFileBased() throws Exception {
         
         // TODO: create a static DynamicProperties class
         DynamicStringProperty prop = new DynamicStringProperty("props1", null);

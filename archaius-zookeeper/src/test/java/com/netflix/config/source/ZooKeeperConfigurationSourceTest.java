@@ -93,6 +93,7 @@ public class ZooKeeperConfigurationSourceTest {
     
     @Test
     public void testZkPropertyOverride() throws Exception {
+        setZkProperty("test.key1", "test.value1-zk");
     	// there is an override from ZK, so make sure the overridden value is being returned
         Assert.assertEquals("test.value1-zk", DynamicPropertyFactory.getInstance()
                 .getStringProperty("test.key1", "default").get());
@@ -125,6 +126,8 @@ public class ZooKeeperConfigurationSourceTest {
     
     @Test
     public void testUpdatePropertyOverride() throws Exception {
+        setZkProperty("test.key1", "test.value1-zk");
+
         // update the map config's property and assert that the value is still the overridden value
         mapConfig.setProperty("test.key1", "prop1");
         Assert.assertEquals("test.value1-zk", DynamicPropertyFactory.getInstance()
