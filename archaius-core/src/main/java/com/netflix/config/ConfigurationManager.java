@@ -28,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.EnvironmentConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
@@ -58,6 +59,9 @@ public class ConfigurationManager {
     static volatile DeploymentContext context = null;
     
     public static final String PROP_NEXT_LOAD = "@next";
+    public static final String ENV_CONFIG_NAME = "archaius.dynamicPropertyFactory.ENV_CONFIG";
+    public static final String DISABLE_DEFAULT_ENV_CONFIG = "archaius.dynamicProperty.disableSystemConfig";
+
     private static final String PROP_NEXT_LOAD_NFLX = "netflixconfiguration.properties.nextLoad";
     public static final String APPLICATION_PROPERTIES = "APPLICATION_PROPERTIES";
     
@@ -131,8 +135,13 @@ public class ConfigurationManager {
         } catch (Throwable e) {
             logger.warn("Failed to create default dynamic configuration", e);
         }
+        if (!Boolean.getBoolean(DISABLE_DEFAULT_ENV_CONFIG)) {
+            EnvironmentConfiguration envConfig = new EnvironmentConfiguration();
+            config.addConfiguration(envConfig, ENV_CONFIG_NAME);
+            indexForContainerConfig = config.getIndexOfConfiguration(envConfig);
+        }
         if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
-            SystemConfiguration sysConfig = new SystemConfiguration();                
+            SystemConfiguration sysConfig = new SystemConfiguration();
             config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
             indexForContainerConfig = config.getIndexOfConfiguration(sysConfig);
         }
