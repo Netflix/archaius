@@ -139,27 +139,23 @@ public class ConfigurationManager {
     
     private static AbstractConfiguration createDefaultConfigInstance() {
         ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();  
-        int indexForContainerConfig = 0;
         try {
             DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
             config.addConfiguration(defaultURLConfig, URL_CONFIG_NAME);
-            indexForContainerConfig = config.getIndexOfConfiguration(defaultURLConfig);
         } catch (Throwable e) {
             logger.warn("Failed to create default dynamic configuration", e);
         }
         if (!Boolean.getBoolean(DISABLE_DEFAULT_SYS_CONFIG)) {
             SystemConfiguration sysConfig = new SystemConfiguration();
             config.addConfiguration(sysConfig, SYS_CONFIG_NAME);
-            indexForContainerConfig = config.getIndexOfConfiguration(sysConfig);
         }
         if (!Boolean.getBoolean(DISABLE_DEFAULT_ENV_CONFIG)) {
             EnvironmentConfiguration envConfig = new EnvironmentConfiguration();
             config.addConfiguration(envConfig, ENV_CONFIG_NAME);
-            indexForContainerConfig = config.getIndexOfConfiguration(envConfig);
         }
-        config.setContainerConfigurationIndex(indexForContainerConfig);
         ConcurrentCompositeConfiguration appOverrideConfig = new ConcurrentCompositeConfiguration();
         config.addConfiguration(appOverrideConfig, APPLICATION_PROPERTIES);
+        config.setContainerConfigurationIndex(config.getIndexOfConfiguration(appOverrideConfig));
         return config;
     }
     
