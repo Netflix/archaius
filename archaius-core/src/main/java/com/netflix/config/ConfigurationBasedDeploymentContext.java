@@ -26,7 +26,14 @@ import org.apache.commons.configuration.Configuration;
  *
  */
 public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext {
-    
+
+    public static final String DEPLOYMENT_ENVIRONMENT_PROPERTY = "archaius.deployment.environment";
+    public static final String DEPLOYMENT_DATACENTER_PROPERTY = "archaius.deployment.datacenter";
+    public static final String DEPLOYMENT_APPLICATION_ID_PROPERTY = "archaius.deployment.applicationId";
+    public static final String DEPLOYMENT_SERVER_ID_PROPERTY = "archaius.deployment.serverId";
+    public static final String DEPLOYMENT_STACK_PROPERTY = "archaius.deployment.stack";
+    public static final String DEPLOYMENT_REGION_PROPERTY = "archaius.deployment.region";
+
     /**
      * Get the deployment environment. If property "archaius.deployment.environment"
      * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentEnvironment().
@@ -34,7 +41,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getDeploymentEnvironment() {
-        String value = getValueFromConfig("archaius.deployment.environment");
+        String value = getValueFromConfig(DEPLOYMENT_ENVIRONMENT_PROPERTY);
         if (value != null) {
             return value;
         } else {
@@ -49,7 +56,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getDeploymentDatacenter() {
-        String value = getValueFromConfig("archaius.deployment.datacenter");
+        String value = getValueFromConfig(DEPLOYMENT_DATACENTER_PROPERTY);
         if (value != null) {
             return value;
         } else {
@@ -63,7 +70,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getApplicationId() {
-        String value = getValueFromConfig("archaius.deployment.applicationId");
+        String value = getValueFromConfig(DEPLOYMENT_APPLICATION_ID_PROPERTY);
         if (value != null) {
             return value;
         } else {
@@ -77,7 +84,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getDeploymentServerId() {
-        String value = getValueFromConfig("archaius.deployment.serverId");
+        String value = getValueFromConfig(DEPLOYMENT_SERVER_ID_PROPERTY);
         if (value != null) {
             return value;
         } else {
@@ -91,7 +98,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getDeploymentStack() {
-        String value = getValueFromConfig("archaius.deployment.stack");
+        String value = getValueFromConfig(DEPLOYMENT_STACK_PROPERTY);
         if (value != null) {
             return value;
         } else {
@@ -105,7 +112,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
      */
     @Override
     public String getDeploymentRegion() {
-        String value = getValueFromConfig("archaius.deployment.region");
+        String value = getValueFromConfig(DEPLOYMENT_REGION_PROPERTY);
         if (value != null) {
             return value;
         } else {
