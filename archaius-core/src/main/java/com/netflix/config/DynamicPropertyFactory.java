@@ -77,8 +77,18 @@ public class DynamicPropertyFactory {
     private volatile static DynamicPropertySupport config = null;
     private volatile static boolean initializedWithDefaultConfig = false;    
     private static final Logger logger = LoggerFactory.getLogger(DynamicPropertyFactory.class);
-    public static final String URL_CONFIG_NAME = "archaius.dynamicPropertyFactory.URL_CONFIG";
-    public static final String SYS_CONFIG_NAME = "archaius.dynamicPropertyFactory.SYS_CONFIG";
+
+    /**
+     * @deprecated Moved to ConfigurationManager in 0.5.12
+     */
+    @Deprecated
+    public static final String URL_CONFIG_NAME = ConfigurationManager.URL_CONFIG_NAME;
+
+    /**
+     * @deprecated Moved to ConfigurationManager in 0.5.12
+     */
+    @Deprecated
+    public static final String SYS_CONFIG_NAME = ConfigurationManager.SYS_CONFIG_NAME;
     
     /**
      * Boolean system property to define whether a configuration MBean should be registered with
@@ -99,9 +109,10 @@ public class DynamicPropertyFactory {
     
     /**
      * System property to disable adding SystemConfiguration to the default ConcurrentCompositeConfiguration
+     * @deprecated Moved to ConfigurationManager in 0.5.12
      */
-    public static final String DISABLE_DEFAULT_SYS_CONFIG = 
-        "archaius.dynamicProperty.disableSystemConfig";
+    @Deprecated
+    public static final String DISABLE_DEFAULT_SYS_CONFIG = ConfigurationManager.DISABLE_DEFAULT_SYS_CONFIG;
     
     /**
      * System property to determine whether DynamicPropertyFactory should be lazily initialized with 
