@@ -15,15 +15,15 @@
  */
 package com.netflix.config;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.configuration.Configuration;
 
 /**
  * An implementation of {@link DeploymentContext} based on system wide configuration set with
  * {@link ConfigurationManager}. All the getters will first consult corresponding property
  * and return the value if set.
- * 
- * @author awang
  *
+ * @author awang
  */
 public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext {
 
@@ -37,7 +37,6 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
     /**
      * Get the deployment environment. If property "archaius.deployment.environment"
      * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentEnvironment().
-     * 
      */
     @Override
     public String getDeploymentEnvironment() {
@@ -50,9 +49,20 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
     }
 
     /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setDeploymentEnvironment(String value) {
+        super.setDeploymentEnvironment(value);
+        setValueInConfig(DEPLOYMENT_ENVIRONMENT_PROPERTY, value);
+        setValueInConfig(ContextKey.environment.getKey(), value);
+    }
+
+    /**
      * Get the deployment environment. If property "archaius.deployment.datacenter"
      * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentDatacenter().
-     * 
      */
     @Override
     public String getDeploymentDatacenter() {
@@ -62,6 +72,18 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         } else {
             return super.getDeploymentDatacenter();
         }
+    }
+
+    /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setDeploymentDatacenter(String value) {
+        super.setDeploymentDatacenter(value);
+        setValueInConfig(DEPLOYMENT_DATACENTER_PROPERTY, value);
+        setValueInConfig(ContextKey.datacenter.getKey(), value);
     }
 
     /**
@@ -79,6 +101,18 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
     }
 
     /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setApplicationId(String value) {
+        super.setApplicationId(value);
+        setValueInConfig(DEPLOYMENT_APPLICATION_ID_PROPERTY, value);
+        setValueInConfig(ContextKey.appId.getKey(), value);
+    }
+
+    /**
      * Get the deployment environment. If property "archaius.deployment.serverId"
      * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentServerId().
      */
@@ -90,6 +124,18 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
         } else {
             return super.getDeploymentServerId();
         }
+    }
+
+    /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setDeploymentServerId(String value) {
+        super.setDeploymentServerId(value);
+        setValueInConfig(DEPLOYMENT_SERVER_ID_PROPERTY, value);
+        setValueInConfig(ContextKey.serverId.getKey(), value);
     }
 
     /**
@@ -107,6 +153,18 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
     }
 
     /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setDeploymentStack(String value) {
+        super.setDeploymentStack(value);
+        setValueInConfig(DEPLOYMENT_STACK_PROPERTY, value);
+        setValueInConfig(ContextKey.stack.getKey(), value);
+    }
+
+    /**
      * Get the deployment environment. If property "archaius.deployment.region"
      * is set in the system wide configuration, it will return it. Otherwise, it will return super.getDeploymentRegion().
      */
@@ -119,7 +177,19 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
             return super.getDeploymentRegion();
         }
     }
-    
+
+    /**
+     * Call super and also update the configuration to reflect the changes.
+     *
+     * @param value
+     */
+    @Override
+    public void setDeploymentRegion(String value) {
+        super.setDeploymentRegion(value);
+        setValueInConfig(DEPLOYMENT_REGION_PROPERTY, value);
+        setValueInConfig(ContextKey.region.getKey(), value);
+    }
+
     private String getValueFromConfig(String name) {
         Configuration conf = ConfigurationManager.getConfigInstance();
         String value = (String) conf.getProperty(name);
@@ -129,13 +199,19 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
             value = System.getProperty(name);
             if (value != null) {
                 return value;
-            }            
+            }
         }
         return null;
     }
 
+    private void setValueInConfig(String name, String value) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(value);
+        ConfigurationManager.getConfigInstance().setProperty(name, value);
+    }
+
     @Override
-    public String getValue(ContextKey key) {   
+    public String getValue(ContextKey key) {
         String value = getValueFromConfig("archaius.deployment." + key.toString());
         if (value != null) {
             return value;
