@@ -96,7 +96,7 @@ public class ConfigurationManager {
             }
             String contextClassName = System.getProperty("archaius.default.deploymentContext.class");
             if (contextClassName != null) {
-                setDeploymentContext((DeploymentContext) Class.forName(className).newInstance());
+                setDeploymentContext((DeploymentContext) Class.forName(contextClassName).newInstance());
             } else {
                 String factoryName = System.getProperty("archaius.default.deploymentContext.factory");
                 if (factoryName != null) {
