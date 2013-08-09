@@ -51,7 +51,7 @@ public class DynamoBackedConfigurationTest {
         assertEquals("goo", test2.get());
         assertEquals("who", test3.get());
 
-        Thread.sleep(1000);
+        Thread.sleep(1250);
 
         assertEquals("bar", test1.get());
         assertEquals("foo", test2.get());

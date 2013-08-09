@@ -40,7 +40,18 @@ import com.netflix.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
 import com.netflix.curator.framework.recipes.cache.PathChildrenCacheListener;
 
 /**
- * Implementation of {@link WatchedConfigurationSource} for ZooKeeper using Curator.
+ * Implementation of the dynamic {@link WatchedConfigurationSource} for ZooKeeper using Curator.
+ * 
+ * This implementation requires the path to the ZK root parent node that contains 
+ * the hierarchy of configuration properties.  
+ * An example is /<my-app>/config
+ * 
+ * Properties are direct ZK child nodes of the root parent ZK node.  
+ * An example ZK child property node is /<my-app>/config/com.fluxcapacitor.my.property
+ * 
+ * The value is stored in the ZK child property node and can be updated at any time.  
+ * All servers will receive a ZK Watcher callback and automatically update their value
+ * similar to other dynamic configuration sources (ie. DynamoDB, etc.)
  * 
  * @author cfregly
  */
@@ -58,8 +69,8 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource,
     /**
      * Creates the pathChildrenCache using the CuratorFramework client and ZK root path node for the config
      * 
-     * @param client
-     * @param configRootPath
+     * @param Curator client
+     * @param path to ZK root parent node for the rest of the configuration properties (ie. /<my-app>/config)
      */
     public ZooKeeperConfigurationSource(CuratorFramework client, String configRootPath) {
         this.client = client;

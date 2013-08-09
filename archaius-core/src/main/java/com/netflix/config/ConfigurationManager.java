@@ -28,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.EnvironmentConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
@@ -58,6 +59,21 @@ public class ConfigurationManager {
     static volatile DeploymentContext context = null;
     
     public static final String PROP_NEXT_LOAD = "@next";
+    public static final String URL_CONFIG_NAME = "archaius.dynamicPropertyFactory.URL_CONFIG";
+    public static final String SYS_CONFIG_NAME = "archaius.dynamicPropertyFactory.SYS_CONFIG";
+    public static final String ENV_CONFIG_NAME = "archaius.dynamicPropertyFactory.ENV_CONFIG";
+
+    /**
+     * System property to disable adding EnvironmentConfiguration to the default ConcurrentCompositeConfiguration
+     */
+    public static final String DISABLE_DEFAULT_ENV_CONFIG = "archaius.dynamicProperty.disableEnvironmentConfig";
+
+    /**
+     * System property to disable adding SystemConfiguration to the default ConcurrentCompositeConfiguration
+     */
+    public static final String DISABLE_DEFAULT_SYS_CONFIG = "archaius.dynamicProperty.disableSystemConfig";
+
+
     private static final String PROP_NEXT_LOAD_NFLX = "netflixconfiguration.properties.nextLoad";
     public static final String APPLICATION_PROPERTIES = "APPLICATION_PROPERTIES";
     
@@ -80,7 +96,7 @@ public class ConfigurationManager {
             }
             String contextClassName = System.getProperty("archaius.default.deploymentContext.class");
             if (contextClassName != null) {
-                setDeploymentContext((DeploymentContext) Class.forName(className).newInstance());
+                setDeploymentContext((DeploymentContext) Class.forName(contextClassName).newInstance());
             } else {
                 String factoryName = System.getProperty("archaius.default.deploymentContext.factory");
                 if (factoryName != null) {
@@ -123,22 +139,23 @@ public class ConfigurationManager {
     
     private static AbstractConfiguration createDefaultConfigInstance() {
         ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();  
-        int indexForContainerConfig = 0;
         try {
             DynamicURLConfiguration defaultURLConfig = new DynamicURLConfiguration();
-            config.addConfiguration(defaultURLConfig, DynamicPropertyFactory.URL_CONFIG_NAME);
-            indexForContainerConfig = config.getIndexOfConfiguration(defaultURLConfig);
+            config.addConfiguration(defaultURLConfig, URL_CONFIG_NAME);
         } catch (Throwable e) {
             logger.warn("Failed to create default dynamic configuration", e);
         }
-        if (!Boolean.getBoolean(DynamicPropertyFactory.DISABLE_DEFAULT_SYS_CONFIG)) {
-            SystemConfiguration sysConfig = new SystemConfiguration();                
-            config.addConfiguration(sysConfig, DynamicPropertyFactory.SYS_CONFIG_NAME);
-            indexForContainerConfig = config.getIndexOfConfiguration(sysConfig);
+        if (!Boolean.getBoolean(DISABLE_DEFAULT_SYS_CONFIG)) {
+            SystemConfiguration sysConfig = new SystemConfiguration();
+            config.addConfiguration(sysConfig, SYS_CONFIG_NAME);
         }
-        config.setContainerConfigurationIndex(indexForContainerConfig);
+        if (!Boolean.getBoolean(DISABLE_DEFAULT_ENV_CONFIG)) {
+            EnvironmentConfiguration envConfig = new EnvironmentConfiguration();
+            config.addConfiguration(envConfig, ENV_CONFIG_NAME);
+        }
         ConcurrentCompositeConfiguration appOverrideConfig = new ConcurrentCompositeConfiguration();
         config.addConfiguration(appOverrideConfig, APPLICATION_PROPERTIES);
+        config.setContainerConfigurationIndex(config.getIndexOfConfiguration(appOverrideConfig));
         return config;
     }
     
@@ -375,7 +392,7 @@ public class ConfigurationManager {
         }
         ConcurrentCompositeConfiguration defaultConfig = (ConcurrentCompositeConfiguration) instance;
         // stop loading of the configuration
-        DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(DynamicPropertyFactory.URL_CONFIG_NAME);
+        DynamicURLConfiguration defaultFileConfig = (DynamicURLConfiguration) defaultConfig.getConfiguration(URL_CONFIG_NAME);
         if (defaultFileConfig != null) {
             defaultFileConfig.stopLoading();
         }

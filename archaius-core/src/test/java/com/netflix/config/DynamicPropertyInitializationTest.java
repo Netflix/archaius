@@ -35,17 +35,21 @@ public class DynamicPropertyInitializationTest {
         }    
                 
     };
-    
+
     @Test
     public void testDefaultConfig() {
         System.setProperty("xyz", "fromSystem");
         DynamicStringProperty prop = new DynamicStringProperty("xyz", null);        
         assertNotNull(DynamicPropertyFactory.getBackingConfigurationSource());
         assertEquals("fromSystem", prop.get());
+
         ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
+
+        //Because SystemProperties default to higher priority than application settings, this set will no-op
         ConfigurationManager.getConfigInstance().setProperty("xyz", "override");
-        assertEquals("override", prop.get());
-        assertEquals("override", lastModified);
+        assertEquals("fromSystem", prop.get());
+        assertEquals(null, lastModified);
+
         BaseConfiguration newConfig = new BaseConfiguration();
         newConfig.setProperty("xyz", "fromNewConfig");
         ConfigurationManager.install(newConfig);

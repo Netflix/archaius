@@ -53,6 +53,7 @@ public class ChainedDynamicPropertyTest {
     public void testInteger() throws Exception {
 
         DynamicIntProperty pInt = DynamicPropertyFactory.getInstance().getIntProperty("defaultInt", -1);
+        ConfigurationManager.getConfigInstance().setProperty("defaultInt", -1);
         ChainedDynamicProperty.IntProperty fInt = new ChainedDynamicProperty.IntProperty("overrideInt", pInt);
 
         assertTrue(-1 == fInt.get());
@@ -122,6 +123,10 @@ public class ChainedDynamicPropertyTest {
 
     @Test
     public void testChainingString() throws Exception {
+
+        ConfigurationManager.getConfigInstance().setProperty("node1", "v1");
+        ConfigurationManager.getConfigInstance().clearProperty("node2");
+        ConfigurationManager.getConfigInstance().clearProperty("node3");
 
         DynamicStringProperty node1 = DynamicPropertyFactory.getInstance().getStringProperty("node1", "v1");
         StringProperty node2 = new ChainedDynamicProperty.StringProperty("node2", node1);
