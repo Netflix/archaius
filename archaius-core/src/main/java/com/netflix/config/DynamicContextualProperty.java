@@ -19,9 +19,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
@@ -86,6 +88,8 @@ public class DynamicContextualProperty<T> extends PropertyWrapper<T> {
     public static class Value<T> {
         private Map<String, Collection<String>> dimensions;
         private T value;
+        private String comment;
+        private boolean runtimeEval = false;
         
         public Value() {            
         }
@@ -94,27 +98,46 @@ public class DynamicContextualProperty<T> extends PropertyWrapper<T> {
             this.value = value;
         }
 
+        @JsonProperty("if")
         public final Map<String, Collection<String>> getDimensions() {
             return dimensions;
         }
         
+        @JsonProperty("if")
         public final void setDimensions(Map<String, Collection<String>> dimensions) {
             this.dimensions = dimensions;
         }
-        
+
         public final T getValue() {
             return value;
         }
         
         public final void setValue(T value) {
             this.value = value;
+        }
+
+        public final String getComment() {
+            return comment;
+        }
+
+        public final void setComment(String comment) {
+            this.comment = comment;
+        }
+
+        public final boolean isRuntimeEval() {
+            return runtimeEval;
+        }
+
+        public final void setRuntimeEval(boolean runtimeEval) {
+            this.runtimeEval = runtimeEval;
         }     
     }
 
     private static Predicate<Map<String, Collection<String>>> defaultPredicate = DefaultContextualPredicate.PROPERTY_BASED;
     
     private final Predicate<Map<String, Collection<String>>> predicate;
-    private volatile List<Value<T>> values;
+    @VisibleForTesting
+    volatile List<Value<T>> values;
     private final ObjectMapper mapper = new ObjectMapper();
     
     private final Class<T> classType;
