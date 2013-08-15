@@ -40,14 +40,14 @@ import com.google.common.collect.Lists;
  * <pre>{@code
  * [
     {
-       "dimensions":  
+       "if":  
               {"@environment":["prod"],
                "@region":["us-east-1"]
               },
        "value":5
     },
      {
-        "dimensions":
+        "if":
              {"@environment":["test", "dev"]},
         "value":10
      },
