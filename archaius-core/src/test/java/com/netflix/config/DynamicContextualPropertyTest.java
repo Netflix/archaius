@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -126,5 +127,29 @@ public class DynamicContextualPropertyTest {
         String json = "[{\"value\":2}]";
         ConfigurationManager.getConfigInstance().setProperty("key2", json);
         assertEquals(2, prop.getValue().intValue());        
+    }
+    
+    @Test
+    public void testCallback() {
+        String json = "[{\"value\":5,\"if\":{\"d1\":[\"v1\",\"v2\"]}, \"comment\": \"some comment\"},{\"value\":10,\"if\":{\"d1\":[\"v3\"],\"d2\":[\"x1\"]}, \"runtimeEval\": true},{\"value\":2}]";
+        ConfigurationManager.getConfigInstance().setProperty("d1", "v2");
+        final AtomicReference<Integer> ref = new AtomicReference<Integer>();
+        DynamicContextualProperty<Integer> prop = new DynamicContextualProperty<Integer>("propWithCallback", 0) {
+            @Override
+            protected void propertyChanged(Integer newVal) {
+                ref.set(newVal);
+            }
+        };
+        assertEquals(0, prop.getValue().intValue());
+        ConfigurationManager.getConfigInstance().setProperty("propWithCallback", json);
+        assertEquals(5, ref.get().intValue());
+        assertEquals(5, prop.getValue().intValue());
+        assertEquals("some comment", prop.values.get(0).getComment());
+        assertTrue(prop.values.get(1).isRuntimeEval());
+        assertFalse(prop.values.get(0).isRuntimeEval());
+        // set the property as a single value integer
+        ConfigurationManager.getConfigInstance().setProperty("propWithCallback", "7");
+        assertEquals(7, ref.get().intValue());
+        assertEquals(7, prop.getValue().intValue());
     }
 }
