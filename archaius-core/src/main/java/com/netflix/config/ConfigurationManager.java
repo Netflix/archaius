@@ -160,13 +160,9 @@ public class ConfigurationManager {
     }
     
     private static AbstractConfiguration getConfigInstance(boolean defaultConfigDisabled) {
-        if (instance == null) {
-            synchronized (ConfigurationManager.class) {
-                if (instance == null && !defaultConfigDisabled) {
-                    instance = createDefaultConfigInstance();
-                    registerConfigBean();
-                }
-            }
+        if (instance == null && !defaultConfigDisabled) {
+            instance = createDefaultConfigInstance();
+            registerConfigBean();
         }
         return instance;        
     }
@@ -347,17 +343,15 @@ public class ConfigurationManager {
     
     public static void setDeploymentContext(DeploymentContext context) {
         ConfigurationManager.context = context;
-        if (instance == null) {
-            instance = getConfigInstance();
+        if (getConfigInstance() == null) {
+            return;
         }
-        if (instance != null) {
-            for (DeploymentContext.ContextKey key: DeploymentContext.ContextKey.values()) {
-                String value = context.getValue(key);
-                if (value != null) {
-                    instance.setProperty(key.getKey(), value);
-                }
-            }      
-        }
+        for (DeploymentContext.ContextKey key: DeploymentContext.ContextKey.values()) {
+            String value = context.getValue(key);
+            if (value != null) {
+                instance.setProperty(key.getKey(), value);
+            }
+        }      
     }
     
     public static DeploymentContext getDeploymentContext() {
