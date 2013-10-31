@@ -160,7 +160,6 @@ public abstract class DynamicSetProperty<T> {
 
     /**
      * Getter for the property name
-     * @return
      */
     public String getName(){
         return delegate.getName();

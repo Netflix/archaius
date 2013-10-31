@@ -27,12 +27,12 @@ import org.apache.commons.configuration.Configuration;
  */
 public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext {
 
-    public static final String DEPLOYMENT_ENVIRONMENT_PROPERTY = "archaius.deployment.environment";
-    public static final String DEPLOYMENT_DATACENTER_PROPERTY = "archaius.deployment.datacenter";
-    public static final String DEPLOYMENT_APPLICATION_ID_PROPERTY = "archaius.deployment.applicationId";
-    public static final String DEPLOYMENT_SERVER_ID_PROPERTY = "archaius.deployment.serverId";
-    public static final String DEPLOYMENT_STACK_PROPERTY = "archaius.deployment.stack";
-    public static final String DEPLOYMENT_REGION_PROPERTY = "archaius.deployment.region";
+    public static final String DEPLOYMENT_ENVIRONMENT_PROPERTY = DeploymentContext.ContextKey.environment.getKey();
+    public static final String DEPLOYMENT_DATACENTER_PROPERTY = DeploymentContext.ContextKey.datacenter.getKey();
+    public static final String DEPLOYMENT_APPLICATION_ID_PROPERTY = DeploymentContext.ContextKey.appId.getKey();
+    public static final String DEPLOYMENT_SERVER_ID_PROPERTY = DeploymentContext.ContextKey.serverId.getKey();
+    public static final String DEPLOYMENT_STACK_PROPERTY = DeploymentContext.ContextKey.stack.getKey();
+    public static final String DEPLOYMENT_REGION_PROPERTY = DeploymentContext.ContextKey.region.getKey();
 
     /**
      * Get the deployment environment. If property "archaius.deployment.environment"
