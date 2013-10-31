@@ -347,6 +347,9 @@ public class ConfigurationManager {
     
     public static void setDeploymentContext(DeploymentContext context) {
         ConfigurationManager.context = context;
+        if (instance == null) {
+            instance = getConfigInstance();
+        }
         if (instance != null) {
             for (DeploymentContext.ContextKey key: DeploymentContext.ContextKey.values()) {
                 String value = context.getValue(key);
