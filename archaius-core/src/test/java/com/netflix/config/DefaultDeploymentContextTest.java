@@ -17,6 +17,7 @@ package com.netflix.config;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.configuration.CompositeConfiguration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,6 +32,12 @@ public class DefaultDeploymentContextTest {
     public void testGetRegion() {
         String region = ConfigurationManager.getConfigInstance().getString("@region");
         assertEquals("us-east-1", region);
+        
+        ConfigurationManager.getConfigInstance().setProperty(DeploymentContext.ContextKey.region.getKey(), "us-west-2");
+        assertEquals("us-west-2", ConfigurationManager.getDeploymentContext().getDeploymentRegion());
+        
+        ((ConcurrentCompositeConfiguration) ConfigurationManager.getConfigInstance()).setOverrideProperty(ConfigurationBasedDeploymentContext.DEPLOYMENT_REGION_PROPERTY, "us-east-1");
+        assertEquals("us-east-1", ConfigurationManager.getDeploymentContext().getDeploymentRegion());
+        assertEquals("us-east-1", ConfigurationManager.getConfigInstance().getProperty(DeploymentContext.ContextKey.region.getKey()));
     }
-
 }
