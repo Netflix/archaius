@@ -15,6 +15,7 @@
  */
 package com.netflix.config.sources;
 
+import com.netflix.config.ConfigurationBasedDeploymentContext;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
 import com.netflix.config.PollResult;
@@ -54,7 +55,7 @@ public class DynamoDbDeploymentContextConfigurationSourceTest {
         propCollection2.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "prod", "goo", "foo"));
         propCollection2.add(new PropertyWithDeploymentContext(DeploymentContext.ContextKey.environment, "test", "boo", "who"));
 
-        ConfigurationManager.getConfigInstance().setProperty("archaius.deployment.environment", "test");
+        ConfigurationManager.getConfigInstance().setProperty(ConfigurationBasedDeploymentContext.DEPLOYMENT_ENVIRONMENT_PROPERTY, "test");
     }
 
     @AfterClass

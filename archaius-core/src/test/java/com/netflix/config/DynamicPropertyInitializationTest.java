@@ -57,7 +57,7 @@ public class DynamicPropertyInitializationTest {
         ConfigurationManager.getConfigInstance().setProperty("xyz", "new");
         assertEquals("new", lastModified);
         assertEquals("new", prop.get());
-        assertEquals(2, newConfig.getConfigurationListeners().size());
+        assertEquals(3, newConfig.getConfigurationListeners().size());
     }
 
 }

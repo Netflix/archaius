@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.netflix.config;
 
 import org.apache.commons.configuration.Configuration;
@@ -24,7 +39,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetAppId() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getApplicationId(), "appId1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.appId.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.appId.getKey()), "appId1");
         context.setApplicationId("appId2");
         assertEquals(context.getApplicationId(), "appId2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.appId,
@@ -36,7 +51,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetDatacenter() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getDeploymentDatacenter(), "datacenter1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.datacenter.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.datacenter.getKey()), "datacenter1");
         context.setDeploymentDatacenter("datacenter2");
         assertEquals(context.getDeploymentDatacenter(), "datacenter2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.datacenter,
@@ -48,7 +63,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetEnvironment() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getDeploymentEnvironment(), "environment1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.environment.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.environment.getKey()), "environment1");
         context.setDeploymentEnvironment("environment2");
         assertEquals(context.getDeploymentEnvironment(), "environment2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.environment,
@@ -60,7 +75,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetRegion() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getDeploymentRegion(), "region1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.region.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.region.getKey()), "region1");
         context.setDeploymentRegion("region2");
         assertEquals(context.getDeploymentRegion(), "region2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.region,
@@ -72,7 +87,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetServerId() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getDeploymentServerId(), "serverId1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.serverId.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.serverId.getKey()), "serverId1");
         context.setDeploymentServerId("server2");
         assertEquals(context.getDeploymentServerId(), "server2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.serverId,
@@ -84,7 +99,7 @@ public class ConfigurationBasedDeploymentContextTest {
     public void testGetAndSetStack() throws Exception {
         DeploymentContext context = ConfigurationManager.getDeploymentContext();
         assertEquals(context.getDeploymentStack(), "stack1");
-        assertEquals(config.getString(DeploymentContext.ContextKey.stack.getKey()), null);
+        assertEquals(config.getString(DeploymentContext.ContextKey.stack.getKey()), "stack1");
         context.setDeploymentStack("stack2");
         assertEquals(context.getDeploymentStack(), "stack2");
         assertTrue(testPropertyValues(DeploymentContext.ContextKey.stack,
