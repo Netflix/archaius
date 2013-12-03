@@ -24,6 +24,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.google.common.io.Closeables;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -32,12 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.config.WatchedUpdateListener;
 import com.netflix.config.WatchedUpdateResult;
 import com.netflix.config.WatchedConfigurationSource;
-import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.recipes.cache.ChildData;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCache;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheEvent.Type;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheListener;
+
 
 /**
  * Implementation of the dynamic {@link WatchedConfigurationSource} for ZooKeeper using Curator.

@@ -17,6 +17,11 @@ package com.netflix.config.source;
 
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.test.TestingServer;
+import org.apache.curator.utils.DebugUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -31,11 +36,7 @@ import com.netflix.config.WatchedUpdateListener;
 import com.netflix.config.WatchedUpdateResult;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicWatchedConfiguration;
-import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.CuratorFrameworkFactory;
-import com.netflix.curator.retry.ExponentialBackoffRetry;
-import com.netflix.curator.test.TestingServer;
-import com.netflix.curator.utils.DebugUtils;
+
 
 /**
  * Tests the implementation of {@link ZooKeeperConfigurationSource}.
