@@ -416,7 +416,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         {
             configList.remove(conf);
             namedConfigurations.remove(name);
-        } else if (conf.equals(containerConfiguration)) {
+        } else if (conf != null && conf.equals(containerConfiguration)) {
             throw new IllegalArgumentException("Can't remove container configuration");
         }
         return conf;
