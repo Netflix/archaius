@@ -61,7 +61,12 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentMapConfiguration.class);
     private static final int NUM_LOCKS = 32;
     private ReentrantLock[] locks = new ReentrantLock[NUM_LOCKS];
-        
+
+    /**
+     * System property to disable delimiter parsing Apache Commons configurations
+     */
+    public static final String DISABLE_DELIMITER_PARSING = "archaius.configuration.disableDelimiterParsing";
+
     /**
      * Create an instance with an empty map.
      */
@@ -70,6 +75,8 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
         for (int i = 0; i < NUM_LOCKS; i++) {
             locks[i] = new ReentrantLock();
         }
+        String disableDelimiterParsing = System.getProperty(DISABLE_DELIMITER_PARSING, "false");
+        setDelimiterParsingDisabled(Boolean.valueOf(disableDelimiterParsing));
     }
     
     public ConcurrentMapConfiguration(Map<String, Object> mapToCopy) {
