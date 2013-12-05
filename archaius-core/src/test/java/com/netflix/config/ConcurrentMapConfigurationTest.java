@@ -37,9 +37,23 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ConcurrentMapConfigurationTest {
+
+    @BeforeClass
+    public static void init() {
+        //Set the system property to default value
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+
+    }
+    @AfterClass
+    public static void cleanUp() {
+        //Set the system property to default value
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+    }
 
     @Test
     public void testSetGet() {
@@ -278,5 +292,8 @@ public class ConcurrentMapConfigurationTest {
         for (int i = 0; i < 4; i++) {
             assertEquals(i, Integer.parseInt(newProps.get(i)));
         }
+        //Restore the system property to turn off delimiter parsing
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+
     }
 }
