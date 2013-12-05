@@ -388,8 +388,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
                 namedConfigurations.remove(configName);
             }
             return configList.remove(config);
+        } else {
+            throw new IllegalArgumentException("Can't remove container configuration");
         }
-        return false;
     }
     
     public AbstractConfiguration removeConfigurationAt(int index) {
@@ -415,6 +416,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         {
             configList.remove(conf);
             namedConfigurations.remove(name);
+        } else if (conf.equals(containerConfiguration)) {
+            throw new IllegalArgumentException("Can't remove container configuration");
         }
         return conf;
     }
