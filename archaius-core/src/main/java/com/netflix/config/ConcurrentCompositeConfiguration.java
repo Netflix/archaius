@@ -36,7 +36,6 @@ import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
-import org.apache.commons.configuration.tree.OverrideCombiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +132,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
                 int type = event.getType();
                 String name = event.getPropertyName();
                 Object value = event.getPropertyValue();
-                Object finalValue = null;
+                Object finalValue;
                 switch(type) {
                 case HierarchicalConfiguration.EVENT_ADD_NODES:
                 case EVENT_CLEAR:
@@ -372,7 +371,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void addConfigurationAtFront(AbstractConfiguration config, String name) {
             addConfigurationAtIndex(config, name, 0);
     }
-    
+
     /**
      * Remove a configuration. The container configuration cannot be removed.
      *
@@ -384,20 +383,19 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         // the CompositeConfiguration object       
         if (!config.equals(containerConfiguration))
         {
-            return configList.remove((AbstractConfiguration) config);
+            String configName = getNameForConfiguration(config);
+            if (configName != null) {
+                namedConfigurations.remove(configName);
+            }
+            return configList.remove(config);
+        } else {
+            throw new IllegalArgumentException("Can't remove container configuration");
         }
-        return false;
     }
     
     public AbstractConfiguration removeConfigurationAt(int index) {
         AbstractConfiguration config = configList.remove(index);
-        String nameFound = null;
-        for (String name: namedConfigurations.keySet()) {
-            if (namedConfigurations.get(name) == config) {
-                nameFound = name;
-                break;
-            }
-        }
+        String nameFound = getNameForConfiguration(config);
         if (nameFound != null) {
             namedConfigurations.remove(nameFound);
         }
@@ -414,9 +412,12 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public Configuration removeConfiguration(String name)
     {
         Configuration conf = getConfiguration(name);
-        if (conf != null)
+        if (conf != null && !conf.equals(containerConfiguration))
         {
-            removeConfiguration(conf);
+            configList.remove(conf);
+            namedConfigurations.remove(name);
+        } else if (conf != null && conf.equals(containerConfiguration)) {
+            throw new IllegalArgumentException("Can't remove container configuration");
         }
         return conf;
     }

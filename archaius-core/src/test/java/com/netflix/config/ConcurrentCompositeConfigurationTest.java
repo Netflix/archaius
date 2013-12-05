@@ -106,5 +106,16 @@ public class ConcurrentCompositeConfigurationTest {
         assertEquals(config3, list.get(2));
         assertEquals(config1, list.get(3));
         assertEquals(4, list.size());
+        config.removeConfiguration(config1);
+        assertFalse(config.getConfigurationNames().contains("base"));
+        assertFalse(config.getConfigurations().contains(config1));
+        config.removeConfigurationAt(1);
+        assertFalse(config.getConfigurationNames().contains("new"));
+        assertFalse(config.getConfigurations().contains(config2));
+        AbstractConfiguration config4 = new ConcurrentMapConfiguration();
+        config.addConfiguration(config4, "another container");
+        config.removeConfiguration("another container");
+        assertFalse(config.getConfigurationNames().contains("another container"));
+        assertFalse(config.getConfigurations().contains(config4));
     }
 }

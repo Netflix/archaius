@@ -37,9 +37,23 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ConcurrentMapConfigurationTest {
+
+    @BeforeClass
+    public static void init() {
+        //Set the system property to default value
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+
+    }
+    @AfterClass
+    public static void cleanUp() {
+        //Set the system property to default value
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+    }
 
     @Test
     public void testSetGet() {
@@ -254,5 +268,32 @@ public class ConcurrentMapConfigurationTest {
         } catch (NullPointerException e) {
             assertNotNull(e);
         }
+    }
+
+    @Test
+    public void testDelimiterParsingSystemProperty() {
+        //Default behavior of enabling Delimiter parsing
+        ConcurrentMapConfiguration conf = new ConcurrentMapConfiguration();
+        conf.setProperty("anotherList", "0,1,2,3");
+        List<String> props = (List<String>) conf.getProperty("anotherList");
+        for (int i = 0; i < 4; i++) {
+            assertEquals(i, Integer.parseInt(props.get(i)));
+        }
+        //Set the system property to turn off delimiter parsing
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "true");
+        ConcurrentMapConfiguration conf_delimiter_parsing_off = new ConcurrentMapConfiguration();
+        conf_delimiter_parsing_off.setProperty("listProperty", "0,1,2,3");
+        assertEquals("0,1,2,3", conf_delimiter_parsing_off.getProperty("listProperty"));
+        conf_delimiter_parsing_off.addProperty("listProperty2", "0,1,2,3");
+        assertEquals("0,1,2,3", conf_delimiter_parsing_off.getProperty("listProperty2"));
+        conf_delimiter_parsing_off.setDelimiterParsingDisabled(false);
+        conf_delimiter_parsing_off.setProperty("listProperty3", "0,1,2,3");
+        List<String> newProps = (List<String>) conf_delimiter_parsing_off.getProperty("listProperty3");
+        for (int i = 0; i < 4; i++) {
+            assertEquals(i, Integer.parseInt(newProps.get(i)));
+        }
+        //Restore the system property to turn off delimiter parsing
+        System.setProperty(ConcurrentMapConfiguration.DISABLE_DELIMITER_PARSING, "false");
+
     }
 }
