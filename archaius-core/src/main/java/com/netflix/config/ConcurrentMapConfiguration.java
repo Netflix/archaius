@@ -76,7 +76,7 @@ public class ConcurrentMapConfiguration extends AbstractConfiguration {
             locks[i] = new ReentrantLock();
         }
         String disableDelimiterParsing = System.getProperty(DISABLE_DELIMITER_PARSING, "false");
-        setDelimiterParsingDisabled(Boolean.valueOf(disableDelimiterParsing));
+        super.setDelimiterParsingDisabled(Boolean.valueOf(disableDelimiterParsing));
     }
     
     public ConcurrentMapConfiguration(Map<String, Object> mapToCopy) {
