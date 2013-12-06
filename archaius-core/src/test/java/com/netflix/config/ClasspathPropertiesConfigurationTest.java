@@ -17,12 +17,24 @@ package com.netflix.config;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class ClasspathPropertiesConfigurationTest {
 
-    
+    /**
+     * Default relative resource path is META-INF/conf/config.properties.
+     * All config files that mathc the pattern will be imported and loaded into the configuration.
+     * In test/resource directory, there's a standalone META-INF/conf/config.properties file:
+     * standaloneConfigProperty = 10
+     * There's another jar file which has an embedded META-INF/conf/config.properties file:
+     * jarConfigProperty = 11
+     * Once initialize() succeeds, both properties should be present in config file.
+     */
     @Test
     public void testClasspathConfiguration() throws Exception {
         ClasspathPropertiesConfiguration.initialize();
+        assertEquals("10", ConfigurationManager.getConfigInstance().getString("standaloneConfigProperty"));
+        assertEquals("11", ConfigurationManager.getConfigInstance().getString("jarConfigProperty"));
     }
         
 }

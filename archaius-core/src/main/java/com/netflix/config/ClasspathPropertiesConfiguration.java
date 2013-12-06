@@ -51,13 +51,33 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     static String propertiesResourceRelativePath = "META-INF/conf/config.properties";
     
     static ClasspathPropertiesConfiguration instance = null;
-        
+
+    @Deprecated
+    static String configNameProperty = "config.configName";
+
     /** You can't instantiate this class. */
     private ClasspathPropertiesConfiguration()
     {
     	
     }
-    
+
+    @Deprecated
+    public String getConfigNameProperty() {
+        return configNameProperty;
+    }
+
+    /**
+     * Sets the name for the property name that defines the name for a bag of
+     * properties loaded from a properties resources
+     *
+     * Default if not set is config.configName
+     *
+     * @param configNameProperty
+     */
+    @Deprecated
+    public static void setConfigNameProperty(String configNameProperty) {
+        ClasspathPropertiesConfiguration.configNameProperty = configNameProperty;
+    }
 
 	public String getPropertiesResourceRelativePath() {
 		return propertiesResourceRelativePath;

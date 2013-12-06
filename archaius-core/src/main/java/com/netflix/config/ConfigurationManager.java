@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -225,8 +222,8 @@ public class ConfigurationManager {
     }
       
     /**
-     * Load properties from resource file into the system wide configuration
-     * @param path path of the resource
+     * Load properties from resource file(s) into the system wide configuration
+     * @param path relative path of the resources
      * @throws IOException
      */
     public static void loadPropertiesFromResources(String path) 
@@ -235,21 +232,21 @@ public class ConfigurationManager {
             instance = getConfigInstance();
         }
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        URL url = loader.getResource(path);
-        if (url == null) {
-            throw new IOException("Cannot locate " + path + " as a classpath resource.");
-        }
-        Properties props = new Properties();
-        InputStream fin = url.openStream();
-        props.load(fin);
-        fin.close();
-        if (instance instanceof AggregatedConfiguration) {
-            String name = getConfigName(url);
-            ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
-            config.loadProperties(props);
-            ((AggregatedConfiguration) instance).addConfiguration(config, name);
-        } else {
-            ConfigurationUtils.loadProperties(props, instance);
+        Enumeration<URL> resources = loader.getResources(path);
+        while (resources.hasMoreElements()) {
+            URL url = resources.nextElement();
+            Properties props = new Properties();
+            InputStream fin = url.openStream();
+            props.load(fin);
+            fin.close();
+            if (instance instanceof AggregatedConfiguration) {
+                String name = getConfigName(url);
+                ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();
+                config.loadProperties(props);
+                ((AggregatedConfiguration) instance).addConfiguration(config, name);
+            } else {
+                ConfigurationUtils.loadProperties(props, instance);
+            }
         }
     }
     
