@@ -15,14 +15,8 @@
  */
 package com.netflix.config;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +48,6 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
 	private static final Logger log = LoggerFactory
 			.getLogger(ClasspathPropertiesConfiguration.class);
 	
-    static String configNameProperty = "config.configName";
-    
     static String propertiesResourceRelativePath = "META-INF/conf/config.properties";
     
     static ClasspathPropertiesConfiguration instance = null;
@@ -66,29 +58,14 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     	
     }
     
-    public String getConfigNameProperty() {
-		return configNameProperty;
-	}
-
-	/**
-	 * Sets the name for the property name that defines the name for a bag of
-	 * properties loaded from a properties resources
-	 * 
-	 * Default if not set is config.configName
-	 * 
-	 * @param configNameProperty
-	 */
-	public static void setConfigNameProperty(String configNameProperty) {
-		ClasspathPropertiesConfiguration.configNameProperty = configNameProperty;
-	}
 
 	public String getPropertiesResourceRelativePath() {
 		return propertiesResourceRelativePath;
 	}
 
 	/**
-	 * 
-	 * @param propertiesResourceRelativePath
+	 * Set relative class path for the config file
+	 * @param propertiesResourceRelativePath New relative path of config file
 	 */
 	public static void setPropertiesResourceRelativePath(
 			String propertiesResourceRelativePath) {
@@ -108,9 +85,8 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     public static void initialize() 
     {
         try {
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
             instance = new ClasspathPropertiesConfiguration();
-            loadResources(loader, propertiesResourceRelativePath);
+            loadResources(propertiesResourceRelativePath);
               
         } catch (Exception e) {
             throw new RuntimeException(
@@ -118,73 +94,10 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
         }
     }
 
-    private static void loadResources(ClassLoader loader,
-            String resourceName) throws Exception
+
+    private static void loadResources(String resourceName) throws Exception
     {
-        Enumeration<URL> resources = loader.getResources(resourceName);
-        boolean loadedResources = false;
-		while (resources.hasMoreElements()) {
-			URL from = resources.nextElement();
-			/* Properties props = loadProperties(from);
-			String configName = getConfigName(props, from);
-			containerConfiguration.addConfiguration(
-					new PropertiesConfiguration(from), configName); */
-			ConfigurationManager.loadPropertiesFromResources(from.getPath());
-			log.debug("Added properties from:" + from + from.getPath());
-			loadedResources = true;
-		}
-		if (!loadedResources) {
-			log.debug("Did not find any properties resource in the classpath with name:"
-					+ propertiesResourceRelativePath);
-		}
+        ConfigurationManager.loadPropertiesFromResources(resourceName);
+        log.debug("Added properties from:" + resourceName);
     }
-
-    private static Properties loadProperties(URL from) throws IOException
-    {
-        Properties into = new Properties();
-        InputStream in = from.openStream();
-        try {
-            into.load(in);
-        }catch(Exception e){
-        	log.error("Exception while loading properties from URL:" + from);
-        } finally {
-            in.close();
-        }
-        return into;
-    }
-
-    /**
-     * Get the conventional name of the configuration that comes from from the
-     * given URL.
-     */
-    private static String getConfigName(Properties props, URL propertyFile)
-    {
-        String name = props.getProperty(configNameProperty);
-        if (name == null) {
-            name = propertyFile.toExternalForm();
-            name = name.replace('\\', '/'); // Windows
-            final String scheme = propertyFile.getProtocol().toLowerCase();
-            if ("jar".equals(scheme) || "zip".equals(scheme)) {
-                // Use the unqualified name of the jar file.
-                final int bang = name.lastIndexOf("!");
-                if (bang >= 0) {
-                    name = name.substring(0, bang);
-                }
-                final int slash = name.lastIndexOf("/");
-                if (slash >= 0) {
-                    name = name.substring(slash + 1);
-                }
-            } else {
-                // Use the URL of the enclosing directory.
-                final int slash = name.lastIndexOf("/");
-                if (slash >= 0) {
-                    name = name.substring(0, slash);
-                }
-            }
-        }
-        return name;
-    }
-
-
-
 }
