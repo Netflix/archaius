@@ -52,6 +52,9 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     
     static ClasspathPropertiesConfiguration instance = null;
 
+    /**
+     * Dead Code. No longer needed. Deprecate first before removing.
+     */
     @Deprecated
     static String configNameProperty = "config.configName";
 
@@ -61,6 +64,10 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
     	
     }
 
+    /**
+     * No longer needed. Deprecate first before removing.
+     * @return
+     */
     @Deprecated
     public String getConfigNameProperty() {
         return configNameProperty;
@@ -71,6 +78,7 @@ public class ClasspathPropertiesConfiguration extends ConcurrentMapConfiguration
      * properties loaded from a properties resources
      *
      * Default if not set is config.configName
+     * Dead code. No longer needed. Deprecate first before removing.
      *
      * @param configNameProperty
      */
