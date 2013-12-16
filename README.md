@@ -22,3 +22,7 @@ Please see [wiki] (https://github.com/Netflix/archaius/wiki) for detail document
 Origin
 ------
 The code name for the project comes from an endangered species of Chameleons. We chose [Archaius](http://en.wikipedia.org/wiki/Archaius), as Chameleons are known for changing their color (a property) based on its environment and situation. This project was borne out of a strong desire to use dynamic property changes to effect runtime behaviors based on specific contexts.
+
+User Group
+----------
+The google group for Archaius users is https://groups.google.com/forum/#!forum/achaius-users. Email address for the group is achaius-users@googlegroups.com.
