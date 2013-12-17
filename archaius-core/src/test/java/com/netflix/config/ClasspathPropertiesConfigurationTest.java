@@ -35,6 +35,14 @@ public class ClasspathPropertiesConfigurationTest {
         ClasspathPropertiesConfiguration.initialize();
         assertEquals("10", ConfigurationManager.getConfigInstance().getString("standaloneConfigProperty"));
         assertEquals("11", ConfigurationManager.getConfigInstance().getString("jarConfigProperty"));
+
+        //Set a non-existent config path, expect an IO Exception
+        ClasspathPropertiesConfiguration.setPropertiesResourceRelativePath("non-existent/conf/bluh");
+        try {
+            ClasspathPropertiesConfiguration.initialize();
+        } catch (Exception e) {
+            assertEquals("Cannot locate non-existent/conf/bluh as a classpath resource.", e.getCause().getMessage());
+        }
     }
         
 }
