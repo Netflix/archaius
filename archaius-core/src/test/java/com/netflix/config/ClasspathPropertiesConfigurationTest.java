@@ -17,6 +17,7 @@ package com.netflix.config;
 
 import org.junit.Test;
 
+import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 
 public class ClasspathPropertiesConfigurationTest {
@@ -35,6 +36,15 @@ public class ClasspathPropertiesConfigurationTest {
         ClasspathPropertiesConfiguration.initialize();
         assertEquals("10", ConfigurationManager.getConfigInstance().getString("standaloneConfigProperty"));
         assertEquals("11", ConfigurationManager.getConfigInstance().getString("jarConfigProperty"));
+
+        //Set a non-existent config path, expect an IO Exception
+        ClasspathPropertiesConfiguration.setPropertiesResourceRelativePath("non-existent/conf/bluh");
+        try {
+            ClasspathPropertiesConfiguration.initialize();
+            fail("exception expected");
+        } catch (Exception e) {
+            assertEquals("Cannot locate non-existent/conf/bluh as a classpath resource.", e.getCause().getMessage());
+        }
     }
         
 }

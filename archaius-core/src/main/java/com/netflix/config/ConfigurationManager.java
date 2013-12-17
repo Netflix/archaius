@@ -233,6 +233,10 @@ public class ConfigurationManager {
         }
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         Enumeration<URL> resources = loader.getResources(path);
+        if (!resources.hasMoreElements()) {
+            //non-existent config path. Throw an exception. Issue #150
+            throw new IOException("Cannot locate " + path + " as a classpath resource.");
+        }
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             Properties props = new Properties();
