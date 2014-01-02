@@ -35,5 +35,6 @@ class DynamicIntProperty(val propertyName: String, val default: Int) {
   }
 
   // For backward compatibility
+  @deprecated("Use propertyName instead", "0.5.15") 
   def property = propertyName
 }
