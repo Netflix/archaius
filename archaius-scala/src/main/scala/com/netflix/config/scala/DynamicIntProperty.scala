@@ -22,9 +22,9 @@ import com.netflix.config.DynamicPropertyFactory
  * Date: 8/6/12
  */
 
-class DynamicIntProperty(val property: String, val default: Int) {
+class DynamicIntProperty(val propertyName: String, val default: Int) {
 
-  private val prop = DynamicPropertyFactory.getInstance().getIntProperty(property, default)
+  private val prop = DynamicPropertyFactory.getInstance().getIntProperty(propertyName, default)
 
   def apply: Option[Int] = Option(get)
 
@@ -33,4 +33,7 @@ class DynamicIntProperty(val property: String, val default: Int) {
   def addCallback(callback: Runnable) {
     if (callback != null) prop.addCallback(callback)
   }
+
+  // For backward compatibility
+  def property = propertyName
 }

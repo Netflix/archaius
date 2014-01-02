@@ -21,8 +21,10 @@ import scala.collection.JavaConversions._
  * User: gorzell
  * Date: 9/25/12
  */
-class DynamicStringListProperty(property: String, default: List[String], delimiterRegex: String) {
-  private val prop = new com.netflix.config.DynamicStringListProperty(property, default, delimiterRegex)
+
+class DynamicStringListProperty(val propertyName: String, default: List[String], delimiterRegex: String) {
+
+  private val prop = new com.netflix.config.DynamicStringListProperty(propertyName, default, delimiterRegex)
 
   def apply: Option[List[String]] = Option(get)
 

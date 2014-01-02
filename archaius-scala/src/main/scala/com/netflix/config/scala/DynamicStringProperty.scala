@@ -22,9 +22,9 @@ import com.netflix.config.DynamicPropertyFactory
  * Date: 8/6/12
  */
 
-class DynamicStringProperty(property: String, default: String) {
+class DynamicStringProperty(val propertyName: String, default: String) {
 
-  private val prop = DynamicPropertyFactory.getInstance().getStringProperty(property, default)
+  private val prop = DynamicPropertyFactory.getInstance().getStringProperty(propertyName, default)
 
   def apply: Option[String] = Option(get)
 
