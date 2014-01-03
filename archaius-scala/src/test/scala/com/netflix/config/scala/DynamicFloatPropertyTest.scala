@@ -15,22 +15,21 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConversions._
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
+import org.scalatest.WordSpec
+import org.scalatest.matchers.ShouldMatchers
+import com.netflix.config.scala.DynamicProperties._
+import com.netflix.config.ConfigurationManager
 
-/**
- * User: gorzell
- * Date: 9/25/12
- */
+@RunWith(classOf[JUnitRunner])
+class DynamicFloatPropertyTest extends WordSpec with ShouldMatchers {
+  private val propertyName = "dynamicFloatTest"
+  private val property = dynamicFloatProperty(propertyName, 1.0F)
 
-class DynamicStringSetProperty(val propertyName: String, default: Set[String], delimiterRegex: String) {
-
-  private val prop = new com.netflix.config.DynamicStringSetProperty(propertyName, default, delimiterRegex)
-
-  def apply: Option[Set[String]] = Option(get)
-
-  def get: Set[String] = prop.get.toSet
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+  "DynamicFloatProperty" should {
+    "provide access to property name via propertyName field" in {
+      property.propertyName should be(propertyName)
+    }
   }
 }

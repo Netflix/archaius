@@ -22,50 +22,14 @@ import org.scalatest.matchers.ShouldMatchers
 import com.netflix.config.scala.DynamicProperties._
 import com.netflix.config.ConfigurationManager
 
-/**
- * Date: 5/21/13
- * Time: 10:48 AM
- * @author gorzell
- */
-
 @RunWith(classOf[JUnitRunner])
-class DynamicBooleanPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicExecutionTest"
-  private val property = dynamicBooleanProperty(propertyName, true)
+class DynamicStringListPropertyTest extends WordSpec with ShouldMatchers {
+  private val propertyName = "dynamicStringListTest"
+  private val property = dynamicStringListProperty(propertyName, List[String](), ",")
 
-  private val config = ConfigurationManager.getConfigInstance
-
-  "DynamicBooleanProperty" should {
+  "DynamicStringListProperty" should {
     "provide access to property name via propertyName field" in {
       property.propertyName should be(propertyName)
-    }
-
-    "execute the code" in {
-      config.setProperty(propertyName, true.toString)
-
-      var executionCount = 0
-
-      val result = property.ifEnabled {
-        executionCount += 1
-        1
-      }
-
-      result should be(Option(1))
-      executionCount should be(1)
-    }
-
-    "not execute the code" in {
-      config.setProperty(propertyName, false.toString)
-
-      var executionCount = 0
-
-      val result = property.ifEnabled {
-        executionCount += 1
-        1
-      }
-
-      result should be(None)
-      executionCount should be(0)
     }
   }
 }
