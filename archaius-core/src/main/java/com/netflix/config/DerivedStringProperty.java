@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author mhawthorne
  */
-public abstract class DerivedStringProperty<D> {
+public abstract class DerivedStringProperty<D> implements Property<D> {
 
     private static final Logger log = LoggerFactory.getLogger(DerivedStringProperty.class);
 
@@ -52,6 +52,26 @@ public abstract class DerivedStringProperty<D> {
     public D get() {
         return derived.get();
     }
+    
+	@Override
+	public D getValue() {
+		return get();
+	}
+
+	@Override
+	public String getName() {
+		return delegate.getName();
+	}
+
+	@Override
+	public long getChangedTimestamp() {
+		return delegate.getChangedTimestamp();
+	}
+
+	@Override
+	public void addCallback(Runnable callback) {
+		delegate.addCallback(callback);
+	}  
 
     /**
      * Invoked when property is updated with a new value.  Should return the new derived value, which may be null.
@@ -75,5 +95,4 @@ public abstract class DerivedStringProperty<D> {
             log.error("error when deriving initial value", e);
         }
     }
-
 }

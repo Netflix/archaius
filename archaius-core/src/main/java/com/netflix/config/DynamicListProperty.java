@@ -31,7 +31,7 @@ import com.google.common.collect.Lists;
  * 
  * @author awang
  */
-public abstract class DynamicListProperty<T> {
+public abstract class DynamicListProperty<T> implements Property<List<T>> {
     private volatile List<T> values;
 
     private List<T> defaultValues;
@@ -122,6 +122,11 @@ public abstract class DynamicListProperty<T> {
     public List<T> get() {
         return values;
     }
+    
+    @Override
+    public List<T> getValue() {
+    	return get();
+    }
 
     private List<String> split(String value) {    	
     	return Lists.newArrayList(splitter.split(Strings.nullToEmpty(value)));
@@ -148,6 +153,7 @@ public abstract class DynamicListProperty<T> {
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
      */
+    @Override
     public long getChangedTimestamp() {
         return delegate.getChangedTimestamp();
     }
@@ -156,6 +162,7 @@ public abstract class DynamicListProperty<T> {
      * Add the callback to be triggered when the value of the property is changed
      *
      */
+    @Override
     public void addCallback(Runnable callback) {
         if (callback != null) delegate.addCallback(callback);
     }
@@ -169,6 +176,7 @@ public abstract class DynamicListProperty<T> {
     /**
      * Getter for the property name
      */
+    @Override
     public String getName() {
         return delegate.getName();
     }

@@ -23,7 +23,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
-public abstract class DynamicSetProperty<T> {
+public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     private volatile Set<T> values;
 
     private Set<T> defaultValues;
@@ -114,6 +114,11 @@ public abstract class DynamicSetProperty<T> {
     public Set<T> get() {
         return values;
     }
+    
+    @Override
+    public Set<T> getValue() {
+    	return get();
+    }
 
     private Set<String> split(String value) {    	    	
     	return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
@@ -140,6 +145,7 @@ public abstract class DynamicSetProperty<T> {
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
      */
+    @Override
     public long getChangedTimestamp() {
         return delegate.getChangedTimestamp();
     }
@@ -148,6 +154,7 @@ public abstract class DynamicSetProperty<T> {
      * Add the callback to be triggered when the value of the property is changed
      *
      */
+    @Override
     public void addCallback(Runnable callback) {
         if (callback != null) delegate.addCallback(callback);
     }
@@ -161,6 +168,7 @@ public abstract class DynamicSetProperty<T> {
     /**
      * Getter for the property name
      */
+    @Override
     public String getName(){
         return delegate.getName();
     }
