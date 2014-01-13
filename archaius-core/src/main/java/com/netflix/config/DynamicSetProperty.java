@@ -23,7 +23,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
-public abstract class DynamicSetProperty<T> {
+public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     private volatile Set<T> values;
 
     private Set<T> defaultValues;
@@ -51,8 +51,8 @@ public abstract class DynamicSetProperty<T> {
      * null, the default set value will be an empty set.
      */
     public DynamicSetProperty(String propName, String defaultValue, String delimiterRegex) {
-    	this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
-    	setup(propName, transform(split(defaultValue)), splitter);
+        this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
+        setup(propName, transform(split(defaultValue)), splitter);
     }
 
     public DynamicSetProperty(String propName, Set<T> defaultValue) {
@@ -65,7 +65,7 @@ public abstract class DynamicSetProperty<T> {
      * set value will be taken from the passed in set argument.
      */
     public DynamicSetProperty(String propName, Set<T> defaultValue, String delimiterRegex) {
-    	setup(propName, defaultValue, delimiterRegex);
+        setup(propName, defaultValue, delimiterRegex);
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class DynamicSetProperty<T> {
      * from the arguments.
      */
     public DynamicSetProperty(String propName, Set<T> defaultValue, Splitter splitter) {
-    	setup(propName, defaultValue, splitter);
+        setup(propName, defaultValue, splitter);
     }
 
     
@@ -82,7 +82,7 @@ public abstract class DynamicSetProperty<T> {
     }
 
     private void setup(String propName, Set<T> defaultValue, Splitter splitter) {
-    	this.defaultValues = defaultValue;
+        this.defaultValues = defaultValue;
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
@@ -91,7 +91,7 @@ public abstract class DynamicSetProperty<T> {
             public void run() {
                 propertyChangedInternal();
             }
-        });    	
+        });        
     }
 
     private void propertyChangedInternal() {
@@ -114,9 +114,14 @@ public abstract class DynamicSetProperty<T> {
     public Set<T> get() {
         return values;
     }
+    
+    @Override
+    public Set<T> getValue() {
+        return get();
+    }
 
-    private Set<String> split(String value) {    	    	
-    	return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
+    private Set<String> split(String value) {                
+        return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
     }
     
     protected Set<T> transform(Set<String> stringValues) {
@@ -124,22 +129,23 @@ public abstract class DynamicSetProperty<T> {
         for (String s : stringValues) {
             set.add(from(s));
         }
-        return Collections.unmodifiableSet(set);	
+        return Collections.unmodifiableSet(set);    
     }
     
     
     protected void load() {
-    	if (delegate.get() == null) {
-    		values = defaultValues;
-    	} else {
+        if (delegate.get() == null) {
+            values = defaultValues;
+        } else {
             values = transform(split(delegate.get()));
-    	}
+        }
     }
 
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
      */
+    @Override
     public long getChangedTimestamp() {
         return delegate.getChangedTimestamp();
     }
@@ -148,6 +154,7 @@ public abstract class DynamicSetProperty<T> {
      * Add the callback to be triggered when the value of the property is changed
      *
      */
+    @Override
     public void addCallback(Runnable callback) {
         if (callback != null) delegate.addCallback(callback);
     }
@@ -161,6 +168,7 @@ public abstract class DynamicSetProperty<T> {
     /**
      * Getter for the property name
      */
+    @Override
     public String getName(){
         return delegate.getName();
     }

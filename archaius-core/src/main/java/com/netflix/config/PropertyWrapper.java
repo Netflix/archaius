@@ -29,7 +29,7 @@ import com.netflix.config.validation.ValidationException;
  * @param <V> The type of the DynamicProperty
  * @author awang
  */
-public abstract class PropertyWrapper<V> {
+public abstract class PropertyWrapper<V> implements Property<V> {
     protected final DynamicProperty prop;
     protected final V defaultValue;
     @SuppressWarnings("rawtypes")
@@ -63,7 +63,7 @@ public abstract class PropertyWrapper<V> {
     protected PropertyWrapper(String propName, V defaultValue) {
         this.prop = DynamicProperty.getInstance(propName);
         this.defaultValue = defaultValue;
-        Class c = getClass();
+        Class<?> c = getClass();
         // this checks whether this constructor is called by a class that
         // extends the immediate sub classes (IntProperty, etc.) of PropertyWrapper. 
         // If yes, it is very likely that propertyChanged()  is overriden
@@ -84,16 +84,17 @@ public abstract class PropertyWrapper<V> {
                 }
             });
             try {
-            	if (this.prop.getString() != null) {
-            	    this.validate(this.prop.getString());
-            	}
+                if (this.prop.getString() != null) {
+                    this.validate(this.prop.getString());
+                }
             } catch (ValidationException e) {
-            	logger.warn("Error validating property at initialization. Will fallback to default value.", e);
-            	prop.updateValue(defaultValue);
+                logger.warn("Error validating property at initialization. Will fallback to default value.", e);
+                prop.updateValue(defaultValue);
             }
         }
     }
 
+    @Override
     public String getName() {
         return prop.getName();
     }
@@ -129,6 +130,7 @@ public abstract class PropertyWrapper<V> {
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
      */
+    @Override
     public long getChangedTimestamp() {
         return prop.getChangedTimestamp();
     }
@@ -138,6 +140,7 @@ public abstract class PropertyWrapper<V> {
      *
      * @param callback
      */
+    @Override
     public void addCallback(Runnable callback) {
         if (callback != null) prop.addCallback(callback);
     }
@@ -145,6 +148,7 @@ public abstract class PropertyWrapper<V> {
     /**
      * Get current typed value of the property.
      */
+    @Override
     public abstract V getValue();
     
     public DynamicProperty getDynamicProperty() {

@@ -61,26 +61,22 @@ public class ChainedDynamicProperty {
 
     private static final Logger logger = LoggerFactory.getLogger(ChainedDynamicProperty.class);
 
-    public static abstract class ChainLink<T> {
+    public static abstract class ChainLink<T> implements Property<T> {
 
         private final AtomicReference<ChainLink<T>> pReference;
         private final ChainLink<T> next; 
         private final List<Runnable> callbacks; 
 
         /**
-         * @return String
-         */
-        public abstract String getName();
-
-        /**
-         * @return T
-         */
-        protected abstract T getValue();
-
-        /**
          * @return Boolean
          */
         public abstract boolean isValueAcceptable();
+        
+        /**
+         * Get the property referenced by this ChainLink
+         * @return the referenced property
+         */
+        protected abstract Property<T> getReferencedProperty();
 
         /**
          * No arg constructor - used for end node
@@ -130,10 +126,30 @@ public class ChainedDynamicProperty {
                 return pReference.get().get();
             }
         }
+        
+        @Override
+        public T getValue() {
+            return getReferencedProperty().getValue();
+        }
+
+        @Override
+        public String getName() {
+            return getReferencedProperty().getName();
+        }
+
+        @Override
+        public long getChangedTimestamp() {
+            if (pReference.get() == this) {
+                return getReferencedProperty().getChangedTimestamp();
+            } else {
+                return pReference.get().getChangedTimestamp();
+            }
+        }
 
         /**
          * @param r
          */
+        @Override
         public void addCallback(Runnable r) {
             callbacks.add(r);
         }
@@ -141,6 +157,7 @@ public class ChainedDynamicProperty {
         /**
          * @return String 
          */
+        @Override
         public String toString() {
             return getName() + " = " + get();   
         }
@@ -179,13 +196,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        protected String getValue() {
-            return sProp.get();
-        }
-
-        @Override
-        public String getName() {
-            return sProp.getName();
+        protected Property<String> getReferencedProperty() {
+            return sProp;
         }
     }
 
@@ -222,13 +234,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public Integer getValue() {
-            return sProp.get();
-        }
-
-        @Override
-        public String getName() {
-            return sProp.getName();
+        protected Property<Integer> getReferencedProperty() {
+            return sProp;
         }
     }
 
@@ -264,13 +271,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public Float getValue() {
-            return sProp.get();
-        }
-
-        @Override
-        public String getName() {
-            return sProp.getName();
+        protected Property<Float> getReferencedProperty() {
+            return sProp;
         }
     }
 
@@ -308,13 +310,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public Boolean getValue() {
-            return sProp.get();
-        }
-
-        @Override
-        public String getName() {
-            return sProp.getName();
+        protected Property<Boolean> getReferencedProperty() {
+            return sProp;
         }
     }
 
