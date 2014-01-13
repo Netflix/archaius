@@ -18,35 +18,39 @@
 package com.netflix.config;
 
 /**
- * Base interface for Archaius properties. Provides common methods across all property implementations. 
- *
+ * Base interface for Archaius properties. Provides common methods across all
+ * property implementations.
+ * 
  * @param <T> The value type of the property
  */
 public interface Property<T> {
-	
-	/**
-	 * Get the latest value for the given property
-	 * @return the latest property value
-	 */
-	T getValue();
-	
-	/**
-	 * Get the name of the property
-	 * @return the property name
-	 */
-	String getName();
-	
+
     /**
-     * Gets the time (in milliseconds past the epoch) when the property
-     * was last set/changed.
+     * Get the latest value for the given property
+     * 
+     * @return the latest property value
      */
-	long getChangedTimestamp();
-	
+    T getValue();
+
     /**
-     * Add the callback to be triggered when the value of the property is changed
-     *
+     * Get the name of the property
+     * 
+     * @return the property name
+     */
+    String getName();
+
+    /**
+     * Gets the time (in milliseconds past the epoch) when the property was last
+     * set/changed.
+     */
+    long getChangedTimestamp();
+
+    /**
+     * Add the callback to be triggered when the value of the property is
+     * changed
+     * 
      * @param callback
      */
-	void addCallback(Runnable callback);
+    void addCallback(Runnable callback);
 
 }

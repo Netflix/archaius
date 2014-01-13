@@ -84,12 +84,12 @@ public abstract class PropertyWrapper<V> implements Property<V> {
                 }
             });
             try {
-            	if (this.prop.getString() != null) {
-            	    this.validate(this.prop.getString());
-            	}
+                if (this.prop.getString() != null) {
+                    this.validate(this.prop.getString());
+                }
             } catch (ValidationException e) {
-            	logger.warn("Error validating property at initialization. Will fallback to default value.", e);
-            	prop.updateValue(defaultValue);
+                logger.warn("Error validating property at initialization. Will fallback to default value.", e);
+                prop.updateValue(defaultValue);
             }
         }
     }

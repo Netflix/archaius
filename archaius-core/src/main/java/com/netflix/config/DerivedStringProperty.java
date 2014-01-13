@@ -53,25 +53,25 @@ public abstract class DerivedStringProperty<D> implements Property<D> {
         return derived.get();
     }
     
-	@Override
-	public D getValue() {
-		return get();
-	}
+    @Override
+    public D getValue() {
+        return get();
+    }
 
-	@Override
-	public String getName() {
-		return delegate.getName();
-	}
+    @Override
+    public String getName() {
+        return delegate.getName();
+    }
 
-	@Override
-	public long getChangedTimestamp() {
-		return delegate.getChangedTimestamp();
-	}
+    @Override
+    public long getChangedTimestamp() {
+        return delegate.getChangedTimestamp();
+    }
 
-	@Override
-	public void addCallback(Runnable callback) {
-		delegate.addCallback(callback);
-	}  
+    @Override
+    public void addCallback(Runnable callback) {
+        delegate.addCallback(callback);
+    }  
 
     /**
      * Invoked when property is updated with a new value.  Should return the new derived value, which may be null.

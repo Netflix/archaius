@@ -59,8 +59,8 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
      * null, the default list value will be an empty list.
      */
     public DynamicListProperty(String propName, String defaultValue, String delimiterRegex) {
-    	this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
-    	setup(propName, transform(split(defaultValue)), splitter);
+        this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
+        setup(propName, transform(split(defaultValue)), splitter);
     }
 
     public DynamicListProperty(String propName, List<T> defaultValue) {
@@ -73,7 +73,7 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
      * list value will be taken from the passed in list argument.
      */
     public DynamicListProperty(String propName, List<T> defaultValue, String delimiterRegex) {
-    	setup(propName, defaultValue, delimiterRegex);
+        setup(propName, defaultValue, delimiterRegex);
     }
 
     /**
@@ -81,7 +81,7 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
      * from the arguments.
      */
     public DynamicListProperty(String propName, List<T> defaultValue, Splitter splitter) {
-    	setup(propName, defaultValue, splitter);
+        setup(propName, defaultValue, splitter);
     }
 
     
@@ -90,7 +90,7 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
     }
 
     private void setup(String propName, List<T> defaultValue, Splitter splitter) {
-    	this.defaultValues = defaultValue;
+        this.defaultValues = defaultValue;
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
@@ -99,7 +99,7 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
             public void run() {
                 propertyChangedInternal();
             }
-        });    	
+        });        
     }
 
     private void propertyChangedInternal() {
@@ -125,11 +125,11 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
     
     @Override
     public List<T> getValue() {
-    	return get();
+        return get();
     }
 
-    private List<String> split(String value) {    	
-    	return Lists.newArrayList(splitter.split(Strings.nullToEmpty(value)));
+    private List<String> split(String value) {        
+        return Lists.newArrayList(splitter.split(Strings.nullToEmpty(value)));
     }
     
     protected List<T> transform(List<String> stringValues) {
@@ -137,16 +137,16 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
         for (String s : stringValues) {
             list.add(from(s));
         }
-        return Collections.unmodifiableList(list);	
+        return Collections.unmodifiableList(list);    
     }
     
     
     protected void load() {
-    	if (delegate.get() == null) {
-    		values = defaultValues;
-    	} else {
+        if (delegate.get() == null) {
+            values = defaultValues;
+        } else {
             values = transform(split(delegate.get()));
-    	}
+        }
     }
 
     /**

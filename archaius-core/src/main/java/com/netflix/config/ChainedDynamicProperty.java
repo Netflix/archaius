@@ -137,14 +137,14 @@ public class ChainedDynamicProperty {
             return getReferencedProperty().getName();
         }
 
-		@Override
-		public long getChangedTimestamp() {
+        @Override
+        public long getChangedTimestamp() {
             if (pReference.get() == this) {
                 return getReferencedProperty().getChangedTimestamp();
             } else {
                 return pReference.get().getChangedTimestamp();
             }
-		}
+        }
 
         /**
          * @param r
@@ -195,10 +195,10 @@ public class ChainedDynamicProperty {
             return (sProp.get() != null);
         }
 
-		@Override
-		protected Property<String> getReferencedProperty() {
-			return sProp;
-		}
+        @Override
+        protected Property<String> getReferencedProperty() {
+            return sProp;
+        }
     }
 
     public static class IntProperty extends ChainLink<Integer> {
@@ -233,10 +233,10 @@ public class ChainedDynamicProperty {
             return (sProp.get() != Integer.MIN_VALUE);
         }
 
-		@Override
-		protected Property<Integer> getReferencedProperty() {
-			return sProp;
-		}
+        @Override
+        protected Property<Integer> getReferencedProperty() {
+            return sProp;
+        }
     }
 
     public static class FloatProperty extends ChainLink<Float> {
@@ -270,10 +270,10 @@ public class ChainedDynamicProperty {
             return Math.abs(sProp.get() - Float.MIN_VALUE) > 0.000001f ;
         }
 
-		@Override
-		protected Property<Float> getReferencedProperty() {
-			return sProp;
-		}
+        @Override
+        protected Property<Float> getReferencedProperty() {
+            return sProp;
+        }
     }
 
     public static class BooleanProperty extends ChainLink<Boolean> {
@@ -310,9 +310,9 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-		protected Property<Boolean> getReferencedProperty() {
-			return sProp;
-		}
+        protected Property<Boolean> getReferencedProperty() {
+            return sProp;
+        }
     }
 
     public static class DynamicBooleanPropertyThatSupportsNull extends PropertyWrapper<Boolean> {

@@ -51,8 +51,8 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
      * null, the default set value will be an empty set.
      */
     public DynamicSetProperty(String propName, String defaultValue, String delimiterRegex) {
-    	this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
-    	setup(propName, transform(split(defaultValue)), splitter);
+        this.splitter = Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults();
+        setup(propName, transform(split(defaultValue)), splitter);
     }
 
     public DynamicSetProperty(String propName, Set<T> defaultValue) {
@@ -65,7 +65,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
      * set value will be taken from the passed in set argument.
      */
     public DynamicSetProperty(String propName, Set<T> defaultValue, String delimiterRegex) {
-    	setup(propName, defaultValue, delimiterRegex);
+        setup(propName, defaultValue, delimiterRegex);
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
      * from the arguments.
      */
     public DynamicSetProperty(String propName, Set<T> defaultValue, Splitter splitter) {
-    	setup(propName, defaultValue, splitter);
+        setup(propName, defaultValue, splitter);
     }
 
     
@@ -82,7 +82,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     }
 
     private void setup(String propName, Set<T> defaultValue, Splitter splitter) {
-    	this.defaultValues = defaultValue;
+        this.defaultValues = defaultValue;
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
@@ -91,7 +91,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
             public void run() {
                 propertyChangedInternal();
             }
-        });    	
+        });        
     }
 
     private void propertyChangedInternal() {
@@ -117,11 +117,11 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     
     @Override
     public Set<T> getValue() {
-    	return get();
+        return get();
     }
 
-    private Set<String> split(String value) {    	    	
-    	return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
+    private Set<String> split(String value) {                
+        return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
     }
     
     protected Set<T> transform(Set<String> stringValues) {
@@ -129,16 +129,16 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
         for (String s : stringValues) {
             set.add(from(s));
         }
-        return Collections.unmodifiableSet(set);	
+        return Collections.unmodifiableSet(set);    
     }
     
     
     protected void load() {
-    	if (delegate.get() == null) {
-    		values = defaultValues;
-    	} else {
+        if (delegate.get() == null) {
+            values = defaultValues;
+        } else {
             values = transform(split(delegate.get()));
-    	}
+        }
     }
 
     /**
