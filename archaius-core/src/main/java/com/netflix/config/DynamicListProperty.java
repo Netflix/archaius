@@ -165,4 +165,11 @@ public abstract class DynamicListProperty<T> {
      * 
      */
     protected abstract T from(String value);
+    
+    /**
+     * Getter for the property name
+     */
+    public String getName() {
+        return delegate.getName();
+    }
 }
