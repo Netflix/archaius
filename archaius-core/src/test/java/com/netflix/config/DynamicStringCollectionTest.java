@@ -136,4 +136,18 @@ public class DynamicStringCollectionTest {
         }
         assertEquals(extMap, map);
     }
+    
+    @Test
+    public void testStringListGetName() {
+    	String propName = "testGetName";
+    	DynamicStringListProperty prop = new DynamicStringListProperty(propName, "1,2");
+    	assertEquals(propName, prop.getName());
+    }
+    
+    @Test
+    public void testStringMapGetName() {
+    	String propName = "testGetName";
+    	DynamicStringMapProperty prop = new DynamicStringMapProperty(propName, "key1=1,key2=2,key3=3");
+    	assertEquals(propName, prop.getName());
+    }
 }
