@@ -27,6 +27,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
+
 public class DynamicStringCollectionTest {
 
     @Test
@@ -149,5 +151,18 @@ public class DynamicStringCollectionTest {
     	String propName = "testGetName";
     	DynamicStringMapProperty prop = new DynamicStringMapProperty(propName, "key1=1,key2=2,key3=3");
     	assertEquals(propName, prop.getName());
+    }
+    
+    @Test
+    public void testStringListGetDefaultValue() {
+        List<String> expected = Lists.newArrayList("1", "2", "3");
+        DynamicStringListProperty prop = new DynamicStringListProperty("test", expected);
+        assertEquals(expected, prop.getDefaultValue());
+        
+        DynamicStringListProperty prop2 = new DynamicStringListProperty("test", "1,2,3");
+        assertEquals(expected, prop2.getDefaultValue());
+        
+        DynamicStringListProperty prop3 = new DynamicStringListProperty("test", "1;;2;;3", ";;");
+        assertEquals(expected, prop3.getDefaultValue());
     }
 }

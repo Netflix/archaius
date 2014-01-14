@@ -151,6 +151,11 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     @Override
     public abstract V getValue();
     
+    @Override
+    public V getDefaultValue() {
+        return defaultValue;
+    }
+    
     public DynamicProperty getDynamicProperty() {
         return prop;
     }

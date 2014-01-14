@@ -66,6 +66,7 @@ public class ChainedDynamicProperty {
         private final AtomicReference<ChainLink<T>> pReference;
         private final ChainLink<T> next; 
         private final List<Runnable> callbacks; 
+        private final T defaultValue;
 
         /**
          * @return Boolean
@@ -79,12 +80,13 @@ public class ChainedDynamicProperty {
         protected abstract Property<T> getReferencedProperty();
 
         /**
-         * No arg constructor - used for end node
+         * Used for end node
          */
-        public ChainLink() {
+        public ChainLink(T defaultValue) {
             next = null; 
             pReference = new AtomicReference<ChainLink<T>>(this);
             callbacks = new ArrayList<Runnable>();
+            this.defaultValue = defaultValue;
         }
 
         /**
@@ -94,6 +96,7 @@ public class ChainedDynamicProperty {
             next = nextProperty; 
             pReference = new AtomicReference<ChainLink<T>>(next);
             callbacks = new ArrayList<Runnable>();
+            this.defaultValue = nextProperty.getDefaultValue();
         }
 
         protected void checkAndFlip() {
@@ -133,6 +136,11 @@ public class ChainedDynamicProperty {
         }
 
         @Override
+        public T getDefaultValue() {
+            return defaultValue;
+        }
+
+        @Override
         public String getName() {
             return getReferencedProperty().getName();
         }
@@ -168,7 +176,7 @@ public class ChainedDynamicProperty {
         private final DynamicStringProperty sProp;
 
         public StringProperty(DynamicStringProperty sProperty) {
-            super();
+            super(sProperty.getDefaultValue());
             sProp = sProperty;
         }
 
@@ -206,7 +214,7 @@ public class ChainedDynamicProperty {
         private final DynamicIntProperty sProp;
 
         public IntProperty(DynamicIntProperty sProperty) {
-            super();
+            super(sProperty.getDefaultValue());
             sProp = sProperty;
         }
 
@@ -244,7 +252,7 @@ public class ChainedDynamicProperty {
         private final DynamicFloatProperty sProp;
 
         public FloatProperty(DynamicFloatProperty sProperty) {
-            super();
+            super(sProperty.getDefaultValue());
             sProp = sProperty;
         }
 
@@ -281,7 +289,7 @@ public class ChainedDynamicProperty {
         private final DynamicBooleanPropertyThatSupportsNull sProp;
 
         public BooleanProperty(DynamicBooleanPropertyThatSupportsNull sProperty) {
-            super();
+            super(sProperty.getDefaultValue());
             sProp = sProperty;
         }
 
