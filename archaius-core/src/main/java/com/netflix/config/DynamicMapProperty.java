@@ -23,24 +23,34 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Maps;
+
 public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListProperty {
     private static final Logger logger = LoggerFactory.getLogger(DynamicMapProperty.class);
+    
+    private Map<TKEY,TVAL> defaultValuesMap;
 
     private volatile Map<TKEY,TVAL> values;
     
     public DynamicMapProperty(String propName, String defaultValue, String mapEntryDelimiterRegex) {
         super(propName, defaultValue, mapEntryDelimiterRegex);
+        defaultValuesMap = parseMapFromStringList(getDefaultValue());
+    }
+    
+    public DynamicMapProperty(String propName, String defaultValue) {
+        super(propName, defaultValue);
+        defaultValuesMap = parseMapFromStringList(getDefaultValue());
     }
 
     public DynamicMapProperty(String propName, Map<TKEY, TVAL> defaultValue, String mapEntryDelimiterRegex) {
         this(propName, (String) null, mapEntryDelimiterRegex);
-        if (values == null && defaultValue != null) {
-            values = Collections.unmodifiableMap(defaultValue);
+        // Make a defensive copy of the default value. Would prefer to use an ImmutableMap, but that
+        // does not allow for null values in the Map.
+        defaultValuesMap = (defaultValue == null ? null : Collections.unmodifiableMap(Maps.newHashMap(defaultValue)));
+        
+        if (values == null) {
+            values = defaultValuesMap;
         }
-    }
-
-    public DynamicMapProperty(String propName, String defaultValue) {
-        super(propName, defaultValue);
     }
 
     public DynamicMapProperty(String propName, Map<TKEY, TVAL> defaultValue) {
@@ -50,13 +60,21 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
     public Map<TKEY,TVAL> getMap() {
         return values;
     }
+    
+    public Map<TKEY,TVAL> getDefaultValueMap() {
+        return defaultValuesMap;
+    }
 
     protected void load() {
         super.load();
-        final List<String> strings = super.get();
-        if (strings == null) {
-            return;
+        values = parseMapFromStringList(super.get());
+    }
+    
+    protected Map<TKEY,TVAL> parseMapFromStringList(List<String> strings) {
+        if (strings == null || strings.isEmpty()) {
+            return Collections.emptyMap();
         }
+        
         Map<TKEY,TVAL> map = new HashMap<TKEY,TVAL>(strings.size());
         for (String s : strings) {
             String kv[] = getKeyValue(s);
@@ -66,7 +84,7 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
                 logger.warn("Ignoring illegal key value pair: " + s);
             }
         }
-        values = Collections.unmodifiableMap(map);
+        return Collections.unmodifiableMap(map);
     }
     
     protected String[] getKeyValue(String keyValue) {

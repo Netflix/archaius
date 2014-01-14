@@ -82,7 +82,11 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     }
 
     private void setup(String propName, Set<T> defaultValue, Splitter splitter) {
-        this.defaultValues = defaultValue;
+        // Make a defensive copy of the default value. Would prefer to use an ImmutableSet, but that
+        // does not allow for null values in the Set.
+        this.defaultValues = (defaultValue == null ? null : 
+            Collections.unmodifiableSet(new HashSet<T>(defaultValue)));
+        
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
@@ -118,6 +122,11 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     @Override
     public Set<T> getValue() {
         return get();
+    }
+    
+    @Override
+    public Set<T> getDefaultValue() {
+        return defaultValues;
     }
 
     private Set<String> split(String value) {                

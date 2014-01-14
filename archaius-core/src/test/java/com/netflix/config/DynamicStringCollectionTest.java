@@ -27,6 +27,11 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 public class DynamicStringCollectionTest {
 
     @Test
@@ -149,5 +154,48 @@ public class DynamicStringCollectionTest {
     	String propName = "testGetName";
     	DynamicStringMapProperty prop = new DynamicStringMapProperty(propName, "key1=1,key2=2,key3=3");
     	assertEquals(propName, prop.getName());
+    }
+    
+    @Test
+    public void testStringListGetDefaultValue() {
+        List<String> expected = Lists.newArrayList("1", "2", "3");
+        DynamicStringListProperty prop = new DynamicStringListProperty("test", expected);
+        assertEquals(expected, prop.getDefaultValue());
+        
+        DynamicStringListProperty prop2 = new DynamicStringListProperty("test", "1,2,3");
+        assertEquals(expected, prop2.getDefaultValue());
+        
+        DynamicStringListProperty prop3 = new DynamicStringListProperty("test", "1;;2;;3", ";;");
+        assertEquals(expected, prop3.getDefaultValue());
+    }
+    
+    @Test
+    public void testStringSetGetDefaultValue() {
+        Set<String> expected = Sets.newHashSet("1", "2", "3");
+        DynamicStringSetProperty prop = new DynamicStringSetProperty("test", expected);
+        assertEquals(expected, prop.getDefaultValue());
+        
+        DynamicStringSetProperty prop2 = new DynamicStringSetProperty("test", "1,2,3");
+        assertEquals(expected, prop2.getDefaultValue());
+        
+        DynamicStringSetProperty prop3 = new DynamicStringSetProperty("test", "1;;2;;3", ";;");
+        assertEquals(expected, prop3.getDefaultValue());
+    }
+    
+    @Test
+    public void testStringMapGetDefaultValue() {
+        Map<String, String> expectedMap = ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3");
+        List<String> expectedList = ImmutableList.of("k1=v1", "k2=v2", "k3=v3");
+
+        DynamicStringMapProperty prop = new DynamicStringMapProperty("test", expectedMap);
+        assertEquals(expectedMap, prop.getDefaultValueMap());
+        
+        DynamicStringMapProperty prop2 = new DynamicStringMapProperty("test", "k1=v1,k2=v2,k3=v3");
+        assertEquals(expectedList, prop2.getDefaultValue());
+        assertEquals(expectedMap, prop2.getDefaultValueMap());
+        
+        DynamicStringMapProperty prop3 = new DynamicStringMapProperty("test", "k1=v1;;k2=v2;;k3=v3", ";;");
+        assertEquals(expectedList, prop3.getDefaultValue());
+        assertEquals(expectedMap, prop3.getDefaultValueMap());
     }
 }

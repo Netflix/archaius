@@ -59,6 +59,11 @@ public abstract class DerivedStringProperty<D> implements Property<D> {
     }
 
     @Override
+    public D getDefaultValue() {
+        return derive(delegate.getDefaultValue());
+    }
+
+    @Override
     public String getName() {
         return delegate.getName();
     }

@@ -15,6 +15,7 @@
  */
 package com.netflix.config;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -47,6 +48,8 @@ public class ChainedDynamicPropertyTest {
 
         ConfigurationManager.getConfigInstance().clearProperty("defaultString");
         assertTrue("default-default".equals(fString.get()));
+        
+        assertEquals("default-default", fString.getDefaultValue());
     }
 
     @Test
@@ -69,6 +72,8 @@ public class ChainedDynamicPropertyTest {
 
         ConfigurationManager.getConfigInstance().clearProperty("defaultInt");
         assertTrue(-1 == fInt.get());
+        
+        assertEquals(Integer.valueOf(-1), fInt.getDefaultValue());
     }
 
     @Test
@@ -96,6 +101,8 @@ public class ChainedDynamicPropertyTest {
 
         ConfigurationManager.getConfigInstance().clearProperty("defaultBoolean");
         assertFalse(fBoolean.get());
+        
+        assertFalse(fBoolean.getDefaultValue());
     }
 
 
@@ -119,6 +126,8 @@ public class ChainedDynamicPropertyTest {
 
         ConfigurationManager.getConfigInstance().clearProperty("defaultFloat");
         assertTrue(-1.0f == fFloat.get());
+        
+        assertEquals(Float.valueOf(-1.0f), fFloat.getDefaultValue());
     }
 
     @Test
@@ -161,6 +170,8 @@ public class ChainedDynamicPropertyTest {
 
         ConfigurationManager.getConfigInstance().setProperty("node2", "v2222");
         assertTrue("v2222".equals(node3.get()));
+        
+        assertEquals("v1", node3.getDefaultValue());
     }
 
     @Test

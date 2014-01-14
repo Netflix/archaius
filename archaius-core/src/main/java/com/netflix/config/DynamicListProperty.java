@@ -90,7 +90,11 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
     }
 
     private void setup(String propName, List<T> defaultValue, Splitter splitter) {
-        this.defaultValues = defaultValue;
+        // Make a defensive copy of the default value. Would prefer to use an ImmutableList, but that
+        // does not allow for null values in the List.
+        this.defaultValues = (defaultValue == null ? null : 
+            Collections.unmodifiableList(new ArrayList<T>(defaultValue)));
+        
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
@@ -126,6 +130,11 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
     @Override
     public List<T> getValue() {
         return get();
+    }
+    
+    @Override
+    public List<T> getDefaultValue() {
+        return defaultValues;
     }
 
     private List<String> split(String value) {        

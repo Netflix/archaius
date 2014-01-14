@@ -31,6 +31,13 @@ public interface Property<T> {
      * @return the latest property value
      */
     T getValue();
+    
+    /**
+     * Get the default property value specified at creation time
+     * 
+     * @return the default property value
+     */
+    T getDefaultValue();
 
     /**
      * Get the name of the property
