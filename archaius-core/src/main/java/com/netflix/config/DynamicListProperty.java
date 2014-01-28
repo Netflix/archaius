@@ -98,12 +98,13 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
-        delegate.addCallback(new Runnable() {
+        Runnable callback = new Runnable() {
             @Override
             public void run() {
                 propertyChangedInternal();
             }
-        });        
+        };
+        delegate.addCallback(callback);
     }
 
     private void propertyChangedInternal() {
@@ -173,8 +174,19 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
      */
     @Override
     public void addCallback(Runnable callback) {
-        if (callback != null) delegate.addCallback(callback);
+        if (callback != null) {
+            delegate.addCallback(callback);
+        }
     }
+
+    /**
+     * Remove all callbacks registered through this instance of property
+     */
+    @Override
+    public void removeAllCallbacks() {
+        delegate.removeAllCallbacks();
+    }
+
 
     /**
      * Construct the generic type from string.
