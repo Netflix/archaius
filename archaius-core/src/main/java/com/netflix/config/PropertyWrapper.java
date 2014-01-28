@@ -157,7 +157,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
      * Remove all callbacks registered through this instance of property
      */
     @Override
-    public void unSubscribe() {
+    public void removeAllCallbacks() {
         for (Runnable callback: callbackList) {
             prop.removeCallback(callback);
         }

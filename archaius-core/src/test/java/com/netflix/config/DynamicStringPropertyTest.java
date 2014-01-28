@@ -35,7 +35,7 @@ public class DynamicStringPropertyTest {
         //trigger callback
         ConfigurationManager.getConfigInstance().setProperty("testProperty", "cde");
         assertEquals(AFTERCALLBACK, callbackFlag);
-        dp.unSubscribe();
+        dp.removeAllCallbacks();
         //trigger callback again
         ConfigurationManager.getConfigInstance().setProperty("testProperty", "def");
         assertEquals(AFTERCALLBACK, callbackFlag);

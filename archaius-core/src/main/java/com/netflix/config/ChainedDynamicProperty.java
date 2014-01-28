@@ -165,6 +165,14 @@ public class ChainedDynamicProperty {
         }
 
         /**
+         * Remove callback from callbacks list
+         */
+        @Override
+        public void removeAllCallbacks() {
+            callbacks.clear();
+        }
+
+        /**
          * @return String 
          */
         @Override
@@ -213,7 +221,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public void unSubscribe() {
+        public void removeAllCallbacks() {
+            super.removeAllCallbacks();
             sProp.prop.removeCallback(callback);
         }
     }
@@ -258,7 +267,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public void unSubscribe() {
+        public void removeAllCallbacks() {
+            super.removeAllCallbacks();
             sProp.prop.removeCallback(callback);
         }
     }
@@ -302,7 +312,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public void unSubscribe() {
+        public void removeAllCallbacks() {
+            super.removeAllCallbacks();
             sProp.prop.removeCallback(callback);
         }
     }
@@ -347,7 +358,8 @@ public class ChainedDynamicProperty {
         }
 
         @Override
-        public void unSubscribe() {
+        public void removeAllCallbacks() {
+            super.removeAllCallbacks();
             sProp.prop.removeCallback(callback);
         }
     }

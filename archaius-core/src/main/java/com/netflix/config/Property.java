@@ -63,6 +63,6 @@ public interface Property<T> {
     /**
      * remove all callbacks registered through the instance of property
      */
-    void unSubscribe();
+    void removeAllCallbacks();
 
 }

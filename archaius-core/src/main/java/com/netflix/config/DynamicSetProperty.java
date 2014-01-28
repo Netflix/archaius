@@ -181,7 +181,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
      * Remove all callbacks registered through this instance of property
      */
     @Override
-    public void unSubscribe() {
+    public void removeAllCallbacks() {
         for (Runnable callback: callbackList) {
             delegate.prop.removeCallback(callback);
         }
