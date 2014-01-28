@@ -16,7 +16,9 @@
 package com.netflix.config;
 
 import java.util.IdentityHashMap;
+import java.util.List;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,8 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     private static final IdentityHashMap<Class<? extends PropertyWrapper>, Object> SUBCLASSES_WITH_NO_CALLBACK
             = new IdentityHashMap<Class<? extends PropertyWrapper>, Object>();
     private static final Logger logger = LoggerFactory.getLogger(PropertyWrapper.class);
-    
+    private final List<Runnable> callbackList = Lists.newArrayList();
+
     static {
         PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);
@@ -72,11 +75,13 @@ public abstract class PropertyWrapper<V> implements Property<V> {
         // immediate subclasses and we can avoid registering the callback, which
         // has the cost of modifying the CopyOnWriteArraySet
         if (!SUBCLASSES_WITH_NO_CALLBACK.containsKey(c)) {
-            this.prop.addCallback(new Runnable() {
+            Runnable callback = new Runnable() {
                 public void run() {
                     propertyChanged();
                 }
-            });
+            };
+            this.prop.addCallback(callback);
+            callbackList.add(callback);
             this.prop.addValidator(new PropertyChangeValidator() {                
                 @Override
                 public void validate(String newValue) {
@@ -142,7 +147,20 @@ public abstract class PropertyWrapper<V> implements Property<V> {
      */
     @Override
     public void addCallback(Runnable callback) {
-        if (callback != null) prop.addCallback(callback);
+        if (callback != null) {
+            prop.addCallback(callback);
+            callbackList.add(callback);
+        }
+    }
+
+    /**
+     * Remove all callbacks registered through this instance of property
+     */
+    @Override
+    public void unSubscribe() {
+        for (Runnable callback: callbackList) {
+            prop.removeCallback(callback);
+        }
     }
 
     /**

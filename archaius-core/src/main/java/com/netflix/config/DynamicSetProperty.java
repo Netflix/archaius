@@ -17,10 +17,12 @@ package com.netflix.config;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
@@ -33,6 +35,8 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     private Splitter splitter;
 
     public static final String DEFAULT_DELIMITER = ",";
+
+    private final List<Runnable> callbackList = Lists.newArrayList();
 
     /**
      * Create the dynamic set property using default delimiter regex ",". The guava Splitter used is created as
@@ -90,12 +94,14 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
-        delegate.addCallback(new Runnable() {
+        Runnable callback = new Runnable() {
             @Override
             public void run() {
                 propertyChangedInternal();
             }
-        });        
+        };
+        delegate.addCallback(callback);
+        callbackList.add(callback);
     }
 
     private void propertyChangedInternal() {
@@ -165,7 +171,20 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
      */
     @Override
     public void addCallback(Runnable callback) {
-        if (callback != null) delegate.addCallback(callback);
+        if (callback != null) {
+            delegate.addCallback(callback);
+            callbackList.add(callback);
+        }
+    }
+
+    /**
+     * Remove all callbacks registered through this instance of property
+     */
+    @Override
+    public void unSubscribe() {
+        for (Runnable callback: callbackList) {
+            delegate.prop.removeCallback(callback);
+        }
     }
 
     /**

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,7 @@ public class ChainedDynamicProperty {
         private final ChainLink<T> next; 
         private final List<Runnable> callbacks; 
         private final T defaultValue;
+
 
         /**
          * @return Boolean
@@ -174,6 +176,7 @@ public class ChainedDynamicProperty {
     public static class StringProperty extends ChainLink<String> {
 
         private final DynamicStringProperty sProp;
+        private Runnable callback;
 
         public StringProperty(DynamicStringProperty sProperty) {
             super(sProperty.getDefaultValue());
@@ -188,13 +191,14 @@ public class ChainedDynamicProperty {
             super(next); // setup next pointer
 
             sProp = DynamicPropertyFactory.getInstance().getStringProperty(name, null);
-            sProp.addCallback(new Runnable() {
+            callback = new Runnable() {
                 @Override
                 public void run() {
                     logger.info("Property changed: '" + getName() + " = " + getValue() + "'");
                     checkAndFlip();
                 }
-            });
+            };
+            sProp.addCallback(callback);
             checkAndFlip();
         }
 
@@ -207,11 +211,17 @@ public class ChainedDynamicProperty {
         protected Property<String> getReferencedProperty() {
             return sProp;
         }
+
+        @Override
+        public void unSubscribe() {
+            sProp.prop.removeCallback(callback);
+        }
     }
 
     public static class IntProperty extends ChainLink<Integer> {
 
         private final DynamicIntProperty sProp;
+        private Runnable callback;
 
         public IntProperty(DynamicIntProperty sProperty) {
             super(sProperty.getDefaultValue());
@@ -226,13 +236,14 @@ public class ChainedDynamicProperty {
             super(next); // setup next pointer
 
             sProp = DynamicPropertyFactory.getInstance().getIntProperty(name, Integer.MIN_VALUE);
-            sProp.addCallback(new Runnable() {
+            callback = new Runnable() {
                 @Override
                 public void run() {
                     logger.info("Property changed: '" + getName() + " = " + getValue() + "'");
                     checkAndFlip();
                 }
-            });
+            };
+            sProp.addCallback(callback);
             checkAndFlip();
         }
 
@@ -245,11 +256,17 @@ public class ChainedDynamicProperty {
         protected Property<Integer> getReferencedProperty() {
             return sProp;
         }
+
+        @Override
+        public void unSubscribe() {
+            sProp.prop.removeCallback(callback);
+        }
     }
 
     public static class FloatProperty extends ChainLink<Float> {
 
         private final DynamicFloatProperty sProp;
+        private Runnable callback;
 
         public FloatProperty(DynamicFloatProperty sProperty) {
             super(sProperty.getDefaultValue());
@@ -263,13 +280,14 @@ public class ChainedDynamicProperty {
         public FloatProperty(String name, FloatProperty next) {
             super(next); // setup next pointer
             sProp = DynamicPropertyFactory.getInstance().getFloatProperty(name, Float.MIN_VALUE);
-            sProp.addCallback(new Runnable() {
+            callback = new Runnable() {
                 @Override
                 public void run() {
                     logger.info("Property changed: '" + getName() + " = " + getValue() + "'");
                     checkAndFlip();
                 }
-            });
+            };
+            sProp.addCallback(callback);
             checkAndFlip();
         }
 
@@ -282,11 +300,17 @@ public class ChainedDynamicProperty {
         protected Property<Float> getReferencedProperty() {
             return sProp;
         }
+
+        @Override
+        public void unSubscribe() {
+            sProp.prop.removeCallback(callback);
+        }
     }
 
     public static class BooleanProperty extends ChainLink<Boolean> {
 
         private final DynamicBooleanPropertyThatSupportsNull sProp;
+        private Runnable callback;
 
         public BooleanProperty(DynamicBooleanPropertyThatSupportsNull sProperty) {
             super(sProperty.getDefaultValue());
@@ -301,14 +325,14 @@ public class ChainedDynamicProperty {
             super(next); // setup next pointer
 
             sProp = new DynamicBooleanPropertyThatSupportsNull(name, null);
-            sProp.addCallback(new Runnable() {
+            callback = new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("Property changed: '" + getName() + " = " + getValue() + "'");
                     logger.info("Property changed: '" + getName() + " = " + getValue() + "'");
                     checkAndFlip();
                 }
-            });
+            };
+            sProp.addCallback(callback);
             checkAndFlip();
         }
 
@@ -320,6 +344,11 @@ public class ChainedDynamicProperty {
         @Override
         protected Property<Boolean> getReferencedProperty() {
             return sProp;
+        }
+
+        @Override
+        public void unSubscribe() {
+            sProp.prop.removeCallback(callback);
         }
     }
 

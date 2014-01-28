@@ -60,4 +60,9 @@ public interface Property<T> {
      */
     void addCallback(Runnable callback);
 
+    /**
+     * remove all callbacks registered through the instance of property
+     */
+    void unSubscribe();
+
 }

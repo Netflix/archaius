@@ -15,9 +15,11 @@
  */
 package com.netflix.config;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -31,6 +33,8 @@ public abstract class DerivedStringProperty<D> implements Property<D> {
 
     private final DynamicStringProperty delegate;
 
+    private final List<Runnable> callbackList = Lists.newArrayList();
+
     /**
      * Holds derived value, which may be null.
      */
@@ -39,11 +43,13 @@ public abstract class DerivedStringProperty<D> implements Property<D> {
     public DerivedStringProperty(String name, String defaultValue) {
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(name, defaultValue);
         deriveAndSet();
-        delegate.addCallback(new Runnable() {
+        Runnable callback = new Runnable() {
             public void run() {
                 propertyChangedInternal();
             }
-        });
+        };
+        delegate.addCallback(callback);
+        callbackList.add(callback);
     }
 
     /**
@@ -76,7 +82,18 @@ public abstract class DerivedStringProperty<D> implements Property<D> {
     @Override
     public void addCallback(Runnable callback) {
         delegate.addCallback(callback);
-    }  
+        callbackList.add(callback);
+    }
+
+    /**
+     * Remove all callbacks registered through this instance of property
+     */
+    @Override
+    public void unSubscribe() {
+        for (Runnable callback: callbackList) {
+            delegate.prop.removeCallback(callback);
+        }
+    }
 
     /**
      * Invoked when property is updated with a new value.  Should return the new derived value, which may be null.

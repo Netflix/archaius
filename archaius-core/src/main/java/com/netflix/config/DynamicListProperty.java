@@ -42,6 +42,8 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
 
     public static final String DEFAULT_DELIMITER = ",";
 
+    private final List<Runnable> callbackList = Lists.newArrayList();
+
     /**
      * Create the dynamic list property using default delimiter regex ",". The guava Splitter used is created as
      * <code>Splitter.onPattern(delimiterRegex).omitEmptyStrings().trimResults()</code>. The default
@@ -98,12 +100,14 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
         load();
-        delegate.addCallback(new Runnable() {
+        Runnable callback = new Runnable() {
             @Override
             public void run() {
                 propertyChangedInternal();
             }
-        });        
+        };
+        delegate.addCallback(callback);
+        callbackList.add(callback);
     }
 
     private void propertyChangedInternal() {
@@ -173,8 +177,22 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
      */
     @Override
     public void addCallback(Runnable callback) {
-        if (callback != null) delegate.addCallback(callback);
+        if (callback != null) {
+            delegate.addCallback(callback);
+            callbackList.add(callback);
+        }
     }
+
+    /**
+     * Remove all callbacks registered through this instance of property
+     */
+    @Override
+    public void unSubscribe() {
+        for (Runnable callback: callbackList) {
+            delegate.prop.removeCallback(callback);
+        }
+    }
+
 
     /**
      * Construct the generic type from string.
