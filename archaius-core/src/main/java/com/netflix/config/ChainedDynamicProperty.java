@@ -365,7 +365,7 @@ public class ChainedDynamicProperty {
     }
 
     public static class DynamicBooleanPropertyThatSupportsNull extends PropertyWrapper<Boolean> {
-        DynamicBooleanPropertyThatSupportsNull(String propName, Boolean defaultValue) {
+        public DynamicBooleanPropertyThatSupportsNull(String propName, Boolean defaultValue) {
             super(propName, defaultValue);
         }
 
