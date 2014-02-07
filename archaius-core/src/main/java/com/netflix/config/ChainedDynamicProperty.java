@@ -273,6 +273,52 @@ public class ChainedDynamicProperty {
         }
     }
 
+    public static class LongProperty extends ChainLink<Long> {
+
+        private final DynamicLongProperty sProp;
+        private Runnable callback;
+
+        public LongProperty(DynamicLongProperty sProperty) {
+            super(sProperty.getDefaultValue());
+            sProp = sProperty;
+        }
+
+        public LongProperty(String name, DynamicLongProperty sProperty) {
+            this(name, new LongProperty(sProperty));
+        }
+
+        public LongProperty(String name, LongProperty next) {
+            super(next); // setup next pointer
+
+            sProp = DynamicPropertyFactory.getInstance().getLongProperty(name, Long.MIN_VALUE);
+            callback = new Runnable() {
+                @Override
+                public void run() {
+                    logger.info("Property changed: '" + getName() + " = " + getValue() + "'");
+                    checkAndFlip();
+                }
+            };
+            sProp.addCallback(callback);
+            checkAndFlip();
+        }
+
+        @Override
+        public boolean isValueAcceptable() {
+            return (sProp.get() != Long.MIN_VALUE);
+        }
+
+        @Override
+        protected Property<Long> getReferencedProperty() {
+            return sProp;
+        }
+
+        @Override
+        public void removeAllCallbacks() {
+            super.removeAllCallbacks();
+            sProp.prop.removeCallback(callback);
+        }
+    }
+
     public static class FloatProperty extends ChainLink<Float> {
 
         private final DynamicFloatProperty sProp;
