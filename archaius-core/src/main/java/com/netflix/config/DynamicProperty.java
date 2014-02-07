@@ -15,10 +15,12 @@
  */
 package com.netflix.config;
 
+import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,7 @@ public class DynamicProperty {
     private String propName;
     private String stringValue = null;
     private long changedTime;
-    private CopyOnWriteArraySet<Runnable> callbacks = new CopyOnWriteArraySet<Runnable>();
+    private CopyOnWriteArraySet<WeakReference<Runnable>> callbacks = new CopyOnWriteArraySet<WeakReference<Runnable>>();
     private CopyOnWriteArraySet<PropertyChangeValidator> validators = new CopyOnWriteArraySet<PropertyChangeValidator>();
 
 
@@ -495,7 +497,7 @@ public class DynamicProperty {
         if (r == null) {
             throw new NullPointerException("Cannot add null callback to DynamicProperty");
         }
-        callbacks.add(r);
+        callbacks.add(new WeakReference<Runnable>(r));
     }
 
     public void addValidator(PropertyChangeValidator validator) {
@@ -512,17 +514,31 @@ public class DynamicProperty {
      * @return true iff the callback was previously registered
      */
     public boolean removeCallback(Runnable r) {
-        return callbacks.remove(r);
+        for (WeakReference<Runnable> wfCallback: callbacks) {
+            if (r == wfCallback.get()) {
+                return callbacks.remove(wfCallback);
+            }
+        }
+        return false;
     }
     
     Set<Runnable> getCallbacks() {
-        return callbacks;         
+        Set<Runnable> callbackSet = Sets.newHashSet();
+        for (WeakReference<Runnable> wfCallback : callbacks) {
+            if (wfCallback.get() != null) {
+                callbackSet.add(wfCallback.get());
+            }
+        }
+        return callbackSet;
     }
 
     private void notifyCallbacks() {
-        for (Runnable r : callbacks) {
+        for (WeakReference<Runnable> r : callbacks) {
             try {
-                r.run();
+                Runnable callback = r.get();
+                if (callback != null) {
+                    callback.run();
+                }
             } catch (Exception e) {
                 logger.error("Error in DynamicProperty callback", e);
             }
