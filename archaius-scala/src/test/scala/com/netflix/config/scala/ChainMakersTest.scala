@@ -43,7 +43,7 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
       val topName = s"${baseName}.bar"
       val default = -1
       Seq(baseName, topName) foreach clearProperty
-      val chain = deriveChain( Seq(topName), DynamicPropertyFactory.getInstance.getIntProperty(baseName, default), wrapRoot, wrapLink )
+      val chain = deriveChain( Seq(topName), intProperty(baseName, default), wrapRoot, wrapLink )
       chain should not be null
       chain.getName should be(topName)
       chain.getDefaultValue should be(default)
@@ -53,7 +53,7 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
       val topName = s"${baseName}.bar"
       val default = -1
       Seq(baseName, topName) foreach clearProperty
-      val chain = deriveChain( Seq(topName), DynamicPropertyFactory.getInstance.getIntProperty(baseName, default), wrapRoot, wrapLink )
+      val chain = deriveChain( Seq(topName), intProperty(baseName, default), wrapRoot, wrapLink )
       chain should not be null
       chain.getName should be(topName)
       chain.get() should be(default)
@@ -64,7 +64,7 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
       val baseValue = 1
       val default = -1
       Seq(baseName, topName) foreach clearProperty
-      val chain = deriveChain( Seq(topName), DynamicPropertyFactory.getInstance.getIntProperty(baseName, default), wrapRoot, wrapLink )
+      val chain = deriveChain( Seq(topName), intProperty(baseName, default), wrapRoot, wrapLink )
       chain should not be null
       chain.get() should be(default)
       setProperty(baseName, baseValue)
@@ -76,7 +76,7 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
       val topValue = 2
       val default = -1
       Seq(baseName, topName) foreach clearProperty
-      val chain = deriveChain( Seq(topName), DynamicPropertyFactory.getInstance.getIntProperty(baseName, default), wrapRoot, wrapLink )
+      val chain = deriveChain( Seq(topName), intProperty(baseName, default), wrapRoot, wrapLink )
       chain should not be null
       chain.get() should be(default)
       setProperty(topName, topValue)
@@ -89,7 +89,7 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
       val topValue = 2
       val default = -1
       Seq(baseName, topName) foreach clearProperty
-      val chain = deriveChain( Seq(topName), DynamicPropertyFactory.getInstance.getIntProperty(baseName, default), wrapRoot, wrapLink )
+      val chain = deriveChain( Seq(topName), intProperty(baseName, default), wrapRoot, wrapLink )
       chain should not be null
       chain.get() should be(default)
       setProperty(baseName, baseValue)
@@ -99,12 +99,12 @@ class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
     }
     "explode given null property names" in {
       intercept[NullPointerException] {
-        deriveChain( null, DynamicPropertyFactory.getInstance.getIntProperty("foo", -1), wrapRoot, wrapLink )
+        deriveChain( null, intProperty("foo", -1), wrapRoot, wrapLink )
       }
     }
     "explode given no property names" in {
       intercept[NoSuchElementException] {
-        deriveChain( Seq.empty, DynamicPropertyFactory.getInstance.getIntProperty("foo", -1), wrapRoot, wrapLink )
+        deriveChain( Seq.empty, intProperty("foo", -1), wrapRoot, wrapLink )
       }
     }
   }

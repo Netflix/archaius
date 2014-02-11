@@ -15,7 +15,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{ConfigurationManager, SimpleDeploymentContext}
+import com.netflix.config.{DynamicPropertyFactory, ConfigurationManager, SimpleDeploymentContext}
 import org.scalatest.{WordSpec, BeforeAndAfterAll}
 import scala.collection.JavaConverters._
 
@@ -46,5 +46,9 @@ trait PropertiesTestHelp extends WordSpec with BeforeAndAfterAll {
       s"${if(key.equals(markName)) "*" else " "}${key}\t = ${ConfigurationManager.getConfigInstance.getProperty(key)}"
     )
     s"Current properties:\n\t${kvs.mkString("\n\t")}\nFailure: "
+  }
+
+  def intProperty(name: String, default: Int) = {
+    DynamicPropertyFactory.getInstance.getIntProperty(name, default)
   }
 }
