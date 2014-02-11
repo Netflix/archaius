@@ -15,7 +15,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{ChainedDynamicProperty, DynamicIntProperty => JavaDynamicIntProperty, DynamicPropertyFactory}
+import com.netflix.config.{ChainedDynamicProperty, DynamicIntProperty => JavaDynamicIntProperty}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
