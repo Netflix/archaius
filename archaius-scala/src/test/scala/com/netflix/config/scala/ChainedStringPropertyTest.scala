@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedStringPropertyTest extends ChainedPropertiesTest with ShouldMatchers {
+class ChainedStringPropertyTest extends PropertiesTestHelp with ShouldMatchers {
 
   "ChainedStringProperty" should {
     "understand a name with one part" in {

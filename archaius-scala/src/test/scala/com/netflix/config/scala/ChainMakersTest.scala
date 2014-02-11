@@ -17,12 +17,11 @@ package com.netflix.config.scala
 
 import com.netflix.config.{ChainedDynamicProperty, DynamicIntProperty => JavaDynamicIntProperty, DynamicPropertyFactory}
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainMakersTest extends ChainedPropertiesTest with ShouldMatchers {
+class ChainMakersTest extends PropertiesTestHelp with ShouldMatchers {
 
   import ChainMakers._
 

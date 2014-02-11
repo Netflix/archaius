@@ -19,7 +19,7 @@ import com.netflix.config.{ConfigurationManager, SimpleDeploymentContext}
 import org.scalatest.{WordSpec, BeforeAndAfterAll}
 import scala.collection.JavaConverters._
 
-trait ChainedPropertiesTest extends WordSpec with BeforeAndAfterAll {
+trait PropertiesTestHelp extends WordSpec with BeforeAndAfterAll {
 
   val context = new SimpleDeploymentContext()
   context.setApplicationId(getClass.getSimpleName)
