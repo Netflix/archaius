@@ -45,7 +45,7 @@ extends ChainedProperty[Float, java.lang.Float]
 
   /**
    * Convert the java.lang.Boolean which DynamicFloatProperty returns to scala.Float.
-   * the caller.  The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
+   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
    * @return the value of the chain of properties, implicitly converted.
    */
   protected def convert(jv:java.lang.Float): Float = jv

@@ -44,7 +44,7 @@ extends ChainedProperty[Boolean, java.lang.Boolean]
 
   /**
    * Convert the java.lang.Boolean which DynamicBooleanProperty returns to scala.Boolean.
-   * the caller.  The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
+   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
    * @return the value of the chain of properties, implicitly converted.
    */
   protected def convert(jv:java.lang.Boolean): Boolean = jv

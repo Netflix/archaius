@@ -45,7 +45,7 @@ extends ChainedProperty[Int, java.lang.Integer]
 
   /**
    * Convert the java.lang.Integer which DynamicIntegerProperty returns to scala.Int.
-   * the caller.  The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
+   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
    * @return the value of the chain of properties, implicitly converted.
    */
   protected def convert(jv:java.lang.Integer): Int = jv
