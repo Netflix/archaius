@@ -20,95 +20,15 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers {
+class ChainedFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Float, java.lang.Float] {
+
+  val defaultValue = -1.1f
+
+  def fixture(pre: Option[String], mid: String, post: Option[String]) = new ChainedFloatProperty(pre, mid, post, defaultValue)
 
   "ChainedFloatProperty" should {
-    "understand a name with one part" in {
-      val defaultValue = -1.1f
-      clearProperty("test.part")
-      clearProperty("test.one.part")
-      val chainOfTwo = new ChainedFloatProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("")) { chainOfTwo.get should equal( defaultValue ) }
-    }
-    "retrieve configured base value for a name with one part" in {
-      val defaultValue = -1.1f
-      val configuredValue = 1.1f
-      setProperty("test.part", configuredValue)
-      val chainOfTwo = new ChainedFloatProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "retrieve configured specific value for a name with one part" in {
-      val defaultValue = -1.1f
-      val configuredValue = 1.1f
-      clearProperty("test.part")
-      setProperty("test.one.part", configuredValue)
-      val chainOfTwo = new ChainedFloatProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.one.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "understand a name with two parts" in {
-      val defaultValue = -1.1f
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
-    }
-    "retrieve configured most-specific value for a name with two parts" in {
-      val defaultValue = -1.1f
-      val configuredValue = 1.1f
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      setProperty("test.one.two.parts", configuredValue)
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
-    "retrieve configured next-general value for a name with two parts" in {
-      val defaultValue = -1.1f
-      val configuredValue = 1.1f
-      clearProperty("test.parts")
-      setProperty("test.one.parts", configuredValue)
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
-    "retrieve configured most-specific value from a multi-part chain" in {
-      val defaultValue = -1.1f
-      val bottomValue = 0.0f
-      val middleValue = 1.1f
-      val topValue = 2.2f
-      setProperty("test.parts", bottomValue)
-      setProperty("test.one.parts", middleValue)
-      setProperty("test.one.two.parts", topValue)
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( topValue ) }
-    }
-    "retrieve configured next-general value from a multi-part chain" in {
-      val defaultValue = -1.1f
-      val middleValue = 1.1f
-      val bottomValue = 0.0f
-      setProperty("test.parts", bottomValue)
-      setProperty("test.one.parts", middleValue)
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.parts")) { chainOfThree.get should equal( middleValue ) }
-    }
-    "retrieve configured most-general value from a multi-part chain" in {
-      val defaultValue = -1.1f
-      val bottomValue = 0.0f
-      setProperty("test.parts", bottomValue)
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.parts")) { chainOfThree.get should equal( bottomValue ) }
-    }
-    "retrieve default value from a multi-part chain" in {
-      val defaultValue = -1.1f
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedFloatProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
-    }
+    behave like chainedPropertyWithOnePart(defaultValue, 1.1f)
+    behave like chainedPropertyWithTwoParts(defaultValue, 1.1f)
+    behave like chainedPropertyWithManyParts(defaultValue, 0.0f, 1.1f, 2.2f)
   }
-
 }

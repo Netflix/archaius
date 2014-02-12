@@ -20,95 +20,15 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedLongPropertyTest extends PropertiesTestHelp with ShouldMatchers {
+class ChainedLongPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Long, java.lang.Long] {
+
+  val defaultValue = -1L
+
+  def fixture(pre: Option[String], mid: String, post: Option[String]) = new ChainedLongProperty(pre, mid, post, defaultValue)
 
   "ChainedLongProperty" should {
-    "understand a name with one part" in {
-      val defaultValue = -1L
-      clearProperty("test.part")
-      clearProperty("test.one.part")
-      val chainOfTwo = new ChainedLongProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("")) { chainOfTwo.get should equal( defaultValue ) }
-    }
-    "retrieve configured base value for a name with one part" in {
-      val defaultValue = -1L
-      val configuredValue = 1L
-      setProperty("test.part", configuredValue)
-      val chainOfTwo = new ChainedLongProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "retrieve configured specific value for a name with one part" in {
-      val defaultValue = -1L
-      val configuredValue = 1L
-      clearProperty("test.part")
-      setProperty("test.one.part", configuredValue)
-      val chainOfTwo = new ChainedLongProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.one.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "understand a name with two parts" in {
-      val defaultValue = -1L
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
-    }
-    "retrieve configured most-specific value for a name with two parts" in {
-      val defaultValue = -1L
-      val configuredValue = 1L
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      setProperty("test.one.two.parts", configuredValue)
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
-    "retrieve configured next-general value for a name with two parts" in {
-      val defaultValue = -1L
-      val configuredValue = 1L
-      clearProperty("test.parts")
-      setProperty("test.one.parts", configuredValue)
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
-    "retrieve configured most-specific value from a multi-part chain" in {
-      val defaultValue = -1L
-      val bottomValue = 0L
-      val middleValue = 1L
-      val topValue = 2L
-      setProperty("test.parts", bottomValue)
-      setProperty("test.one.parts", middleValue)
-      setProperty("test.one.two.parts", topValue)
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( topValue ) }
-    }
-    "retrieve configured next-general value from a multi-part chain" in {
-      val defaultValue = -1L
-      val middleValue = 1L
-      val bottomValue = 0L
-      setProperty("test.parts", bottomValue)
-      setProperty("test.one.parts", middleValue)
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.parts")) { chainOfThree.get should equal( middleValue ) }
-    }
-    "retrieve configured most-general value from a multi-part chain" in {
-      val defaultValue = -1L
-      val bottomValue = 0L
-      setProperty("test.parts", bottomValue)
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.parts")) { chainOfThree.get should equal( bottomValue ) }
-    }
-    "retrieve default value from a multi-part chain" in {
-      val defaultValue = -1L
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedLongProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
-    }
+    behave like chainedPropertyWithOnePart(defaultValue, 1L)
+    behave like chainedPropertyWithTwoParts(defaultValue, 1L)
+    behave like chainedPropertyWithManyParts(defaultValue, 0L, 1L, 2L)
   }
-
 }

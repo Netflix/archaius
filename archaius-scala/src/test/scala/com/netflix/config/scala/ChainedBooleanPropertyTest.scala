@@ -20,57 +20,17 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers {
+class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Boolean, java.lang.Boolean] {
+
+  val defaultValue = false
+
+  def fixture(pre: Option[String], mid: String, post: Option[String]) = new ChainedBooleanProperty(pre, mid, post, defaultValue)
 
   "ChainedBooleanProperty" should {
-    "understand a name with one part" in {
-      val defaultValue = false
-      clearProperty("test.part")
-      clearProperty("test.one.part")
-      val chainOfTwo = new ChainedBooleanProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("")) { chainOfTwo.get should equal( defaultValue ) }
-    }
-    "retrieve configured base value for a name with one part" in {
-      val defaultValue = false
-      val configuredValue = true
-      setProperty("test.part", configuredValue)
-      val chainOfTwo = new ChainedBooleanProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "retrieve configured specific value for a name with one part" in {
-      val defaultValue = false
-      val configuredValue = true
-      clearProperty("test.part")
-      setProperty("test.one.part", configuredValue)
-      val chainOfTwo = new ChainedBooleanProperty(Some("test"), "one", Some("part"), defaultValue)
-      withClue(markProperty("test.one.part")) { chainOfTwo.get should equal( configuredValue ) }
-    }
-    "understand a name with two parts" in {
-      val defaultValue = false
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedBooleanProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
-    }
-    "retrieve configured most-specific value for a name with two parts" in {
-      val defaultValue = false
-      val configuredValue = true
-      clearProperty("test.parts")
-      clearProperty("test.one.parts")
-      setProperty("test.one.two.parts", configuredValue)
-      val chainOfThree = new ChainedBooleanProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
-    "retrieve configured next-general value for a name with two parts" in {
-      val defaultValue = false
-      val configuredValue = true
-      clearProperty("test.parts")
-      setProperty("test.one.parts", configuredValue)
-      clearProperty("test.one.two.parts")
-      val chainOfThree = new ChainedBooleanProperty(Some("test"), "one.two", Some("parts"), defaultValue)
-      withClue(markProperty("test.one.parts")) { chainOfThree.get should equal( configuredValue ) }
-    }
+    behave like chainedPropertyWithOnePart(defaultValue, true)
+    behave like chainedPropertyWithTwoParts(defaultValue, true)
+
+    // cannot derive from ChainedPropertiesTestHelp due to the values in this test vs the next test
     "retrieve configured most-specific value from a multi-part chain" in {
       val defaultValue = false
       val bottomValue = false
@@ -82,6 +42,7 @@ class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers 
       val chainOfThree = new ChainedBooleanProperty(Some("test"), "one.two", Some("parts"), defaultValue)
       withClue(markProperty("test.one.two.parts")) { chainOfThree.get should equal( topValue ) }
     }
+    // cannot derive from ChainedPropertiesTestHelp due to the values in this test vs the previous test
     "retrieve configured next-general value from a multi-part chain" in {
       val defaultValue = false
       val middleValue = true
@@ -101,6 +62,7 @@ class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers 
       val chainOfThree = new ChainedBooleanProperty(Some("test"), "one.two", Some("parts"), defaultValue)
       withClue(markProperty("test.parts")) { chainOfThree.get should equal( bottomValue ) }
     }
+    // cannot derive from ChainedPropertiesTestHelp due to the values in this test vs the other tests
     "retrieve default value from a multi-part chain" in {
       val defaultValue = true
       clearProperty("test.parts")
@@ -110,5 +72,4 @@ class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers 
       withClue(markProperty("")) { chainOfThree.get should equal( defaultValue ) }
     }
   }
-
 }
