@@ -17,9 +17,9 @@ package com.netflix.config.scala
 
 import org.scalatest.matchers.ShouldMatchers
 
-trait ChainedPropertyBehaviors[TYPE, JAVATYPE] { this: PropertiesTestHelp with ShouldMatchers =>
+trait ChainedPropertyBehaviors[TYPE] { this: PropertiesTestHelp with ShouldMatchers =>
 
-  def fixture( pre: Option[String], mid: String, post: Option[String]):ChainedProperty[TYPE, JAVATYPE]
+  def fixture( pre: Option[String], mid: String, post: Option[String]):ChainedProperty[TYPE]
 
   def chainedPropertyWithOnePart(defaultValue: TYPE, configuredValue: TYPE) {
     "understand a name with one part" in {

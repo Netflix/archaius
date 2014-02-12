@@ -15,6 +15,7 @@
  */
 package com.netflix.config.scala
 
+import com.netflix.config.scala.ChainMakers.ChainBox
 import com.netflix.config.{ChainedDynamicProperty, DynamicPropertyFactory}
 import com.netflix.config.{DynamicLongProperty => JavaDynamicLongProperty}
 
@@ -22,7 +23,7 @@ class ChainedLongProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Long,
   callback: Option[Runnable] = None)
-extends ChainedProperty[Long, java.lang.Long]
+extends ChainedProperty[Long]
 {
 
   def this(prefix: Option[String], name: String, suffix: Option[String], default: Long, callback: Option[Runnable] = None) = {
@@ -31,22 +32,25 @@ extends ChainedProperty[Long, java.lang.Long]
 
   callback.foreach(addCallback)
 
-  override protected lazy val typeName = classOf[Long].getName
+  override protected val chainBox = new ChainBox[Long, java.lang.Long] {
 
-  private def wrapRoot(p: String, r: JavaDynamicLongProperty) = new ChainedDynamicProperty.LongProperty(p, r)
-  private def wrapLink(p: String, n: ChainedDynamicProperty.LongProperty) = new ChainedDynamicProperty.LongProperty(p, n)
+    override protected lazy val typeName = classOf[Long].getName
 
-  override protected val chain = ChainMakers.deriveChain(
-    propertyNames.tail,
-    DynamicPropertyFactory.getInstance.getLongProperty(propertyNames.head, defaultValue),
-    wrapRoot,
-    wrapLink
-  )
+    override protected val chain = ChainMakers.deriveChain(
+      propertyNames.tail,
+      DynamicPropertyFactory.getInstance.getLongProperty(propertyNames.head, ChainedLongProperty.this.defaultValue),
+      wrapRoot,
+      wrapLink
+    )
 
-  /**
-   * Convert the java.lang.Long which DynamicLongProperty returns to scala.Long.
-   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
-   * @return the value of the chain of properties, implicitly converted.
-   */
-  protected def convert(jv:java.lang.Long): Long = jv
+    private def wrapRoot(p: String, r: JavaDynamicLongProperty) = new ChainedDynamicProperty.LongProperty(p, r)
+    private def wrapLink(p: String, n: ChainedDynamicProperty.LongProperty) = new ChainedDynamicProperty.LongProperty(p, n)
+
+    /**
+     * Convert the java.lang.Long which DynamicLongProperty returns to scala.Long.
+     * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainMakers.ChainBox.nonNull]].
+     * @return the value of the chain of properties, implicitly converted.
+     */
+    protected def convert(jv:java.lang.Long): Long = jv
+  }
 }

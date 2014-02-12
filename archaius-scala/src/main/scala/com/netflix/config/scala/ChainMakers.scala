@@ -15,10 +15,75 @@
  */
 package com.netflix.config.scala
 
+import com.netflix.config.ChainedDynamicProperty.ChainLink
+
 /**
  * Utilities for assembling the chains of dynamic properties underlying a [[com.netflix.config.scala.ChainedProperty]].
  */
 protected[scala] object ChainMakers {
+
+  trait ChainBox[TYPE, JAVATYPE] {
+
+    protected def chain: ChainLink[JAVATYPE]
+
+    protected def typeName: String
+
+    /*
+     * Provides an anchor for scala's implicit conversions to happen.
+     */
+    protected def convert(jv: JAVATYPE): TYPE
+
+    /**
+     * Validate the value's nullability for this property's Scala type.
+     * @param value the value to return, as the Java type.
+     * @return the value if it meets nullability requirements for the Scala type.
+     */
+    protected def nonNull(value: JAVATYPE): JAVATYPE = {
+      if ( value == null ) {
+        throw new IllegalStateException(s"${propertyName} should somewhere have a hard value instead of null, cannot be converted to scala type ${typeName}")
+      }
+      value
+    }
+
+    /**
+     * Add a callback to be triggered when the value of the property is
+     * changed.
+     * @param callback a [[java.lang.Runnable]] to call on changes.
+     */
+    def addCallback(callback: Runnable) {
+      chain.addCallback(callback)
+    }
+
+    /**
+     * Get the name of the property.
+     * @return the property name
+     */
+    def propertyName: String = chain.getName
+
+    /**
+     * Get the default value of the chain of properties.  Where the Scala type allows it, it may be null,
+     * ie. scala.String is [[scala.AnyRef]] may be null but numbers are [[scala.AnyVal]] and so may not
+     * be null.
+     * @return the default value from the chain of properties.
+     */
+    def defaultValue: TYPE = convert(chain.getDefaultValue)
+
+    /**
+     * Produce the most-appropriate current value of the chain of properties, as an [[scala.Option]].  Null
+     * values results are represented as [[scala.None]], regardless of the possibility of the Scala type to
+     * be null.
+     * @return the value derived from the chain of properties.
+     */
+    def apply: Option[TYPE] = Option(convert(chain.get()))
+
+    /**
+     * Produce the most-appropriate current value of the chain of properties.  Where the Scala type allows
+     * it, it may be null, ie. scala.String is [[scala.AnyRef]] may be null but numbers are [[scala.AnyVal]]
+     * and so may not be null.
+     * @return the value derived from the chain of properties.
+     */
+    def get: TYPE = convert(nonNull(chain.get()))
+  }
 
   /**
    * Assemble a set of property names from

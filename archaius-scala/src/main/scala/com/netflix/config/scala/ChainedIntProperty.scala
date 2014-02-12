@@ -15,6 +15,7 @@
  */
 package com.netflix.config.scala
 
+import com.netflix.config.scala.ChainMakers.ChainBox
 import com.netflix.config.{ChainedDynamicProperty, DynamicPropertyFactory}
 import com.netflix.config.{DynamicIntProperty => JavaDynamicIntProperty}
 
@@ -22,7 +23,7 @@ class ChainedIntProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Int,
   callback: Option[Runnable] = None)
-extends ChainedProperty[Int, java.lang.Integer]
+extends ChainedProperty[Int]
 {
 
   def this(prefix: Option[String], name: String, suffix: Option[String], default: Int, callback: Option[Runnable] = None) = {
@@ -31,22 +32,25 @@ extends ChainedProperty[Int, java.lang.Integer]
 
   callback.foreach(addCallback)
 
-  override protected lazy val typeName = classOf[Int].getName
+  override protected val chainBox = new ChainBox[Int, java.lang.Integer] {
 
-  private def wrapRoot(p: String, r: JavaDynamicIntProperty) = new ChainedDynamicProperty.IntProperty(p, r)
-  private def wrapLink(p: String, n: ChainedDynamicProperty.IntProperty) = new ChainedDynamicProperty.IntProperty(p, n)
+    override protected lazy val typeName = classOf[Int].getName
 
-  override protected val chain = ChainMakers.deriveChain(
-    propertyNames.tail,
-    DynamicPropertyFactory.getInstance.getIntProperty(propertyNames.head, defaultValue),
-    wrapRoot,
-    wrapLink
-  )
+    override protected val chain = ChainMakers.deriveChain(
+      propertyNames.tail,
+      DynamicPropertyFactory.getInstance.getIntProperty(propertyNames.head, ChainedIntProperty.this.defaultValue),
+      wrapRoot,
+      wrapLink
+    )
 
-  /**
-   * Convert the java.lang.Integer which DynamicIntegerProperty returns to scala.Int.
-   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
-   * @return the value of the chain of properties, implicitly converted.
-   */
-  protected def convert(jv:java.lang.Integer): Int = jv
+    private def wrapRoot(p: String, r: JavaDynamicIntProperty) = new ChainedDynamicProperty.IntProperty(p, r)
+    private def wrapLink(p: String, n: ChainedDynamicProperty.IntProperty) = new ChainedDynamicProperty.IntProperty(p, n)
+
+    /**
+     * Convert the java.lang.Integer which DynamicIntegerProperty returns to scala.Int.
+     * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainMakers.ChainBox.nonNull]].
+     * @return the value of the chain of properties, implicitly converted.
+     */
+    protected override def convert(jv:java.lang.Integer): Int = jv
+  }
 }

@@ -15,16 +15,13 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.ChainedDynamicProperty.ChainLink
+import com.netflix.config.scala.ChainMakers.ChainBox
 
 /**
  * Base functionality of a [[com.netflix.config.ChainedDynamicProperty]], in Scala terms.
  * @tparam TYPE the Scala type produced by the property.
- * @tparam JAVATYPE the Java type in the supporting [[com.netflix.config.ChainedDynamicProperty.ChainLink]].
  */
-trait ChainedProperty[TYPE, JAVATYPE] {
-
-  protected def typeName: String
+trait ChainedProperty[TYPE] {
 
   /*
    * The second generic property is necessary to provide the type for the ChainLink.  Conversions
@@ -32,24 +29,7 @@ trait ChainedProperty[TYPE, JAVATYPE] {
    * is implicitly converted to/from a java.lang.Integer 42, but classOf[scala.Int] does not
    * implicitly convert to classOf[java.lang.Integer].
    */
-  protected val chain: ChainLink[JAVATYPE]
-
-  /*
-   * Provides an anchor for scala's implicit conversions to happen.
-   */
-  protected def convert(jv: JAVATYPE): TYPE
-
-  /**
-   * Validate the value's nullability for this property's Scala type.
-   * @param value the value to return, as the Java type.
-   * @return the value if it meets nullability requirements for the Scala type.
-   */
-  protected def nonNull(value: JAVATYPE): JAVATYPE = {
-    if ( value == null ) {
-      throw new IllegalStateException(s"${propertyName} should somewhere have a hard value instead of null, cannot be converted to scala type ${typeName}")
-    }
-    value
-  }
+  protected val chainBox: ChainBox[TYPE, _]
 
   /**
    * Produce the most-appropriate current value of the chain of properties.  Where the Scala type allows
@@ -57,7 +37,7 @@ trait ChainedProperty[TYPE, JAVATYPE] {
    * and so may not be null.
    * @return the value derived from the chain of properties.
    */
-  def get: TYPE = convert(nonNull(chain.get()))
+  def get: TYPE = chainBox.get
 
   /**
    * Produce the most-appropriate current value of the chain of properties, as an [[scala.Option]].  Null
@@ -65,13 +45,13 @@ trait ChainedProperty[TYPE, JAVATYPE] {
    * be null.
    * @return the value derived from the chain of properties.
    */
-  def apply: Option[TYPE] = Option(convert(chain.get()))
+  def apply: Option[TYPE] = chainBox.apply
 
   /**
    * Get the name of the property.
    * @return the property name
    */
-  def propertyName: String = chain.getName
+  def propertyName: String = chainBox.propertyName
 
   /**
    * Get the names of all properties in the chain.
@@ -85,8 +65,7 @@ trait ChainedProperty[TYPE, JAVATYPE] {
    * be null.
    * @return the default value from the chain of properties.
    */
-  def defaultValue: TYPE = convert(chain.getDefaultValue)
-
+  def defaultValue: TYPE = chainBox.defaultValue
 
   /**
    * Add a callback to be triggered when the value of the property is
@@ -94,7 +73,7 @@ trait ChainedProperty[TYPE, JAVATYPE] {
    * @param callback a [[java.lang.Runnable]] to call on changes.
    */
   def addCallback(callback: Runnable) {
-    chain.addCallback(callback)
+    chainBox.addCallback(callback)
   }
 
   override def toString: String = s"[${propertyName}] = ${get}"

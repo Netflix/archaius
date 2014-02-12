@@ -16,12 +16,13 @@
 package com.netflix.config.scala
 
 import com.netflix.config.ChainedDynamicProperty
+import com.netflix.config.scala.ChainMakers.ChainBox
 
 class ChainedBooleanProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Boolean,
   callback: Option[Runnable] = None)
-extends ChainedProperty[Boolean, java.lang.Boolean]
+extends ChainedProperty[Boolean]
 {
 
   def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean, callback: Option[Runnable] = None) = {
@@ -30,22 +31,25 @@ extends ChainedProperty[Boolean, java.lang.Boolean]
 
   callback.foreach(addCallback)
 
-  override protected lazy val typeName = classOf[Boolean].getName
+  override protected val chainBox = new ChainBox[Boolean, java.lang.Boolean] {
 
-  private def wrapRoot(p: String, r: ChainedDynamicProperty.DynamicBooleanPropertyThatSupportsNull) = new ChainedDynamicProperty.BooleanProperty(p, r)
-  private def wrapLink(p: String, n: ChainedDynamicProperty.BooleanProperty) = new ChainedDynamicProperty.BooleanProperty(p, n)
+    override protected lazy val typeName = classOf[Boolean].getName
 
-  override protected val chain = ChainMakers.deriveChain(
-    propertyNames.tail,
-    new ChainedDynamicProperty.DynamicBooleanPropertyThatSupportsNull(propertyNames.head, defaultValue),
-    wrapRoot,
-    wrapLink
-  )
+    override protected val chain = ChainMakers.deriveChain(
+      propertyNames.tail,
+      new ChainedDynamicProperty.DynamicBooleanPropertyThatSupportsNull(propertyNames.head, ChainedBooleanProperty.this.defaultValue),
+      wrapRoot,
+      wrapLink
+    )
 
-  /**
-   * Convert the java.lang.Boolean which DynamicBooleanProperty returns to scala.Boolean.
-   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
-   * @return the value of the chain of properties, implicitly converted.
-   */
-  protected def convert(jv:java.lang.Boolean): Boolean = jv
+    private def wrapRoot(p: String, r: ChainedDynamicProperty.DynamicBooleanPropertyThatSupportsNull) = new ChainedDynamicProperty.BooleanProperty(p, r)
+    private def wrapLink(p: String, n: ChainedDynamicProperty.BooleanProperty) = new ChainedDynamicProperty.BooleanProperty(p, n)
+
+    /**
+     * Convert the java.lang.Boolean which DynamicBooleanProperty returns to scala.Boolean.
+     * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainMakers.ChainBox.nonNull]].
+     * @return the value of the chain of properties, implicitly converted.
+     */
+    protected def convert(jv:java.lang.Boolean): Boolean = jv
+  }
 }

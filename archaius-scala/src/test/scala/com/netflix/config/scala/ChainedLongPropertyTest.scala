@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedLongPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Long, java.lang.Long] {
+class ChainedLongPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Long] {
 
   val defaultValue = -1L
 

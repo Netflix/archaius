@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedStringPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[String, java.lang.String] {
+class ChainedStringPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[String] {
 
   val defaultValue = "voo"
 
