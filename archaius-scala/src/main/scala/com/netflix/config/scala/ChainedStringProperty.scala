@@ -15,6 +15,7 @@
  */
 package com.netflix.config.scala
 
+import com.netflix.config.scala.ChainMakers.ChainBox
 import com.netflix.config.{ChainedDynamicProperty, DynamicPropertyFactory}
 import com.netflix.config.{DynamicStringProperty => JavaDynamicStringProperty}
 
@@ -22,7 +23,7 @@ class ChainedStringProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: String,
   callback: Option[Runnable] = None)
-extends ChainedProperty[String, java.lang.String]
+extends ChainedProperty[String]
 {
 
   def this(prefix: Option[String], name: String, suffix: Option[String], default: String, callback: Option[Runnable] = None) = {
@@ -31,19 +32,22 @@ extends ChainedProperty[String, java.lang.String]
 
   callback.foreach(addCallback)
 
-  override protected lazy val typeName = classOf[String].getName
+  override protected val chainBox = new ChainBox[String, java.lang.String] {
 
-  private def wrapRoot(p: String, r: JavaDynamicStringProperty) = new ChainedDynamicProperty.StringProperty(p, r)
-  private def wrapLink(p: String, n: ChainedDynamicProperty.StringProperty) = new ChainedDynamicProperty.StringProperty(p, n)
+    override protected lazy val typeName = classOf[String].getName
 
-  override protected val chain = ChainMakers.deriveChain(
-    propertyNames.tail,
-    DynamicPropertyFactory.getInstance.getStringProperty(propertyNames.head, defaultValue),
-    wrapRoot,
-    wrapLink
-  )
+    override protected val chain = ChainMakers.deriveChain(
+      propertyNames.tail,
+      DynamicPropertyFactory.getInstance.getStringProperty(propertyNames.head, ChainedStringProperty.this.defaultValue),
+      wrapRoot,
+      wrapLink
+    )
 
-  override protected def convert(jv: java.lang.String): String = jv
+    private def wrapRoot(p: String, r: JavaDynamicStringProperty) = new ChainedDynamicProperty.StringProperty(p, r)
+    private def wrapLink(p: String, n: ChainedDynamicProperty.StringProperty) = new ChainedDynamicProperty.StringProperty(p, n)
 
-  override protected def nonNull(jv: java.lang.String) = jv
+    override protected def convert(jv: java.lang.String): String = jv
+
+    override protected def nonNull(jv: java.lang.String) = jv
+  }
 }

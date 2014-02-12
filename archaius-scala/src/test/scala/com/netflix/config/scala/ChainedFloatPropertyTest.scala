@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Float, java.lang.Float] {
+class ChainedFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Float] {
 
   val defaultValue = -1.1f
 

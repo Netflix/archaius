@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedIntPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Int, java.lang.Integer] {
+class ChainedIntPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Int] {
 
   val defaultValue = -1
 

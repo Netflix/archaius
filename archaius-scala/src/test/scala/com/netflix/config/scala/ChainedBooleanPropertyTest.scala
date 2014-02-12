@@ -20,7 +20,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Boolean, java.lang.Boolean] {
+class ChainedBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Boolean] {
 
   val defaultValue = false
 

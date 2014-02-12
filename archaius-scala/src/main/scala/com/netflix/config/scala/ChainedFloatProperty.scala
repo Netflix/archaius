@@ -15,6 +15,7 @@
  */
 package com.netflix.config.scala
 
+import com.netflix.config.scala.ChainMakers.ChainBox
 import com.netflix.config.{ChainedDynamicProperty, DynamicPropertyFactory}
 import com.netflix.config.{DynamicFloatProperty => JavaDynamicFloatProperty}
 
@@ -22,7 +23,7 @@ class ChainedFloatProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Float,
   callback: Option[Runnable] = None)
-extends ChainedProperty[Float, java.lang.Float]
+extends ChainedProperty[Float]
 {
 
   def this(prefix: Option[String], name: String, suffix: Option[String], default: Float, callback: Option[Runnable] = None) = {
@@ -31,22 +32,25 @@ extends ChainedProperty[Float, java.lang.Float]
 
   callback.foreach(addCallback)
 
-  override protected lazy val typeName = classOf[Float].getName
+  override protected val chainBox =  new ChainBox[Float, java.lang.Float] {
 
-  private def wrapRoot(p: String, r: JavaDynamicFloatProperty) = new ChainedDynamicProperty.FloatProperty(p, r)
-  private def wrapLink(p: String, n: ChainedDynamicProperty.FloatProperty) = new ChainedDynamicProperty.FloatProperty(p, n)
+    override protected lazy val typeName = classOf[Float].getName
 
-  override protected val chain = ChainMakers.deriveChain(
-    propertyNames.tail,
-    DynamicPropertyFactory.getInstance.getFloatProperty(propertyNames.head, defaultValue),
-    wrapRoot,
-    wrapLink
-  )
+    override protected val chain = ChainMakers.deriveChain(
+      propertyNames.tail,
+      DynamicPropertyFactory.getInstance.getFloatProperty(propertyNames.head, ChainedFloatProperty.this.defaultValue),
+      wrapRoot,
+      wrapLink
+    )
 
-  /**
-   * Convert the java.lang.Boolean which DynamicFloatProperty returns to scala.Float.
-   * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainedProperty.nonNull]].
-   * @return the value of the chain of properties, implicitly converted.
-   */
-  protected def convert(jv:java.lang.Float): Float = jv
+    private def wrapRoot(p: String, r: JavaDynamicFloatProperty) = new ChainedDynamicProperty.FloatProperty(p, r)
+    private def wrapLink(p: String, n: ChainedDynamicProperty.FloatProperty) = new ChainedDynamicProperty.FloatProperty(p, n)
+
+    /**
+     * Convert the java.lang.Boolean which DynamicFloatProperty returns to scala.Float.
+     * The value is guaranteed to be non-null thanks to [[com.netflix.config.scala.ChainMakers.ChainBox.nonNull]].
+     * @return the value of the chain of properties, implicitly converted.
+     */
+    protected def convert(jv:java.lang.Float): Float = jv
+  }
 }
