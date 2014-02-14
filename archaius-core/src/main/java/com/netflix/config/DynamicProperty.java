@@ -79,7 +79,8 @@ public class DynamicProperty {
     private String stringValue = null;
     private long changedTime;
     private CopyOnWriteArraySet<WeakReference<Runnable>> callbacks = new CopyOnWriteArraySet<WeakReference<Runnable>>();
-    private CopyOnWriteArraySet<PropertyChangeValidator> validators = new CopyOnWriteArraySet<PropertyChangeValidator>();
+    private CopyOnWriteArraySet<WeakReference<PropertyChangeValidator>> validators =
+            new CopyOnWriteArraySet<WeakReference<PropertyChangeValidator>>();
 
 
     /**
@@ -504,7 +505,7 @@ public class DynamicProperty {
         if (validator == null) {
             throw new NullPointerException("Cannot add null validator to DynamicProperty");            
         }
-        validators.add(validator);
+        validators.add(new WeakReference<PropertyChangeValidator>(validator));
     }
     
     /**
@@ -546,9 +547,12 @@ public class DynamicProperty {
     }
 
     private void validate(String newValue) {
-        for (PropertyChangeValidator v: validators) {
+        for (WeakReference<PropertyChangeValidator> v: validators) {
             try {
-                v.validate(newValue);
+                PropertyChangeValidator pcv = v.get();
+                if (pcv != null) {
+                    pcv.validate(newValue);
+                }
             } catch (ValidationException e) {
                 throw e;
             } catch (Throwable e) {
