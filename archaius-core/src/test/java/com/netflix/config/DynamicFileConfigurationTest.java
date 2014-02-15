@@ -163,9 +163,10 @@ public class DynamicFileConfigurationTest {
         assertEquals(79.98, doubleProp.get(), 0.00001d);
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
-        modifyConfigFile();
         ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
-        Thread.sleep(1000);
+        Thread.sleep(500);
+        modifyConfigFile();
+        Thread.sleep(500);
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
