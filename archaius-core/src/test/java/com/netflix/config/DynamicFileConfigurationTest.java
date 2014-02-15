@@ -45,7 +45,16 @@ public class DynamicFileConfigurationTest {
     private DynamicLongProperty longProp = null;
     
     private static DynamicProperty dynProp = null;
-    
+
+    private DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
+        @Override
+        public void validate(String newValue) {
+            if (Integer.parseInt(newValue) < 0) {
+                throw new ValidationException("Cannot be negative");
+            }
+        }
+    };
+
     static File configFile = null;
     static File createConfigFile(String prefix) throws Exception {
         configFile = File.createTempFile(prefix, ".properties");        
@@ -61,7 +70,7 @@ public class DynamicFileConfigurationTest {
         return configFile;
     }
     
-    static void modifyConfigFile() {
+    private void modifyConfigFile() {
         new Thread() {
             public void run() {
                 try {
@@ -147,14 +156,6 @@ public class DynamicFileConfigurationTest {
             }
         });
 
-        DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
-            @Override
-            public void validate(String newValue) {
-                if (Integer.parseInt(newValue) < 0) {
-                    throw new ValidationException("Cannot be negative");
-                }
-            }
-        };
         assertEquals(0, validatedProp.get());
         assertFalse(propertyChanged);
         DynamicDoubleProperty doubleProp = propertyFactory.getDoubleProperty("dprops2", 0.0d);
@@ -164,9 +165,8 @@ public class DynamicFileConfigurationTest {
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
         ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
-        Thread.sleep(500);
         modifyConfigFile();
-        Thread.sleep(500);
+        Thread.sleep(1000);
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
