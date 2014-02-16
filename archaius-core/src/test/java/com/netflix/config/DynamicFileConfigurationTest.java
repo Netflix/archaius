@@ -45,7 +45,16 @@ public class DynamicFileConfigurationTest {
     private DynamicLongProperty longProp = null;
     
     private static DynamicProperty dynProp = null;
-    
+
+    private DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
+        @Override
+        public void validate(String newValue) {
+            if (Integer.parseInt(newValue) < 0) {
+                throw new ValidationException("Cannot be negative");
+            }
+        }
+    };
+
     static File configFile = null;
     static File createConfigFile(String prefix) throws Exception {
         configFile = File.createTempFile(prefix, ".properties");        
@@ -61,7 +70,7 @@ public class DynamicFileConfigurationTest {
         return configFile;
     }
     
-    static void modifyConfigFile() {
+    private void modifyConfigFile() {
         new Thread() {
             public void run() {
                 try {
@@ -147,14 +156,6 @@ public class DynamicFileConfigurationTest {
             }
         });
 
-        DynamicIntProperty validatedProp = new DynamicIntProperty("abc", 0) {
-            @Override
-            public void validate(String newValue) {
-                if (Integer.parseInt(newValue) < 0) {
-                    throw new ValidationException("Cannot be negative");
-                }
-            }
-        };
         assertEquals(0, validatedProp.get());
         assertFalse(propertyChanged);
         DynamicDoubleProperty doubleProp = propertyFactory.getDoubleProperty("dprops2", 0.0d);
@@ -163,18 +164,21 @@ public class DynamicFileConfigurationTest {
         assertEquals(79.98, doubleProp.get(), 0.00001d);
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
-        modifyConfigFile();
         ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
+        System.out.println("Before Modification -- listener count : " + listener.getCount());
+        modifyConfigFile();
         Thread.sleep(1000);
+        System.out.println("After Modification -- listener count : " + listener.getCount());
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
         assertEquals(Double.MAX_VALUE, doubleProp.get(), 0.01d);
         assertFalse(ConfigurationManager.isConfigurationInstalled());
-        Thread.sleep(3000);
-        // Only 4 events expected, two each for dprops1 and dprops2
         assertEquals(4, listener.getCount());
-    }    
+        Thread.sleep(3000);
+        //after sleep for 3000 seconds, CloudBee Jenkins build GCed PropertyChangeValidator (?)
+        // Only 4 events expected, two each for dprops1 and dprops2
+        System.out.println("After sleep for 3 secs, listener count : " + listener.getCount()); }    
     
     @Test
     public void testSwitchingToConfiguration() throws Exception {

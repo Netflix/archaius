@@ -81,4 +81,39 @@ public class DynamicStringPropertyTest {
         }
 
     }
+
+    @Test
+    public void testOverrideCallback() {
+        DynamicStringProperty dp = new DynamicStringProperty("testWeakRef", null) {
+          @Override
+          public String getValue() {
+            return "No-Op";
+          }
+        };
+        assertEquals(dp.getDynamicProperty().getCallbacks().size(), 1);
+        int count = 0;
+        //don't release dp. callback is going to be there
+        while(count < 3) {
+            System.gc();
+            count++;
+        }
+        assertEquals(dp.getDynamicProperty().getCallbacks().size(), 1);
+
+        //setup dp for GC
+        dp = null;
+        count = 0;
+        while(DynamicPropertyFactory.getInstance().
+                getStringProperty("testWeakRef", null).getDynamicProperty().getCallbacks().size() != 0 && count < 3) {
+            System.gc();
+            count ++;
+
+        }
+        if (DynamicPropertyFactory.getInstance().
+                getStringProperty("testWeakRef", null).getDynamicProperty().getCallbacks().size() == 0) {
+            assertTrue(true);
+        } else {
+            System.out.println("Fail to force a GC. Ignore the test");
+        }
+
+    }
 }
