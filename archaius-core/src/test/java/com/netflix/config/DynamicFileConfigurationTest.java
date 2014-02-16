@@ -102,7 +102,7 @@ public class DynamicFileConfigurationTest {
 		@Override
 		public void configurationChanged(ConfigurationEvent event) {
             if (event.getPropertyName().equals("abc") && event.isBeforeUpdate()) {
-                System.out.println("abc thread trace: " + Thread.currentThread().getStackTrace());
+                System.out.println("abc thread trace: " + Thread.currentThread().getStackTrace().toString());
             }
 			System.out.println("Event received: " + event.getType() + "," + event.getPropertyName() + "," + event.isBeforeUpdate() + "," + event.getPropertyValue());
 			counter.incrementAndGet();
