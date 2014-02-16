@@ -165,8 +165,10 @@ public class DynamicFileConfigurationTest {
         assertEquals(Double.valueOf(79.98), doubleProp.getValue());
         assertEquals(Long.valueOf(123456789L), longProp.getValue());
         ConfigurationManager.getConfigInstance().addConfigurationListener(listener);
+        System.out.println("Before Modification -- listener count : "+listener.getCount());
         modifyConfigFile();
         Thread.sleep(1000);
+        System.out.println("After Modification -- listener count : "+listener.getCount());
         assertEquals(Long.MIN_VALUE, longProp.get());
         assertEquals(0, validatedProp.get());
         assertTrue(propertyChanged);
@@ -174,6 +176,7 @@ public class DynamicFileConfigurationTest {
         assertFalse(ConfigurationManager.isConfigurationInstalled());
         Thread.sleep(3000);
         // Only 4 events expected, two each for dprops1 and dprops2
+        System.out.println("After sleep for 3 secs, listener count : "+listener.getCount());
         assertEquals(4, listener.getCount());
     }    
     
