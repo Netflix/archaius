@@ -1,6 +1,7 @@
 package com.netflix.config;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -46,7 +47,7 @@ public class DynamicStringPropertyTest {
 
     }
 
-    @Test
+    @Ignore
     public void testWeakRef() throws InterruptedException {
         DynamicStringProperty dp = new DynamicStringProperty("testWeakRef", null);
         dp.addCallback(new Runnable() {
@@ -82,7 +83,7 @@ public class DynamicStringPropertyTest {
 
     }
 
-    @Test
+    @Ignore
     public void testOverrideCallback() {
         DynamicStringProperty dp = new DynamicStringProperty("testWeakRef", null) {
           @Override

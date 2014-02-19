@@ -82,13 +82,12 @@ public abstract class PropertyWrapper<V> implements Property<V> {
             };
             this.prop.addCallback(callback);
             callbackList.add(callback);
-            PropertyChangeValidator propertyChangeValidator = new PropertyChangeValidator() {
+            this.prop.addValidator(new PropertyChangeValidator() {                
                 @Override
-                public void validate(String newValue) throws ValidationException {
+                public void validate(String newValue) {
                     PropertyWrapper.this.validate(newValue);
                 }
-            };
-            this.prop.addValidator(propertyChangeValidator);
+            });
             try {
                 if (this.prop.getString() != null) {
                     this.validate(this.prop.getString());
