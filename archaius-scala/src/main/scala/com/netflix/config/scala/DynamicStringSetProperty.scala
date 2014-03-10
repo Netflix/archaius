@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import com.netflix.config.{DynamicStringSetProperty => jDynamicStringSetProperty}
+import java.util.{Set => jSet}
 
 /**
  * User: gorzell
  * Date: 9/25/12
  */
-
-class DynamicStringSetProperty(val propertyName: String, default: Set[String], delimiterRegex: String) {
-
-  private val prop = new com.netflix.config.DynamicStringSetProperty(propertyName, default, delimiterRegex)
-
-  def apply: Option[Set[String]] = Option(get)
-
-  def get: Set[String] = prop.get.toSet
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicStringSetProperty(
+  override val propertyName: String,
+  override val defaultValue: Set[String],
+  delimiterRegex: String)
+extends DynamicProperty[Set[String]]
+{
+  override protected val box = new PropertyBox[Set[String], jSet[String]] {
+    override val prop = new jDynamicStringSetProperty(propertyName, defaultValue.asJava, delimiterRegex)
+    def convert(jt: jSet[String]): Set[String] = jt.asScala.toSet
   }
 }

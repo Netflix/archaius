@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import com.netflix.config.{DynamicStringListProperty => jDynamicStringListProperty}
+import java.util.{List => jList}
 
 /**
  * User: gorzell
  * Date: 9/25/12
  */
-
-class DynamicStringListProperty(val propertyName: String, default: List[String], delimiterRegex: String) {
-
-  private val prop = new com.netflix.config.DynamicStringListProperty(propertyName, default, delimiterRegex)
-
-  def apply: Option[List[String]] = Option(get)
-
-  def get: List[String] = prop.get.toList
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicStringListProperty(
+  override val propertyName: String,
+  override val defaultValue: List[String],
+  delimiterRegex: String)
+extends DynamicProperty[List[String]]
+{
+  override protected val box = new PropertyBox[List[String], jList[String]] {
+    override val prop = new jDynamicStringListProperty(propertyName, defaultValue.asJava, delimiterRegex)
+    def convert(jt: jList[String]): List[String] = jt.asScala.toList
   }
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import com.netflix.config.{DynamicStringMapProperty => jDynamicStringMapProperty}
+import java.util.{Map => jMap}
 
 /**
  * User: gorzell
  * Date: 9/25/12
  */
-
-class DynamicStringMapProperty(val propertyName: String, default: Map[String, String], delimiterRegex: String) {
-
-  private val prop = new com.netflix.config.DynamicStringMapProperty(propertyName, default, delimiterRegex)
-
-  def apply: Option[Map[String, String]] = Option(get)
-
-  def get: Map[String, String] = prop.getMap.toMap
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicStringMapProperty(
+  override val propertyName: String,
+  override val defaultValue: Map[String, String],
+  delimiterRegex: String)
+extends DynamicProperty[Map[String, String]]
+{
+  override protected val box = new PropertyBox[Map[String, String], jMap[String, String]] {
+    override val prop = new jDynamicStringMapProperty(propertyName, defaultValue.asJava, delimiterRegex)
+    def convert(jt: jMap[String, String]): Map[String, String] = jt.asScala.toMap
   }
 }

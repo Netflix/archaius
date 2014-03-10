@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,30 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.DynamicPropertyFactory
+import com.netflix.config.{PropertyWrapper, DynamicPropertyFactory}
+import java.lang.{Boolean => jBoolean}
 
 /**
  * User: gorzell
  * Date: 8/10/12
  */
+class DynamicBooleanProperty(
+  override val propertyName: String,
+  override val defaultValue: Boolean,
+  callback: Option[() => Unit] = None)
+extends DynamicProperty[Boolean]
+{
 
-class DynamicBooleanProperty(val propertyName: String, val default: Boolean) {
+  callback.foreach(addCallback)
 
-  private val prop = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, default)
+  override protected val box = new PropertyBox[Boolean, jBoolean] {
+    override val prop: PropertyWrapper[jBoolean] = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, defaultValue)
 
-  def apply: Option[Boolean] = Option(get)
-
-  def get: Boolean = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+    def convert(jt: jBoolean): Boolean = jt
   }
 
   def ifEnabled[T] (r: => T): Option[T] = {
-    prop.get match {
+    box.get match {
       case true => Some(r)
       case false => None
     }
