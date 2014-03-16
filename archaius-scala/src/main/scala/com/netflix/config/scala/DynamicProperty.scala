@@ -15,7 +15,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.PropertyWrapper
+import com.netflix.config.Property
 
 /**
  * Base functionality of a [[com.netflix.config.DynamicProperty]], in Scala terms.
@@ -26,7 +26,7 @@ trait DynamicProperty[T] {
    * Get the name of the property.
    * @return the property name
    */
-  def propertyName: String = box.propertyName
+  def propertyName: String = box.name
 
   /**
    * Get the default value of the property.  Where the Scala type allows it, it may be null,
@@ -34,7 +34,7 @@ trait DynamicProperty[T] {
    * be null.
    * @return the default value from the property.
    */
-  def defaultValue: T = box.defaultValue
+  def defaultValue: T = box.default
 
   /**
    * Produce the current value of the property.  Where the Scala type allows
@@ -57,7 +57,7 @@ trait DynamicProperty[T] {
    * @param fn the transformation function which produces the new type.
    * @return a new DynamicProperty for the target type.
    */
-  def map[B](fn: (T) => B)(implicit mapType: Manifest[B]): ChainedProperty[B] = new MapBy(box, fn, mapType)
+  def map[B](fn: (T) => B)(implicit mapType: Manifest[B]): DynamicProperty[B] = new MapBy[B, T](box.asInstanceOf[PropertyBox[T, AnyRef]], fn, mapType)
 
   /**
    * Add a callback to be triggered when the value of the property is
@@ -71,48 +71,46 @@ trait DynamicProperty[T] {
   override def toString: String = s"[${propertyName}] = ${get}"
 
   protected val box: PropertyBox[T, _]
+}
 
-  protected abstract class PropertyBox[T, JT] {
-    def prop: PropertyWrapper[JT]
-    def propertyName: String = prop.getName
-    def get: T = convert(prop.getValue)
-    def apply(): Option[T] = Option(prop.getValue).map(convert)
-    def defaultValue: T = convert(prop.getDefaultValue)
-    def addCallback(callback: Option[() => Unit]) {
-      callback.map( c => prop.addCallback( new Runnable { def run() { c() } } ) )
-        .getOrElse(prop.addCallback(null))
-    }
-    def convert(jt: JT): T
+protected[scala] abstract class PropertyBox[T, JT] {
+  protected def prop: Property[JT]
+  def name: String = prop.getName
+  def get: T = convert(prop.getValue)
+  def apply(): Option[T] = Option(prop.getValue).map(convert)
+  def default: T = convert(prop.getDefaultValue)
+  def addCallback(callback: Option[() => Unit]) {
+    callback.map( c => prop.addCallback( new Runnable { def run() { c() } } ) )
+      .getOrElse(prop.addCallback(null))
+  }
+  protected def convert(jt: JT): T
+}
+
+protected[scala] class BoxConverter[B, TYPE](propertyBox: PropertyBox[TYPE,AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
+  extends PropertyBox[B, TYPE]
+{
+  protected lazy val typeName = mapType.runtimeClass.getName
+
+  // all calls in some way divert to the provided PropertyBox
+  override protected val prop: Property[TYPE] = null
+
+  protected def convert(cv: TYPE): B = fn(cv)
+
+  override def apply(): Option[B] = propertyBox().map(fn)
+
+  override def get: B = fn(propertyBox.get)
+
+  override def addCallback(callback: Option[() => Unit]) {
+    propertyBox.addCallback(callback)
   }
 
-  protected class BoxConverter[B, TYPE](propertyBox: PropertyBox[TYPE,_], fn: (TYPE) => B, mapType: Manifest[B])
-    extends PropertyBox[B, TYPE]
-  {
-    protected lazy val typeName = mapType.runtimeClass.getName
+  override def name: String = propertyBox.name
 
-    // all calls in some way divert to the provided PropertyBox
-    override protected val prop: PropertyWrapper[TYPE] = null
+  override def default: B = convert(propertyBox.default)
+}
 
-    protected def convert(cv: TYPE): B = fn(cv)
-
-    override def apply(): Option[B] = propertyBox().map(fn)
-
-    override def get: B = fn(propertyBox.get)
-
-    override def addCallback(callback: Option[() => Unit]) {
-      propertyBox.addCallback(callback)
-    }
-
-    override def propertyName: String = propertyBox.propertyName
-
-    override def defaultValue: B = convert(propertyBox.defaultValue)
-  }
-
-  protected class MapBy[B, TYPE](unmappedBox: PropertyBox[TYPE, _], fn: (TYPE) => B, mapType: Manifest[B])
-    extends ChainedProperty[B]
-  {
-    override protected val chainBox = new BoxConverter[B, TYPE](unmappedBox, fn, mapType)
-
-    override def propertyNames: Iterable[String] = propertyNames
-  }
+protected[scala] class MapBy[B, TYPE](unmappedBox: PropertyBox[TYPE, AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
+  extends DynamicProperty[B]
+{
+  override protected val box = new BoxConverter[B, TYPE](unmappedBox, fn, mapType)
 }

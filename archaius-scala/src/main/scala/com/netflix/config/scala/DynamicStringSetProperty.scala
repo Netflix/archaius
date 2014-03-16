@@ -15,9 +15,10 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConverters._
-import com.netflix.config.{DynamicStringSetProperty => jDynamicStringSetProperty}
+import com.netflix.config.{DynamicStringSetProperty => jDynamicStringSetProperty, Property}
+import java.lang.{String => jString}
 import java.util.{Set => jSet}
+import scala.collection.JavaConverters._
 
 /**
  * User: gorzell
@@ -29,8 +30,8 @@ class DynamicStringSetProperty(
   delimiterRegex: String)
 extends DynamicProperty[Set[String]]
 {
-  override protected val box = new PropertyBox[Set[String], jSet[String]] {
-    override val prop = new jDynamicStringSetProperty(propertyName, defaultValue.asJava, delimiterRegex)
-    def convert(jt: jSet[String]): Set[String] = jt.asScala.toSet
+  override protected val box = new PropertyBox[Set[String], jSet[jString]] {
+    override val prop: Property[jSet[jString]]= new jDynamicStringSetProperty(propertyName, defaultValue.asJava, delimiterRegex)
+    def convert(jt: jSet[String]): Set[String] = jt.asScala.map(x => x).toSet
   }
 }

@@ -30,7 +30,14 @@ class DynamicStringMapProperty(
 extends DynamicProperty[Map[String, String]]
 {
   override protected val box = new PropertyBox[Map[String, String], jMap[String, String]] {
-    override val prop = new jDynamicStringMapProperty(propertyName, defaultValue.asJava, delimiterRegex)
-    def convert(jt: jMap[String, String]): Map[String, String] = jt.asScala.toMap
+    override val prop = null
+    val mapProp = new jDynamicStringMapProperty(propertyName, defaultValue.asJava, delimiterRegex)
+    override def get: Map[String, String] = convert(mapProp.getMap)
+    override def apply(): Option[Map[String, String]] = Option(mapProp.getMap).map(convert)
+    override def addCallback(callback: Option[() => Unit]) {
+      callback.map( c => mapProp.addCallback( new Runnable { def run() { c() } } ) )
+        .getOrElse(mapProp.addCallback(null))
+    }
+    override protected def convert(jt: jMap[String, String]): Map[String, String] = jt.asScala.toMap
   }
 }

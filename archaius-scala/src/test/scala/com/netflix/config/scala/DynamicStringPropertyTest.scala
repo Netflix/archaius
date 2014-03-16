@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,18 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
-import com.netflix.config.ConfigurationManager
 
 @RunWith(classOf[JUnitRunner])
-class DynamicStringPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicStringTest"
-  private val property = dynamicStringProperty(propertyName, "string")
+class DynamicStringPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[String] {
+
+  import DynamicProperties._
+
+  override def fixture(name: String) = dynamicStringProperty(name, "default")
 
   "DynamicStringProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty("default", "string")
   }
 }
