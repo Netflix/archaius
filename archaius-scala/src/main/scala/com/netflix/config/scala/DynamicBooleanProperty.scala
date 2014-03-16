@@ -15,7 +15,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{PropertyWrapper, DynamicPropertyFactory}
+import com.netflix.config.DynamicPropertyFactory
 import java.lang.{Boolean => jBoolean}
 
 /**
@@ -32,7 +32,7 @@ extends DynamicProperty[Boolean]
   callback.foreach(addCallback)
 
   override protected val box = new PropertyBox[Boolean, jBoolean] {
-    override val prop: PropertyWrapper[jBoolean] = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, defaultValue)
+    override val prop = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, defaultValue)
 
     def convert(jt: jBoolean): Boolean = jt
   }

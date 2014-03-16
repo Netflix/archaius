@@ -15,9 +15,9 @@
  */
 package com.netflix.config.scala
 
-import scala.collection.JavaConverters._
 import com.netflix.config.{DynamicStringMapProperty => jDynamicStringMapProperty}
 import java.util.{Map => jMap}
+import scala.collection.JavaConverters._
 
 /**
  * User: gorzell
