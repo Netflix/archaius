@@ -16,8 +16,6 @@
 package com.netflix.config.scala
 
 import com.netflix.config.scala.ChainMakers.ChainBox
-import java.util.Map
-import scala.Predef.Map
 
 /**
  * Base functionality of a [[com.netflix.config.ChainedDynamicProperty]], in Scala terms.
