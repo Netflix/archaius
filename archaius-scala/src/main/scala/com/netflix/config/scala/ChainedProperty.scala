@@ -16,12 +16,14 @@
 package com.netflix.config.scala
 
 import com.netflix.config.scala.ChainMakers.ChainBox
+import java.util.Map
+import scala.Predef.Map
 
 /**
  * Base functionality of a [[com.netflix.config.ChainedDynamicProperty]], in Scala terms.
  * @tparam TYPE the Scala type produced by the property.
  */
-trait ChainedProperty[TYPE] {
+trait ChainedProperty[TYPE] extends DynamicProperty[TYPE] {
 
   /*
    * The second generic property is necessary to provide the type for the ChainLink.  Conversions
@@ -31,13 +33,15 @@ trait ChainedProperty[TYPE] {
    */
   protected val chainBox: ChainBox[TYPE, _]
 
+  override protected val box = null
+
   /**
    * Produce the most-appropriate current value of the chain of properties.  Where the Scala type allows
    * it, it may be null, ie. scala.String is [[scala.AnyRef]] may be null but numbers are [[scala.AnyVal]]
    * and so may not be null.
    * @return the value derived from the chain of properties.
    */
-  def get: TYPE = chainBox.get
+  override def get: TYPE = chainBox.get
 
   /**
    * Produce the most-appropriate current value of the chain of properties, as an [[scala.Option]].  Null
@@ -45,13 +49,13 @@ trait ChainedProperty[TYPE] {
    * be null.
    * @return the value derived from the chain of properties.
    */
-  def apply: Option[TYPE] = chainBox.apply
+  override def apply: Option[TYPE] = chainBox.apply
 
   /**
    * Get the name of the property.
    * @return the property name
    */
-  def propertyName: String = chainBox.propertyName
+  override def propertyName: String = chainBox.propertyName
 
   /**
    * Get the names of all properties in the chain.
@@ -65,7 +69,7 @@ trait ChainedProperty[TYPE] {
    * be null.
    * @return the default value from the chain of properties.
    */
-  def defaultValue: TYPE = chainBox.defaultValue
+  override def defaultValue: TYPE = chainBox.defaultValue
 
   /**
    * Add a callback to be triggered when the value of the property is
