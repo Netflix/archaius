@@ -47,7 +47,7 @@ trait ChainedProperty[TYPE] extends DynamicProperty[TYPE] {
    * be null.
    * @return the value derived from the chain of properties.
    */
-  override def apply: Option[TYPE] = chainBox.apply
+  override def apply(): Option[TYPE] = chainBox.apply
 
   /**
    * Get the name of the property.
