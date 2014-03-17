@@ -48,10 +48,11 @@ protected[scala] object ChainMakers {
     /**
      * Add a callback to be triggered when the value of the property is
      * changed.
-     * @param callback a [[java.lang.Runnable]] to call on changes.
+     * @param callback a function to call on changes.
      */
-    def addCallback(callback: Runnable) {
-      chain.addCallback(callback)
+    def addCallback(callback: Option[() => Unit]) {
+      callback.map( c => chain.addCallback( new Runnable { def run() { c() } } ) )
+        .getOrElse(chain.addCallback(null))
     }
 
     /**
