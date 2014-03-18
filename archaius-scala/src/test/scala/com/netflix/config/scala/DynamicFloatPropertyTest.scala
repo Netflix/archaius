@@ -22,9 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Float] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicFloatProperty(name, 1.0f)
+  override def fixture(name: String) =
+    DynamicFloatProperty(name, 1.0f)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicFloatProperty(name, 1.0f, callback)
 
   "DynamicFloatProperty" should {
     behave like dynamicProperty(1.0f, 2.2f)

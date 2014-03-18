@@ -23,6 +23,17 @@ import scala.collection.JavaConverters._
  * User: gorzell
  * Date: 9/25/12
  */
+object DynamicStringListProperty {
+  def apply(propertyName: String, defaultValue: List[String], delimiterRegex: String) =
+    new DynamicStringListProperty(propertyName, defaultValue, delimiterRegex)
+
+  def apply(propertyName: String, defaultValue: List[String], delimiterRegex: String, callback: () => Unit) = {
+    val p = new DynamicStringListProperty(propertyName, defaultValue, delimiterRegex)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicStringListProperty(
   override val propertyName: String,
   override val defaultValue: List[String],

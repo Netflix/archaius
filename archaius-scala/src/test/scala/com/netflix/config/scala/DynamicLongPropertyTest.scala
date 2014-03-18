@@ -22,9 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicLongPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Long] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicLongProperty(name, 1l)
+  override def fixture(name: String) =
+    DynamicLongProperty(name, 1l)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicLongProperty(name, 1l, callback)
 
   "DynamicLongProperty" should {
     behave like dynamicProperty(1l, 2l)

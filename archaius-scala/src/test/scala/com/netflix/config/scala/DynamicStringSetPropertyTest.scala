@@ -22,7 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicStringSetPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Set[String]] {
 
-  override def fixture(name: String) = new DynamicStringSetProperty(name, Set("a", "b", "c"), ",")
+  override def fixture(name: String) =
+    DynamicStringSetProperty(name, Set("a", "b", "c"), ",")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringSetProperty(name, Set("a", "b", "c"), ",", callback)
 
   "DynamicStringSetProperty" should {
     behave like dynamicProperty("a,b,c", "1,2,3", Set("a", "b", "c"), Set("1", "2", "3"))

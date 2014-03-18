@@ -22,9 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicDoublePropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Double] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicDoubleProperty(name, 1.0d)
+  override def fixture(name: String) =
+    DynamicDoubleProperty(name, 1.0d)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicDoubleProperty(name, 1.0d, callback)
 
   "DynamicDoubleProperty" should {
     behave like dynamicProperty(1.0d, 2.2d)

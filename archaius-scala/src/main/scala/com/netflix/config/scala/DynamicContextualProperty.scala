@@ -17,6 +17,17 @@ package com.netflix.config.scala
 
 import com.netflix.config.{DynamicContextualProperty => jDynamicContextualProperty}
 
+object DynamicContextualProperty {
+  def apply[T](propertyName: String, defaultValue: T) =
+    new DynamicContextualProperty(propertyName, defaultValue)
+
+  def apply[T](propertyName: String, defaultValue: T, callback: () => Unit) = {
+    val p = new DynamicContextualProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicContextualProperty[T](
   override val propertyName: String,
   override val defaultValue: T)

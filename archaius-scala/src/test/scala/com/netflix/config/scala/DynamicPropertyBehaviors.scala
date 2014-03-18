@@ -30,53 +30,70 @@ trait DynamicPropertyBehaviors[TYPE] extends Eventually with IntegrationPatience
 
   def fixture(name: String): DynamicProperty[TYPE]
 
+  def fixtureWithCallback(name: String, callback: () => Unit): DynamicProperty[TYPE]
+
+  // see dynamicProperty(Any, Any, TYPE, TYPE) below
+  var directlySetExecutionCount = 0
+  def directlySetCallback() {
+    directlySetExecutionCount += 1
+  }
+
+  // see dynamicProperty(Any, Any, TYPE, TYPE) below
+  var factorySetExecutionCount = 0
+  def factorySetCallback() {
+    factorySetExecutionCount += 1
+  }
+
   def dynamicProperty(defaultValue: TYPE, configuredValue: TYPE) {
     dynamicProperty(defaultValue, configuredValue, defaultValue, configuredValue)
   }
 
   def dynamicProperty(defaultValue: Any, configuredValue: Any, expectedDefaultValue: TYPE, expectedConfiguredValue: TYPE) {
+
+    // Required single copies of the properties, initialized once and with any callbacks attached,
+    // to more closely model the behavior expected by ConfigurationManager.  Re-creating the
+    // property ends up getting the original property back.  Then manipulating callbacks breaks
+    // the callback mechanism.  Any attempt to create a specific ConfigurationManager environment
+    // underneath the properties runs afoul of ConfigurationManager's assumptions of being
+    // configured once-and-once-only, leaving isolatable testing methodologies in the lurch.
+    val propertyWithDirectlySetCallback = fixture(propertyName)
+    propertyWithDirectlySetCallback.addCallback(directlySetCallback)
+    val propertyWithFactorySetCallback = fixtureWithCallback(propertyName, factorySetCallback)
+    
     "provide access to property name via propertyName field" in {
-      fixture(propertyName).propertyName should be(propertyName)
+      propertyWithDirectlySetCallback.propertyName should be(propertyName)
     }
     "provide access to default value via defaultValue field" in {
-      fixture(propertyName).defaultValue should be(expectedDefaultValue)
+      propertyWithDirectlySetCallback.defaultValue should be(expectedDefaultValue)
     }
     "retrieve configured value" in {
       setProperty(propertyName, configuredValue)
       eventually {
-        val property = fixture(propertyName)
         withClue(markProperty(propertyName)) {
-          val current = property.get
-          current should equal( expectedConfiguredValue )
+          val current = propertyWithDirectlySetCallback.get
+          withClue(s"default=${expectedDefaultValue}, configured=${expectedConfiguredValue}, ") { current should equal( expectedConfiguredValue ) }
         }
       }
     }
-    "call a registered callback on change" in {
-      var executionCount = 0
-      def callback() {
-        executionCount += 1
-      }
-      val property = fixture(propertyName)
-      property.addCallback(callback)
+    "call a callback registered explicitly on change" in {
+      propertyWithDirectlySetCallback.removeAllCallbacks()
       setProperty(propertyName, configuredValue)
-      eventually { executionCount should be(1) }
+      eventually { directlySetExecutionCount should be(1) }
+    }
+    "call a callback registered via factory method on change" in {
+      setProperty(propertyName, configuredValue)
+      eventually { factorySetExecutionCount should be(1) }
     }
     "not call a registered callback after callbacks are removed, on change" in {
-      var executionCount = 0
-      def callback() {
-        executionCount += 1
-      }
-      val property = fixture(propertyName)
-      property.addCallback(callback)
       setProperty(propertyName, configuredValue)
       eventually {
-        executionCount should be(1)
-        property.removeAllCallbacks()
+        factorySetExecutionCount should be(1)
+        propertyWithFactorySetCallback.removeAllCallbacks()
         setProperty(propertyName, defaultValue)
         eventually {
-          executionCount should be(1)
+          factorySetExecutionCount should be(1)
           setProperty(propertyName, configuredValue)
-          eventually { executionCount should be(1) }
+          eventually { factorySetExecutionCount should be(1) }
         }
       }
     }

@@ -22,9 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicStringPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[String] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicStringProperty(name, "default")
+  override def fixture(name: String) =
+    DynamicStringProperty(name, "default")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringProperty(name, "default", callback)
 
   "DynamicStringProperty" should {
     behave like dynamicProperty("default", "string")

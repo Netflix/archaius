@@ -22,7 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicStringListPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[List[String]] {
 
-  override def fixture(name: String) = new DynamicStringListProperty(name, List("a", "b", "c"), ",")
+  override def fixture(name: String) =
+    DynamicStringListProperty(name, List("a", "b", "c"), ",")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringListProperty(name, List("a", "b", "c"), ",", callback)
 
   "DynamicStringListProperty" should {
     behave like dynamicProperty("a,b,c", "1,2,3", List("a", "b", "c"), List("1", "2", "3"))

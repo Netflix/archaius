@@ -1,5 +1,5 @@
-/**
- * Copyright 2013 Netflix, Inc.
+/*
+ * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,17 @@ import java.lang.{Integer => jInt}
  * User: gorzell
  * Date: 8/6/12
  */
+object DynamicIntProperty {
+  def apply(propertyName: String, defaultValue: Int) =
+    new DynamicIntProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: Int, callback: () => Unit) = {
+    val p = new DynamicIntProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicIntProperty(
   override val propertyName: String,
   override val defaultValue: Int)

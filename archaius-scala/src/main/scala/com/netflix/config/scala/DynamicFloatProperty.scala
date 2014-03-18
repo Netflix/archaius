@@ -22,6 +22,17 @@ import java.lang.{Float => jFloat}
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicFloatProperty {
+  def apply(propertyName: String, defaultValue: Float) =
+    new DynamicFloatProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: Float, callback: () => Unit) = {
+    val p = new DynamicFloatProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicFloatProperty(
   override val propertyName: String,
   override val defaultValue: Float)

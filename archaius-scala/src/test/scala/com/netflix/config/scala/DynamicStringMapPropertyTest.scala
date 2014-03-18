@@ -22,7 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicStringMapPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Map[String, String]] {
 
-  override def fixture(name: String) = new DynamicStringMapProperty(name, Map("a" -> "x", "b" -> "y", "c" -> "z"), ",")
+  override def fixture(name: String) =
+    DynamicStringMapProperty(name, Map("a" -> "x", "b" -> "y", "c" -> "z"), ",")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringMapProperty(name, Map("a" -> "x", "b" -> "y", "c" -> "z"), ",", callback)
 
   "DynamicStringMapProperty" should {
     behave like dynamicProperty("a=x,b=y,c=z", "1=q,2=r,3=s", Map("a" -> "x", "b" -> "y", "c" -> "z"), Map("1" -> "q", "2" -> "r", "3" -> "s"))

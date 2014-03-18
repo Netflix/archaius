@@ -24,6 +24,17 @@ import scala.collection.JavaConverters._
  * User: gorzell
  * Date: 9/25/12
  */
+object DynamicStringSetProperty {
+  def apply(propertyName: String, defaultValue: Set[String], delimiterRegex: String) =
+    new DynamicStringSetProperty(propertyName, defaultValue, delimiterRegex)
+
+  def apply(propertyName: String, defaultValue: Set[String], delimiterRegex: String, callback: () => Unit) = {
+    val p = new DynamicStringSetProperty(propertyName, defaultValue, delimiterRegex)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicStringSetProperty(
   override val propertyName: String,
   override val defaultValue: Set[String],

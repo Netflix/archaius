@@ -22,6 +22,17 @@ import java.lang.{Long => jLong}
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicLongProperty {
+  def apply(propertyName: String, defaultValue: Long) =
+    new DynamicLongProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: Long, callback: () => Unit) = {
+    val p = new DynamicLongProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicLongProperty(
   override val propertyName: String,
   override val defaultValue: Long)

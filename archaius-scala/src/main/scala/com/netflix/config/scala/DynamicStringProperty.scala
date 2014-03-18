@@ -22,6 +22,17 @@ import java.lang.{String => jString}
  * User: gorzell
  * Date: 8/6/12
  */
+object DynamicStringProperty {
+  def apply(propertyName: String, defaultValue: String) =
+    new DynamicStringProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: String, callback: () => Unit) = {
+    val p = new DynamicStringProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicStringProperty(
   override val propertyName: String,
   override val defaultValue: String)

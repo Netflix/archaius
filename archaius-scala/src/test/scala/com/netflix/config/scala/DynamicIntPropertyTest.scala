@@ -22,9 +22,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicIntPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Int] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicIntProperty(name, 1)
+  override def fixture(name: String) =
+    DynamicIntProperty(name, 1)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicIntProperty(name, 1, callback)
 
   "DynamicIntProperty" should {
     behave like dynamicProperty(1, 2)

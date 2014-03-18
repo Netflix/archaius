@@ -22,15 +22,22 @@ import java.lang.{Boolean => jBoolean}
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicBooleanProperty {
+  def apply(propertyName: String, defaultValue: Boolean) =
+    new DynamicBooleanProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: Boolean, callback: () => Unit) = {
+    val p = new DynamicBooleanProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicBooleanProperty(
   override val propertyName: String,
-  override val defaultValue: Boolean,
-  callback: Option[() => Unit] = None)
+  override val defaultValue: Boolean)
 extends DynamicProperty[Boolean]
 {
-
-  callback.foreach(addCallback)
-
   override protected val box = new PropertyBox[Boolean, jBoolean] {
     override val prop = DynamicPropertyFactory.getInstance().getBooleanProperty(propertyName, defaultValue)
 

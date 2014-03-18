@@ -22,6 +22,17 @@ import java.lang.{Double => jDouble}
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicDoubleProperty {
+  def apply(propertyName: String, defaultValue: Double) =
+    new DynamicDoubleProperty(propertyName, defaultValue)
+
+  def apply(propertyName: String, defaultValue: Double, callback: () => Unit) = {
+    val p = new DynamicDoubleProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
+
 class DynamicDoubleProperty(
   override val propertyName: String,
   override val defaultValue: Double)

@@ -29,9 +29,10 @@ import org.scalatest.matchers.ShouldMatchers
 @RunWith(classOf[JUnitRunner])
 class DynamicBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Boolean] {
 
-  import DynamicProperties._
-
-  override def fixture(name: String) = dynamicBooleanProperty(name, true)
+  override def fixture(name: String) =
+    DynamicBooleanProperty(name, true)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicBooleanProperty(name, true, callback)
 
   "DynamicBooleanProperty" should {
     behave like dynamicProperty(true, false)
