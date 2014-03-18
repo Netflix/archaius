@@ -68,6 +68,14 @@ trait DynamicProperty[T] {
     box.addCallback(Option(callback))
   }
 
+  /**
+   * Remove all callbacks to be triggered when the value of the property is
+   * changed.
+   */
+  def removeAllCallbacks() {
+    box.removeAllCallbacks()
+  }
+
   override def toString: String = s"[${propertyName}] = ${get}"
 
   protected val box: PropertyBox[T, _]
@@ -81,7 +89,10 @@ protected[scala] abstract class PropertyBox[T, JT] {
   def default: T = convert(prop.getDefaultValue)
   def addCallback(callback: Option[() => Unit]) {
     callback.map( c => prop.addCallback( new Runnable { def run() { c() } } ) )
-      .getOrElse(prop.addCallback(null))
+      .getOrElse()
+  }
+  def removeAllCallbacks() {
+    prop.removeAllCallbacks()
   }
   protected def convert(jt: JT): T
 }

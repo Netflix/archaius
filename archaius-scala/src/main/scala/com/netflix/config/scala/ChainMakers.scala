@@ -52,7 +52,15 @@ protected[scala] object ChainMakers {
      */
     def addCallback(callback: Option[() => Unit]) {
       callback.map( c => chain.addCallback( new Runnable { def run() { c() } } ) )
-        .getOrElse(chain.addCallback(null))
+        .getOrElse()
+    }
+
+    /**
+     * Remove all callbacks to be triggered when the value of the property is
+     * changed.
+     */
+    def removeAllCallbacks() {
+      chain.removeAllCallbacks()
     }
 
     /**

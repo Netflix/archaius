@@ -16,8 +16,15 @@
 package com.netflix.config.scala
 
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.concurrent.{IntegrationPatience, Eventually}
+import org.scalatest.time.{Millis, Seconds, Span}
 
-trait DynamicPropertyBehaviors[TYPE] { this: PropertiesTestHelp with ShouldMatchers =>
+trait DynamicPropertyBehaviors[TYPE] extends Eventually with IntegrationPatience { this: PropertiesTestHelp with ShouldMatchers =>
+
+  override implicit val patienceConfig = PatienceConfig(
+    timeout = scaled(Span(15, Seconds)),
+    interval = scaled(Span(150, Millis))
+  )
 
   val propertyName = s"test.prop.${this.getClass.getSimpleName}"
 
@@ -36,8 +43,42 @@ trait DynamicPropertyBehaviors[TYPE] { this: PropertiesTestHelp with ShouldMatch
     }
     "retrieve configured value" in {
       setProperty(propertyName, configuredValue)
-      val chainOfTwo = fixture(propertyName)
-      withClue(markProperty(propertyName)) { chainOfTwo.get should equal( expectedConfiguredValue ) }
+      eventually {
+        val property = fixture(propertyName)
+        withClue(markProperty(propertyName)) {
+          val current = property.get
+          current should equal( expectedConfiguredValue )
+        }
+      }
+    }
+    "call a registered callback on change" in {
+      var executionCount = 0
+      def callback() {
+        executionCount += 1
+      }
+      val property = fixture(propertyName)
+      property.addCallback(callback)
+      setProperty(propertyName, configuredValue)
+      eventually { executionCount should be(1) }
+    }
+    "not call a registered callback after callbacks are removed, on change" in {
+      var executionCount = 0
+      def callback() {
+        executionCount += 1
+      }
+      val property = fixture(propertyName)
+      property.addCallback(callback)
+      setProperty(propertyName, configuredValue)
+      eventually {
+        executionCount should be(1)
+        property.removeAllCallbacks()
+        setProperty(propertyName, defaultValue)
+        eventually {
+          executionCount should be(1)
+          setProperty(propertyName, configuredValue)
+          eventually { executionCount should be(1) }
+        }
+      }
     }
   }
 
