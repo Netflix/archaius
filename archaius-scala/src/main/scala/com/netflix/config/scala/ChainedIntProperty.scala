@@ -32,7 +32,7 @@ extends ChainedProperty[Int]
 
   callback.foreach(addCallback)
 
-  override protected val chainBox = new ChainBox[Int, java.lang.Integer] {
+  override protected val box = new ChainBox[Int, java.lang.Integer] {
 
     override protected lazy val typeName = classOf[Int].getName
 

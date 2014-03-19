@@ -32,7 +32,7 @@ extends ChainedProperty[Float]
 
   callback.foreach(addCallback)
 
-  override protected val chainBox =  new ChainBox[Float, java.lang.Float] {
+  override protected val box =  new ChainBox[Float, java.lang.Float] {
 
     override protected lazy val typeName = classOf[Float].getName
 

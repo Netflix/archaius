@@ -31,7 +31,7 @@ extends ChainedProperty[Boolean]
 
   callback.foreach(addCallback)
 
-  override protected val chainBox = new ChainBox[Boolean, java.lang.Boolean] {
+  override protected val box = new ChainBox[Boolean, java.lang.Boolean] {
 
     override protected lazy val typeName = classOf[Boolean].getName
 

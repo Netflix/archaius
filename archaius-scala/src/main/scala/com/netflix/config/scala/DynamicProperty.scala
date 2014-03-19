@@ -102,7 +102,7 @@ protected[scala] abstract class PropertyBox[T, JT] {
   protected def convert(jt: JT): T
 }
 
-protected[scala] class BoxConverter[B, TYPE](propertyBox: PropertyBox[TYPE,AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
+protected[this] class BoxConverter[B, TYPE](propertyBox: PropertyBox[TYPE,AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
   extends PropertyBox[B, TYPE]
 {
   protected lazy val typeName = mapType.runtimeClass.getName
@@ -125,7 +125,7 @@ protected[scala] class BoxConverter[B, TYPE](propertyBox: PropertyBox[TYPE,AnyRe
   override def default: B = convert(propertyBox.default)
 }
 
-protected[scala] class MapBy[B, TYPE](unmappedBox: PropertyBox[TYPE, AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
+protected[this] class MapBy[B, TYPE](unmappedBox: PropertyBox[TYPE, AnyRef], fn: (TYPE) => B, mapType: Manifest[B])
   extends DynamicProperty[B]
 {
   override protected val box = new BoxConverter[B, TYPE](unmappedBox, fn, mapType)
