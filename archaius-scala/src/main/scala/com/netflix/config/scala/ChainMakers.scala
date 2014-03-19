@@ -83,7 +83,7 @@ protected[scala] object ChainMakers {
      * be null.
      * @return the value derived from the chain of properties.
      */
-    def apply: Option[TYPE] = Option(convert(chain.get()))
+    def apply(): Option[TYPE] = Option(convert(chain.get()))
 
     /**
      * Produce the most-appropriate current value of the chain of properties.  Where the Scala type allows
@@ -92,6 +92,29 @@ protected[scala] object ChainMakers {
      * @return the value derived from the chain of properties.
      */
     def get: TYPE = convert(nonNull(chain.get()))
+  }
+
+  class BoxConverter[B, TYPE](chainBox: ChainBox[TYPE,_], fn: (TYPE) => B, mapType: Manifest[B])
+  extends ChainBox[B, TYPE]
+  {
+    override protected lazy val typeName = mapType.runtimeClass.getName
+
+    // all calls in some way divert to the provided chainBox
+    override protected val chain : ChainLink[TYPE] = null
+
+    protected def convert(cv: TYPE): B = fn(cv)
+
+    override def apply(): Option[B] = chainBox().map(fn)
+
+    override def get: B = fn(chainBox.get)
+
+    override def addCallback(callback: Runnable) {
+      chainBox.addCallback(callback)
+    }
+
+    override def propertyName: String = chainBox.propertyName
+
+    override def defaultValue: B = convert(chainBox.defaultValue)
   }
 
   /**

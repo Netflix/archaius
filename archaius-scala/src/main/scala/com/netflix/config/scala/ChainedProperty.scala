@@ -15,7 +15,7 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.scala.ChainMakers.ChainBox
+import com.netflix.config.scala.ChainMakers.{BoxConverter, ChainBox}
 
 /**
  * Base functionality of a [[com.netflix.config.ChainedDynamicProperty]], in Scala terms.
@@ -47,7 +47,22 @@ trait ChainedProperty[TYPE] extends DynamicProperty[TYPE] {
    * be null.
    * @return the value derived from the chain of properties.
    */
-  override def apply(): Option[TYPE] = chainBox.apply
+  def apply(): Option[TYPE] = chainBox()
+
+  /**
+   * Allow derivation of a new type of ChainedProperty by mapping the type of this one.
+   * @param fn the transformation function which produces the new type.
+   * @return a new ChainedProperty for the target type.
+   */
+  def map[B](fn: (TYPE) => B)(implicit mapType: Manifest[B]): ChainedProperty[B] = new MapBy(chainBox, fn, mapType)
+
+  class MapBy[B, TYPE](unmappedBox: ChainBox[TYPE, _], fn: (TYPE) => B, mapType: Manifest[B])
+  extends ChainedProperty[B]
+  {
+    override protected val chainBox = new BoxConverter[B, TYPE](unmappedBox, fn, mapType)
+
+    override def propertyNames: Iterable[String] = propertyNames
+  }
 
   /**
    * Get the name of the property.
