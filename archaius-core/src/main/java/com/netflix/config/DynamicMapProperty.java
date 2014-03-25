@@ -48,7 +48,8 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
         // does not allow for null values in the Map.
         defaultValuesMap = (defaultValue == null ? null : Collections.unmodifiableMap(Maps.newHashMap(defaultValue)));
         
-        if (values == null) {
+        // The values will be initialized as an empty map in the super constructor
+        if (defaultValuesMap != null && values.isEmpty()) {
             values = defaultValuesMap;
         }
     }
