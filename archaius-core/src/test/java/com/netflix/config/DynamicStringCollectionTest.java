@@ -189,13 +189,20 @@ public class DynamicStringCollectionTest {
 
         DynamicStringMapProperty prop = new DynamicStringMapProperty("test", expectedMap);
         assertEquals(expectedMap, prop.getDefaultValueMap());
+        assertEquals(expectedMap, prop.getMap());
         
         DynamicStringMapProperty prop2 = new DynamicStringMapProperty("test", "k1=v1,k2=v2,k3=v3");
         assertEquals(expectedList, prop2.getDefaultValue());
         assertEquals(expectedMap, prop2.getDefaultValueMap());
+        assertEquals(expectedMap, prop2.getMap());
         
         DynamicStringMapProperty prop3 = new DynamicStringMapProperty("test", "k1=v1;;k2=v2;;k3=v3", ";;");
         assertEquals(expectedList, prop3.getDefaultValue());
         assertEquals(expectedMap, prop3.getDefaultValueMap());
+        assertEquals(expectedMap, prop3.getMap());
+        
+        DynamicStringMapProperty prop4 = new DynamicStringMapProperty("test", (Map<String,String>)null);
+        assertEquals(null, prop4.getDefaultValueMap());
+        assertEquals(Collections.emptyMap(), prop4.getMap());
     }
 }
