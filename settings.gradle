@@ -5,3 +5,5 @@ include 'archaius-aws'
 include 'archaius-jclouds'
 include 'archaius-scala'
 include 'archaius-zookeeper'
+include 'archaius-typesafe'
+

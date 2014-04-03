@@ -34,7 +34,6 @@ project(':archaius-core') {
         compile 'com.google.guava:guava:11.0.2'    
         compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.11'    
         compile 'org.codehaus.jackson:jackson-core-asl:1.9.11'
-        compile 'com.typesafe:config:1.2.0'
         testCompile 'junit:junit:4.11'
         testCompile 'org.slf4j:slf4j-simple:1.7.5'
         testCompile 'org.apache.derby:derby:10.8.2.2'
@@ -57,6 +56,15 @@ project(':archaius-jclouds') {
     dependencies {
         compile project(':archaius-core')
         compile 'org.jclouds:jclouds-blobstore:1.5.3'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+    }
+}
+
+project(':archaius-typesafe') {
+    dependencies {
+        compile project(':archaius-core')
+        compile 'com.typesafe:config:1.2.0'
         testCompile 'junit:junit:4.11'
         testCompile 'org.slf4j:slf4j-simple:1.6.4'
     }
