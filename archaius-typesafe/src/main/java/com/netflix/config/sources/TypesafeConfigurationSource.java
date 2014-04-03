@@ -32,12 +32,12 @@ public class TypesafeConfigurationSource implements PolledConfigurationSource
             Object value = entry.getValue().unwrapped();
 
             if (value instanceof List) {
-                List values = (List) value;
-
-                if (false == safeArrayKeyExpansion(config, key, values.size())) {
+                if (false == safeArrayKeyExpansion(config, key)) {
                     log.error("Unable to expand array: {}", key);
                     continue;
                 }
+
+                List values = (List) value;
 
                 map.put(lengthKey(key), values.size());
 
@@ -52,10 +52,12 @@ public class TypesafeConfigurationSource implements PolledConfigurationSource
         return map;
     }
 
-    private boolean safeArrayKeyExpansion(Config config, String prefix, int length) {
+    private boolean safeArrayKeyExpansion(Config config, String prefix) {
         if (config.hasPath(lengthKey(prefix))) {
             return false;
         }
+
+        // don't need to test element expansion, as "[]" are illegal key characters in Typesafe Config
 
         return true;
     }
