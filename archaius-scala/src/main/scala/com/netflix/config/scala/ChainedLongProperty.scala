@@ -22,17 +22,17 @@ import com.netflix.config.{DynamicLongProperty => JavaDynamicLongProperty}
 class ChainedLongProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Long,
-  callback: Option[Runnable] = None)
+  callback: Option[() => Unit] = None)
 extends ChainedProperty[Long]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Long, callback: Option[Runnable] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Long, callback: Option[() => Unit] = None) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
   }
 
   callback.foreach(addCallback)
 
-  override protected val chainBox = new ChainBox[Long, java.lang.Long] {
+  override protected val box = new ChainBox[Long, java.lang.Long] {
 
     override protected lazy val typeName = classOf[Long].getName
 

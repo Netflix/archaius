@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,10 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
 import com.netflix.config.ConfigurationManager
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.matchers.ShouldMatchers
 
 /**
  * Date: 5/21/13
@@ -29,18 +27,22 @@ import com.netflix.config.ConfigurationManager
  */
 
 @RunWith(classOf[JUnitRunner])
-class DynamicBooleanPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicExecutionTest"
-  private val property = dynamicBooleanProperty(propertyName, true)
+class DynamicBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Boolean] {
 
-  private val config = ConfigurationManager.getConfigInstance
+  override def fixture(name: String) =
+    DynamicBooleanProperty(name, true)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicBooleanProperty(name, true, callback)
 
   "DynamicBooleanProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty(true, false)
+  }
 
-    "execute the code" in {
+  "DynamicBooleanProperty.ifEnabled" should {
+    "execute the provided function when value is true" in {
+      val config = ConfigurationManager.getConfigInstance
+      val property = fixture(propertyName)
+
       config.setProperty(propertyName, true.toString)
 
       var executionCount = 0
@@ -54,7 +56,10 @@ class DynamicBooleanPropertyTest extends WordSpec with ShouldMatchers {
       executionCount should be(1)
     }
 
-    "not execute the code" in {
+    "not execute the provided function when value is false" in {
+      val config = ConfigurationManager.getConfigInstance
+      val property = fixture(propertyName)
+
       config.setProperty(propertyName, false.toString)
 
       var executionCount = 0

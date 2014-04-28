@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,30 @@
 package com.netflix.config.scala
 
 import com.netflix.config.DynamicPropertyFactory
+import java.lang.{String => jString}
 
 /**
  * User: gorzell
  * Date: 8/6/12
  */
+object DynamicStringProperty {
+  def apply(propertyName: String, defaultValue: String) =
+    new DynamicStringProperty(propertyName, defaultValue)
 
-class DynamicStringProperty(val propertyName: String, default: String) {
+  def apply(propertyName: String, defaultValue: String, callback: () => Unit) = {
+    val p = new DynamicStringProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
 
-  private val prop = DynamicPropertyFactory.getInstance().getStringProperty(propertyName, default)
-
-  def apply: Option[String] = Option(get)
-
-  def get: String = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicStringProperty(
+  override val propertyName: String,
+  override val defaultValue: String)
+extends DynamicProperty[String]
+{
+  override protected val box = new PropertyBox[String, jString] {
+    override val prop = DynamicPropertyFactory.getInstance().getStringProperty(propertyName, defaultValue)
+    def convert(jt: jString): String = jt
   }
 }

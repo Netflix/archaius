@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +15,26 @@
  */
 package com.netflix.config.scala
 
-class DynamicContextualProperty[T](val propertyName: String, val default: T) {
+import com.netflix.config.{DynamicContextualProperty => jDynamicContextualProperty}
 
-  private val prop = new DynamicContextualProperty[T](propertyName, default)
+object DynamicContextualProperty {
+  def apply[T](propertyName: String, defaultValue: T) =
+    new DynamicContextualProperty(propertyName, defaultValue)
 
-  def apply: Option[T] = Option(get)
+  def apply[T](propertyName: String, defaultValue: T, callback: () => Unit) = {
+    val p = new DynamicContextualProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
 
-  def get: T = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicContextualProperty[T](
+  override val propertyName: String,
+  override val defaultValue: T)
+extends DynamicProperty[T]
+{
+  override protected val box = new PropertyBox[T, T] {
+    override val prop = new jDynamicContextualProperty[T](propertyName, defaultValue)
+    def convert(jt: T): T = jt
   }
 }

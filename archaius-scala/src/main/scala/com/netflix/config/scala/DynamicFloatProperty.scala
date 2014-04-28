@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,30 @@
 package com.netflix.config.scala
 
 import com.netflix.config.DynamicPropertyFactory
+import java.lang.{Float => jFloat}
 
 /**
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicFloatProperty {
+  def apply(propertyName: String, defaultValue: Float) =
+    new DynamicFloatProperty(propertyName, defaultValue)
 
-class DynamicFloatProperty(val propertyName: String, val default: Float) {
+  def apply(propertyName: String, defaultValue: Float, callback: () => Unit) = {
+    val p = new DynamicFloatProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
 
-  private val prop = DynamicPropertyFactory.getInstance().getFloatProperty(propertyName, default)
-
-  def apply: Option[Float] = Option(get)
-
-  def get: Float = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicFloatProperty(
+  override val propertyName: String,
+  override val defaultValue: Float)
+extends DynamicProperty[Float]
+{
+  override protected val box = new PropertyBox[Float, jFloat] {
+    override val prop = DynamicPropertyFactory.getInstance().getFloatProperty(propertyName, defaultValue)
+    def convert(jt: jFloat): Float = jt
   }
 }

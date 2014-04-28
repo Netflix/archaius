@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,30 @@
 package com.netflix.config.scala
 
 import com.netflix.config.DynamicPropertyFactory
+import java.lang.{Long => jLong}
 
 /**
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicLongProperty {
+  def apply(propertyName: String, defaultValue: Long) =
+    new DynamicLongProperty(propertyName, defaultValue)
 
-class DynamicLongProperty(val propertyName: String, val default: Long) {
+  def apply(propertyName: String, defaultValue: Long, callback: () => Unit) = {
+    val p = new DynamicLongProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
 
-  private val prop = DynamicPropertyFactory.getInstance().getLongProperty(propertyName, default)
-
-  def apply: Option[Long] = Option(get)
-
-  def get: Long = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicLongProperty(
+  override val propertyName: String,
+  override val defaultValue: Long)
+extends DynamicProperty[Long]
+{
+  override protected val box = new PropertyBox[Long, jLong] {
+    override val prop = DynamicPropertyFactory.getInstance().getLongProperty(propertyName, defaultValue)
+    def convert(jt: jLong): Long = jt
   }
 }

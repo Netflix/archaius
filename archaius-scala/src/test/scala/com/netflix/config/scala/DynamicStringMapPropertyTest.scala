@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,20 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
-import com.netflix.config.ConfigurationManager
 
 @RunWith(classOf[JUnitRunner])
-class DynamicStringMapPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicStringMapTest"
-  private val property = dynamicStringMapProperty(propertyName, Map[String, String](), ",")
+class DynamicStringMapPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Map[String, String]] {
+
+  override def fixture(name: String) =
+    DynamicStringMapProperty(name, Map("a" -> "x", "b" -> "y", "c" -> "z"), ",")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringMapProperty(name, Map("a" -> "x", "b" -> "y", "c" -> "z"), ",", callback)
 
   "DynamicStringMapProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty("a=x,b=y,c=z", "1=q,2=r,3=s", Map("a" -> "x", "b" -> "y", "c" -> "z"), Map("1" -> "q", "2" -> "r", "3" -> "s"))
   }
+
 }

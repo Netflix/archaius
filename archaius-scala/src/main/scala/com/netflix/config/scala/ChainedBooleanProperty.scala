@@ -21,17 +21,17 @@ import com.netflix.config.scala.ChainMakers.ChainBox
 class ChainedBooleanProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Boolean,
-  callback: Option[Runnable] = None)
+  callback: Option[() => Unit] = None)
 extends ChainedProperty[Boolean]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean, callback: Option[Runnable] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean, callback: Option[() => Unit] = None) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
   }
 
   callback.foreach(addCallback)
 
-  override protected val chainBox = new ChainBox[Boolean, java.lang.Boolean] {
+  override protected val box = new ChainBox[Boolean, java.lang.Boolean] {
 
     override protected lazy val typeName = classOf[Boolean].getName
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,55 +18,49 @@ package com.netflix.config.scala
 import com.netflix.config.DynamicListProperty
 
 /**
- * User: gorzell
- * Date: 8/6/12
- *
- * @deprecated You should use the object instead.
- * @since 0.5.5
+ * @deprecated Use the factory methods for each class instead of this central factory.
  */
-
-@deprecated("You should use the object instead.", "0.5.5")
-trait DynamicProperties {
-
+@deprecated("Use the factory methods for each class instead of this central factory.", "0.6.1")
+object DynamicProperties {
   private val DefaultDelimiterRegex = DynamicListProperty.DEFAULT_DELIMITER
 
   def dynamicIntProperty(propertyName: String, default: Int,
-                         callback: Runnable = null): DynamicIntProperty = {
+                         callback: () => Unit = null): DynamicIntProperty = {
     val prop = new DynamicIntProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
   def dynamicLongProperty(propertyName: String, default: Long,
-                          callback: Runnable = null): DynamicLongProperty = {
+                          callback: () => Unit = null): DynamicLongProperty = {
     val prop = new DynamicLongProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
   def dynamicFloatProperty(propertyName: String, default: Float,
-                           callback: Runnable = null): DynamicFloatProperty = {
+                           callback: () => Unit = null): DynamicFloatProperty = {
     val prop = new DynamicFloatProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
   def dynamicDoubleProperty(propertyName: String, default: Double,
-                            callback: Runnable = null): DynamicDoubleProperty = {
+                            callback: () => Unit = null): DynamicDoubleProperty = {
     val prop = new DynamicDoubleProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
   def dynamicBooleanProperty(propertyName: String, default: Boolean,
-                             callback: Runnable = null): DynamicBooleanProperty = {
+                             callback: () => Unit = null): DynamicBooleanProperty = {
     val prop = new DynamicBooleanProperty(propertyName, default)
     prop.addCallback(callback)
     prop
   }
 
   def dynamicStringProperty(propertyName: String, default: String,
-                            callback: Runnable = null): DynamicStringProperty = {
+                            callback: () => Unit = null): DynamicStringProperty = {
     val prop = new DynamicStringProperty(propertyName, default)
     prop.addCallback(callback)
     prop
@@ -75,7 +69,7 @@ trait DynamicProperties {
   def dynamicStringListProperty(propertyName: String,
                                 default: List[String],
                                 delimiterRegex: String = DefaultDelimiterRegex,
-                                callback: Runnable = null): DynamicStringListProperty = {
+                                callback: () => Unit = null): DynamicStringListProperty = {
     val prop = new DynamicStringListProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
@@ -84,7 +78,7 @@ trait DynamicProperties {
   def dynamicStringSetProperty(propertyName: String,
                                default: Set[String],
                                delimiterRegex: String = DefaultDelimiterRegex,
-                               callback: Runnable = null): DynamicStringSetProperty = {
+                               callback: () => Unit = null): DynamicStringSetProperty = {
     val prop = new DynamicStringSetProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
@@ -93,16 +87,14 @@ trait DynamicProperties {
   def dynamicStringMapProperty(propertyName: String,
                                default: Map[String, String],
                                delimiterRegex: String = DefaultDelimiterRegex,
-                               callback: Runnable = null): DynamicStringMapProperty = {
+                               callback: () => Unit = null): DynamicStringMapProperty = {
     val prop = new DynamicStringMapProperty(propertyName, default, delimiterRegex)
     prop.addCallback(callback)
     prop
   }
-}
 
-object DynamicProperties extends DynamicProperties {
   def dynamicContextualProperty[T](propertyName: String, default: T,
-                                   callback: Runnable = null): DynamicContextualProperty[T] = {
+                                   callback: () => Unit = null): DynamicContextualProperty[T] = {
     val prop = new DynamicContextualProperty[T](propertyName, default)
     prop.addCallback(callback)
     prop

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,19 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
-import com.netflix.config.ConfigurationManager
 
 @RunWith(classOf[JUnitRunner])
-class DynamicLongPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicLongTest"
-  private val property = dynamicLongProperty(propertyName, 1L)
+class DynamicLongPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Long] {
+
+  override def fixture(name: String) =
+    DynamicLongProperty(name, 1l)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicLongProperty(name, 1l, callback)
 
   "DynamicLongProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty(1l, 2l)
   }
 }

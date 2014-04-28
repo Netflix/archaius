@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,20 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
-import com.netflix.config.ConfigurationManager
 
 @RunWith(classOf[JUnitRunner])
-class DynamicStringSetPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicStringSetTest"
-  private val property = dynamicStringSetProperty(propertyName, Set[String](), ",")
+class DynamicStringSetPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Set[String]] {
+
+  override def fixture(name: String) =
+    DynamicStringSetProperty(name, Set("a", "b", "c"), ",")
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicStringSetProperty(name, Set("a", "b", "c"), ",", callback)
 
   "DynamicStringSetProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty("a,b,c", "1,2,3", Set("a", "b", "c"), Set("1", "2", "3"))
   }
+
 }

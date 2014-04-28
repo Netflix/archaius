@@ -15,13 +15,13 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.scala.ChainMakers.{BoxConverter, ChainBox}
+import com.netflix.config.scala.ChainMakers.{ChainBoxConverter, ChainBox}
 
 /**
  * Base functionality of a [[com.netflix.config.ChainedDynamicProperty]], in Scala terms.
  * @tparam TYPE the Scala type produced by the property.
  */
-trait ChainedProperty[TYPE] {
+trait ChainedProperty[TYPE] extends DynamicProperty[TYPE] {
 
   /*
    * The second generic property is necessary to provide the type for the ChainLink.  Conversions
@@ -29,7 +29,7 @@ trait ChainedProperty[TYPE] {
    * is implicitly converted to/from a java.lang.Integer 42, but classOf[scala.Int] does not
    * implicitly convert to classOf[java.lang.Integer].
    */
-  protected val chainBox: ChainBox[TYPE, _]
+  override protected val box : ChainBox[TYPE, _]
 
   /**
    * Produce the most-appropriate current value of the chain of properties.  Where the Scala type allows
@@ -37,7 +37,7 @@ trait ChainedProperty[TYPE] {
    * and so may not be null.
    * @return the value derived from the chain of properties.
    */
-  def get: TYPE = chainBox.get
+  override def get: TYPE = box.get
 
   /**
    * Produce the most-appropriate current value of the chain of properties, as an [[scala.Option]].  Null
@@ -45,19 +45,19 @@ trait ChainedProperty[TYPE] {
    * be null.
    * @return the value derived from the chain of properties.
    */
-  def apply(): Option[TYPE] = chainBox()
+  override def apply(): Option[TYPE] = box()
 
   /**
    * Allow derivation of a new type of ChainedProperty by mapping the type of this one.
    * @param fn the transformation function which produces the new type.
    * @return a new ChainedProperty for the target type.
    */
-  def map[B](fn: (TYPE) => B)(implicit mapType: Manifest[B]): ChainedProperty[B] = new MapBy(chainBox, fn, mapType)
+  override def map[B](fn: (TYPE) => B)(implicit mapType: Manifest[B]): ChainedProperty[B] = new MapChainBy(box, fn, mapType)
 
-  class MapBy[B, TYPE](unmappedBox: ChainBox[TYPE, _], fn: (TYPE) => B, mapType: Manifest[B])
+  protected[this] class MapChainBy[B, TYPE](unmappedBox: ChainBox[TYPE, _], fn: (TYPE) => B, mapType: Manifest[B])
   extends ChainedProperty[B]
   {
-    override protected val chainBox = new BoxConverter[B, TYPE](unmappedBox, fn, mapType)
+    override protected val box = new ChainBoxConverter[B, TYPE](unmappedBox, fn, mapType)
 
     override def propertyNames: Iterable[String] = propertyNames
   }
@@ -66,7 +66,7 @@ trait ChainedProperty[TYPE] {
    * Get the name of the property.
    * @return the property name
    */
-  def propertyName: String = chainBox.propertyName
+  override def propertyName: String = box.propertyName
 
   /**
    * Get the names of all properties in the chain.
@@ -80,15 +80,26 @@ trait ChainedProperty[TYPE] {
    * be null.
    * @return the default value from the chain of properties.
    */
-  def defaultValue: TYPE = chainBox.defaultValue
+  override def defaultValue: TYPE = box.defaultValue
+
+  /**
+   * Add a callback to be triggered when the value of the property is
+   * changed.
+   * @param callback a function to call on changes.
+   */
+  override def addCallback(callback: () => Unit) {
+    box.addCallback(callback)
+  }
 
   /**
    * Add a callback to be triggered when the value of the property is
    * changed.
    * @param callback a [[java.lang.Runnable]] to call on changes.
    */
+  @deprecated("pass a function instead", "0.6.1")
   def addCallback(callback: Runnable) {
-    chainBox.addCallback(callback)
+    val run: () => Unit = callback.run
+    box.addCallback(run)
   }
 
   override def toString: String = s"[${propertyName}] = ${get}"

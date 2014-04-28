@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +16,30 @@
 package com.netflix.config.scala
 
 import com.netflix.config.DynamicPropertyFactory
+import java.lang.{Integer => jInt}
 
 /**
  * User: gorzell
  * Date: 8/6/12
  */
+object DynamicIntProperty {
+  def apply(propertyName: String, defaultValue: Int) =
+    new DynamicIntProperty(propertyName, defaultValue)
 
-class DynamicIntProperty(val propertyName: String, val default: Int) {
-
-  private val prop = DynamicPropertyFactory.getInstance().getIntProperty(propertyName, default)
-
-  def apply: Option[Int] = Option(get)
-
-  def get: Int = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+  def apply(propertyName: String, defaultValue: Int, callback: () => Unit) = {
+    val p = new DynamicIntProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
   }
+}
 
-  // For backward compatibility
-  @deprecated("Use propertyName instead", "0.5.15") 
-  def property = propertyName
+class DynamicIntProperty(
+  override val propertyName: String,
+  override val defaultValue: Int)
+extends DynamicProperty[Int]
+{
+  override protected val box = new PropertyBox[Int, jInt] {
+    override val prop = DynamicPropertyFactory.getInstance().getIntProperty(propertyName, defaultValue)
+    def convert(jt: jInt): Int = jt
+  }
 }

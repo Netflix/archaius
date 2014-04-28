@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,30 @@
 package com.netflix.config.scala
 
 import com.netflix.config.DynamicPropertyFactory
+import java.lang.{Double => jDouble}
 
 /**
  * User: gorzell
  * Date: 8/10/12
  */
+object DynamicDoubleProperty {
+  def apply(propertyName: String, defaultValue: Double) =
+    new DynamicDoubleProperty(propertyName, defaultValue)
 
-class DynamicDoubleProperty(val propertyName: String, val default: Double) {
+  def apply(propertyName: String, defaultValue: Double, callback: () => Unit) = {
+    val p = new DynamicDoubleProperty(propertyName, defaultValue)
+    p.addCallback(callback)
+    p
+  }
+}
 
-  private val prop = DynamicPropertyFactory.getInstance().getDoubleProperty(propertyName, default)
-
-  def apply: Option[Double] = Option(get)
-
-  def get: Double = prop.get
-
-  def addCallback(callback: Runnable) {
-    if (callback != null) prop.addCallback(callback)
+class DynamicDoubleProperty(
+  override val propertyName: String,
+  override val defaultValue: Double)
+extends DynamicProperty[Double]
+{
+  override protected val box = new PropertyBox[Double, jDouble] {
+    override val prop = DynamicPropertyFactory.getInstance().getDoubleProperty(propertyName, defaultValue)
+    def convert(jt: jDouble): Double = jt
   }
 }

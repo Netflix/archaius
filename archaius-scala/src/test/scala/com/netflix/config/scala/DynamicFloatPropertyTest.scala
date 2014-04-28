@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,19 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
-import com.netflix.config.scala.DynamicProperties._
-import com.netflix.config.ConfigurationManager
 
 @RunWith(classOf[JUnitRunner])
-class DynamicFloatPropertyTest extends WordSpec with ShouldMatchers {
-  private val propertyName = "dynamicFloatTest"
-  private val property = dynamicFloatProperty(propertyName, 1.0F)
+class DynamicFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Float] {
+
+  override def fixture(name: String) =
+    DynamicFloatProperty(name, 1.0f)
+  override def fixtureWithCallback(name: String, callback: () => Unit) =
+    DynamicFloatProperty(name, 1.0f, callback)
 
   "DynamicFloatProperty" should {
-    "provide access to property name via propertyName field" in {
-      property.propertyName should be(propertyName)
-    }
+    behave like dynamicProperty(1.0f, 2.2f)
   }
 }

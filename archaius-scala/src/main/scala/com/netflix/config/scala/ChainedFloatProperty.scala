@@ -22,17 +22,17 @@ import com.netflix.config.{DynamicFloatProperty => JavaDynamicFloatProperty}
 class ChainedFloatProperty(
   override val propertyNames: Iterable[String],
   override val defaultValue: Float,
-  callback: Option[Runnable] = None)
+  callback: Option[() => Unit] = None)
 extends ChainedProperty[Float]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Float, callback: Option[Runnable] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Float, callback: Option[() => Unit] = None) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
   }
 
   callback.foreach(addCallback)
 
-  override protected val chainBox =  new ChainBox[Float, java.lang.Float] {
+  override protected val box =  new ChainBox[Float, java.lang.Float] {
 
     override protected lazy val typeName = classOf[Float].getName
 

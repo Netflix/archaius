@@ -15,18 +15,24 @@
  */
 package com.netflix.config.scala
 
-import com.netflix.config.{DynamicPropertyFactory, ConfigurationManager, SimpleDeploymentContext}
+import com.netflix.config.{ConfigurationManager, DynamicPropertyFactory, SimpleDeploymentContext}
 import org.scalatest.{WordSpec, BeforeAndAfterAll}
 import scala.collection.JavaConverters._
+import java.util.Properties
 
-trait PropertiesTestHelp extends WordSpec with BeforeAndAfterAll {
-
+object PropertiesTestHelp {
   val context = new SimpleDeploymentContext()
   context.setApplicationId(getClass.getSimpleName)
   context.setDeploymentEnvironment("dev")
   context.setDeploymentStack("none")
+}
+
+trait PropertiesTestHelp extends WordSpec with BeforeAndAfterAll {
+
+  import PropertiesTestHelp._
 
   override def beforeAll() {
+    ConfigurationManager.getConfigInstance.clear()
     ConfigurationManager.setDeploymentContext(context)
     ConfigurationManager.getConfigInstance.setProperty("com.blackpearl.config.dynamo.disable", "true")
     ConfigurationManager.getConfigInstance.setProperty("com.netflix.karyon.eureka.disable", "true")
