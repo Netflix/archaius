@@ -474,7 +474,8 @@ public class DynamicProperty {
             } else if (Class.class.equals(objectType)) {
                 result = (T) classValue.getValue();            
             }
-        } catch (Exception e) {            
+        } catch (Exception e) {
+            logger.warn("Type conversion error", e);
         }
         if (result == null) {
             return Optional.absent();
