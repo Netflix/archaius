@@ -218,6 +218,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource,
             client.delete().forPath(path);        
         } catch (NoNodeException exc) {
         	// Node doesn't exist - NoOp
+            logger.warn("Node doesn't exist", exc);
         }
     }
     
