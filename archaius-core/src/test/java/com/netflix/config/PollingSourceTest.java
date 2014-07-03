@@ -93,7 +93,7 @@ public class PollingSourceTest {
         assertEquals("changed", pollingConfig.getProperty("prop1"));
         
         source.setFull("");
-        Thread.sleep(200);
+        Thread.sleep(250);
         assertFalse(pollingConfig.containsKey("prop1"));
         source.setFull("prop1=changedagain,prop2=new");
         Thread.sleep(200);
