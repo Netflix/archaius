@@ -15,16 +15,13 @@
  */
 package com.netflix.config;
 
-import static org.junit.Assert.*;
-
 import com.netflix.config.DynamicURLConfiguration;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Assert;
@@ -41,33 +38,48 @@ public class DynamicURLConfigurationTestWithFileURL {
     @Test
     public void testFileURL() {
         DynamicURLConfiguration config = new DynamicURLConfiguration();
-        assertEquals(5, config.getInt("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
+        Assert.assertEquals(5, config.getInt("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
     }
     
+
     @Test
     public void testFileURLWithPropertiesUpdatedDynamically() throws IOException, InterruptedException {
-        File file = new File("test.properties");
+
+        File file = new File("src/test/resources/test.properties");
+        
+        populateFile(file, "test.host=12312,123213", "test.host1=132,12");
         Thread.sleep(1 * 31000);
-        populateFile(file.toPath(),"test.host=12312,123213","test.host1=132,12");
-        
         DynamicURLConfiguration config = new DynamicURLConfiguration();
-        
+
         Assert.assertEquals(5, config.getInt("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
         Thread.sleep(1 * 31000);
         CopyOnWriteArrayList writeList = new CopyOnWriteArrayList();
         writeList.add("12312");
         writeList.add("123213");
-        
-        Assert.assertEquals(writeList,config.getProperty("test.host"));
+
+        Assert.assertEquals(writeList, config.getProperty("test.host"));
     }
 
-    private void populateFile(Path temporary, String prop1, String prop2)
-        throws IOException {
+    /**
+     * @param temporary
+     * @param prop3
+     * @param prop4
+     * @throws IOException
+     */
+    private void populateFile(File temporary, String prop1, String prop2) throws IOException {
 
         String s = prop1 + "\n" + prop2 + "\n";
         byte data[] = s.getBytes("UTF-8");
-       
-        OutputStream out = new BufferedOutputStream(Files.newOutputStream(temporary));
-        out.write(data, 0, data.length);
+        OutputStream out = null;
+        try {
+            out = new BufferedOutputStream(new FileOutputStream(temporary,true), 8 * 1024);
+            out.write(data, 0, data.length);
+        } finally {
+            if (null != out) {
+                out.flush();
+                out.close();
+            }
+        }
+
     }
 }
