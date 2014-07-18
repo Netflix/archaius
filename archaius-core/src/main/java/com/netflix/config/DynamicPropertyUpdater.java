@@ -129,14 +129,13 @@ public class DynamicPropertyUpdater {
                     Object newValueArray;
                     if (oldValue instanceof CopyOnWriteArrayList && AbstractConfiguration.getDefaultListDelimiter() != '\0'){
                         newValueArray = 
-                                        new CopyOnWriteArrayList<String>();
+                                        new CopyOnWriteArrayList();
                         
                       Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().split((String)newValue);
                       for(String s :stringiterator){
-                            ((CopyOnWriteArrayList<String>) newValueArray).add(s);
+                            ((CopyOnWriteArrayList) newValueArray).add(s);
                         }
-                      }
-                      else{
+                      } else {
                           newValueArray = newValue;
                       }
                   
