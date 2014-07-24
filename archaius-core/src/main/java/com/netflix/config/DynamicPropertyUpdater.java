@@ -131,7 +131,7 @@ public class DynamicPropertyUpdater {
                         newValueArray = 
                                         new CopyOnWriteArrayList();
                         
-                      Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().split((String)newValue);
+                      Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().trimResults().split((String)newValue);
                       for(String s :stringiterator){
                             ((CopyOnWriteArrayList) newValueArray).add(s);
                         }
