@@ -58,14 +58,14 @@ project(':archaius-aws') {
     }
 }
 
-project(':archaius-jclouds') {
-    dependencies {
-        compile project(':archaius-core')
-        compile 'org.jclouds:jclouds-blobstore:1.6.0'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
-    }
-}
+//project(':archaius-jclouds') {
+//    dependencies {
+//        compile project(':archaius-core')
+//        compile 'org.jclouds:jclouds-blobstore:1.6.0'
+//        testCompile 'junit:junit:4.11'
+//        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+//    }
+//}
 
 project(':archaius-zookeeper') {
     dependencies {
