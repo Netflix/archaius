@@ -15,16 +15,21 @@
  */
 package com.netflix.config;
 
+import com.google.common.base.Splitter;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Splitter;
 import com.netflix.config.validation.ValidationException;
 
 /**
@@ -119,12 +124,27 @@ public class DynamicPropertyUpdater {
                 config.addProperty(name, newValue);
             } else {
                 Object oldValue = config.getProperty(name);
+             
                 if (newValue != null) {
-                    if (!newValue.equals(oldValue)) {
+                    Object newValueArray;
+                    if (oldValue instanceof CopyOnWriteArrayList && AbstractConfiguration.getDefaultListDelimiter() != '\0'){
+                        newValueArray = 
+                                        new CopyOnWriteArrayList();
+                        
+                      Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().trimResults().split((String)newValue);
+                      for(String s :stringiterator){
+                            ((CopyOnWriteArrayList) newValueArray).add(s);
+                        }
+                      } else {
+                          newValueArray = newValue;
+                      }
+                  
+                    if (!newValueArray.equals(oldValue)) {
                         logger.debug("updating property key [{}], value [{}]", name, newValue);
     
                         config.setProperty(name, newValue);
                     }
+                   
                 } else if (oldValue != null) {
                     logger.debug("nulling out property key [{}]", name);
     
