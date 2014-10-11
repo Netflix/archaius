@@ -15,8 +15,8 @@
  */
 package com.netflix.config.sources;
 
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.PollResult;
 import org.junit.BeforeClass;
