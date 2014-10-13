@@ -15,8 +15,8 @@
  */
 package com.netflix.config.sources;
 
-import com.amazonaws.services.dynamodb.model.AttributeValue;
-import com.amazonaws.services.dynamodb.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 
 import java.util.Collection;
 import java.util.HashMap;

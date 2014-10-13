@@ -15,32 +15,27 @@
  */
 package com.netflix.config.sources;
 
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.model.*;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: gorzell
- * Date: 9/5/12
- */
 public class DynamoDbIntegrationTestHelper {
 
     static void createTable(AmazonDynamoDB dbClient, String tableName) throws InterruptedException {
         //TODO check to make sure the table isn't being created or deleted.
         KeySchemaElement hashKey = new KeySchemaElement()
-                .withAttributeName(DynamoDbConfigurationSource.defaultKeyAttribute).withAttributeType("S");
-        KeySchema ks = new KeySchema().withHashKeyElement(hashKey);
+                .withAttributeName(DynamoDbConfigurationSource.defaultKeyAttribute).withKeyType(KeyType.HASH);
 
         ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
                 .withReadCapacityUnits(1L)
                 .withWriteCapacityUnits(1L);
 
         dbClient.createTable(new CreateTableRequest().withTableName(tableName)
-                .withKeySchema(ks).withProvisionedThroughput(provisionedThroughput));
+                .withKeySchema(hashKey).withProvisionedThroughput(provisionedThroughput));
 
         while (!dbClient.describeTable(new DescribeTableRequest().withTableName(tableName)).getTable().getTableStatus().equalsIgnoreCase("active")) {
             Thread.sleep(10000);
@@ -74,23 +69,35 @@ public class DynamoDbIntegrationTestHelper {
 
     static void updateValues(AmazonDynamoDB dbClient, String tableName) {
 
+        Map<String, AttributeValue> key1 = new HashMap<String, AttributeValue>(1);
+        key1.put("test1", new AttributeValue().withS("HASH"));
+
         Map<String, AttributeValueUpdate> item1 = new HashMap<String, AttributeValueUpdate>(1);
         item1.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
                 .withAction(AttributeAction.PUT).withValue(new AttributeValue().withS("vala")));
+
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
-                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test1"))).withAttributeUpdates(item1));
+                withKey(key1).withAttributeUpdates(item1));
+
+        Map<String, AttributeValue> key2 = new HashMap<String, AttributeValue>(1);
+        key2.put("test2", new AttributeValue().withS("HASH"));
 
         HashMap<String, AttributeValueUpdate> item2 = new HashMap<String, AttributeValueUpdate>(1);
         item2.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
                 .withAction(AttributeAction.PUT).withValue(new AttributeValue().withS("valb")));
+
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
-                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test2"))).withAttributeUpdates(item2));
+                withKey(key2).withAttributeUpdates(item2));
+
+        Map<String, AttributeValue> key3 = new HashMap<String, AttributeValue>(1);
+        key3.put("test3", new AttributeValue().withS("HASH"));
 
         HashMap<String, AttributeValueUpdate> item3 = new HashMap<String, AttributeValueUpdate>(1);
         item3.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
                 .withAction(AttributeAction.PUT).withValue(new AttributeValue().withS("valc")));
+
         dbClient.updateItem(new UpdateItemRequest().withTableName(tableName).
-                withKey(new Key().withHashKeyElement(new AttributeValue().withS("test3"))).withAttributeUpdates(item3));
+                withKey(key3).withAttributeUpdates(item3));
     }
 
     static void removeTable(AmazonDynamoDB dbClient, String tableName) {

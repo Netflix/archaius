@@ -18,12 +18,11 @@ package com.netflix.config.sources;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodb.model.AttributeValue;
-import com.amazonaws.services.dynamodb.model.Key;
-import com.amazonaws.services.dynamodb.model.ScanRequest;
-import com.amazonaws.services.dynamodb.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.netflix.config.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -257,11 +256,11 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     @Override
     protected Map<String, PropertyWithDeploymentContext> loadPropertiesFromTable(String table) {
         Map<String, PropertyWithDeploymentContext> propertyMap = new HashMap<String, PropertyWithDeploymentContext>();
-        Key lastKeyEvaluated = null;
+        Map<String, AttributeValue> lastKeysEvaluated = null;
         do {
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
-                    .withExclusiveStartKey(lastKeyEvaluated);
+                    .withExclusiveStartKey(lastKeysEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
@@ -278,8 +277,8 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
                                 item.get(valueAttributeName.get()).getS()
                         ));
             }
-            lastKeyEvaluated = result.getLastEvaluatedKey();
-        } while (lastKeyEvaluated != null);
+            lastKeysEvaluated = result.getLastEvaluatedKey();
+        } while (lastKeysEvaluated != null);
         return propertyMap;
     }
 

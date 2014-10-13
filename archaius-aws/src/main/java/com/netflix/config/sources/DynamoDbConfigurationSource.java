@@ -18,12 +18,11 @@ package com.netflix.config.sources;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.dynamodb.AmazonDynamoDB;
-import com.amazonaws.services.dynamodb.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodb.model.AttributeValue;
-import com.amazonaws.services.dynamodb.model.Key;
-import com.amazonaws.services.dynamodb.model.ScanRequest;
-import com.amazonaws.services.dynamodb.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import com.netflix.config.PollResult;
@@ -74,17 +73,17 @@ public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSo
     @Override
     protected synchronized Map<String, Object> loadPropertiesFromTable(String table) {
         Map<String, Object> propertyMap = new HashMap<String, Object>();
-        Key lastKeyEvaluated = null;
+        Map<String, AttributeValue> lastKeysEvaluated = null;
         do {
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
-                    .withExclusiveStartKey(lastKeyEvaluated);
+                    .withExclusiveStartKey(lastKeysEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 propertyMap.put(item.get(keyAttributeName.get()).getS(), item.get(valueAttributeName.get()).getS());
             }
-            lastKeyEvaluated = result.getLastEvaluatedKey();
-        } while (lastKeyEvaluated != null);
+            lastKeysEvaluated = result.getLastEvaluatedKey();
+        } while (lastKeysEvaluated != null);
         return propertyMap;
     }
 
