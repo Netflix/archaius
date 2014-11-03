@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -36,7 +36,7 @@ public class DynamicContextualPropertyTest {
     @Test
     public void testPropertyChange() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Inclusion.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         List<Value<Integer>> values = Lists.newArrayList();
         Value<Integer> value = new Value<Integer>();
         Map<String, Collection<String>> dimension = Maps.newHashMap();
