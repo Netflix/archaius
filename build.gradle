@@ -51,7 +51,9 @@ project(':archaius-core') {
 project(':archaius-aws') {
     dependencies {
         compile project(':archaius-core')
-        compile 'com.amazonaws:aws-java-sdk:1.9.0'
+        compile 'com.amazonaws:aws-java-sdk-core:1.9.3'
+        compile 'com.amazonaws:aws-java-sdk-dynamodb:1.9.3'
+        compile 'com.amazonaws:aws-java-sdk-s3:1.9.3'
         testCompile 'junit:junit:4.11'
         testCompile 'org.mockito:mockito-all:1.9.5'
         testCompile 'org.slf4j:slf4j-simple:1.6.4'
