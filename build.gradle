@@ -25,7 +25,8 @@ apply from: file('gradle/release.gradle')
 subprojects {
     dependencies {
         compile 'com.google.code.findbugs:annotations:2.0.0'
-        testCompile('log4j:log4j:1.2.16')
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.slf4j:slf4j-simple:1.7.7'
     }
     group = "com.netflix.${githubProjectName}" 
 
@@ -40,8 +41,6 @@ project(':archaius-core') {
         compile 'com.google.guava:guava:11.0.2'    
         compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.11'    
         compile 'org.codehaus.jackson:jackson-core-asl:1.9.11'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.7.5'
         testCompile 'org.apache.derby:derby:10.8.2.2'
         testCompile files('src/test/resources/classpathTestResources.jar')
 
@@ -52,9 +51,7 @@ project(':archaius-aws') {
     dependencies {
         compile project(':archaius-core')
         compile 'com.amazonaws:aws-java-sdk:1.9.0'
-        testCompile 'junit:junit:4.11'
         testCompile 'org.mockito:mockito-all:1.9.5'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
     }
 }
 
@@ -62,8 +59,6 @@ project(':archaius-aws') {
 //    dependencies {
 //        compile project(':archaius-core')
 //        compile 'org.jclouds:jclouds-blobstore:1.6.0'
-//        testCompile 'junit:junit:4.11'
-//        testCompile 'org.slf4j:slf4j-simple:1.6.4'
 //    }
 //}
 
@@ -77,8 +72,6 @@ project(':archaius-zookeeper') {
         }
         compile 'org.apache.curator:curator-client:2.3.0'
         compile 'org.apache.curator:curator-recipes:2.3.0'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
         testCompile 'org.apache.curator:curator-test:2.3.0'
     }
 }
@@ -90,7 +83,6 @@ project(':archaius-scala') {
         compile project(':archaius-core')
         compile 'org.scala-lang:scala-library:2.10.1'
         testCompile 'org.scalatest:scalatest_2.10.0:1.8'
-        testCompile 'junit:junit:4.11'
     }
 }
 
@@ -100,11 +92,10 @@ project(':archaius-samplelibrary') {
     dependencies {
         compile project(':archaius-scala')
 
-        compile 'org.slf4j:slf4j-api:1.6.4'
+        compile 'org.slf4j:slf4j-api:1.7.7'
         compile 'org.scala-lang:scala-library:2.10.1'
 
         testCompile 'org.scalatest:scalatest_2.10.0:1.8'
-        testCompile 'junit:junit:4.11'
     }
     jar {
         from('src/main/java') {
