@@ -70,7 +70,7 @@ public class DynamoDbIntegrationTestHelper {
     static void updateValues(AmazonDynamoDB dbClient, String tableName) {
 
         Map<String, AttributeValue> key1 = new HashMap<String, AttributeValue>(1);
-        key1.put("test1", new AttributeValue().withS("HASH"));
+        key1.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test1"));
 
         Map<String, AttributeValueUpdate> item1 = new HashMap<String, AttributeValueUpdate>(1);
         item1.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
@@ -80,7 +80,7 @@ public class DynamoDbIntegrationTestHelper {
                 withKey(key1).withAttributeUpdates(item1));
 
         Map<String, AttributeValue> key2 = new HashMap<String, AttributeValue>(1);
-        key2.put("test2", new AttributeValue().withS("HASH"));
+        key2.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test2"));
 
         HashMap<String, AttributeValueUpdate> item2 = new HashMap<String, AttributeValueUpdate>(1);
         item2.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
@@ -90,7 +90,7 @@ public class DynamoDbIntegrationTestHelper {
                 withKey(key2).withAttributeUpdates(item2));
 
         Map<String, AttributeValue> key3 = new HashMap<String, AttributeValue>(1);
-        key3.put("test3", new AttributeValue().withS("HASH"));
+        key3.put(DynamoDbConfigurationSource.defaultKeyAttribute, new AttributeValue().withS("test3"));
 
         HashMap<String, AttributeValueUpdate> item3 = new HashMap<String, AttributeValueUpdate>(1);
         item3.put(DynamoDbConfigurationSource.defaultValueAttribute, new AttributeValueUpdate()
