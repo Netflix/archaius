@@ -70,6 +70,15 @@ project(':archaius-aws') {
 //    }
 //}
 
+project(':archaius-typesafe') {
+    dependencies {
+        compile project(':archaius-core')
+        compile 'com.typesafe:config:1.2.1'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+    }
+}
+
 project(':archaius-zookeeper') {
     dependencies {
         compile project(':archaius-core')
