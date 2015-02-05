@@ -129,7 +129,7 @@ public class ConfigurationBasedDeploymentContext extends SimpleDeploymentContext
             }    
             contextValue = getValueFromConfig(DEPLOYMENT_SERVER_ID_PROPERTY);
             if (contextValue != null) {
-                setDeploymentStack(contextValue);
+                setDeploymentServerId(contextValue);
             }    
             config.addConfigurationListener(configListener);
         }
