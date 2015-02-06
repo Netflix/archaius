@@ -256,11 +256,11 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
     @Override
     protected Map<String, PropertyWithDeploymentContext> loadPropertiesFromTable(String table) {
         Map<String, PropertyWithDeploymentContext> propertyMap = new HashMap<String, PropertyWithDeploymentContext>();
-        Map<String, AttributeValue> lastKeysEvaluated = null;
+        Map<String, AttributeValue> lastKeyEvaluated = null;
         do {
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
-                    .withExclusiveStartKey(lastKeysEvaluated);
+                    .withExclusiveStartKey(lastKeyEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
@@ -277,8 +277,8 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
                                 item.get(valueAttributeName.get()).getS()
                         ));
             }
-            lastKeysEvaluated = result.getLastEvaluatedKey();
-        } while (lastKeysEvaluated != null);
+            lastKeyEvaluated = result.getLastEvaluatedKey();
+        } while (lastKeyEvaluated != null);
         return propertyMap;
     }
 

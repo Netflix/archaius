@@ -73,17 +73,17 @@ public class DynamoDbConfigurationSource extends AbstractDynamoDbConfigurationSo
     @Override
     protected synchronized Map<String, Object> loadPropertiesFromTable(String table) {
         Map<String, Object> propertyMap = new HashMap<String, Object>();
-        Map<String, AttributeValue> lastKeysEvaluated = null;
+        Map<String, AttributeValue> lastKeyEvaluated = null;
         do {
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
-                    .withExclusiveStartKey(lastKeysEvaluated);
+                    .withExclusiveStartKey(lastKeyEvaluated);
             ScanResult result = dbClient.scan(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 propertyMap.put(item.get(keyAttributeName.get()).getS(), item.get(valueAttributeName.get()).getS());
             }
-            lastKeysEvaluated = result.getLastEvaluatedKey();
-        } while (lastKeysEvaluated != null);
+            lastKeyEvaluated = result.getLastEvaluatedKey();
+        } while (lastKeyEvaluated != null);
         return propertyMap;
     }
 
