@@ -47,6 +47,7 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
     static final String endpointPropertyName = "com.netflix.config.dynamo.endpoint";
     static final String pollingMaxBackOffMsPropertyName = "com.netflix.config.dynamo.maxPollingBackOffMs";
     static final String pollingMinBackOffMsPropertyName = "com.netflix.config.dynamo.maxPollingBackOffMs";
+    static final String maxRetryCountPropertyName = "com.netflix.config.dynamo.maxRetryCount";
 
     //Property defaults
     static final String defaultTable = "archaiusProperties";
@@ -55,6 +56,7 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
     static final String defaultEndpoint = "dynamodb.us-east-1.amazonaws.com";
     static final Long defaultMaxBackOffMs = 5 * 1000L;
     static final Long defaultMinBackOffMs = 500L;
+    static final Long defaultMaxRetryCount = 100;
 
     //Dynamic Properties
     protected DynamicStringProperty tableName = DynamicPropertyFactory.getInstance()
@@ -69,6 +71,8 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
             .getLongProperty(pollingMaxBackOffMsPropertyName, defaultMaxBackOffMs);
     protected DynamicLongProperty minBackOffMs = DynamicPropertyFactory.getInstance()
             .getLongProperty(pollingMinBackOffMsPropertyName, defaultMinBackOffMs);
+    protected DynamicLongProperty maxRetryCount = DynamicPropertyFactory.getInstance()
+            .getLongProperty(maxRetryCountPropertyName, defaultMaxRetryCount);
 
     protected AmazonDynamoDB dbClient;
 
@@ -109,13 +113,18 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
 
     protected ScanResult dbScanWithThroughputBackOff(ScanRequest scanRequest) {
         Long currentBackOffMs = minBackOffMs.get();
-        while(true) {
+        Long retryCount = 0;
+        while (true) {
             try {
                 return dbClient.scan(scanRequest);
             }
             catch (ProvisionedThroughputExceededException e) {
                 currentBackOffMs = Math.min(currentBackOffMs * 2, maxBackOffMs.get());
                 log.error(String.format("Failed to poll Dynamo due to ProvisionedThroughputExceededException. Backing off for %d ms.", currentBackOffMs));
+                if (retryCount > maxRetryCount.get()) {
+                  throw e;
+                }
+                retryCount++;
 
                 try {
                     Thread.sleep(currentBackOffMs);
