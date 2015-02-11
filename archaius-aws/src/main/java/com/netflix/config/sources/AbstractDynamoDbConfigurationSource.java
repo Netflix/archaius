@@ -56,7 +56,7 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
     static final String defaultEndpoint = "dynamodb.us-east-1.amazonaws.com";
     static final Long defaultMaxBackOffMs = 5 * 1000L;
     static final Long defaultMinBackOffMs = 500L;
-    static final Long defaultMaxRetryCount = 100;
+    static final Long defaultMaxRetryCount = 100L;
 
     //Dynamic Properties
     protected DynamicStringProperty tableName = DynamicPropertyFactory.getInstance()
@@ -113,7 +113,7 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
 
     protected ScanResult dbScanWithThroughputBackOff(ScanRequest scanRequest) {
         Long currentBackOffMs = minBackOffMs.get();
-        Long retryCount = 0;
+        Long retryCount = 0L;
         while (true) {
             try {
                 return dbClient.scan(scanRequest);
