@@ -20,6 +20,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.slf4j.Logger;
@@ -41,12 +45,18 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
     static final String keyAttributePropertyName = "com.netflix.config.dynamo.keyAttributeName";
     static final String valueAttributePropertyName = "com.netflix.config.dynamo.valueAttributeName";
     static final String endpointPropertyName = "com.netflix.config.dynamo.endpoint";
+    static final String pollingMaxBackOffMsPropertyName = "com.netflix.config.dynamo.maxPollingBackOffMs";
+    static final String pollingMinBackOffMsPropertyName = "com.netflix.config.dynamo.maxPollingBackOffMs";
+    static final String maxRetryCountPropertyName = "com.netflix.config.dynamo.maxRetryCount";
 
     //Property defaults
     static final String defaultTable = "archaiusProperties";
     static final String defaultKeyAttribute = "key";
     static final String defaultValueAttribute = "value";
     static final String defaultEndpoint = "dynamodb.us-east-1.amazonaws.com";
+    static final Long defaultMaxBackOffMs = 5 * 1000L;
+    static final Long defaultMinBackOffMs = 500L;
+    static final Long defaultMaxRetryCount = 100L;
 
     //Dynamic Properties
     protected DynamicStringProperty tableName = DynamicPropertyFactory.getInstance()
@@ -57,7 +67,12 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
             .getStringProperty(valueAttributePropertyName, defaultValueAttribute);
     protected DynamicStringProperty endpointName = DynamicPropertyFactory.getInstance()
             .getStringProperty(endpointPropertyName, defaultEndpoint);
-
+    protected DynamicLongProperty maxBackOffMs = DynamicPropertyFactory.getInstance()
+            .getLongProperty(pollingMaxBackOffMsPropertyName, defaultMaxBackOffMs);
+    protected DynamicLongProperty minBackOffMs = DynamicPropertyFactory.getInstance()
+            .getLongProperty(pollingMinBackOffMsPropertyName, defaultMinBackOffMs);
+    protected DynamicLongProperty maxRetryCount = DynamicPropertyFactory.getInstance()
+            .getLongProperty(maxRetryCountPropertyName, defaultMaxRetryCount);
 
     protected AmazonDynamoDB dbClient;
 
@@ -93,6 +108,30 @@ public abstract class AbstractDynamoDbConfigurationSource <T> {
 
     public AbstractDynamoDbConfigurationSource(AmazonDynamoDB dbClient) {
         this.dbClient = dbClient;
+    }
+
+
+    protected ScanResult dbScanWithThroughputBackOff(ScanRequest scanRequest) {
+        Long currentBackOffMs = minBackOffMs.get();
+        Long retryCount = 0L;
+        while (true) {
+            try {
+                return dbClient.scan(scanRequest);
+            }
+            catch (ProvisionedThroughputExceededException e) {
+                currentBackOffMs = Math.min(currentBackOffMs * 2, maxBackOffMs.get());
+                log.error(String.format("Failed to poll Dynamo due to ProvisionedThroughputExceededException. Backing off for %d ms.", currentBackOffMs));
+                if (retryCount > maxRetryCount.get()) {
+                  throw e;
+                }
+                retryCount++;
+
+                try {
+                    Thread.sleep(currentBackOffMs);
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
     }
 
     protected abstract Map<String, T> loadPropertiesFromTable(String table);
