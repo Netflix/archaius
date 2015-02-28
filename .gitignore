@@ -1,5 +1,3 @@
-archaius-core/MySiteConfiguration/
-
 # Compiled source #
 ###################
 *.com
@@ -61,7 +59,9 @@ atlassian-ide-plugin.xml
 .project
 .settings
 .metadata
-*/bin
 
 # NetBeans specific files/directories
 .nbattrs
+
+bin
+test-output

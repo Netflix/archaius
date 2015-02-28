@@ -18,110 +18,35 @@ allprojects {
 
 apply from: file('gradle/convention.gradle')
 apply from: file('gradle/maven.gradle')
-apply from: file('gradle/check.gradle')
-apply from: file('gradle/license.gradle')
+//apply from: file('gradle/check.gradle')
+//apply from: file('gradle/license.gradle')
 apply from: file('gradle/release.gradle')
 
-subprojects {
-    dependencies {
-        compile 'com.google.code.findbugs:annotations:2.0.0'
-        testCompile('log4j:log4j:1.2.16')
-    }
-    group = "com.netflix.${githubProjectName}" 
+apply plugin: 'idea'
+apply plugin: 'eclipse'
 
-    apply plugin: 'java'
-    tasks.withType(Test) { forkEvery = 1 }
+subprojects {
+    group = "com.netflix.${githubProjectName}"
+
+    dependencies {
+        compile     'org.apache.commons:commons-lang3:3.3.2'
+        compile     'org.slf4j:slf4j-api:1.6.3'
+	
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+    }
 }
 
 project(':archaius-core') {
+    apply plugin: 'java'
     dependencies {
-        compile 'commons-configuration:commons-configuration:1.8'
-        compile 'org.slf4j:slf4j-api:1.6.4'
-        compile 'com.google.guava:guava:11.0.2'    
-        compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
-        compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
-        compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.7.5'
-        testCompile 'org.apache.derby:derby:10.8.2.2'
-        testCompile files('src/test/resources/classpathTestResources.jar')
-
     }
 }
-
-project(':archaius-aws') {
-    dependencies {
-        compile project(':archaius-core')
-        compile 'com.amazonaws:aws-java-sdk-core:1.9.3'
-        compile 'com.amazonaws:aws-java-sdk-dynamodb:1.9.3'
-        compile 'com.amazonaws:aws-java-sdk-s3:1.9.3'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.mockito:mockito-all:1.9.5'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
-    }
-}
-
-//project(':archaius-jclouds') {
-//    dependencies {
-//        compile project(':archaius-core')
-//        compile 'org.jclouds:jclouds-blobstore:1.6.0'
-//        testCompile 'junit:junit:4.11'
-//        testCompile 'org.slf4j:slf4j-simple:1.6.4'
-//    }
-//}
 
 project(':archaius-typesafe') {
+    apply plugin: 'java'
     dependencies {
-        compile project(':archaius-core')
-        compile 'com.typesafe:config:1.2.1'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+        compile     project(':archaius-core')
+        compile     'com.typesafe:config:1.2.1'
     }
 }
 
-project(':archaius-zookeeper') {
-    dependencies {
-        compile project(':archaius-core')
-        compile('org.apache.zookeeper:zookeeper:3.4.5') {
-            exclude group: 'com.sun.jdmk', module: 'jmxtools'
-            exclude group: 'com.sun.jmx', module: 'jmxri'
-            exclude group: 'javax.jms', module: 'jms'
-        }
-        compile 'org.apache.curator:curator-client:2.3.0'
-        compile 'org.apache.curator:curator-recipes:2.3.0'
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.slf4j:slf4j-simple:1.6.4'
-        testCompile 'org.apache.curator:curator-test:2.3.0'
-    }
-}
-
-project(':archaius-scala') {
-    apply plugin: 'scala'
-
-    dependencies {
-        compile project(':archaius-core')
-        compile 'org.scala-lang:scala-library:2.10.1'
-        testCompile 'org.scalatest:scalatest_2.10.0:1.8'
-        testCompile 'junit:junit:4.11'
-    }
-}
-
-project(':archaius-samplelibrary') {
-    apply plugin: 'scala'
-
-    dependencies {
-        compile project(':archaius-scala')
-
-        compile 'org.slf4j:slf4j-api:1.6.4'
-        compile 'org.scala-lang:scala-library:2.10.1'
-
-        testCompile 'org.scalatest:scalatest_2.10.0:1.8'
-        testCompile 'junit:junit:4.11'
-    }
-    jar {
-        from('src/main/java') {
-            include 'META-INF/conf/springbeans.xml'
-            include 'META-INF/conf/config.properties'
-        }
-    }
-}
