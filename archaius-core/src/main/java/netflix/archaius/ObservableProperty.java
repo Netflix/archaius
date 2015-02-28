@@ -38,4 +38,6 @@ public interface ObservableProperty {
      * @return
      */
     <T> PropertySubscription subscribe(PropertyObserver<T> observer, Class<T> type, T defaultValue);
+    
+    <T> PropertySubscription subscribe(TypedPropertyObserver<T> observer);
 }

@@ -7,7 +7,7 @@ import netflix.archaius.config.SystemConfig;
 
 import org.junit.Test;
 
-public class CommonsStrInterpolatorTest {
+public class ConfigManagerTest {
     @Test
     public void testBasicReplacement() {
         SimpleDynamicConfig dyn = new SimpleDynamicConfig("FAST");

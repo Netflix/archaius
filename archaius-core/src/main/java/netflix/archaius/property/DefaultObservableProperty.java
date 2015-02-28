@@ -10,6 +10,7 @@ import netflix.archaius.Config;
 import netflix.archaius.ObservableProperty;
 import netflix.archaius.PropertyObserver;
 import netflix.archaius.PropertySubscription;
+import netflix.archaius.TypedPropertyObserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,7 +172,6 @@ public class DefaultObservableProperty implements ObservableProperty {
         void update() {
             try {
                 T next = getCurrent();
-                System.out.println("next : " + next);
                 if ((next == null || existing == null) && next == existing) {
                     return;
                 }
@@ -186,5 +186,10 @@ public class DefaultObservableProperty implements ObservableProperty {
         }
         
         protected abstract T getCurrent() throws Exception;
+    }
+
+    @Override
+    public <T> PropertySubscription subscribe(TypedPropertyObserver<T> observer) {
+        return subscribe(observer, observer.getType(), observer.getDefaultValue());
     }
 }
