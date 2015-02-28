@@ -1,0 +1,52 @@
+// Establish version and status
+ext.githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral() // maven { url 'http://jcenter.bintray.com' }
+    }
+    apply from: file('gradle/buildscript.gradle'), to: buildscript 
+}
+
+allprojects {
+    repositories { 
+        mavenLocal()
+        mavenCentral() // maven { url: 'http://jcenter.bintray.com' }
+    }
+}
+
+apply from: file('gradle/convention.gradle')
+apply from: file('gradle/maven.gradle')
+//apply from: file('gradle/check.gradle')
+//apply from: file('gradle/license.gradle')
+apply from: file('gradle/release.gradle')
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+subprojects {
+    group = "com.netflix.${githubProjectName}"
+
+    dependencies {
+        compile     'org.apache.commons:commons-lang3:3.3.2'
+        compile     'org.slf4j:slf4j-api:1.6.3'
+	
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+    }
+}
+
+project(':archaius-core') {
+    apply plugin: 'java'
+    dependencies {
+    }
+}
+
+project(':archaius-typesafe') {
+    apply plugin: 'java'
+    dependencies {
+        compile     project(':archaius-core')
+        compile     'com.typesafe:config:1.2.1'
+    }
+}
+
