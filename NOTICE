@@ -1,0 +1,22 @@
+Archaius
+
+Copyright 2012 Netflix, Inc.
+
+This product includes software developed by The Apache Software
+Foundation (http://www.apache.org/).
+
+ColumnPrinter code developed by Proofpoint, Inc.
+https://github.com/proofpoint/platform
+Copyright (c) 2010 Proofpoint, Inc.
+
+Validation framework developed by JBoss
+https://github.com/hibernate/hibernate-validator
+Copyright (c) 2009 Red Hat, Inc. and/or its affiliates, and individual contributors
+
+Alternative collection types provided by Google Guava from
+http://code.google.com/p/guava-libraries/
+Copyright (C) 2007 Google Inc.
+
+Google Guice
+https://code.google.com/p/google-guice/
+Copyright (C) 2006 Google Inc.
