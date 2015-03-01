@@ -13,37 +13,7 @@ public class MapConfig extends AbstractConfig {
             this.name = name;
         }
         
-        public Builder put(String key, Integer value) {
-            map.put(key, value.toString());
-            return this;
-        }
-        
-        public Builder put(String key, String value) {
-            map.put(key, value);
-            return this;
-        }
-        
-        public Builder put(String key, Boolean value) {
-            map.put(key, value.toString());
-            return this;
-        }
-        
-        public Builder put(String key, Double value) {
-            map.put(key, value.toString());
-            return this;
-        }
-        
-        public Builder put(String key, Short value) {
-            map.put(key, value.toString());
-            return this;
-        }
-        
-        public Builder put(String key, Float value) {
-            map.put(key, value.toString());
-            return this;
-        }
-        
-        public Builder put(String key, Byte value) {
+        public <T> Builder put(String key, T value) {
             map.put(key, value.toString());
             return this;
         }
