@@ -4,6 +4,7 @@ import netflix.archaius.config.EnvironmentConfig;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
 import netflix.archaius.config.SystemConfig;
+import netflix.archaius.property.DefaultPropertyObserver;
 
 import org.junit.Test;
 
@@ -24,18 +25,14 @@ public class ConfigManagerTest {
               .addConfig(new EnvironmentConfig())
               .addConfig(new SystemConfig());
         
-        config.listen("abc").subscribe(new PropertyObserver<String>() {
+        Property<String> prop = config.observe("abc").asString("defaultValue");
+        
+        config.observe("abc").asString("defaultValue", new DefaultPropertyObserver<String>() {
             @Override
-            public void onChange(String key, String previous, String next) {
-                System.out.println("Configuration changed : " + key + " " + previous + " " + next);
+            public void onChange(String next) {
+                System.out.println("Configuration changed : " + next);
             }
-
-            @Override
-            public void onError(String propName, Throwable error) {
-                // TODO Auto-generated method stub
-                
-            }
-        }, String.class, null);
+        });
         
         dyn.setProperty("abc", "${c}");
     }

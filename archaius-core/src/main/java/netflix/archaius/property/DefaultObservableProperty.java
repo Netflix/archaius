@@ -3,14 +3,12 @@ package netflix.archaius.property;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import netflix.archaius.Config;
 import netflix.archaius.ObservableProperty;
+import netflix.archaius.Property;
 import netflix.archaius.PropertyObserver;
-import netflix.archaius.PropertySubscription;
-import netflix.archaius.TypedPropertyObserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +18,7 @@ public class DefaultObservableProperty implements ObservableProperty {
     
     private final String key;
     private final Config config;
-    private final CopyOnWriteArrayList<Subscriber<?>> subscribers = new CopyOnWriteArrayList<Subscriber<?>>();
+    private final CopyOnWriteArrayList<AbstractProperty<?>> subscribers = new CopyOnWriteArrayList<AbstractProperty<?>>();
     
     public DefaultObservableProperty(String key, Config config) {
         this.key = key;
@@ -29,138 +27,16 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public void update() {
-        for (Subscriber<?> subscriber : subscribers) {
+        for (AbstractProperty<?> subscriber : subscribers) {
             subscriber.update();
         }
     }
 
-    @Override
-    public <T> PropertySubscription subscribe(PropertyObserver<T> observer, Class<T> type, final T defaultValue) {
-        Subscriber<?> subscriber = null;
-        
-        if (type.equals(Integer.class)) {
-            subscriber = new Subscriber<Integer>(observer) {
-                @Override
-                protected Integer getCurrent() throws Exception {
-                    return config.getInteger(key, (Integer) defaultValue);
-                }
-            };
-        }
-        else if (type.equals(String.class)) {
-            subscriber = new Subscriber<String>(observer) {
-                @Override
-                protected String getCurrent() throws Exception {
-                    return config.getString(key, (String)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Boolean.class)) {
-            subscriber = new Subscriber<Boolean>(observer) {
-                @Override
-                protected Boolean getCurrent() throws Exception {
-                    return config.getBoolean(key, (Boolean)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Long.class)) {
-            subscriber = new Subscriber<Long>(observer) {
-                @Override
-                protected Long getCurrent() throws Exception {
-                    return config.getLong(key, (Long)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(BigDecimal.class)) {
-            subscriber = new Subscriber<BigDecimal>(observer) {
-                @Override
-                protected BigDecimal getCurrent() throws Exception {
-                    return config.getBigDecimal(key, (BigDecimal)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Double.class)) {
-            subscriber = new Subscriber<Double>(observer) {
-                @Override
-                protected Double getCurrent() throws Exception {
-                    return config.getDouble(key, (Double)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(BigInteger.class)) {
-            subscriber = new Subscriber<BigInteger>(observer) {
-                @Override
-                protected BigInteger getCurrent() throws Exception {
-                    return config.getBigInteger(key, (BigInteger)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Byte.class)) {
-            subscriber = new Subscriber<Byte>(observer) {
-                @Override
-                protected Byte getCurrent() throws Exception {
-                    return config.getByte(key, (Byte)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Float.class)) {
-            subscriber = new Subscriber<Float>(observer) {
-                @Override
-                protected Float getCurrent() throws Exception {
-                    return config.getFloat(key, (Float)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(List.class)) {
-            subscriber = new Subscriber<List>(observer) {
-                @Override
-                protected List getCurrent() throws Exception {
-                    return config.getList(key, (List)defaultValue);
-                }
-            };
-        }
-        else if (type.equals(Short.class)) {
-            subscriber = new Subscriber<Short>(observer) {
-                @Override
-                protected Short getCurrent() throws Exception {
-                    return config.getShort(key, (Short)defaultValue);
-                }
-            };
-        }
-        else {
-            final Constructor<T> constructor;
-            try {
-                constructor = type.getConstructor(String.class);
-                if (constructor != null) {
-                    subscriber = new Subscriber<T>(observer) {
-                        @Override
-                        protected T getCurrent() throws Exception {
-                            String value = config.getString(key);
-                            if (value == null) {
-                                return defaultValue;
-                            }
-                            else { 
-                                return constructor.newInstance(value);
-                            }
-                        }
-                    };
-                }
-            } catch (NoSuchMethodException e) {
-            } catch (SecurityException e) {
-            }
-            
-            throw new UnsupportedOperationException("Not parser for type " + type.getName());
-        }
-        
-        subscribers.add(subscriber);
-        subscriber.update();
-        return subscriber;
-    }
-    
-    public abstract class Subscriber<T> implements PropertySubscription {
-        private T existing = null;
+    public abstract class AbstractProperty<T> implements Property<T> {
+        private volatile T existing = null;
         private PropertyObserver<?> observer;
         
-        public Subscriber(PropertyObserver<?> observer) {
+        public AbstractProperty(PropertyObserver<?> observer) {
             this.observer = observer;
         }
         
@@ -176,20 +52,200 @@ public class DefaultObservableProperty implements ObservableProperty {
                     return;
                 }
                 else if (next == null || existing == null || !existing.equals(next)) {
-                    ((PropertyObserver<T>)observer).onChange(key, existing, next);
+                    
+                    
                     existing = next;
+                    if (observer != null) {
+                        ((PropertyObserver<T>)observer).onChange(existing);
+                    }
                 }
             }
             catch (Exception e) {
                 LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
+                if (observer != null) {
+                    ((PropertyObserver<T>)observer).onError(e);
+                }
             }
         }
         
+        @Override
+        public T get() {
+            return existing;
+        }
+
         protected abstract T getCurrent() throws Exception;
     }
 
+    private <T> AbstractProperty<T> subscribe(AbstractProperty<T> subscriber) {
+        subscribers.add(subscriber);
+        subscriber.update();
+        return subscriber;
+    }
+    
     @Override
-    public <T> PropertySubscription subscribe(TypedPropertyObserver<T> observer) {
-        return subscribe(observer, observer.getType(), observer.getDefaultValue());
+    public Property<String> asString(final String defaultValue, PropertyObserver<String> observer) {
+        return subscribe(new AbstractProperty<String>(observer) {
+            @Override
+            protected String getCurrent() throws Exception {
+                return config.getString(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<Integer> asInteger(final Integer defaultValue, PropertyObserver<Integer> observer) {
+        return subscribe(new AbstractProperty<Integer>(null) {
+            @Override
+            protected Integer getCurrent() throws Exception {
+                return config.getInteger(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<Double> asDouble(final Double defaultValue, PropertyObserver<Double> observer) {
+        return subscribe(new AbstractProperty<Double>(null) {
+            @Override
+            protected Double getCurrent() throws Exception {
+                return config.getDouble(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<Float> asFloat(final Float defaultValue, PropertyObserver<Float> observer) {
+        return subscribe(new AbstractProperty<Float>(null) {
+            @Override
+            protected Float getCurrent() throws Exception {
+                return config.getFloat(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<Short> asShort(final Short defaultValue, PropertyObserver<Short> observer) {
+        return subscribe(new AbstractProperty<Short>(null) {
+            @Override
+            protected Short getCurrent() throws Exception {
+                return config.getShort(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<Byte> asByte(final Byte defaultValue, PropertyObserver<Byte> observer) {
+        return subscribe(new AbstractProperty<Byte>(null) {
+            @Override
+            protected Byte getCurrent() throws Exception {
+                return config.getByte(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<BigDecimal> asBigDecimal(final BigDecimal defaultValue, PropertyObserver<BigDecimal> observer) {
+        return subscribe(new AbstractProperty<BigDecimal>(null) {
+            @Override
+            protected BigDecimal getCurrent() throws Exception {
+                return config.getBigDecimal(key, defaultValue);
+            }
+        });
+    }
+    
+    @Override
+    public Property<Boolean> asBoolean(final Boolean defaultValue, PropertyObserver<Boolean> observer) {
+        return subscribe(new AbstractProperty<Boolean>(null) {
+            @Override
+            protected Boolean getCurrent() throws Exception {
+                return config.getBoolean(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public Property<BigInteger> asBigInteger(final BigInteger defaultValue, PropertyObserver<BigInteger> observer) {
+        return subscribe(new AbstractProperty<BigInteger>(null) {
+            @Override
+            protected BigInteger getCurrent() throws Exception {
+                return config.getBigInteger(key, defaultValue);
+            }
+        });
+    }
+
+    @Override
+    public <T> Property<T> asType(Class<T> type, final T defaultValue, PropertyObserver<T> observer) {
+        final Constructor<T> constructor;
+        try {
+            constructor = type.getConstructor(String.class);
+            if (constructor != null) {
+                return subscribe(new AbstractProperty<T>(null) {
+                    @Override
+                    protected T getCurrent() throws Exception {
+                        String value = config.getString(key);
+                        if (value == null) {
+                            return defaultValue;
+                        }
+                        else { 
+                            return constructor.newInstance(value);
+                        }
+                    }
+                });
+            }
+        } catch (NoSuchMethodException e) {
+        } catch (SecurityException e) {
+            throw new UnsupportedOperationException("No parser for type " + type.getName());
+        }
+      
+        throw new UnsupportedOperationException("No parser for type " + type.getName());
+    }
+
+    @Override
+    public Property<String> asString(String defaultValue) {
+        return asString(defaultValue, null);
+    }
+
+    @Override
+    public Property<Integer> asInteger(Integer defaultValue) {
+        return asInteger(defaultValue, null);
+    }
+
+    @Override
+    public Property<Double> asDouble(Double defaultValue) {
+        return asDouble(defaultValue, null);
+    }
+
+    @Override
+    public Property<Float> asFloat(Float defaultValue) {
+        return asFloat(defaultValue, null);
+    }
+
+    @Override
+    public Property<Short> asShort(Short defaultValue) {
+        return asShort(defaultValue, null);
+    }
+
+    @Override
+    public Property<Byte> asByte(Byte defaultValue) {
+        return asByte(defaultValue, null);
+    }
+
+    @Override
+    public Property<BigDecimal> asBigDecimal(BigDecimal defaultValue) {
+        return asBigDecimal(defaultValue, null);
+    }
+
+    @Override
+    public Property<Boolean> asBoolean(Boolean defaultValue) {
+        return asBoolean(defaultValue, null);
+    }
+
+    @Override
+    public Property<BigInteger> asBigInteger(BigInteger defaultValue) {
+        return asBigInteger(defaultValue, null);
+    }
+
+    @Override
+    public <T> Property<T> asType(Class<T> type, T defaultValue) {
+        return asType(type, defaultValue, null);
     }
 }
