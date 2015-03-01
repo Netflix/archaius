@@ -19,4 +19,11 @@ public interface PropertyObserver<T> {
      * @param newValue
      */
     public void onChange(String propName, T prevValue, T newValue);
+    
+    /**
+     * Notification that a property update failed
+     * @param propName
+     * @param error
+     */
+    public void onError(String propName, Throwable error);
 }

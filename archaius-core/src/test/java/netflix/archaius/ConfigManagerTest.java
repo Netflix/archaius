@@ -29,6 +29,12 @@ public class ConfigManagerTest {
             public void onChange(String key, String previous, String next) {
                 System.out.println("Configuration changed : " + key + " " + previous + " " + next);
             }
+
+            @Override
+            public void onError(String propName, Throwable error) {
+                // TODO Auto-generated method stub
+                
+            }
         }, String.class, null);
         
         dyn.setProperty("abc", "${c}");

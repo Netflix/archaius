@@ -26,7 +26,7 @@ public interface ObservableProperty {
     /**
      * Notify the observable that it should fetch the latest property value
      */
-    void reload();
+    void update();
     
     /**
      * Subscribe for property change notification.  The observer will be called 

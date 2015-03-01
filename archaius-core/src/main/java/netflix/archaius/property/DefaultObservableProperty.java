@@ -28,7 +28,7 @@ public class DefaultObservableProperty implements ObservableProperty {
     }
 
     @Override
-    public void reload() {
+    public void update() {
         for (Subscriber<?> subscriber : subscribers) {
             subscriber.update();
         }

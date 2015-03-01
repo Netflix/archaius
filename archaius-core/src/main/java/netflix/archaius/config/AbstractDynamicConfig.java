@@ -3,8 +3,8 @@ package netflix.archaius.config;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import netflix.archaius.PropertyListener;
 import netflix.archaius.DynamicConfig;
+import netflix.archaius.DynamicConfigObserver;
 
 /**
  * Contract for a DynamicConfig source.
@@ -12,7 +12,7 @@ import netflix.archaius.DynamicConfig;
  * @author elandau
  */
 public abstract class AbstractDynamicConfig extends AbstractConfig implements DynamicConfig {
-    private CopyOnWriteArrayList<PropertyListener> listeners = new CopyOnWriteArrayList<PropertyListener>();
+    private CopyOnWriteArrayList<DynamicConfigObserver> listeners = new CopyOnWriteArrayList<DynamicConfigObserver>();
     
     public interface Listener {
         void onInvalidate(Collection<String> keys);
@@ -23,18 +23,30 @@ public abstract class AbstractDynamicConfig extends AbstractConfig implements Dy
     }
 
     @Override
-    public void addListener(PropertyListener listener) {
+    public void addListener(DynamicConfigObserver listener) {
         listeners.add(listener);
     }
     
     @Override
-    public void removeListener(PropertyListener listener) {
+    public void removeListener(DynamicConfigObserver listener) {
         listeners.remove(listener);
     }
     
     protected void notifyOnUpdate(String key) {
-        for (PropertyListener listener : listeners) {
+        for (DynamicConfigObserver listener : listeners) {
             listener.onUpdate(key, this);
+        }
+    }
+    
+    protected void notifyOnUpdate() {
+        for (DynamicConfigObserver listener : listeners) {
+            listener.onUpdate(this);
+        }
+    }
+    
+    protected void notifyOnError(Throwable t) {
+        for (DynamicConfigObserver listener : listeners) {
+            listener.onError(t, this);
         }
     }
 }

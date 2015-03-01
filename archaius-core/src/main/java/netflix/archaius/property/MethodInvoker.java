@@ -41,6 +41,11 @@ public class MethodInvoker<T> implements TypedPropertyObserver<T> {
     }
 
     @Override
+    public void onError(String propName, Throwable error) {
+        // No op
+    }
+
+    @Override
     public Class<T> getType() {
         return type;
     }
