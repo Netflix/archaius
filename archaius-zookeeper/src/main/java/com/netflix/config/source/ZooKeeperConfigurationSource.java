@@ -16,6 +16,7 @@
 package com.netflix.config.source;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -223,6 +224,10 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource,
     }
     
     public void close() {
-    	Closeables.closeQuietly(pathChildrenCache);
+        try {
+            Closeables.close(pathChildrenCache, true);
+        } catch (IOException exc) {
+            logger.warn("IOException should not have been thrown.", exc);
+        }
     }
 }
