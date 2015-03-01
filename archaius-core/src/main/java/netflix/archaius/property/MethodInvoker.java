@@ -2,20 +2,14 @@ package netflix.archaius.property;
 
 import java.lang.reflect.Method;
 
-import netflix.archaius.TypedPropertyObserver;
-
-public class MethodInvoker<T> implements TypedPropertyObserver<T> {
+public class MethodInvoker<T> extends DefaultPropertyObserver<T> {
     
     private Method method;
     private Object obj;
-    private Class<T> type;
-    private T defaultValue;
     
-    public MethodInvoker(Object obj, String methodName, T defaultValue) {
+    public MethodInvoker(Object obj, String methodName) {
         this.method = getMethodWithOneParameter(obj, methodName);
         this.obj    = obj;
-        this.type   = (Class<T>) method.getParameterTypes()[0]; 
-        this.defaultValue = defaultValue;
     }
     
     private static Method getMethodWithOneParameter(Object obj, String methodName) {
@@ -32,27 +26,11 @@ public class MethodInvoker<T> implements TypedPropertyObserver<T> {
     }
     
     @Override
-    public void onChange(String propName, T prevValue, T newValue) {
+    public void onChange(T newValue) {
         try {
             method.invoke(obj, newValue);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    @Override
-    public void onError(String propName, Throwable error) {
-        // No op
-    }
-
-    @Override
-    public Class<T> getType() {
-        return type;
-    }
-
-    @Override
-    public T getDefaultValue() {
-        return defaultValue;
-    }
-
 }

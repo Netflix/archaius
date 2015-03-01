@@ -131,7 +131,7 @@ public class ConfigManager extends CompositeConfig {
         this.registery = new ObservablePropertyRegistry(propertyFactory);
     }
     
-    public ObservableProperty listen(String key) {
+    public ObservableProperty observe(String key) {
         return this.registery.get(key);
     }
     
