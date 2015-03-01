@@ -3,7 +3,7 @@ package netflix.archaius;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ObservablePropertyRegistry implements PropertyListener {
+public class ObservablePropertyRegistry implements DynamicConfigObserver {
 
     private final ConcurrentMap<String, ObservableProperty> registry = new ConcurrentHashMap<String, ObservableProperty>();
     private final ObservablePropertyFactory factory;
@@ -16,10 +16,13 @@ public class ObservablePropertyRegistry implements PropertyListener {
     public void onUpdate(String key, Config config) {
         ObservableProperty property = registry.get(key);
         if (property != null) {
-            property.reload();
+            property.update();
         }
     }
     
+    @Override
+    public void onError(Throwable error, Config config) {
+    }
 
     /**
      * Get the ObservableProperty for a specific property name.  The ObservableProperty
@@ -39,5 +42,12 @@ public class ObservablePropertyRegistry implements PropertyListener {
         }
         
         return observable;
+    }
+
+    @Override
+    public void onUpdate(Config config) {
+        for (ObservableProperty prop : registry.values()) {
+            prop.update();
+        }
     }
 }

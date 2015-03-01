@@ -16,12 +16,12 @@ public interface DynamicConfig {
      * 
      * @param listener
      */
-    void addListener(PropertyListener listener);
+    void addListener(DynamicConfigObserver listener);
 
     /**
      * Remove a previously registered listener.
      * @param listener
      */
-    void removeListener(PropertyListener listener);
+    void removeListener(DynamicConfigObserver listener);
 
 }

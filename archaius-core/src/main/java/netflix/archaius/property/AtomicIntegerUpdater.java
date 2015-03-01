@@ -27,4 +27,9 @@ public class AtomicIntegerUpdater implements TypedPropertyObserver<Integer> {
     public Integer getDefaultValue() {
         return defaultValue;
     }
+
+    @Override
+    public void onError(String propName, Throwable error) {
+        // No op
+    }
 }
