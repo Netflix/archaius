@@ -7,7 +7,7 @@ import netflix.archaius.config.SimpleDynamicConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class AtomicUpdaterTest {
+public class PropertyTest {
     public static class MyService {
         private Property<Integer> value;
         private Property<Integer> value2;

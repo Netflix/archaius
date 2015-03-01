@@ -94,7 +94,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<Integer> asInteger(final Integer defaultValue, PropertyObserver<Integer> observer) {
-        return subscribe(new AbstractProperty<Integer>(null) {
+        return subscribe(new AbstractProperty<Integer>(observer) {
             @Override
             protected Integer getCurrent() throws Exception {
                 return config.getInteger(key, defaultValue);
@@ -104,7 +104,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<Double> asDouble(final Double defaultValue, PropertyObserver<Double> observer) {
-        return subscribe(new AbstractProperty<Double>(null) {
+        return subscribe(new AbstractProperty<Double>(observer) {
             @Override
             protected Double getCurrent() throws Exception {
                 return config.getDouble(key, defaultValue);
@@ -114,7 +114,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<Float> asFloat(final Float defaultValue, PropertyObserver<Float> observer) {
-        return subscribe(new AbstractProperty<Float>(null) {
+        return subscribe(new AbstractProperty<Float>(observer) {
             @Override
             protected Float getCurrent() throws Exception {
                 return config.getFloat(key, defaultValue);
@@ -124,7 +124,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<Short> asShort(final Short defaultValue, PropertyObserver<Short> observer) {
-        return subscribe(new AbstractProperty<Short>(null) {
+        return subscribe(new AbstractProperty<Short>(observer) {
             @Override
             protected Short getCurrent() throws Exception {
                 return config.getShort(key, defaultValue);
@@ -134,7 +134,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<Byte> asByte(final Byte defaultValue, PropertyObserver<Byte> observer) {
-        return subscribe(new AbstractProperty<Byte>(null) {
+        return subscribe(new AbstractProperty<Byte>(observer) {
             @Override
             protected Byte getCurrent() throws Exception {
                 return config.getByte(key, defaultValue);
@@ -144,7 +144,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<BigDecimal> asBigDecimal(final BigDecimal defaultValue, PropertyObserver<BigDecimal> observer) {
-        return subscribe(new AbstractProperty<BigDecimal>(null) {
+        return subscribe(new AbstractProperty<BigDecimal>(observer) {
             @Override
             protected BigDecimal getCurrent() throws Exception {
                 return config.getBigDecimal(key, defaultValue);
@@ -154,7 +154,7 @@ public class DefaultObservableProperty implements ObservableProperty {
     
     @Override
     public Property<Boolean> asBoolean(final Boolean defaultValue, PropertyObserver<Boolean> observer) {
-        return subscribe(new AbstractProperty<Boolean>(null) {
+        return subscribe(new AbstractProperty<Boolean>(observer) {
             @Override
             protected Boolean getCurrent() throws Exception {
                 return config.getBoolean(key, defaultValue);
@@ -164,7 +164,7 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     @Override
     public Property<BigInteger> asBigInteger(final BigInteger defaultValue, PropertyObserver<BigInteger> observer) {
-        return subscribe(new AbstractProperty<BigInteger>(null) {
+        return subscribe(new AbstractProperty<BigInteger>(observer) {
             @Override
             protected BigInteger getCurrent() throws Exception {
                 return config.getBigInteger(key, defaultValue);
@@ -178,7 +178,7 @@ public class DefaultObservableProperty implements ObservableProperty {
         try {
             constructor = type.getConstructor(String.class);
             if (constructor != null) {
-                return subscribe(new AbstractProperty<T>(null) {
+                return subscribe(new AbstractProperty<T>(observer) {
                     @Override
                     protected T getCurrent() throws Exception {
                         String value = config.getString(key);
