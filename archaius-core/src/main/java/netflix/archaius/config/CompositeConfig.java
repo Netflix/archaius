@@ -5,6 +5,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import netflix.archaius.Config;
 
+/**
+ * Config that is a composite of multiple configuration and as such doesn't track a 
+ * configuraiton of its own.  The composite does not merge the configurations but instead
+ * treats them as overrides so that a property existing in a configuration supersedes
+ * the same property in configuration that was added later.
+ * 
+ * @author elandau
+ *
+ * TODO: Optional cache of queried properties
+ */
 public class CompositeConfig extends AbstractConfig {
     private final CopyOnWriteArrayList<Config> levels = new CopyOnWriteArrayList<Config>();
 
