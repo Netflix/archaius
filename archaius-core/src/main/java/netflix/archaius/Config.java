@@ -81,4 +81,6 @@ public interface Config {
      * @return
      */
     Config subset(String prefix);
+    
+    void setStrInterpolator(StrInterpolator interpolator);
 }

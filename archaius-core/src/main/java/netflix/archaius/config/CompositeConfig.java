@@ -33,6 +33,7 @@ public class CompositeConfig extends AbstractConfig {
             return this;
         }
         levels.add(config);
+        config.setStrInterpolator(this.getStrInterpolator());
         return this;
     }
     

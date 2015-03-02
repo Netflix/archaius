@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URL;
 
 import netflix.archaius.ConfigLoader;
+import netflix.archaius.exceptions.ConfigurationException;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -13,19 +14,19 @@ public class TypesafeConfigLoader implements ConfigLoader {
     }
 
     @Override
-    public netflix.archaius.Config load(String name) {
-        System.out.println("Loading configuration : " + name);
-        Config config = ConfigFactory.parseResources(name + ".properties");
+    public netflix.archaius.Config load(String name, String resourceName) throws ConfigurationException {
+        System.out.println("Loading configuration : " + resourceName);
+        Config config = ConfigFactory.parseResources(resourceName + ".properties");
         return new TypesafeConfig(name, config);
     }
 
     @Override
-    public netflix.archaius.Config load(URL name) {
+    public netflix.archaius.Config load(String name, URL url) throws ConfigurationException {
         return null;
     }
 
     @Override
-    public netflix.archaius.Config load(File file) {
+    public netflix.archaius.Config load(String name, File file) throws ConfigurationException {
         return null;
     }
 
