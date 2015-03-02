@@ -1,6 +1,6 @@
 package netflix.archaius.property;
 
-import netflix.archaius.ConfigManager;
+import netflix.archaius.RootConfig;
 import netflix.archaius.Property;
 import netflix.archaius.config.SimpleDynamicConfig;
 
@@ -12,7 +12,7 @@ public class PropertyTest {
         private Property<Integer> value;
         private Property<Integer> value2;
         
-        public MyService(ConfigManager manager) {
+        public MyService(RootConfig manager) {
             value  = manager.observe("foo").asInteger(1, new MethodInvoker<Integer>(this, "setValue"));
             value2 = manager.observe("foo").asInteger(2);
         }
@@ -26,7 +26,7 @@ public class PropertyTest {
     public void test() {
         SimpleDynamicConfig config = new SimpleDynamicConfig("dyn");
         
-        ConfigManager manager = ConfigManager.builder().build();
+        RootConfig manager = RootConfig.builder().build();
         manager.addConfig(config);
         
         MyService service = new MyService(manager);

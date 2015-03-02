@@ -7,7 +7,7 @@ public class MapConfig extends AbstractConfig {
 
     public static class Builder {
         final String name;
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, Object> map = new HashMap<String, Object>();
         
         public Builder(String name) {
             this.name = name;
@@ -27,16 +27,16 @@ public class MapConfig extends AbstractConfig {
         return new Builder(name);
     }
     
-    private final Map<String, String> values = new HashMap<String, String>();
+    private final Map<String, Object> values = new HashMap<String, Object>();
     
-    public MapConfig(String name, Map<String, String> values) {
+    public MapConfig(String name, Map<String, Object> values) {
         super(name);
         this.values.putAll(values);
     }
 
     @Override
     public String getProperty(String key) {
-        return values.get(key);
+        return values.get(key).toString();
     }
 
     @Override

@@ -1,7 +1,7 @@
 package netflix.archaius.typesafe;
 
-import netflix.archaius.ConfigManager;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
+import netflix.archaius.config.LoadingCompositeConfig;
 import netflix.archaius.config.MapConfig;
 
 import org.junit.Assert;
@@ -10,7 +10,7 @@ import org.junit.Test;
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() {
-        ConfigManager config = ConfigManager.builder()
+        LoadingCompositeConfig config = LoadingCompositeConfig.builder()
                 .withConfigLoader(new TypesafeConfigLoader())
                 .build();
         

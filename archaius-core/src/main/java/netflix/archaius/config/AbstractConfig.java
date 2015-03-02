@@ -21,6 +21,10 @@ public abstract class AbstractConfig implements Config {
         this.interpolator = interpolator;
     }
     
+    public StrInterpolator getStrInterpolator() {
+        return this.interpolator;
+    }
+    
     @Override
     public String interpolate(String key) {
         return (String) interpolator.resolve(getProperty(key));
