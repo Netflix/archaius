@@ -54,8 +54,6 @@ public interface Config {
     
     boolean containsProperty(String key);
     
-    int size();
-    
     boolean isEmpty();
     
     Iterator<String> getKeys();
@@ -67,12 +65,12 @@ public interface Config {
      * @param key
      * @return
      */
-    String getProperty(String key);
+    Object getProperty(String key);
     
     /**
      * Return the interpolated String value for a property
      */
-    String interpolate(String key);
+    Object interpolate(String key);
     
     /**
      * Return a subset of the configuration prefixed by a key.

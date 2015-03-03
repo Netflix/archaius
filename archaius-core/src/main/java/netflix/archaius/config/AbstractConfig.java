@@ -1,12 +1,15 @@
 package netflix.archaius.config;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import netflix.archaius.Config;
 import netflix.archaius.StrInterpolator;
+import netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 
 public abstract class AbstractConfig implements Config {
 
@@ -15,6 +18,7 @@ public abstract class AbstractConfig implements Config {
     
     public AbstractConfig(String name) {
         this.name = name;
+        this.interpolator = CommonsStrInterpolatorFactory.INSTANCE.create(this);
     }
     
     public void setStrInterpolator(StrInterpolator interpolator) {
@@ -26,8 +30,12 @@ public abstract class AbstractConfig implements Config {
     }
     
     @Override
-    public String interpolate(String key) {
-        return (String) interpolator.resolve(getProperty(key));
+    public Object interpolate(String key) {
+        Object prop = getProperty(key);
+        if (prop == null) {
+            return null;
+        }
+        return interpolator.resolve(prop.toString());
     }
     
     @Override
@@ -53,7 +61,10 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public String getString(String key) {
-        return interpolate(key);
+        Object value = getProperty(key);
+        if (value == null) 
+            return null;
+        return value.toString();
     }
 
     @Override
@@ -206,32 +217,41 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        // TODO Auto-generated method stub
-        return null;
+        return get(type, null);
     }
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Iterator<String> getKeys() {
-        // TODO Auto-generated method stub
-        return null;
+        String value = getString(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        Constructor<T> c;
+        try {
+            c = type.getConstructor(String.class);
+            return c.newInstance(value);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to instantiate value of type " + type.getCanonicalName(), e);
+        }
     }
 
     @Override
     public Iterator<String> getKeys(String prefix) {
-        // TODO Auto-generated method stub
-        return null;
+        LinkedHashSet<String> result = new LinkedHashSet<String>();
+        Iterator<String> keys = getKeys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            if (key.startsWith(prefix)) {
+                result.add(key);
+            }
+        }
+        
+        return result.iterator();
     }
 
     @Override
     public Config subset(String prefix) {
-        // TODO Auto-generated method stub
-        return null;
+        return new PrefixedViewConfig(prefix, this);
     }
 
 }

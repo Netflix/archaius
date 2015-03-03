@@ -1,6 +1,8 @@
 package netflix.archaius.config;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import netflix.archaius.Config;
@@ -25,10 +27,15 @@ public class CompositeConfig extends AbstractConfig {
     public CompositeConfig(String name, Collection<Config> config) {
         super(name);
         
-        addConfigs(config);
+        addConfigsLast(config);
     }
 
-    public CompositeConfig addConfig(Config config) {
+    /**
+     * Add a Config to the end of the list so that it has least priority
+     * @param config
+     * @return
+     */
+    public CompositeConfig addConfigLast(Config config) {
         if (config == null) {
             return this;
         }
@@ -37,8 +44,27 @@ public class CompositeConfig extends AbstractConfig {
         return this;
     }
     
-    public CompositeConfig addConfigs(Collection<Config> config) {
+    /**
+     * Add a Config to the end of the list so that it has highest priority
+     * @param config
+     * @return
+     */
+    public CompositeConfig addConfigFirst(Config config) {
+        if (config == null) {
+            return this;
+        }
+        levels.add(0, config);
+        config.setStrInterpolator(this.getStrInterpolator());
+        return this;
+    }
+    
+    public CompositeConfig addConfigsLast(Collection<Config> config) {
         levels.addAll(config);
+        return this;
+    }
+    
+    public CompositeConfig addConfigsFirst(Collection<Config> config) {
+        levels.addAll(0, config);
         return this;
     }
     
@@ -47,8 +73,14 @@ public class CompositeConfig extends AbstractConfig {
         return this;
     }
     
+    /**
+     * Compact all the configurations into a single config
+     */
+    public void compact() {
+    }
+    
     @Override
-    public String getProperty(String key) {
+    public Object getProperty(String key) {
         for (Config config : levels) {
             if (config.containsProperty(key)) {
                 return config.getProperty(key);
@@ -70,16 +102,6 @@ public class CompositeConfig extends AbstractConfig {
     }
 
     @Override
-    public int size() {
-        int size = 0;
-        for (Config config : levels) {
-            size += config.size();
-        }
-        
-        return size;
-    }
-
-    @Override
     public boolean isEmpty() {
         for (Config config : levels) {
             if (!config.isEmpty()) {
@@ -90,4 +112,16 @@ public class CompositeConfig extends AbstractConfig {
         return true;
     }
 
+    @Override
+    public Iterator<String> getKeys() {
+        LinkedHashSet<String> result = new LinkedHashSet<String>();
+        for (Config config : levels) {
+            Iterator<String> iter = config.getKeys();
+            while (iter.hasNext()) {
+                String key = iter.next();
+                result.add(key);
+            }
+        }
+        return result.iterator();
+    }
 }

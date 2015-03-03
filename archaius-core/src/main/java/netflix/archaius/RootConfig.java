@@ -89,7 +89,7 @@ public class RootConfig extends CompositeConfig {
     
 
     @Override
-    public CompositeConfig addConfig(Config config) {
+    public CompositeConfig addConfigLast(Config config) {
         if (config == null) {
             return this;
         }
@@ -98,6 +98,6 @@ public class RootConfig extends CompositeConfig {
         if (DynamicConfig.class.isAssignableFrom(config.getClass())) {
             ((DynamicConfig)config).addListener(registery);
         }
-        return super.addConfig(config);
+        return super.addConfigLast(config);
     }
 }

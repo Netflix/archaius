@@ -1,15 +1,20 @@
 package netflix.archaius.config;
 
+import java.util.Iterator;
 import java.util.Map;
 
 public class EnvironmentConfig extends AbstractConfig {
 
-    private static final String NAME = "ENVIRONMENT";
+    private static final String DEFAULT_NAME = "ENVIRONMENT";
     
-    private Map<String, String> properties;
+    private final Map<String, String> properties;
     
     public EnvironmentConfig() {
-        super(NAME);
+        this(DEFAULT_NAME);
+    }
+
+    public EnvironmentConfig(String name) {
+        super(name);
         this.properties = System.getenv();
     }
 
@@ -24,12 +29,13 @@ public class EnvironmentConfig extends AbstractConfig {
     }
 
     @Override
-    public int size() {
-        return properties.size();
-    }
-
-    @Override
     public boolean isEmpty() {
         return properties.isEmpty();
     }
+    
+    @Override
+    public Iterator<String> getKeys() {
+        return properties.keySet().iterator();
+    }
+
 }

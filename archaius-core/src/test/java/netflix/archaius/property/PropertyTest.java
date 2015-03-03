@@ -27,7 +27,7 @@ public class PropertyTest {
         SimpleDynamicConfig config = new SimpleDynamicConfig("dyn");
         
         RootConfig manager = RootConfig.builder().build();
-        manager.addConfig(config);
+        manager.addConfigLast(config);
         
         MyService service = new MyService(manager);
 
