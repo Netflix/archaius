@@ -53,8 +53,7 @@ public class FixedPollingStrategy implements PollingStrategy {
                 try {
                     callback.call();
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    LOG.warn("Failed to load properties", e);
                 }
             }
         }, interval, interval, units);

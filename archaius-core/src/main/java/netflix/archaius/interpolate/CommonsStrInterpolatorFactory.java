@@ -8,6 +8,9 @@ import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
 public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
+    
+    public static CommonsStrInterpolatorFactory INSTANCE = new CommonsStrInterpolatorFactory();
+    
     @Override
     public StrInterpolator create(final Config rootConfig) {
         return new InternalInterpolator(rootConfig);
@@ -29,8 +32,7 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
 
         @Override
         public String lookup(String key) {
-            return config.getProperty(key);
+            return config.getProperty(key).toString();
         }
-        
     }
 }

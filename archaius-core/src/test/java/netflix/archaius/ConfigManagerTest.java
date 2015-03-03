@@ -2,7 +2,6 @@ package netflix.archaius;
 
 import netflix.archaius.cascade.ConcatCascadeStrategy;
 import netflix.archaius.config.EnvironmentConfig;
-import netflix.archaius.config.LoadingCompositeConfig;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
 import netflix.archaius.config.SystemConfig;
@@ -19,14 +18,14 @@ public class ConfigManagerTest {
         RootConfig config = RootConfig.builder()
                 .build();
         
-        config.addConfig(dyn)
-              .addConfig(MapConfig.builder("test")
+        config.addConfigLast(dyn)
+              .addConfigLast(MapConfig.builder("test")
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .put("c",      123)
                         .build())
-              .addConfig(new EnvironmentConfig())
-              .addConfig(new SystemConfig());
+              .addConfigLast(new EnvironmentConfig())
+              .addConfigLast(new SystemConfig());
         
         Property<String> prop = config.observe("abc").asString("defaultValue");
         
@@ -45,20 +44,17 @@ public class ConfigManagerTest {
         RootConfig config = RootConfig.builder()
                 .build();
         
-        LoadingCompositeConfig loader;
-        
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
+                .withConfigLoader(new PropertiesConfigLoader())
+                .build();
+                
         config
-            .addConfig(MapConfig.builder("test")
+            .addConfigLast(MapConfig.builder("test")
                     .put("env",    "prod")
                     .put("region", "us-east")
                     .build())
-            .addConfig(loader = LoadingCompositeConfig.builder()
-                    .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
-                    .withConfigLoader(new PropertiesConfigLoader())
-                    .build()
-                    );
-        
-        loader.newLoader().load("application");
+            .addConfigLast(loader.newLoader().load("application"));
 
         String str = config.getString("application.prop1");
         System.out.println(str);

@@ -2,6 +2,7 @@ package netflix.archaius.config;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,14 +18,14 @@ import org.slf4j.LoggerFactory;
  * @author elandau
  *
  */
-public class PollingDynamicConfg extends AbstractDynamicConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfg.class);
+public class PollingDynamicConfig extends AbstractDynamicConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
     private volatile Map<String, Object> current = new HashMap<String, Object>();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<Map<String, Object>> reader;
     
-    public PollingDynamicConfg(String name, Callable<Map<String, Object>> reader, PollingStrategy strategy) {
+    public PollingDynamicConfig(String name, Callable<Map<String, Object>> reader, PollingStrategy strategy) {
         super(name);
         
         this.reader = reader;
@@ -45,11 +46,6 @@ public class PollingDynamicConfg extends AbstractDynamicConfig {
     @Override
     public boolean containsProperty(String key) {
         return current.containsKey(key);
-    }
-
-    @Override
-    public int size() {
-        return current.size();
     }
 
     @Override
@@ -82,5 +78,10 @@ public class PollingDynamicConfg extends AbstractDynamicConfig {
                 busy.set(false);
             }
         }
+    }
+
+    @Override
+    public Iterator<String> getKeys() {
+        return current.keySet().iterator();
     }
 }

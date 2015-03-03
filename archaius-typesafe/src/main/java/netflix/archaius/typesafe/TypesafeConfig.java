@@ -1,8 +1,12 @@
 package netflix.archaius.typesafe;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import netflix.archaius.config.AbstractConfig;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
 
 public class TypesafeConfig extends AbstractConfig {
 
@@ -19,11 +23,6 @@ public class TypesafeConfig extends AbstractConfig {
     }
 
     @Override
-    public int size() {
-        return config.entrySet().size();
-    }
-
-    @Override
     public boolean isEmpty() {
         return config.isEmpty();
     }
@@ -31,5 +30,27 @@ public class TypesafeConfig extends AbstractConfig {
     @Override
     public String getProperty(String key) {
         return config.getString(key);
+    }
+
+    @Override
+    public Iterator<String> getKeys() {
+        return new Iterator<String>() {
+            Iterator<Entry<String, ConfigValue>> iter = config.entrySet().iterator();
+                    
+            @Override
+            public boolean hasNext() {
+                return iter.hasNext();
+            }
+
+            @Override
+            public String next() {
+                return iter.next().getKey();
+            }
+
+            @Override
+            public void remove() {
+                iter.remove();
+            }
+        };
     }
 }
