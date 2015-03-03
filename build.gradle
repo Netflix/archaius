@@ -50,3 +50,18 @@ project(':archaius-typesafe') {
     }
 }
 
+project(':archaius-commons-configuration') {
+    apply plugin: 'java'
+    dependencies {
+        compile  'commons-configuration:commons-configuration:1.8'
+        compile  project(':archaius-core')
+    }
+}
+
+project(':archaius-legacy') {
+    apply plugin: 'java'
+    dependencies {
+        compile  project(':archaius-commons-configuration')
+    }
+}
+
