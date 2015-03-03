@@ -65,7 +65,7 @@ public interface Config {
      * @param key
      * @return
      */
-    Object getProperty(String key);
+    Object getRawProperty(String key);
     
     /**
      * Return the interpolated String value for a property

@@ -50,8 +50,8 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getProperty(String key) {
-        return config.getProperty(prefix + key);
+    public Object getRawProperty(String key) {
+        return config.getRawProperty(prefix + key);
     }
 
 }
