@@ -80,10 +80,10 @@ public class CompositeConfig extends AbstractConfig {
     }
     
     @Override
-    public Object getProperty(String key) {
+    public Object getRawProperty(String key) {
         for (Config config : levels) {
             if (config.containsProperty(key)) {
-                return config.getProperty(key);
+                return config.getRawProperty(key);
             }
         }
         

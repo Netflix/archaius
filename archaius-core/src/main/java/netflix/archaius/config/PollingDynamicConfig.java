@@ -54,8 +54,8 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public String getProperty(String key) {
-        return (String) current.get(key);
+    public Object getRawProperty(String key) {
+        return current.get(key);
     }
 
     private void update() throws IOException {

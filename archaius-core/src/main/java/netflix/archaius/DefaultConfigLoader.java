@@ -202,6 +202,7 @@ public class DefaultConfigLoader {
             @Override
             public Config load(String resourceName) {
                 List<Config> configs = new ArrayList<Config>();
+                boolean failIfNotLoaded = failOnFirst;
                 for (String resourcePermutationName : strategy.generate(resourceName, interpolator)) {
                     for (ConfigLoader loader : loaders) {
                         if (loader.canLoad(name)) {
@@ -213,11 +214,16 @@ public class DefaultConfigLoader {
                                     fileToLoad = config.getString(includeKey);
                                     configs.add(config);
                                 } catch (ConfigurationException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
+                                    break;
                                 }
                             } while (fileToLoad != null);
                         }
+                    }
+                    
+                    if (failIfNotLoaded == true) {
+                        if (configs.isEmpty())
+                            throw new RuntimeException("Failed to load configuration resource '" + resourceName + "'");
+                        failIfNotLoaded = false;
                     }
                 }
                 

@@ -90,7 +90,7 @@ public class MapConfig extends AbstractConfig {
             Iterator<String> keys = config.getKeys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                props.put(key, config.getProperty(key));
+                props.put(key, config.getRawProperty(key));
             }
         }
         
@@ -98,8 +98,12 @@ public class MapConfig extends AbstractConfig {
     }
     
     @Override
-    public String getProperty(String key) {
-        return props.get(key).toString();
+    public Object getRawProperty(String key) {
+        Object obj = props.get(key);
+        if (obj == null) {
+            return null;
+        }
+        return obj;
     }
 
     @Override

@@ -18,7 +18,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig {
         notifyOnUpdate(propName);
     }
     
-    public void removeProperty(String propName) {
+    public void clearProperty(String propName) {
         props.remove(propName);
         notifyOnUpdate(propName);
     }
@@ -27,7 +27,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig {
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();
-            props.put(key, config.getProperty(key));
+            props.put(key, config.getRawProperty(key));
         }
     }
     
@@ -42,7 +42,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public Object getProperty(String key) {
+    public Object getRawProperty(String key) {
         return props.get(key);
     }
     

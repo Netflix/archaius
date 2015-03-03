@@ -31,7 +31,7 @@ public abstract class AbstractConfig implements Config {
     
     @Override
     public Object interpolate(String key) {
-        Object prop = getProperty(key);
+        Object prop = getRawProperty(key);
         if (prop == null) {
             return null;
         }
@@ -61,7 +61,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public String getString(String key) {
-        Object value = getProperty(key);
+        Object value = getRawProperty(key);
         if (value == null) 
             return null;
         return value.toString();
