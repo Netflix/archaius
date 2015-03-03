@@ -53,10 +53,20 @@ For example, the following cascade policy will attempt to load the following per
 to the base resource name:  basename, basename-${env}, basename-${env}-${region}.  
 
 ``` java
-ConfigManager manager = ConfigManager.builder()
+DefaultConfigLoader loader = DefaultConfigLoader.builder()
+    .withStrInterpolator(rootConfig.getStrInterpolator())
     .withConfigLoader(new TypesafeLoader())
     .withDefaultCascadeStrategy(new ConcatCascadeStrategy("${env}", "${region}"))
     ...
+```
+
+
+```java    
+// libraryConfigs is a layer that tracks configurations at the libraries layer
+CompositeConfig libraryConfigs = new CompositeConfig("LIBRARIES");
+...
+// Load a configuration, using the default cascading, for the resource name 'foo'
+libraryConfigs.addConfigFirst(loader.newLoader().load("foo"));
 ```
 
 # Dynamic Properties
