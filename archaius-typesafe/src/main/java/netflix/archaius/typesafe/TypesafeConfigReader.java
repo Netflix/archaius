@@ -3,14 +3,14 @@ package netflix.archaius.typesafe;
 import java.io.File;
 import java.net.URL;
 
-import netflix.archaius.ConfigLoader;
+import netflix.archaius.ConfigReader;
 import netflix.archaius.exceptions.ConfigException;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
-public class TypesafeConfigLoader implements ConfigLoader {
-    public TypesafeConfigLoader() {
+public class TypesafeConfigReader implements ConfigReader {
+    public TypesafeConfigReader() {
     }
 
     @Override

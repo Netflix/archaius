@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 import javax.inject.Inject;
 
-import netflix.archaius.AppConfig;
+import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.CascadeStrategy;
 import netflix.archaius.Config;
 import netflix.archaius.exceptions.ConfigException;
@@ -27,7 +27,7 @@ public class ArchaiusModule extends AbstractModule {
         private Config config;
         
         @Inject
-        private AppConfig appConfig;
+        private DefaultAppConfig appConfig;
         
         @Inject
         private Injector injector;

@@ -1,7 +1,7 @@
 package netflix.archaius.typesafe;
 
 import netflix.archaius.DefaultConfigLoader;
-import netflix.archaius.AppConfig;
+import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.exceptions.ConfigException;
@@ -12,10 +12,10 @@ import org.junit.Test;
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
-        AppConfig config = AppConfig.builder().build();
+        DefaultAppConfig config = DefaultAppConfig.builder().build();
                 
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withConfigLoader(new TypesafeConfigLoader())
+                .withConfigLoader(new TypesafeConfigReader())
                 .withStrInterpolator(config.getStrInterpolator())
                 .build();
         
