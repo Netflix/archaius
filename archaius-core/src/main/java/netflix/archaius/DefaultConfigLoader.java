@@ -88,7 +88,9 @@ public class DefaultConfigLoader {
         }
         
         public Builder withDefaultCascadingStrategy(CascadeStrategy strategy) {
-            this.defaultStrategy = strategy;
+            if (strategy != null) {
+                this.defaultStrategy = strategy;
+            }
             return this;
         }
 
@@ -98,17 +100,20 @@ public class DefaultConfigLoader {
         }
         
         public Builder withStrInterpolator(StrInterpolator interpolator) {
-            this.interpolator = interpolator;
+            if (interpolator != null) 
+                this.interpolator = interpolator;
             return this;
         }
         
         public Builder withConfigLoaders(List<ConfigLoader> loaders) {
-            this.loaders = loaders;
+            if (loaders != null)
+                this.loaders = loaders;
             return this;
         }
         
         public Builder withIncludeKey(String key) {
-            this.includeKey = key;
+            if (key != null)
+                this.includeKey = key;
             return this;
         }
         
