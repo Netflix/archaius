@@ -5,6 +5,7 @@ import netflix.archaius.config.EnvironmentConfig;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
 import netflix.archaius.config.SystemConfig;
+import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.loaders.PropertiesConfigLoader;
 import netflix.archaius.property.DefaultPropertyObserver;
 
@@ -12,24 +13,24 @@ import org.junit.Test;
 
 public class ConfigManagerTest {
     @Test
-    public void testBasicReplacement() {
+    public void testBasicReplacement() throws ConfigException {
         SimpleDynamicConfig dyn = new SimpleDynamicConfig("FAST");
         
-        RootConfig config = RootConfig.builder()
+        AppConfig config = AppConfig.builder()
                 .build();
         
-        config.addConfigLast(dyn)
-              .addConfigLast(MapConfig.builder("test")
+        config.addConfigLast(dyn);
+        config.addConfigLast(MapConfig.builder("test")
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .put("c",      123)
-                        .build())
-              .addConfigLast(new EnvironmentConfig())
-              .addConfigLast(new SystemConfig());
+                        .build());
+        config.addConfigLast(new EnvironmentConfig());
+        config.addConfigLast(new SystemConfig());
         
-        Property<String> prop = config.observe("abc").asString("defaultValue");
+        Property<String> prop = config.createProperty("abc").asString("defaultValue");
         
-        config.observe("abc").asString("defaultValue", new DefaultPropertyObserver<String>() {
+        config.createProperty("abc").asString("defaultValue", new DefaultPropertyObserver<String>() {
             @Override
             public void onChange(String next) {
                 System.out.println("Configuration changed : " + next);
@@ -40,8 +41,8 @@ public class ConfigManagerTest {
     }
     
     @Test
-    public void testDefaultConfiguration() {
-        RootConfig config = RootConfig.builder()
+    public void testDefaultConfiguration() throws ConfigException {
+        AppConfig config = AppConfig.builder()
                 .build();
         
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
@@ -49,12 +50,11 @@ public class ConfigManagerTest {
                 .withConfigLoader(new PropertiesConfigLoader())
                 .build();
                 
-        config
-            .addConfigLast(MapConfig.builder("test")
+        config.addConfigLast(MapConfig.builder("test")
                     .put("env",    "prod")
                     .put("region", "us-east")
-                    .build())
-            .addConfigLast(loader.newLoader().load("application"));
+                    .build());
+        config.addConfigLast(loader.newLoader().load("application"));
 
         String str = config.getString("application.prop1");
         System.out.println(str);

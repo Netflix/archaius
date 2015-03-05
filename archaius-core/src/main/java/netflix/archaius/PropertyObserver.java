@@ -3,7 +3,7 @@ package netflix.archaius;
 /**
  * Handler for property change notifications.  
  * 
- * @see {@link RootConfig} for usage example
+ * @see {@link AppConfig} for usage example
  * 
  * @author elandau
  *

@@ -3,12 +3,12 @@ package netflix.archaius;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ObservablePropertyRegistry implements DynamicConfigObserver {
+public class CachingDynamicConfigObserver implements DynamicConfigObserver {
 
     private final ConcurrentMap<String, ObservableProperty> registry = new ConcurrentHashMap<String, ObservableProperty>();
     private final ObservablePropertyFactory factory;
     
-    public ObservablePropertyRegistry(ObservablePropertyFactory factory) {
+    public CachingDynamicConfigObserver(ObservablePropertyFactory factory) {
         this.factory = factory;
     }
     
@@ -22,6 +22,7 @@ public class ObservablePropertyRegistry implements DynamicConfigObserver {
     
     @Override
     public void onError(Throwable error, Config config) {
+        // TODO
     }
 
     /**
@@ -31,10 +32,10 @@ public class ObservablePropertyRegistry implements DynamicConfigObserver {
      * @param key
      * @return
      */
-    public ObservableProperty get(String key) {
+    public ObservableProperty create(String key) {
         ObservableProperty observable = registry.get(key);
         if (observable == null) {
-            observable = factory.create(key);
+            observable = factory.createProperty(key);
             ObservableProperty existing = registry.putIfAbsent(key, observable);
             if (existing != null) {
                 return existing;
@@ -44,8 +45,16 @@ public class ObservablePropertyRegistry implements DynamicConfigObserver {
         return observable;
     }
 
+    public ObservableProperty get(String key) {
+        return registry.get(key);
+    }
+    
     @Override
     public void onUpdate(Config config) {
+        invalidate();
+    }
+
+    public void invalidate() {
         for (ObservableProperty prop : registry.values()) {
             prop.update();
         }

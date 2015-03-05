@@ -9,35 +9,35 @@ import java.net.URLDecoder;
 import netflix.archaius.Config;
 import netflix.archaius.ConfigLoader;
 import netflix.archaius.config.MapConfig;
-import netflix.archaius.exceptions.ConfigurationException;
+import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.readers.URLConfigReader;
 
 public class PropertiesConfigLoader implements ConfigLoader {
 
     @Override
-    public Config load(String name, String resourceName) throws ConfigurationException {
+    public Config load(String name, String resourceName) throws ConfigException {
         URL url = getResource(resourceName + ".properties");
         if (url == null) {
-            throw new ConfigurationException("Unable to resolve URL for resource " + resourceName);
+            throw new ConfigException("Unable to resolve URL for resource " + resourceName);
         }
         return load(name, url);
     }
 
     @Override
-    public Config load(String name, URL url) throws ConfigurationException {
+    public Config load(String name, URL url) throws ConfigException {
         try {
             return new MapConfig(name, new URLConfigReader(url).call());
         } catch (IOException e) {
-            throw new ConfigurationException("Unable to load URL " + url.toString(), e);
+            throw new ConfigException("Unable to load URL " + url.toString(), e);
         }
     }
 
     @Override
-    public Config load(String name, File file) throws ConfigurationException {
+    public Config load(String name, File file) throws ConfigException {
         try {
             return load(name, (file).toURI().toURL());
         } catch (MalformedURLException e) {
-            throw new ConfigurationException("Unable to load file " + file.getAbsolutePath(), e);
+            throw new ConfigException("Unable to load file " + file.getAbsolutePath(), e);
         }
     }
 

@@ -15,6 +15,7 @@ public abstract class AbstractConfig implements Config {
 
     private final String name;
     private StrInterpolator interpolator;
+    private Config parent;
     
     public AbstractConfig(String name) {
         this.name = name;
@@ -29,6 +30,14 @@ public abstract class AbstractConfig implements Config {
         return this.interpolator;
     }
     
+    public Config getParent() {
+        return parent;
+    }
+    
+    public void setParent(Config config) {
+        this.parent = config;
+    }
+
     @Override
     public Object interpolate(String key) {
         Object prop = getRawProperty(key);
@@ -254,4 +263,16 @@ public abstract class AbstractConfig implements Config {
         return new PrefixedViewConfig(prefix, this);
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+    
+    @Override
+    public void accept(Visitor visitor) {
+        Iterator<String> iter = getKeys();
+        while (iter.hasNext()) {
+            visitor.visit(this, iter.next());
+        }
+    }
 }

@@ -1,23 +1,27 @@
 package netflix.archaius.config;
 
 import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import netflix.archaius.Config;
 
-public class SimpleDynamicConfig extends AbstractDynamicConfig {
+public class SimpleDynamicConfig extends AbstractDynamicConfig implements SettableConfig {
     public SimpleDynamicConfig(String name) {
         super(name);
     }
 
     private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
     
-    public void setProperty(String propName, String propValue) {
+    @Override
+    public void setProperty(String propName, Object propValue) {
         props.put(propName, propValue);
         notifyOnUpdate(propName);
     }
     
+    @Override
     public void clearProperty(String propName) {
         props.remove(propName);
         notifyOnUpdate(propName);
@@ -49,6 +53,15 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig {
     @Override
     public Iterator<String> getKeys() {
         return props.keySet().iterator();
+    }
+
+    @Override
+    public void setProperties(Properties properties) {
+        if (null != properties) {
+            for (Entry<Object, Object> prop : properties.entrySet()) {
+                setProperty(prop.getKey().toString(), prop.getValue());
+            }
+        }
     }
 
 }

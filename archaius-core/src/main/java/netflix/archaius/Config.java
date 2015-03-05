@@ -11,6 +11,10 @@ import java.util.List;
  * @author elandau
  */
 public interface Config {
+    public interface Visitor {
+        void visit(Config config, String key);
+    }
+    
     /**
      * @return  Arbitrary name assigned to this configuration
      */
@@ -80,5 +84,15 @@ public interface Config {
      */
     Config subset(String prefix);
     
+    /**
+     * 
+     * @param interpolator
+     */
+    Config getParent();
+    
+    void setParent(Config config);
+    
     void setStrInterpolator(StrInterpolator interpolator);
+    
+    void accept(Visitor visitor);
 }

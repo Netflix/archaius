@@ -3,7 +3,7 @@ package netflix.archaius;
 import java.io.File;
 import java.net.URL;
 
-import netflix.archaius.exceptions.ConfigurationException;
+import netflix.archaius.exceptions.ConfigException;
 
 /**
  * Contract for a configuration file loader.  A ConfigManager will likely be configured with 
@@ -28,7 +28,7 @@ public interface ConfigLoader {
      * @param resourceName
      * @return
      */
-    Config load(String name, String resourceName) throws ConfigurationException ;
+    Config load(String name, String resourceName) throws ConfigException ;
     
     /**
      * Load a specific URL.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
@@ -37,7 +37,7 @@ public interface ConfigLoader {
      * @param name
      * @return
      */
-    Config load(String name, URL url) throws ConfigurationException;
+    Config load(String name, URL url) throws ConfigException;
     
     /**
      * Load a specific file.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
@@ -46,7 +46,7 @@ public interface ConfigLoader {
      * @param file
      * @return
      */
-    Config load(String name, File file) throws ConfigurationException;
+    Config load(String name, File file) throws ConfigException;
     
     /**
      * Determine if the 

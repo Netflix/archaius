@@ -1,5 +1,7 @@
 package netflix.archaius;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * API to access latest cached value for a Property.  When creating a Property object from the config manager
  * the property will auto register for change notifications. 
@@ -28,6 +30,18 @@ public interface Property<T> {
      * @return  Most recent value for the property
      */
     T get();
+    
+    /**
+     * @return  The default value used when the property is not set
+     */
+    T getDefaultValue();
+    
+    /**
+     * Get the last time the property was updated
+     * @param units
+     * @return
+     */
+    long getLastUpdateTime(TimeUnit units);
     
     /**
      * Unsubscribe from property value update notifications.  The property object cannot be resubscribed.
