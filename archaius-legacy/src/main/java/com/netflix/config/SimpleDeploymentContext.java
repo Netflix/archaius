@@ -96,15 +96,4 @@ public class SimpleDeploymentContext implements DeploymentContext {
     public void setValue(ContextKey key, String value) {
         map.put(key, value);
     }    
-    
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName()).append("[");
-        for (ContextKey key : ContextKey.values()) {
-            sb.append(key.getKey()).append("=").append(getValue(key)).append(" ");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
 }

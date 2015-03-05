@@ -72,11 +72,17 @@ project(':archaius-legacy') {
     apply plugin: 'java'
     dependencies {
         compile  project(':archaius-commons-configuration')
+        compile 'com.google.code.findbugs:annotations:2.0.0'
         compile 'com.google.guava:guava:14.0.1'    
+        compile 'commons-configuration:commons-configuration:1.8'
+        compile 'org.slf4j:slf4j-api:1.6.4'
         compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
-        compile 'com.google.code.findbugs:annotations:2.0.0'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.apache.derby:derby:10.8.2.2'
+        testCompile files('src/test/resources/classpathTestResources.jar')
+
     }
 }
 
