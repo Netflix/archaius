@@ -17,6 +17,7 @@ public class ConfigManagerTest {
         SimpleDynamicConfig dyn = new SimpleDynamicConfig("FAST");
         
         AppConfig config = AppConfig.builder()
+                .withApplicationConfigName("application")
                 .build();
         
         config.addConfigLast(dyn);
@@ -43,6 +44,7 @@ public class ConfigManagerTest {
     @Test
     public void testDefaultConfiguration() throws ConfigException {
         AppConfig config = AppConfig.builder()
+                .withApplicationConfigName("application")
                 .build();
         
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
@@ -54,7 +56,6 @@ public class ConfigManagerTest {
                     .put("env",    "prod")
                     .put("region", "us-east")
                     .build());
-        config.addConfigLast(loader.newLoader().load("application"));
 
         String str = config.getString("application.prop1");
         System.out.println(str);
