@@ -10,7 +10,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import netflix.archaius.cascade.SimpleCascadeStrategy;
 import netflix.archaius.config.MapConfig;
-import netflix.archaius.exceptions.ConfigurationException;
+import netflix.archaius.exceptions.ConfigException;
+import netflix.archaius.visitor.PrintStreamVisitor;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -126,16 +127,18 @@ public class DefaultConfigLoader {
     private final String             includeKey;
     private final StrInterpolator    interpolator;
     private final CopyOnWriteArraySet<String> alreadyLoaded;
+    private final boolean            defaultFailOnFirst;
     
     public DefaultConfigLoader(Builder builder) {
-        this.includeKey      = builder.includeKey;
-        this.loaders         = builder.loaders;
-        this.defaultStrategy = builder.defaultStrategy;
-        this.interpolator    = builder.interpolator;
-        this.alreadyLoaded   = new CopyOnWriteArraySet<String>();
+        this.includeKey         = builder.includeKey;
+        this.loaders            = builder.loaders;
+        this.defaultStrategy    = builder.defaultStrategy;
+        this.interpolator       = builder.interpolator;
+        this.alreadyLoaded      = new CopyOnWriteArraySet<String>();
+        this.defaultFailOnFirst = builder.failOnFirst;
     }
 
-    public void load(String name, URL url) throws ConfigurationException {
+    public void load(String name, URL url) throws ConfigException {
         if (alreadyLoaded.contains(url)) 
             return;
         
@@ -150,10 +153,10 @@ public class DefaultConfigLoader {
             }
         }
         
-        throw new ConfigurationException("Configuration not found " + url);
+        throw new ConfigException("Configuration not found " + url);
     }
     
-    public Config load(String name, File file) throws ConfigurationException {
+    public Config load(String name, File file) throws ConfigException {
         for (ConfigLoader loader : loaders) {
             if (loader.canLoad(file)) {
                 Config config = loader.load(name, file);
@@ -163,7 +166,7 @@ public class DefaultConfigLoader {
             }
         }
         
-        throw new ConfigurationException("Configuration not found " + file.getAbsolutePath());
+        throw new ConfigException("Configuration not found " + file.getAbsolutePath());
     }
     
     public Loader newLoader() {
@@ -171,7 +174,7 @@ public class DefaultConfigLoader {
             private CascadeStrategy strategy = defaultStrategy;
             private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             private String name;
-            private boolean failOnFirst = true;
+            private boolean failOnFirst = defaultFailOnFirst;
             private boolean loadToSystem = false;
             private Properties overrides = null;
             
@@ -200,7 +203,23 @@ public class DefaultConfigLoader {
             }
 
             @Override
+            public Loader withOverrides(Properties props) {
+                this.overrides = props;
+                return this;
+            }
+
+            @Override
+            public Loader withLoadToSystem(boolean toSystem) {
+                loadToSystem = toSystem;
+                return this;
+            }
+
+            @Override
             public Config load(String resourceName) {
+                if (name == null) {
+                    name = resourceName;
+                }
+                
                 List<Config> configs = new ArrayList<Config>();
                 boolean failIfNotLoaded = failOnFirst;
                 for (String resourcePermutationName : strategy.generate(resourceName, interpolator)) {
@@ -213,7 +232,7 @@ public class DefaultConfigLoader {
                                     config = loader.load(name, resourcePermutationName);
                                     fileToLoad = config.getString(includeKey);
                                     configs.add(config);
-                                } catch (ConfigurationException e) {
+                                } catch (ConfigException e) {
                                     break;
                                 }
                             } while (fileToLoad != null);
@@ -253,25 +272,13 @@ public class DefaultConfigLoader {
                     if (loader.canLoad(name)) {
                         try {
                             return loader.load(name, url);
-                        } catch (ConfigurationException e) {
+                        } catch (ConfigException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                     }
                 }
                 return null;
-            }
-
-            @Override
-            public Loader withOverrides(Properties props) {
-                this.overrides = props;
-                return this;
-            }
-
-            @Override
-            public Loader withLoadToSystem(boolean toSystem) {
-                loadToSystem = toSystem;
-                return this;
             }
         };
     }    

@@ -11,5 +11,5 @@ public interface ObservablePropertyFactory {
     /**
      * Create an observable for the property name.  
      */
-    public ObservableProperty create(String propName);
+    public ObservableProperty createProperty(String propName);
 }

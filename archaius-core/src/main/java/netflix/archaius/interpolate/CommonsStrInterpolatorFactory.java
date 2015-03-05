@@ -27,12 +27,14 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
         
         @Override
         public Object resolve(String key) {
-            return sub.replace(key);
+            Object obj = sub.replace(key);
+            return (obj == null) ? key : obj;
         }
 
         @Override
         public String lookup(String key) {
-            return config.getRawProperty(key).toString();
+            Object obj = config.getRawProperty(key);
+            return (obj == null) ? key : obj.toString();
         }
     }
 }
