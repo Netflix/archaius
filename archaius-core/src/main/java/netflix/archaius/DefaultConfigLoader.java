@@ -18,71 +18,18 @@ import netflix.archaius.exceptions.ConfigException;
  * @author elandau
  *
  */
-public class DefaultConfigLoader {
+public class DefaultConfigLoader implements ConfigLoader {
     private static final SimpleCascadeStrategy DEFAULT_CASCADE_STRATEGY = new SimpleCascadeStrategy();
 
-    /**
-     * DSL for loading a configuration
-     * 
-     * @author elandau
-     *
-     */
-    public static interface Loader {
-        /**
-         * Cascading policy to use the loading based on a resource name.  All loaded
-         * files will be merged into a single Config.
-         * @param strategy
-         */
-        Loader withCascadeStrategy(CascadeStrategy strategy);
-        
-        /**
-         * Arbitrary name assigned to the loaded Config.
-         * @param name
-         */
-        Loader withName(String name);
-        
-        /**
-         * Class loader to use
-         * @param loader
-         */
-        Loader withClassLoader(ClassLoader loader);
-        
-        /**
-         * When true, fail the entire load operation if the first resource name
-         * can't be loaded.  By definition all cascaded variations are treated 
-         * as overrides
-         * @param flag
-         */
-        Loader withFailOnFirst(boolean flag);
-        
-        /**
-         * Externally provided property overrides that are applied once 
-         * all cascaded files have been loaded
-         * 
-         * @param props
-         */
-        Loader withOverrides(Properties props);
-        
-        /**
-         * Once loaded add all the properties to System.setProperty()
-         * @param toSystem
-         * @return
-         */
-        Loader withLoadToSystem(boolean toSystem);
-        
-        Config load(String resourceName);
-        Config load(URL url);
-    }
-
     public static class Builder {
-        private List<ConfigLoader>  loaders = new ArrayList<ConfigLoader>();
+        private List<ConfigReader>  loaders = new ArrayList<ConfigReader>();
         private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
         private boolean             failOnFirst = true;
         private String              name = "";
         private String              includeKey = "@next";
         private StrInterpolator     interpolator;
         
-        public Builder withConfigLoader(ConfigLoader loader) {
+        public Builder withConfigLoader(ConfigReader loader) {
             this.loaders.add(loader);
             return this;
         }
@@ -105,7 +52,7 @@ public class DefaultConfigLoader {
             return this;
         }
         
-        public Builder withConfigLoaders(List<ConfigLoader> loaders) {
+        public Builder withConfigLoaders(List<ConfigReader> loaders) {
             if (loaders != null)
                 this.loaders = loaders;
             return this;
@@ -126,7 +73,7 @@ public class DefaultConfigLoader {
         return new Builder();
     }
     
-    private final List<ConfigLoader> loaders;
+    private final List<ConfigReader> loaders;
     private final CascadeStrategy    defaultStrategy;
     private final String             includeKey;
     private final StrInterpolator    interpolator;
@@ -147,7 +94,7 @@ public class DefaultConfigLoader {
             return;
         
         List<Config> configs = new ArrayList<Config>();
-        for (ConfigLoader loader : loaders) {
+        for (ConfigReader loader : loaders) {
             if (loader.canLoad(url)) {
                 Config config = loader.load(name, url);
                 if (config != null) {
@@ -161,7 +108,7 @@ public class DefaultConfigLoader {
     }
     
     public Config load(String name, File file) throws ConfigException {
-        for (ConfigLoader loader : loaders) {
+        for (ConfigReader loader : loaders) {
             if (loader.canLoad(file)) {
                 Config config = loader.load(name, file);
                 if (config != null) {
@@ -173,6 +120,7 @@ public class DefaultConfigLoader {
         throw new ConfigException("Configuration not found " + file.getAbsolutePath());
     }
     
+    @Override
     public Loader newLoader() {
         return new Loader() {
             private CascadeStrategy strategy = defaultStrategy;
@@ -227,7 +175,7 @@ public class DefaultConfigLoader {
                 List<Config> configs = new ArrayList<Config>();
                 boolean failIfNotLoaded = failOnFirst;
                 for (String resourcePermutationName : strategy.generate(resourceName, interpolator)) {
-                    for (ConfigLoader loader : loaders) {
+                    for (ConfigReader loader : loaders) {
                         if (loader.canLoad(name)) {
                             Config config;
                             String fileToLoad = resourcePermutationName;
@@ -272,7 +220,7 @@ public class DefaultConfigLoader {
 
             @Override
             public Config load(URL url) {
-                for (ConfigLoader loader : loaders) {
+                for (ConfigReader loader : loaders) {
                     if (loader.canLoad(name)) {
                         try {
                             return loader.load(name, url);

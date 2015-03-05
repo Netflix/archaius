@@ -1,62 +1,68 @@
 package netflix.archaius;
 
-import java.io.File;
 import java.net.URL;
-
-import netflix.archaius.exceptions.ConfigException;
+import java.util.Properties;
 
 /**
- * Contract for a configuration file loader.  A ConfigManager will likely be configured with 
- * multiple configuration loaders, each responsible for loading a specific configuration
- * format and loading from a specific location.
- * 
- * TODO: Consider splitting load(resource) into a separate abstraction
- * 
+ * SPI for loading configurations.  The ConfigLoader provides a DSL 
  * @author elandau
  *
  */
 public interface ConfigLoader {
+
     /**
-     * Load configuration from a simple resource name.  A concrete ConfigLoader will need to add
-     * location and type information to this resource.
+     * DSL for loading a configuration
      * 
-     * For example, an WebAppConfigurationLoader will attempt load to the configuration from
-     *    resourceName : 'application-prod'
-     *    
-     *    /WEB-INF/confg/application-prod.properties
-     *    
-     * @param resourceName
-     * @return
+     * @author elandau
+     *
      */
-    Config load(String name, String resourceName) throws ConfigException ;
-    
-    /**
-     * Load a specific URL.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
-     * only need to check that the extension is supported (ex .properties)
-     * 
-     * @param name
-     * @return
-     */
-    Config load(String name, URL url) throws ConfigException;
-    
-    /**
-     * Load a specific file.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
-     * only need to check that the extension is supported (ex .properties)
-     * 
-     * @param file
-     * @return
-     */
-    Config load(String name, File file) throws ConfigException;
-    
-    /**
-     * Determine if the 
-     * 
-     * @param resourceName
-     * @return
-     */
-    boolean canLoad(String resourceName);
-    
-    boolean canLoad(URL uri);
-    
-    boolean canLoad(File file);
+    public static interface Loader {
+        /**
+         * Cascading policy to use the loading based on a resource name.  All loaded
+         * files will be merged into a single Config.
+         * @param strategy
+         */
+        Loader withCascadeStrategy(CascadeStrategy strategy);
+        
+        /**
+         * Arbitrary name assigned to the loaded Config.
+         * @param name
+         */
+        Loader withName(String name);
+        
+        /**
+         * Class loader to use
+         * @param loader
+         */
+        Loader withClassLoader(ClassLoader loader);
+        
+        /**
+         * When true, fail the entire load operation if the first resource name
+         * can't be loaded.  By definition all cascaded variations are treated 
+         * as overrides
+         * @param flag
+         */
+        Loader withFailOnFirst(boolean flag);
+        
+        /**
+         * Externally provided property overrides that are applied once 
+         * all cascaded files have been loaded
+         * 
+         * @param props
+         */
+        Loader withOverrides(Properties props);
+        
+        /**
+         * Once loaded add all the properties to System.setProperty()
+         * @param toSystem
+         * @return
+         */
+        Loader withLoadToSystem(boolean toSystem);
+        
+        Config load(String resourceName);
+        
+        Config load(URL url);
+    }
+
+    Loader newLoader();
 }
