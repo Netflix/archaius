@@ -4,7 +4,7 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 
-import netflix.archaius.AppConfig;
+import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.Config;
 import netflix.archaius.Property;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
@@ -57,7 +57,7 @@ public class ArchaiusModuleTest {
         private Boolean value;
         
         @Inject
-        public MyService(AppConfig config, MyServiceConfig serviceConfig) {
+        public MyService(DefaultAppConfig config, MyServiceConfig serviceConfig) {
             value = config.getBoolean("moduleTest.loaded");
         }
         
@@ -79,9 +79,9 @@ public class ArchaiusModuleTest {
                     props.setProperty("prefix-prod.double_value", "456.0");
                     props.setProperty("env", "prod");
                     
-                    AppConfig config = AppConfig.builder().withProperties(props).build();
+                    DefaultAppConfig config = DefaultAppConfig.builder().withProperties(props).build();
                     bind(Config.class).toInstance(config);
-                    bind(AppConfig.class).toInstance(config);
+                    bind(DefaultAppConfig.class).toInstance(config);
                 }
             },
             new ArchaiusModule()

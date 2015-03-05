@@ -7,12 +7,12 @@ import java.net.URL;
 import java.net.URLDecoder;
 
 import netflix.archaius.Config;
-import netflix.archaius.ConfigLoader;
+import netflix.archaius.ConfigReader;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.readers.URLConfigReader;
 
-public class PropertiesConfigLoader implements ConfigLoader {
+public class PropertiesConfigReader implements ConfigReader {
 
     @Override
     public Config load(String name, String resourceName) throws ConfigException {

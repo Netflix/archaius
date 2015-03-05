@@ -6,7 +6,7 @@ import netflix.archaius.config.MapConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
 import netflix.archaius.config.SystemConfig;
 import netflix.archaius.exceptions.ConfigException;
-import netflix.archaius.loaders.PropertiesConfigLoader;
+import netflix.archaius.loaders.PropertiesConfigReader;
 import netflix.archaius.property.DefaultPropertyObserver;
 
 import org.junit.Test;
@@ -16,7 +16,7 @@ public class ConfigManagerTest {
     public void testBasicReplacement() throws ConfigException {
         SimpleDynamicConfig dyn = new SimpleDynamicConfig("FAST");
         
-        AppConfig config = AppConfig.builder()
+        DefaultAppConfig config = DefaultAppConfig.builder()
                 .withApplicationConfigName("application")
                 .build();
         
@@ -43,13 +43,13 @@ public class ConfigManagerTest {
     
     @Test
     public void testDefaultConfiguration() throws ConfigException {
-        AppConfig config = AppConfig.builder()
+        DefaultAppConfig config = DefaultAppConfig.builder()
                 .withApplicationConfigName("application")
                 .build();
         
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
-                .withConfigLoader(new PropertiesConfigLoader())
+                .withConfigLoader(new PropertiesConfigReader())
                 .build();
                 
         config.addConfigLast(MapConfig.builder("test")

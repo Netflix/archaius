@@ -1,6 +1,6 @@
 package netflix.archaius.property;
 
-import netflix.archaius.AppConfig;
+import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.Property;
 import netflix.archaius.exceptions.ConfigException;
 
@@ -12,7 +12,7 @@ public class PropertyTest {
         private Property<Integer> value;
         private Property<Integer> value2;
         
-        public MyService(AppConfig config) {
+        public MyService(DefaultAppConfig config) {
             value  = config.createProperty("foo").asInteger(1, new MethodInvoker<Integer>(this, "setValue"));
             value2 = config.createProperty("foo").asInteger(2);
         }
@@ -24,7 +24,7 @@ public class PropertyTest {
     
     @Test
     public void test() throws ConfigException {
-        AppConfig config = AppConfig.builder().withApplicationConfigName("application").build();
+        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
         
         System.out.println("Configs: " + config.getChildConfigNames());
         

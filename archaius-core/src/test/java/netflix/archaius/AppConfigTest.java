@@ -15,7 +15,7 @@ public class AppConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        AppConfig config = AppConfig.builder()
+        DefaultAppConfig config = DefaultAppConfig.builder()
             .withApplicationConfigName("application")
             .withProperties(props)
             .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}"))
