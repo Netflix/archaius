@@ -1,6 +1,7 @@
 package netflix.archaius.cascade;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,10 +37,18 @@ public class ConcatCascadeStrategy implements CascadeStrategy {
         this.parameters.addAll(parameters);
     }
     
+    public ConcatCascadeStrategy(String[] parameters) {
+        this(Arrays.asList(parameters));
+    }
+    
     public ConcatCascadeStrategy(String separator, List<String> parameters) {
         this.separator = separator;
         this.parameters = new ArrayList<String>();
         this.parameters.addAll(parameters);
+    }
+    
+    public ConcatCascadeStrategy(String separator, String[] parameters) {
+        this(separator, Arrays.asList(parameters));
     }
     
     @Override

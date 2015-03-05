@@ -6,12 +6,14 @@ import java.lang.reflect.Method;
 import javax.inject.Inject;
 
 import netflix.archaius.AppConfig;
+import netflix.archaius.CascadeStrategy;
 import netflix.archaius.Config;
 import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.guice.annotations.Configuration;
 import netflix.archaius.guice.annotations.ConfigurationSource;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
@@ -27,6 +29,9 @@ public class ArchaiusModule extends AbstractModule {
         @Inject
         private AppConfig appConfig;
         
+        @Inject
+        private Injector injector;
+        
         @Override
         public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
             Class<?> clazz = typeLiteral.getRawType();
@@ -40,10 +45,13 @@ public class ArchaiusModule extends AbstractModule {
                     @Override
                     public void afterInjection(I injectee) {
                         ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
+                        CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
+                                                 ? injector.getInstance(source.cascading()) 
+                                                 : null;
                         if (source != null) {
                             for (String value : source.value()) {
                                 try {
-                                    appConfig.addConfigFirst(appConfig.newLoader().load(value));
+                                    appConfig.addConfigFirst(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
                                 } catch (ConfigException e) {
                                     throw new ProvisionException("Unable to load configuration for " + value + " at source " + injectee.getClass(), e);
                                 }

@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import netflix.archaius.AppConfig;
 import netflix.archaius.Config;
 import netflix.archaius.Property;
+import netflix.archaius.cascade.ConcatCascadeStrategy;
 import netflix.archaius.guice.annotations.Configuration;
 import netflix.archaius.guice.annotations.ConfigurationSource;
 
@@ -19,9 +20,16 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
 public class ArchaiusModuleTest {
+    
+    public static class MyCascadingStrategy extends ConcatCascadeStrategy {
+        public MyCascadingStrategy() {
+            super(new String[]{"${env}"});
+        }
+    }
+    
     @Singleton
     @Configuration(prefix="prefix-${env}")
-    @ConfigurationSource({"libA"})
+    @ConfigurationSource(value={"moduleTest"}, cascading=MyCascadingStrategy.class)
     public static class MyServiceConfig {
         private String  str_value;
         private Integer int_value;
@@ -50,7 +58,7 @@ public class ArchaiusModuleTest {
         
         @Inject
         public MyService(AppConfig config, MyServiceConfig serviceConfig) {
-            value = config.getBoolean("libA.loaded");
+            value = config.getBoolean("moduleTest.loaded");
         }
         
         public Boolean getValue() {
@@ -82,10 +90,15 @@ public class ArchaiusModuleTest {
         MyService service = injector.getInstance(MyService.class);
         Assert.assertTrue(service.getValue());
         
-        MyServiceConfig config = injector.getInstance(MyServiceConfig.class);
-        Assert.assertEquals("str_value", config.str_value);
-        Assert.assertEquals(123,   config.int_value.intValue());
-        Assert.assertEquals(true,  config.bool_value);
-        Assert.assertEquals(456.0, config.double_value, 0);
+        MyServiceConfig serviceConfig = injector.getInstance(MyServiceConfig.class);
+        Assert.assertEquals("str_value", serviceConfig.str_value);
+        Assert.assertEquals(123,   serviceConfig.int_value.intValue());
+        Assert.assertEquals(true,  serviceConfig.bool_value);
+        Assert.assertEquals(456.0, serviceConfig.double_value, 0);
+
+        Config config = injector.getInstance(Config.class);
+        
+        Assert.assertTrue(config.getBoolean("moduleTest.loaded"));
+        Assert.assertTrue(config.getBoolean("moduleTest-prod.loaded"));
     }
 }
