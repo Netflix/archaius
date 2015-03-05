@@ -1,6 +1,7 @@
 package netflix.archaius.config;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
@@ -238,7 +239,15 @@ public abstract class AbstractConfig implements Config {
         Constructor<T> c;
         try {
             c = type.getConstructor(String.class);
-            return c.newInstance(value);
+            if (c != null) {
+                return c.newInstance(value);
+            }
+            
+            Method method = type.getMethod("valueOf", String.class);
+            if (method != null) {
+                return (T) method.invoke(null, value);
+            }
+            throw new RuntimeException(type.getCanonicalName() + " has no String constructor or valueOf static method");
         } catch (Exception e) {
             throw new RuntimeException("Unable to instantiate value of type " + type.getCanonicalName(), e);
         }

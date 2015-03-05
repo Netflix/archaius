@@ -29,7 +29,7 @@ public class CompositeConfig extends AbstractConfig {
     }
 
     public static interface CompositeVisitor {
-        void visitChild(Config child);
+        void visit(Config child);
     }
     
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
@@ -187,5 +187,18 @@ public class CompositeConfig extends AbstractConfig {
         }
         sb.append("]");
         return sb.toString();
+    }
+    
+    @Override
+    public void accept(Visitor visitor) {
+        if (visitor instanceof CompositeVisitor) {
+            CompositeVisitor cv = (CompositeVisitor)visitor;
+            for (Config child : children) {
+                cv.visit(child);
+            }
+        }
+        else {
+            super.accept(visitor);
+        }
     }
 }

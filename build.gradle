@@ -58,10 +58,25 @@ project(':archaius-commons-configuration') {
     }
 }
 
+project(':archaius-guice') {
+    apply plugin: 'java'
+    dependencies {
+        compile  'javax.inject:javax.inject:1'
+        compile  'com.google.inject:guice:3.0'
+        compile  'com.google.inject.extensions:guice-multibindings:3.0'
+        compile  project(':archaius-core')
+    }
+}
+
 project(':archaius-legacy') {
     apply plugin: 'java'
     dependencies {
         compile  project(':archaius-commons-configuration')
+        compile 'com.google.guava:guava:14.0.1'    
+        compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
+        compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
+        compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+        compile 'com.google.code.findbugs:annotations:2.0.0'
     }
 }
 
