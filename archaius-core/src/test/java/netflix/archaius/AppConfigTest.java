@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import netflix.archaius.cascade.ConcatCascadeStrategy;
 import netflix.archaius.exceptions.ConfigException;
+import netflix.archaius.visitor.PrintStreamVisitor;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,6 +40,6 @@ public class AppConfigTest {
         Assert.assertTrue(config.getBoolean("libB.loaded"));
         Assert.assertEquals("libB", config.getString("libA.overrideA"));
         
-        System.out.println(config);
+        config.accept(new PrintStreamVisitor());
     }
 }

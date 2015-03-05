@@ -298,4 +298,5 @@ public class AppConfig extends CompositeConfig implements ObservablePropertyFact
         runtime.setProperties(properties);
         dynamicObserver.invalidate();
     }
+    
 }
