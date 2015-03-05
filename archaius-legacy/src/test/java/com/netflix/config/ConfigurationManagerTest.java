@@ -1,87 +1,77 @@
+/**
+ * Copyright 2014 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.netflix.config;
 
-import java.io.IOException;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicInteger;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
+import org.apache.commons.configuration.BaseConfiguration;
 import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
-import com.netflix.config.DefaultLegacyConfigurationManager.Builder;
-import com.netflix.config.DeploymentContext.ContextKey;
-
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConfigurationManagerTest {
-    @Before
-    public void beforeEachTest() {
-        ConfigurationManager.clearInstance();
-    }
-    
-    @Rule
-    public TestName name = new TestName();
+
+    static DynamicStringProperty prop1 = DynamicPropertyFactory.getInstance().getStringProperty("prop1", null);
     
     @Test
-    public void testDefaultStatic() {
-        for (ContextKey key : ContextKey.values()) {
-            System.setProperty(key.getKey(), key.name() + "-set");
-        }
-        
-        AbstractConfiguration config = ConfigurationManager.getConfigInstance();
-        DeploymentContext context = ConfigurationManager.getDeploymentContext();
-        
-        System.setProperty("someproperty", "prefix-${@environment}");
-        
-        Assert.assertEquals("prefix-environment-set", config.getString("someproperty"));
-    }
-    
-    @Test 
-    public void testAppOverride() {
+    public void testInstall() {
+        ConfigurationManager.getConfigInstance().setProperty("prop1", "abc");
+        assertEquals("abc", ConfigurationManager.getConfigInstance().getProperty("prop1"));
+        assertEquals("abc", prop1.get());
+        BaseConfiguration newConfig = new BaseConfiguration();
+        newConfig.setProperty("prop1", "fromNewConfig");
+        ConfigurationManager.install(newConfig);
+        assertEquals("fromNewConfig", ConfigurationManager.getConfigInstance().getProperty("prop1"));
+        assertEquals("fromNewConfig", prop1.get());
+        newConfig.setProperty("prop1", "changed");
+        assertEquals("changed", ConfigurationManager.getConfigInstance().getProperty("prop1"));
+        assertEquals("changed", prop1.get());
         try {
-            ConfigurationManager.loadAppOverrideProperties("test");
-            
-            AbstractConfiguration config = ConfigurationManager.getConfigInstance();
-            Boolean value = config.getBoolean("testloaded", false);
-            Assert.assertTrue(value);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            ConfigurationManager.install(new BaseConfiguration());
+            fail("IllegalStateExceptionExpected");
+        } catch (IllegalStateException e) {
+            assertNotNull(e);
+        }
+        try {
+            DynamicPropertyFactory.initWithConfigurationSource(new BaseConfiguration());
+            fail("IllegalStateExceptionExpected");
+        } catch (IllegalStateException e) {
+            assertNotNull(e);
         }
     }
     
-    @Test(expected=Exception.class)
-    public void testAppOverrideNotFound() throws IOException {
-        ConfigurationManager.loadAppOverrideProperties("notfound");
+    @Test
+    public void testLoadProperties() throws Exception {
+        ConfigurationManager.loadPropertiesFromResources("test.properties");
+        assertEquals("5", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
     }
     
-    public static class CustomFactory implements LegacyRootConfigurationFactory {
-        static AtomicInteger counter = new AtomicInteger();
-        
-        @Override
-        public LegacyConfigurationManager create() throws Exception {
-            counter.incrementAndGet();
-            Builder builder = DefaultLegacyConfigurationManager.builder()
-                    .withSystemProperties(false)
-                    .withEnvironmentProperties(false)
-                    ;
-            
-            return builder.build();
-        }
-    }
-    
-    @Test(expected=NoSuchElementException.class)
-    public void testCustomFactory() {
-        System.setProperty(name.getMethodName(), "true");
-        
-        CustomFactory.counter.set(0);
-        System.setProperty("archaius.default.configuration.factory.class", CustomFactory.class.getName());
-        
-        AbstractConfiguration config = ConfigurationManager.getConfigInstance();
-        
-        Assert.assertEquals(CustomFactory.counter.get(), 1);
-        config.getBoolean(name.getMethodName());    // This will throw the NoSuchElementException
-        Assert.fail("Should have failed with NoSuchElementException");
+    @Test
+    public void testLoadCascadedProperties() throws Exception {
+        SimpleDeploymentContext context = new SimpleDeploymentContext();
+        context.setDeploymentEnvironment("test");
+        context.setDeploymentRegion("us-east-1");
+        ConfigurationManager.setDeploymentContext(context);
+        ConfigurationManager.loadCascadedPropertiesFromResources("test");
+        assertEquals("9", ConfigurationManager.getConfigInstance().getProperty("com.netflix.config.samples.SampleApp.SampleBean.numSeeds"));
+        assertEquals("1", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));
+        ConfigurationManager.loadAppOverrideProperties("override");
+        assertEquals("200", ConfigurationManager.getConfigInstance().getProperty("cascaded.property"));
     }
 }

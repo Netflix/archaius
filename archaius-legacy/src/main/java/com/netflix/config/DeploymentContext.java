@@ -22,13 +22,8 @@ package com.netflix.config;
 public interface DeploymentContext {
     
     public enum ContextKey {
-        environment("@environment"), 
-        datacenter("@datacenter"), 
-        appId("@appId"),
-        serverId("@serverId"), 
-        stack("@stack"), 
-        region("@region"), 
-        zone("@zone");
+        environment("@environment"), datacenter("@datacenter"), appId("@appId"),
+        serverId("@serverId"), stack("@stack"), region("@region"), zone("@zone");
         
         private String key;
         
