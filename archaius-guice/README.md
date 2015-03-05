@@ -1,9 +1,9 @@
-# Overview
+## Overview
 
 This module integrates Archaius Config with Guice to enable custom injection of properties
 into objects created by guice.
 
-# Getting Started
+## Getting Started
 
 To enable create Guice bindings for Config and AppConfig and install a single guice module.
 
@@ -21,7 +21,7 @@ Injector injector = Guice.createInjector(
     );
 ```
 
-# Loading configuration
+## Loading configuration
 
 You can load configuration into AppConfig by annotating an injectable class with @ConfigurationSource.
 Note that @ConfigurationSource is processed AFTER the constructor is called so you cannot assume the 
@@ -47,9 +47,9 @@ public class ServiceA {
     }
 }
 
-```java
+```
 
-# Cascade loading
+## Cascade loading
 
 All @ConfigurationSource annotated classes will load configuration using the default cascading strategy 
 configured on AppConfig.  However, a per class override strategy may be specified as well.
@@ -69,7 +69,7 @@ public static class MyCascadingStrategy extends ConcatCascadeStrategy {
 }
 ```
 
-# Configuration binding
+## Configuration binding
 
 Configuration binding is triggered by annotating a class with @Configuration.
 
@@ -87,12 +87,12 @@ public class ServiceAConfiguration {
     public void withTimeout(Integer timeout) {
     }
 }
-```java
+```
 
 ```properties
 serviceA.timeout=10000
 ```
 
-# Configuration based named injection
+## Configuration based named injection
 
 TBD
