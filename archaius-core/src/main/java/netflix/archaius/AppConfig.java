@@ -4,13 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import netflix.archaius.DefaultConfigLoader.Loader;
 import netflix.archaius.cascade.SimpleCascadeStrategy;
 import netflix.archaius.config.CompositeConfig;
-import netflix.archaius.config.EmptyConfig;
 import netflix.archaius.config.EnvironmentConfig;
 import netflix.archaius.config.SettableConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
@@ -19,6 +15,9 @@ import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 import netflix.archaius.loaders.PropertiesConfigLoader;
 import netflix.archaius.property.DefaultObservableProperty;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main AppConfig to be used as the top level entry point for application configuration.
@@ -193,9 +192,6 @@ public class AppConfig extends CompositeConfig implements ObservablePropertyFact
                 dynamic = null;
             }
             
-            super.addConfigLast(new EmptyConfig(APPLICATION_LAYER));
-            super.addConfigLast(library = new CompositeConfig(LIBRARY_LAYER));
-            
             if (builder.includeSystem) {
                 super.addConfigLast(new SystemConfig());
             }
@@ -205,13 +201,14 @@ public class AppConfig extends CompositeConfig implements ObservablePropertyFact
             }
             
             loader = DefaultConfigLoader.builder()
-                .withConfigLoaders(builder.loaders)
-                .withDefaultCascadingStrategy(builder.defaultStrategy)
-                .withFailOnFirst(builder.failOnFirst)
-                .withStrInterpolator(getStrInterpolator())
-                .build();
-            
-            super.replace(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
+                    .withConfigLoaders(builder.loaders)
+                    .withDefaultCascadingStrategy(builder.defaultStrategy)
+                    .withFailOnFirst(builder.failOnFirst)
+                    .withStrInterpolator(getStrInterpolator())
+                    .build();
+                
+            super.addConfigLast(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
+            super.addConfigLast(library = new CompositeConfig(LIBRARY_LAYER));
             
             this.setStrInterpolator(builder.interpolator.create(this));
             
