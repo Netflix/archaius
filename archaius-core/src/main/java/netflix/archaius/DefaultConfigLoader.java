@@ -11,7 +11,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import netflix.archaius.cascade.SimpleCascadeStrategy;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.exceptions.ConfigException;
-import netflix.archaius.visitor.PrintStreamVisitor;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.

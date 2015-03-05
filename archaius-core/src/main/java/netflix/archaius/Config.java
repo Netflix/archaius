@@ -94,5 +94,7 @@ public interface Config {
     
     void setStrInterpolator(StrInterpolator interpolator);
     
+    StrInterpolator getStrInterpolator();
+    
     void accept(Visitor visitor);
 }
