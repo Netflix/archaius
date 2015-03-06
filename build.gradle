@@ -33,6 +33,8 @@ subprojects {
         compile     'org.slf4j:slf4j-api:1.6.3'
 	
         testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+        testCompile 'junit:junit:4.11'
+        testCompile 'com.google.guava:guava:11.0.2'
     }
 }
 
