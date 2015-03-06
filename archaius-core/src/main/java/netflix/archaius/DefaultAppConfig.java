@@ -75,6 +75,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         private boolean                   includeDynamicConfig = true;
         private String                    configName           = DEFAULT_APP_CONFIG_NAME;
         private Properties                props;
+        private Decoder                   decoder              = new DefaultDecoder();
 
         public Builder withStrInterpolator(StrInterpolatorFactory interpolator) {
             this.interpolator = interpolator;
@@ -148,6 +149,14 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             this.configName = name;
             return this;
         }
+
+        /**
+         * Decoder used to decode properties to arbitrary types.
+         */
+        public Builder withDecoder(Decoder decoder) {
+            this.decoder = decoder;
+            return this;
+        }
         
         public DefaultAppConfig build() {
             if (this.interpolator == null) {
@@ -199,7 +208,11 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             if (builder.includeEnvironment) {
                 super.addConfigLast(new EnvironmentConfig());
             }
-            
+
+            if (builder.decoder != null) {
+                super.setDecoder(builder.decoder);
+            }
+
             loader = DefaultConfigLoader.builder()
                     .withConfigLoaders(builder.loaders)
                     .withDefaultCascadingStrategy(builder.defaultStrategy)

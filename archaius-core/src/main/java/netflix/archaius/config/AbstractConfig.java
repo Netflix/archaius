@@ -1,7 +1,5 @@
 package netflix.archaius.config;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -10,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import netflix.archaius.Config;
+import netflix.archaius.Decoder;
+import netflix.archaius.DefaultDecoder;
 import netflix.archaius.StrInterpolator;
 import netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 
@@ -18,10 +18,12 @@ public abstract class AbstractConfig implements Config {
     private final String name;
     private StrInterpolator interpolator;
     private Config parent;
-    
+    private Decoder decoder;
+
     public AbstractConfig(String name) {
         this.name = name;
         this.interpolator = CommonsStrInterpolatorFactory.INSTANCE.create(this);
+        this.decoder = new DefaultDecoder();
     }
     
     public void setStrInterpolator(StrInterpolator interpolator) {
@@ -31,7 +33,15 @@ public abstract class AbstractConfig implements Config {
     public StrInterpolator getStrInterpolator() {
         return this.interpolator;
     }
-    
+
+    public Decoder getDecoder() {
+        return decoder;
+    }
+
+    public void setDecoder(Decoder decoder) {
+        this.decoder = decoder;
+    }
+
     public Config getParent() {
         return parent;
     }
@@ -341,21 +351,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) {
             return defaultValue;
         }
-        Constructor<T> c;
-        try {
-            c = type.getConstructor(String.class);
-            if (c != null) {
-                return c.newInstance(value);
-            }
-            
-            Method method = type.getMethod("valueOf", String.class);
-            if (method != null) {
-                return (T) method.invoke(null, value);
-            }
-            throw new RuntimeException(type.getCanonicalName() + " has no String constructor or valueOf static method");
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to instantiate value of type " + type.getCanonicalName(), e);
-        }
+        return decoder.decode(type, value);
     }
 
     @Override
