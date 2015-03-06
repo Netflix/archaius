@@ -8,8 +8,8 @@ import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.Config;
 import netflix.archaius.Property;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
-import netflix.archaius.guice.annotations.Configuration;
-import netflix.archaius.guice.annotations.ConfigurationSource;
+import netflix.archaius.mapper.annotations.Configuration;
+import netflix.archaius.mapper.annotations.ConfigurationSource;
 
 import org.junit.Assert;
 import org.junit.Test;
