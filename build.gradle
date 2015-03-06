@@ -27,20 +27,17 @@ apply plugin: 'eclipse'
 
 subprojects {
     group = "com.netflix.${githubProjectName}"
-
-    dependencies {
-        compile     'org.apache.commons:commons-lang3:3.3.2'
-        compile     'org.slf4j:slf4j-api:1.6.3'
-	
-        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
-        testCompile 'junit:junit:4.11'
-        testCompile 'com.google.guava:guava:11.0.2'
-    }
 }
 
 project(':archaius-core') {
     apply plugin: 'java'
     dependencies {
+        compile     'org.apache.commons:commons-lang3:3.3.2'
+        compile     'org.slf4j:slf4j-api:1.6.3'
+
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+        testCompile 'junit:junit:4.11'
+        testCompile 'com.google.guava:guava:11.0.2'
     }
 }
 
@@ -49,24 +46,33 @@ project(':archaius-typesafe') {
     dependencies {
         compile     project(':archaius-core')
         compile     'com.typesafe:config:1.2.1'
+
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+        testCompile 'junit:junit:4.11'
     }
 }
 
 project(':archaius-commons-configuration') {
     apply plugin: 'java'
     dependencies {
-        compile  'commons-configuration:commons-configuration:1.8'
         compile  project(':archaius-core')
+        compile  'commons-configuration:commons-configuration:1.8'
+
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+        testCompile 'junit:junit:4.11'
     }
 }
 
 project(':archaius-guice') {
     apply plugin: 'java'
     dependencies {
+        compile  project(':archaius-core')
         compile  'javax.inject:javax.inject:1'
         compile  'com.google.inject:guice:3.0'
         compile  'com.google.inject.extensions:guice-multibindings:3.0'
-        compile  project(':archaius-core')
+
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+        testCompile 'junit:junit:4.11'
     }
 }
 
@@ -81,10 +87,11 @@ project(':archaius-legacy') {
         compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+
+        testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
         testCompile 'junit:junit:4.11'
         testCompile 'org.apache.derby:derby:10.8.2.2'
         testCompile files('src/test/resources/classpathTestResources.jar')
-
     }
 }
 
