@@ -1,4 +1,4 @@
-package netflix.archaius.guice.annotations;
+package netflix.archaius.mapper.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
