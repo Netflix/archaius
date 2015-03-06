@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,8 +12,6 @@ import java.util.List;
 import netflix.archaius.Config;
 import netflix.archaius.StrInterpolator;
 import netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
-
-import com.google.common.collect.Lists;
 
 public abstract class AbstractConfig implements Config {
 
@@ -318,7 +317,7 @@ public abstract class AbstractConfig implements Config {
             return notFound();
         }
         String[] parts = value.split(",");
-        return Lists.newArrayList(parts);
+        return Arrays.asList(parts);
     }
 
     @Override
@@ -328,7 +327,7 @@ public abstract class AbstractConfig implements Config {
             return notFound(defaultValue);
         }
         String[] parts = value.split(",");
-        return Lists.newArrayList(parts);
+        return Arrays.asList(parts);
     }
 
     @Override
