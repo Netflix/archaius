@@ -26,7 +26,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 
 subprojects {
-    group = "com.netflix.${githubProjectName}"
+    group = "netflix.${githubProjectName}"
 }
 
 project(':archaius-core') {
