@@ -8,21 +8,24 @@ import netflix.archaius.Config;
 import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.mapper.ConfigBinder;
 import netflix.archaius.mapper.DefaultConfigBinder;
+import netflix.archaius.mapper.IoCContainer;
 import netflix.archaius.mapper.annotations.Configuration;
 import netflix.archaius.mapper.annotations.ConfigurationSource;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.ProvisionException;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Names;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
 public class ArchaiusModule extends AbstractModule {
-    public static class ConfigurationInjectingListener implements TypeListener {
+    public static class ConfigurationInjectingListener implements TypeListener, IoCContainer {
         @Inject
         private AppConfig appConfig;
         
@@ -70,14 +73,20 @@ public class ArchaiusModule extends AbstractModule {
                     @Override
                     public void afterInjection(I injectee) {
                         try {
-                            binder.bindConfig(injectee);
+                            binder.bindConfig(injectee, ConfigurationInjectingListener.this);
                         }
                         catch (Exception e) {
-                            throw new ProvisionException("Unable to bind configuration to " + injectee.getClass());
+                            e.printStackTrace();
+                            throw new ProvisionException("Unable to bind configuration to " + injectee.getClass(), e);
                         }
                     }
                 });
             }        
+        }
+
+        @Override
+        public <T> T getInstance(String name, Class<T> type) {
+            return injector.getInstance(Key.get(type, Names.named(name)));
         }
     }
     
