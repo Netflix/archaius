@@ -9,16 +9,21 @@ import netflix.archaius.Config;
 import netflix.archaius.DefaultAppConfig;
 import netflix.archaius.Property;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
+import netflix.archaius.config.MapConfig;
+import netflix.archaius.exceptions.MappingException;
+import netflix.archaius.mapper.DefaultConfigBinder;
 import netflix.archaius.mapper.annotations.Configuration;
 import netflix.archaius.mapper.annotations.ConfigurationSource;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
 public class ArchaiusModuleTest {
     
@@ -36,8 +41,8 @@ public class ArchaiusModuleTest {
         private Integer int_value;
         private Boolean bool_value;
         private Double  double_value;
-        
         private Property<Integer> fast_int;
+        private Named named;
         
         public void setStr_value(String value) {
             System.out.println("Setting string value to : " + value);
@@ -45,6 +50,10 @@ public class ArchaiusModuleTest {
         
         public void setInt_value(Integer value) {
             System.out.println("Setting int value to : " + value);
+        }
+        
+        public void setNamed(Named named) {
+            this.named = named;
         }
         
         @Inject
@@ -65,6 +74,20 @@ public class ArchaiusModuleTest {
         public Boolean getValue() {
             return value;
         }
+    }
+    
+    public static interface Named {
+        
+    }
+    
+    @Singleton
+    public static class Named1 implements Named {
+        
+    }
+    
+    @Singleton
+    public static class Named2 implements Named {
+        
     }
     
     @Test
@@ -101,5 +124,59 @@ public class ArchaiusModuleTest {
         
         Assert.assertTrue(config.getBoolean("moduleTest.loaded"));
         Assert.assertTrue(config.getBoolean("moduleTest-prod.loaded"));
+    }
+    
+    @Test
+    public void testNamedInjection() {
+        Injector injector = Guice.createInjector(
+            new AbstractModule() {
+                @Override
+                protected void configure() {
+                    Properties props = new Properties();
+                    props.setProperty("prefix-prod.named", "name1");
+                    props.setProperty("env", "prod");
+                    
+                    bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
+                    bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
+                    
+                    AppConfig config = DefaultAppConfig.builder().withProperties(props).build();
+                    bind(Config.class).toInstance(config);
+                    bind(AppConfig.class).toInstance(config);
+                }
+            },
+            new ArchaiusModule()
+            );
+            
+        MyService service = injector.getInstance(MyService.class);
+        Assert.assertTrue(service.getValue());
+        
+        MyServiceConfig serviceConfig = injector.getInstance(MyServiceConfig.class);
+
+        Assert.assertTrue(serviceConfig.named instanceof Named1);
+    }
+
+    @Configuration(prefix="prefix.${name}.${id}", params={"name", "id"})
+    public static class ChildService {
+        private final String name;
+        private final Long id;
+        private String loaded;
+        
+        public ChildService(String name, Long id) {
+            this.name = name;
+            this.id = id;
+        }
+    }
+    
+    @Test
+    public void testPrefixReplacements() throws MappingException {
+        Config config = MapConfig.builder("")
+                .put("prefix.foo.123.loaded", "loaded")
+                .build();
+        
+        DefaultConfigBinder binder = new DefaultConfigBinder(config);
+        
+        ChildService service = new ChildService("foo", 123L);
+        binder.bindConfig(service);
+        Assert.assertEquals("loaded", service.loaded);
     }
 }

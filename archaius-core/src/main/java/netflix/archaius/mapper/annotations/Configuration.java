@@ -36,6 +36,11 @@ public @interface Configuration
     String      prefix() default "";
 
     /**
+     * @return field names to use for replacement
+     */
+    String[]      params() default {};
+    
+    /**
      * @return user displayable description of this configuration
      */
     String      documentation() default "";
