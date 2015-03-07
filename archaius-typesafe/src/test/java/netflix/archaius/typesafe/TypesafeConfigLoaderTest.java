@@ -12,7 +12,9 @@ import org.junit.Test;
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
-        DefaultAppConfig config = DefaultAppConfig.builder().build();
+        DefaultAppConfig config = DefaultAppConfig.builder()
+                .withApplicationConfigName("application")
+                .build();
                 
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withConfigLoader(new TypesafeConfigReader())
