@@ -20,7 +20,7 @@ public class DefaultObservableProperty implements ObservableProperty {
     private final String key;
     private final Config config;
     private final CopyOnWriteArrayList<AbstractProperty<?>> subscribers = new CopyOnWriteArrayList<AbstractProperty<?>>();
-    private long lastUpdateTimeInMillis = 0;
+    private volatile long lastUpdateTimeInMillis = 0;
     
     public DefaultObservableProperty(String key, Config config) {
         this.key = key;
@@ -36,10 +36,10 @@ public class DefaultObservableProperty implements ObservableProperty {
 
     public abstract class AbstractProperty<T> implements Property<T> {
         private volatile T existing = null;
-        private PropertyObserver<?> observer;
+        private PropertyObserver<T> observer;
         private final T defaultValue;
         
-        public AbstractProperty(PropertyObserver<?> observer, T defaultValue) {
+        public AbstractProperty(PropertyObserver<T> observer, T defaultValue) {
             this.observer = observer;
             this.defaultValue = defaultValue;
         }
@@ -59,14 +59,14 @@ public class DefaultObservableProperty implements ObservableProperty {
                     existing = next;
                     if (observer != null) {
                         lastUpdateTimeInMillis = System.currentTimeMillis();
-                        ((PropertyObserver<T>)observer).onChange(existing);
+                        observer.onChange(existing);
                     }
                 }
             }
             catch (Exception e) {
                 LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
                 if (observer != null) {
-                    ((PropertyObserver<T>)observer).onError(e);
+                    observer.onError(e);
                 }
             }
         }
