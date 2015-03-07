@@ -182,7 +182,13 @@ public class DefaultConfigLoader implements ConfigLoader {
                             do {
                                 try {
                                     config = loader.load(name, resourcePermutationName);
-                                    fileToLoad = config.getString(includeKey);
+                                    try {
+                                        fileToLoad = config.getString(includeKey);
+                                    }
+                                    catch (Exception e) {
+                                        // TODO: 
+                                        fileToLoad = null;
+                                    }
                                     configs.add(config);
                                 } catch (ConfigException e) {
                                     break;
