@@ -227,7 +227,7 @@ public class ZooKeeperConfigurationSource implements WatchedConfigurationSource,
         try {
             Closeables.close(pathChildrenCache, true);
         } catch (IOException exc) {
-            logger.warn("IOException should not have been thrown.", exc);
+            logger.error("IOException should not have been thrown.", exc);
         }
     }
 }
