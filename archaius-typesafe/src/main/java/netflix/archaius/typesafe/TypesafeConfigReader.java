@@ -1,6 +1,5 @@
 package netflix.archaius.typesafe;
 
-import java.io.File;
 import java.net.URL;
 
 import netflix.archaius.ConfigReader;
@@ -8,40 +7,28 @@ import netflix.archaius.exceptions.ConfigException;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
 
 public class TypesafeConfigReader implements ConfigReader {
-    public TypesafeConfigReader() {
-    }
-
     @Override
-    public netflix.archaius.Config load(String name, String resourceName) throws ConfigException {
-        System.out.println("Loading configuration : " + resourceName);
-        Config config = ConfigFactory.parseResources(resourceName + ".properties");
+    public netflix.archaius.Config load(ClassLoader loader, String name, String resourceName) throws ConfigException {
+        Config config = ConfigFactory.parseResources(loader, resourceName + ".properties");
         return new TypesafeConfig(name, config);
     }
 
     @Override
-    public netflix.archaius.Config load(String name, URL url) throws ConfigException {
-        return null;
+    public netflix.archaius.Config load(ClassLoader loader, String name, URL url) throws ConfigException {
+        Config config = ConfigFactory.parseURL(url, ConfigParseOptions.defaults().setClassLoader(loader));
+        return new TypesafeConfig(name, config);
     }
 
     @Override
-    public netflix.archaius.Config load(String name, File file) throws ConfigException {
-        return null;
-    }
-
-    @Override
-    public boolean canLoad(String name) {
+    public boolean canLoad(ClassLoader loader, String name) {
         return true;
     }
 
     @Override
-    public boolean canLoad(URL uri) {
-        return true;
-    }
-
-    @Override
-    public boolean canLoad(File file) {
+    public boolean canLoad(ClassLoader loader, URL uri) {
         return true;
     }
 }

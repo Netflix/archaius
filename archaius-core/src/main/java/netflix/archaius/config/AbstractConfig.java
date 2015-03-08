@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import netflix.archaius.Config;
 import netflix.archaius.Decoder;
@@ -19,6 +20,7 @@ public abstract class AbstractConfig implements Config {
     private StrInterpolator interpolator;
     private Config parent;
     private Decoder decoder;
+    private boolean throwExceptionOnMissing = false;
 
     public AbstractConfig(String name) {
         this.name = name;
@@ -373,6 +375,8 @@ public abstract class AbstractConfig implements Config {
     }
     
     private <T> T notFound() {
+        if (throwExceptionOnMissing) 
+            throw new NoSuchElementException();
         return null;
     }
     

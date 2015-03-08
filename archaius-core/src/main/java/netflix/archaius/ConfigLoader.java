@@ -1,7 +1,10 @@
 package netflix.archaius;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Properties;
+
+import netflix.archaius.exceptions.ConfigException;
 
 /**
  * SPI for loading configurations.  The ConfigLoader provides a DSL 
@@ -59,9 +62,27 @@ public interface ConfigLoader {
          */
         Loader withLoadToSystem(boolean toSystem);
         
-        Config load(String resourceName);
+        /**
+         * Load configuration by cascade resource name.
+         * @param resourceName
+         * @return
+         */
+        Config load(String resourceName) throws ConfigException;
         
-        Config load(URL url);
+        /**
+         * Load configuration from a specific URL
+         * @param url
+         * @return
+         */
+        Config load(URL url) throws ConfigException;
+        
+        /**
+         * Load configuration from a specific file
+         * @param url
+         * @return
+         * @throws ConfigException 
+         */
+        Config load(File file) throws ConfigException;
     }
 
     Loader newLoader();

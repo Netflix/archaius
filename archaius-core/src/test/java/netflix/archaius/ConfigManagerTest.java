@@ -49,7 +49,7 @@ public class ConfigManagerTest {
         
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
-                .withConfigLoader(new PropertiesConfigReader())
+                .withConfigReader(new PropertiesConfigReader())
                 .build();
                 
         config.addConfigLast(MapConfig.builder("test")

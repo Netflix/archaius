@@ -17,7 +17,7 @@ public class TypesafeConfigLoaderTest {
                 .build();
                 
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withConfigLoader(new TypesafeConfigReader())
+                .withConfigReader(new TypesafeConfigReader())
                 .withStrInterpolator(config.getStrInterpolator())
                 .build();
         

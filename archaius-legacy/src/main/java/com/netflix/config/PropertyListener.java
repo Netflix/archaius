@@ -26,6 +26,7 @@ package com.netflix.config;
  * @author awang
  *
  */
+@Deprecated
 public interface PropertyListener {
     
     
