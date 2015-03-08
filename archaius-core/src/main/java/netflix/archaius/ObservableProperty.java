@@ -10,14 +10,14 @@ import java.math.BigInteger;
  * 
  * {@code 
  * <pre>   
- *     Subscription s = config.listen("my.service.property")
+ *     Property<String> p = factory.createProperty("my.service.property")
  *           .subscribe(new PropertyObserver<String>() {
  *               public void onUpdate(String newValue, String oldValue) {
  *               }
- *           }, String.class, "defaultValue");
- *           
+ *           }).asString("defaultValue");
  *     ...
- *     s.unsubscribe();
+ *     // When shutting down call...
+ *     p.unsubscribe();
  * </pre>
  * }
  * 
