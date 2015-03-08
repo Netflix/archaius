@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import netflix.archaius.ConfigLoader.Loader;
 import netflix.archaius.cascade.SimpleCascadeStrategy;
 import netflix.archaius.config.CascadingCompositeConfig;
 import netflix.archaius.config.EnvironmentConfig;
-import netflix.archaius.config.SettableConfig;
 import netflix.archaius.config.SimpleDynamicConfig;
 import netflix.archaius.config.SystemConfig;
 import netflix.archaius.exceptions.ConfigException;
@@ -177,12 +175,11 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         return new Builder().build();
     }
     
-    private final SimpleDynamicConfig    runtime;
-    private final CascadingCompositeConfig        dynamic;
-    private final CascadingCompositeConfig        library;
-    
+    private final SimpleDynamicConfig          runtime;
+    private final CascadingCompositeConfig     dynamic;
+    private final CascadingCompositeConfig     library;
     private final CachingDynamicConfigObserver dynamicObserver;
-    private final DefaultConfigLoader    loader;
+    private final DefaultConfigLoader          loader;
     
     public DefaultAppConfig(Builder builder) {
         super(NAME);
@@ -214,7 +211,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             }
 
             loader = DefaultConfigLoader.builder()
-                    .withConfigLoaders(builder.loaders)
+                    .withConfigReader(builder.loaders)
                     .withDefaultCascadingStrategy(builder.defaultStrategy)
                     .withFailOnFirst(builder.failOnFirst)
                     .withStrInterpolator(getStrInterpolator())

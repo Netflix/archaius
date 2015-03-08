@@ -1,6 +1,5 @@
 package netflix.archaius;
 
-import java.io.File;
 import java.net.URL;
 
 import netflix.archaius.exceptions.ConfigException;
@@ -28,7 +27,7 @@ public interface ConfigReader {
      * @param resourceName
      * @return
      */
-    Config load(String name, String resourceName) throws ConfigException ;
+    Config load(ClassLoader loader, String name, String resourceName) throws ConfigException ;
     
     /**
      * Load a specific URL.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
@@ -37,26 +36,21 @@ public interface ConfigReader {
      * @param name
      * @return
      */
-    Config load(String name, URL url) throws ConfigException;
+    Config load(ClassLoader loader, String name, URL url) throws ConfigException;
     
     /**
-     * Load a specific file.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
-     * only need to check that the extension is supported (ex .properties)
-     * 
-     * @param file
-     * @return
-     */
-    Config load(String name, File file) throws ConfigException;
-    
-    /**
-     * Determine if the 
+     * Determine if this reader can load the provided resource name
      * 
      * @param resourceName
      * @return
      */
-    boolean canLoad(String resourceName);
-    
-    boolean canLoad(URL uri);
-    
-    boolean canLoad(File file);
+    boolean canLoad(ClassLoader loader, String resourceName);
+
+    /**
+     * Determine if this reader can load the provided url
+     * @param loader
+     * @param uri
+     * @return
+     */
+    boolean canLoad(ClassLoader loader, URL uril);
 }

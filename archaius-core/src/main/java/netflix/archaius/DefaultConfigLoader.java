@@ -1,6 +1,7 @@
 package netflix.archaius;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,7 +30,7 @@ public class DefaultConfigLoader implements ConfigLoader {
         private String              includeKey = "@next";
         private StrInterpolator     interpolator;
         
-        public Builder withConfigLoader(ConfigReader loader) {
+        public Builder withConfigReader(ConfigReader loader) {
             this.loaders.add(loader);
             return this;
         }
@@ -52,7 +53,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             return this;
         }
         
-        public Builder withConfigLoaders(List<ConfigReader> loaders) {
+        public Builder withConfigReader(List<ConfigReader> loaders) {
             if (loaders != null)
                 this.loaders = loaders;
             return this;
@@ -87,37 +88,6 @@ public class DefaultConfigLoader implements ConfigLoader {
         this.interpolator       = builder.interpolator;
         this.alreadyLoaded      = new CopyOnWriteArraySet<String>();
         this.defaultFailOnFirst = builder.failOnFirst;
-    }
-
-    public void load(String name, URL url) throws ConfigException {
-        if (alreadyLoaded.contains(url)) 
-            return;
-        
-        List<Config> configs = new ArrayList<Config>();
-        for (ConfigReader loader : loaders) {
-            if (loader.canLoad(url)) {
-                Config config = loader.load(name, url);
-                if (config != null) {
-                    configs.add(config);
-                    return;
-                }
-            }
-        }
-        
-        throw new ConfigException("Configuration not found " + url);
-    }
-    
-    public Config load(String name, File file) throws ConfigException {
-        for (ConfigReader loader : loaders) {
-            if (loader.canLoad(file)) {
-                Config config = loader.load(name, file);
-                if (config != null) {
-                    return config;
-                }
-            }
-        }
-        
-        throw new ConfigException("Configuration not found " + file.getAbsolutePath());
     }
     
     @Override
@@ -176,12 +146,12 @@ public class DefaultConfigLoader implements ConfigLoader {
                 boolean failIfNotLoaded = failOnFirst;
                 for (String resourcePermutationName : strategy.generate(resourceName, interpolator)) {
                     for (ConfigReader loader : loaders) {
-                        if (loader.canLoad(name)) {
+                        if (loader.canLoad(classLoader, name)) {
                             Config config;
                             String fileToLoad = resourcePermutationName;
                             do {
                                 try {
-                                    config = loader.load(name, resourcePermutationName);
+                                    config = loader.load(classLoader, name, resourcePermutationName);
                                     try {
                                         fileToLoad = config.getString(includeKey);
                                     }
@@ -227,9 +197,9 @@ public class DefaultConfigLoader implements ConfigLoader {
             @Override
             public Config load(URL url) {
                 for (ConfigReader loader : loaders) {
-                    if (loader.canLoad(name)) {
+                    if (loader.canLoad(classLoader, name)) {
                         try {
-                            return loader.load(name, url);
+                            return loader.load(classLoader, name, url);
                         } catch (ConfigException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
@@ -237,6 +207,15 @@ public class DefaultConfigLoader implements ConfigLoader {
                     }
                 }
                 return null;
+            }
+
+            @Override
+            public Config load(File file) throws ConfigException {
+                try {
+                    return load(file.toURL());
+                } catch (MalformedURLException e) {
+                    throw new ConfigException("Failed to load file " + file, e);
+                }
             }
         };
     }    
