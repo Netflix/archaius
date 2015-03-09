@@ -7,27 +7,26 @@ Archaius has minimal external dependencies, is non-static, and DI friendly.
 
 # Getting Started
 
-The core of Archaius configuration is the ConfigManager.  All access to the configuration
-should be done through this class.  An application will likely create a single ConfigManager
-to which different override levels may be added.  ConfigManager extends CompositeConfig
-and as such offers a hierarchical override structure of configuration.
-
-An example setup of ConfigManager is to have a top dynamic override layer following by 
-application level configuration, library configuration and finally system and environment 
-variables.  Additional layers may be added and the order of property value resolution
-is dictated by the order in which addConfig() is called.
+Archaius provides a set of specialized configuration objects that may be combined
+using CompositeConfig into a specific override structure.  For convenience you may 
+also use AppConfig as a best practices combination of runtime overrides,
+remote configuration, environment, system, application and library configuration 
+levels.  All access to the configuration in application should go through an instance 
+of AppConfig.  
 
 ```java
-ConfigManager manager = ConfigManager.builder() 
-    .addConfig(new PollingDynamicConfg(
-            "REMOTE", 
-            new URLConfigReader("http://remoteconfigservice/snapshot"), 
-            new FixedPollingStrategy(30, TimeUnit.SECONDS)) 
-    .addConfig(application = new CompositeConfig())
-    .addConfig(library = new CompositeConfig())
-    .addConfig(new SystemConfig()) 
-    .addConfig(new EnvironmentConfig())
-    .build();
+// Create the config.  This will load configuration from config.properties
+AppConfig config = DefaultAppConfig.createDefault();
+
+// Read a property
+config.getString("propertyname");
+
+// Load configuration into the libraries level
+config.addConfig(config.newLoader().load("library");
+
+// Get a fast property
+config.createProperty("propertyname").asString();
+
 ```
 
 # Reading configuration
@@ -127,7 +126,7 @@ The example below shows an override layer being added as the first Config in Con
 overrides take precedence.  
 
 ```java
-ConfigManager manager = ConfigManager.builder() 
+CompositeConfig manager = CompositeConfig.builder() 
     .addConfig(overrides = new SimpleDynamicConfig())
     .addConfig(new PollingDynamicConfg(
             "REMOTE", 
