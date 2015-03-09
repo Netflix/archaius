@@ -13,8 +13,9 @@ public class PropertyTest {
         private Property<Integer> value2;
         
         public MyService(DefaultAppConfig config) {
-            value  = config.createProperty("foo").asInteger(1, new MethodInvoker<Integer>(this, "setValue"));
-            value2 = config.createProperty("foo").asInteger(2);
+            value  = config.createProperty("foo").asInteger();
+            value.addObserver(new MethodInvoker<Integer>(this, "setValue"));
+            value2 = config.createProperty("foo").asInteger();
         }
         
         public void setValue(Integer value) {
@@ -30,13 +31,32 @@ public class PropertyTest {
         
         MyService service = new MyService(config);
 
-        Assert.assertEquals(1, (int)service.value.get());
-        Assert.assertEquals(2, (int)service.value2.get());
+        Assert.assertEquals(1, (int)service.value.get(1));
+        Assert.assertEquals(2, (int)service.value2.get(2));
         
         config.setProperty("foo", "123");
         
-        Assert.assertEquals(123, (int)service.value.get());
-        Assert.assertEquals(123, (int)service.value2.get());
+        Assert.assertEquals(123, (int)service.value.get(1));
+        Assert.assertEquals(123, (int)service.value2.get(2));
+    }
+    
+    @Test
+    public void testPropertyIsCached() throws ConfigException {
+        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
+        
+        System.out.println("Configs: " + config.getChildConfigNames());
+        
+        Property<Integer> intProp1 = config.createProperty("foo").asInteger();
+        Property<Integer> intProp2 = config.createProperty("foo").asInteger();
+        Property<String>  strProp  = config.createProperty("foo").asString();
+
+        Assert.assertSame(intProp1, intProp2);
+        
+        config.setProperty("foo", "123");
+        
+        Assert.assertEquals("123", strProp.get(null));
+        Assert.assertEquals((Integer)123, intProp1.get(null));
+        Assert.assertEquals((Integer)123, intProp2.get(null));
     }
 
 }
