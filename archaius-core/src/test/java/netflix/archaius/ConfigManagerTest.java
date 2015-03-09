@@ -29,9 +29,9 @@ public class ConfigManagerTest {
         config.addConfigLast(new EnvironmentConfig());
         config.addConfigLast(new SystemConfig());
         
-        Property<String> prop = config.createProperty("abc").asString("defaultValue");
+        Property<String> prop = config.createProperty("abc").asString();
         
-        config.createProperty("abc").asString("defaultValue", new DefaultPropertyObserver<String>() {
+        prop.addObserver(new DefaultPropertyObserver<String>() {
             @Override
             public void onChange(String next) {
                 System.out.println("Configuration changed : " + next);

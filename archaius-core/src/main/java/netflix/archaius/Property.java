@@ -29,12 +29,7 @@ public interface Property<T> {
     /**
      * @return  Most recent value for the property
      */
-    T get();
-    
-    /**
-     * @return  The default value used when the property is not set
-     */
-    T getDefaultValue();
+    T get(T defaultValue);
     
     /**
      * Get the last time the property was updated
@@ -47,4 +42,8 @@ public interface Property<T> {
      * Unsubscribe from property value update notifications.  The property object cannot be resubscribed.
      */
     void unsubscribe();
+
+    void addObserver(PropertyObserver<T> observer);
+
+    void removeObserver(PropertyObserver<T> observer);
 }

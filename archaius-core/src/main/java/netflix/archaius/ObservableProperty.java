@@ -35,43 +35,24 @@ public interface ObservableProperty {
      */
     void update();
     
-    Property<String> asString(String defaultValue);
+    Property<String> asString();
     
-    Property<Integer> asInteger(Integer defaultValue);
+    Property<Integer> asInteger();
     
-    Property<Double> asDouble(Double defaultValue);
+    Property<Double> asDouble();
     
-    Property<Float> asFloat(Float defaultValue);
+    Property<Float> asFloat();
     
-    Property<Short> asShort(Short defaultValue);
+    Property<Short> asShort();
     
-    Property<Byte> asByte(Byte defaultValue);
+    Property<Byte> asByte();
     
-    Property<BigDecimal> asBigDecimal(BigDecimal defaultValue);
+    Property<BigDecimal> asBigDecimal();
 
-    Property<Boolean> asBoolean(Boolean defaultValue);
+    Property<Boolean> asBoolean();
 
-    Property<BigInteger> asBigInteger(BigInteger defaultValue);
+    Property<BigInteger> asBigInteger();
     
-    <T> Property<T> asType(Class<T> type, T defaultValue);
+    <T> Property<T> asType(Class<T> type);
 
-    Property<String> asString(String defaultValue, PropertyObserver<String> observer);
-    
-    Property<Integer> asInteger(Integer defaultValue, PropertyObserver<Integer> observer);
-    
-    Property<Double> asDouble(Double defaultValue, PropertyObserver<Double> observer);
-    
-    Property<Float> asFloat(Float defaultValue, PropertyObserver<Float> observer);
-    
-    Property<Short> asShort(Short defaultValue, PropertyObserver<Short> observer);
-    
-    Property<Byte> asByte(Byte defaultValue, PropertyObserver<Byte> observer);
-    
-    Property<BigDecimal> asBigDecimal(BigDecimal defaultValue, PropertyObserver<BigDecimal> observer);
-
-    Property<Boolean> asBoolean(Boolean defaultValue, PropertyObserver<Boolean> observer);
-
-    Property<BigInteger> asBigInteger(BigInteger defaultValue, PropertyObserver<BigInteger> observer);
-    
-    <T> Property<T> asType(Class<T> type, T defaultValue, PropertyObserver<T> observer);
 }
