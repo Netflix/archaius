@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import netflix.archaius.Config;
+import netflix.archaius.Decoder;
+import netflix.archaius.DefaultDecoder;
 import netflix.archaius.ObservablePropertyFactory;
 import netflix.archaius.Property;
 import netflix.archaius.exceptions.MappingException;
@@ -24,6 +26,17 @@ public class DefaultConfigMapper implements ConfigMapper {
             return null;
         }
     };
+    
+    private final boolean allowPostConfigure;
+    private final Decoder decoder = new DefaultDecoder();
+    
+    public DefaultConfigMapper() {
+        this(true);
+    }
+    
+    public DefaultConfigMapper(boolean allowPostConfigure) {
+        this.allowPostConfigure = allowPostConfigure;
+    }
     
     @Override
     public <T> void mapConfig(T injectee, Config config) throws MappingException {
@@ -73,80 +86,93 @@ public class DefaultConfigMapper implements ConfigMapper {
         if (!prefix.isEmpty() || !prefix.endsWith("."))
             prefix += ".";
         
-        // Iterate and set fiels
-        for (Field field : injecteeType.getDeclaredFields()) {
-            if (   Modifier.isFinal(field.getModifiers())
-                || Modifier.isTransient(field.getModifiers())
-                || Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-            
-            String name = field.getName();
-            Class<?> type = field.getType();
-            Object value = null;
-            if (type.isInterface()) {
-                String objName = config.getString(prefix + name, null);
-                if (objName != null) {
-                    value = ioc.getInstance(objName, type);
+        // Iterate and set fields
+        if (configAnnot.allowFields()) {
+            for (Field field : injecteeType.getDeclaredFields()) {
+                if (   Modifier.isFinal(field.getModifiers())
+                    || Modifier.isTransient(field.getModifiers())
+                    || Modifier.isStatic(field.getModifiers())) {
+                    continue;
                 }
-            }
-            else {
-                value = config.get(type, prefix + name, null);
-            }
-            
-            if (value != null) {
-                try {
-                    field.setAccessible(true);
-                    field.set(injectee, value);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
+                
+                String name = field.getName();
+                Class<?> type = field.getType();
+                Object value = null;
+                if (type.isInterface()) {
+                    String objName = config.getString(prefix + name, null);
+                    if (objName != null) {
+                        value = ioc.getInstance(objName, type);
+                    }
+                }
+                else {
+                    value = config.get(type, prefix + name, null);
+                }
+                
+                if (value != null) {
+                    try {
+                        field.setAccessible(true);
+                        field.set(injectee, value);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
+                    }
                 }
             }
         }
         
         // map to setter methods
-        for (Method method : injectee.getClass().getDeclaredMethods()) {
-            // Only support methods with one parameter 
-            //  Ex.  setTimeout(int timeout);
-            if (method.getParameterTypes().length != 1) {
-                continue;
-            }
-            
-            // Extract field name from method name
-            //  Ex.  setTimeout => timeout
-            String name = method.getName();
-            if (name.startsWith("set") && name.length() > 3) {
-                name = name.substring(3,4).toLowerCase() + name.substring(4);
-            }
-            // Or from builder
-            //  Ex.  withTimeout => timeout
-            else if (name.startsWith("with") && name.length() > 4) {
-                name = name.substring(4,1).toLowerCase() + name.substring(5);
-            }
-            else {
-                continue;
-            }
-
-            method.setAccessible(true);
-            Class<?> type = method.getParameterTypes()[0];
-            Object value = null;
-            if (type.isInterface()) {
-                String objName = config.getString(prefix + name, null);
-                if (objName != null) {
-                    value = ioc.getInstance(objName, type);
+        if (configAnnot.allowSetters()) {
+            for (Method method : injectee.getClass().getDeclaredMethods()) {
+                // Only support methods with one parameter 
+                //  Ex.  setTimeout(int timeout);
+                if (method.getParameterTypes().length != 1) {
+                    continue;
+                }
+                
+                // Extract field name from method name
+                //  Ex.  setTimeout => timeout
+                String name = method.getName();
+                if (name.startsWith("set") && name.length() > 3) {
+                    name = name.substring(3,4).toLowerCase() + name.substring(4);
+                }
+                // Or from builder
+                //  Ex.  withTimeout => timeout
+                else if (name.startsWith("with") && name.length() > 4) {
+                    name = name.substring(4,1).toLowerCase() + name.substring(5);
+                }
+                else {
+                    continue;
+                }
+    
+                method.setAccessible(true);
+                Class<?> type = method.getParameterTypes()[0];
+                Object value = null;
+                if (type.isInterface()) {
+                    String objName = config.getString(prefix + name, null);
+                    if (objName != null) {
+                        value = ioc.getInstance(objName, type);
+                    }
+                }
+                else {
+                    value = config.get(type, prefix + name, null);
+                }
+                
+                if (value != null) {
+                    try {
+                        method.invoke(injectee, value);
+                    } catch (Exception e) {
+                        throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
+                    }
                 }
             }
-            else {
-                value = config.get(type, prefix + name, null);
-            }
-            
-            if (value != null) {
-                try {
-                    method.invoke(injectee, value);
-                } catch (Exception e) {
-                    throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
-                }
+        }
+        
+        if (!configAnnot.postConfigure().isEmpty()) {
+            try {
+                Method m = injecteeType.getMethod(configAnnot.postConfigure());
+                m.invoke(injectee);
+            } catch (Exception e) {
+                throw new MappingException("Unable to invoke postConfigure method " + configAnnot.postConfigure(), e);
             }
         }
     }
@@ -175,35 +201,7 @@ public class DefaultConfigMapper implements ConfigMapper {
             Class<?> returnType = m.getReturnType();
             if (annotDefaultValue != null) {
                 try {
-                    if (returnType.equals(String.class)) {
-                        defaultValue = annotDefaultValue.value();
-                    }
-                    else if (returnType.isPrimitive()) {
-                        if (returnType.equals(boolean.class)) {
-                            defaultValue = Boolean.parseBoolean(annotDefaultValue.value());
-                        }
-                        else if (returnType.equals(int.class)) {
-                            defaultValue = Integer.parseInt(annotDefaultValue.value());
-                        }
-                        else if (returnType.equals(long.class)) {
-                            defaultValue = Long.parseLong(annotDefaultValue.value());
-                        }
-                        else if (returnType.equals(short.class)) {
-                            defaultValue = Short.parseShort(annotDefaultValue.value());
-                        }
-                        else if (returnType.equals(double.class)) {
-                            defaultValue = Double.parseDouble(annotDefaultValue.value());
-                        }
-                        else if (returnType.equals(float.class)) {
-                            defaultValue = Float.parseFloat(annotDefaultValue.value());
-                        }
-                    }
-                    else {
-                        Method valueOf = returnType.getMethod("valueOf", String.class);
-                        if (valueOf != null) {
-                            defaultValue = valueOf.invoke(null, annotDefaultValue.value());
-                        }
-                    }
+                    defaultValue = decoder.decode(returnType, annotDefaultValue.value());
                 } catch (Exception e) {
                     throw new RuntimeException("No accessible valueOf(String) method to parse default value for type " + returnType.getName(), e);
                 }
@@ -217,7 +215,7 @@ public class DefaultConfigMapper implements ConfigMapper {
             // TODO: sub proxy for non-primitive types
             String propName = prefix + Character.toLowerCase(m.getName().charAt(3)) + m.getName().substring(4);
             
-            Property<?> prop = factory.createProperty(propName).asType(m.getReturnType());
+            Property<?> prop = factory.observeProperty(propName).asType(m.getReturnType());
             
             properties.put(m, new MethodInvoker(prop, defaultValue));
         }

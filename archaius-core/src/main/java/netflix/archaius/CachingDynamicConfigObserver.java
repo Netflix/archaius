@@ -35,7 +35,7 @@ public class CachingDynamicConfigObserver implements DynamicConfigObserver {
     public ObservableProperty create(String key) {
         ObservableProperty observable = registry.get(key);
         if (observable == null) {
-            observable = factory.createProperty(key);
+            observable = factory.observeProperty(key);
             ObservableProperty existing = registry.putIfAbsent(key, observable);
             if (existing != null) {
                 return existing;
