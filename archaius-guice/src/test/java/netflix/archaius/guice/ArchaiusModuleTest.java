@@ -11,12 +11,11 @@ import netflix.archaius.Property;
 import netflix.archaius.cascade.ConcatCascadeStrategy;
 import netflix.archaius.config.MapConfig;
 import netflix.archaius.exceptions.MappingException;
-import netflix.archaius.mapper.DefaultConfigBinder;
+import netflix.archaius.mapper.DefaultConfigMapper;
 import netflix.archaius.mapper.annotations.Configuration;
 import netflix.archaius.mapper.annotations.ConfigurationSource;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
@@ -173,10 +172,10 @@ public class ArchaiusModuleTest {
                 .put("prefix.foo.123.loaded", "loaded")
                 .build();
         
-        DefaultConfigBinder binder = new DefaultConfigBinder(config);
+        DefaultConfigMapper binder = new DefaultConfigMapper();
         
         ChildService service = new ChildService("foo", 123L);
-        binder.bindConfig(service);
+        binder.mapConfig(service, config);
         Assert.assertEquals("loaded", service.loaded);
     }
 }
