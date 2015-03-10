@@ -7,7 +7,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
-import netflix.archaius.*;
+import netflix.archaius.Config;
+import netflix.archaius.ObservableProperty;
+import netflix.archaius.Property;
+import netflix.archaius.PropertyConversions;
+import netflix.archaius.PropertyObserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
