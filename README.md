@@ -1,11 +1,9 @@
-# Overview
-
 Archaius is a configuration library for accessing a mixture of static as well
 as dynamic configuration as a single configuration unit.
 
 Archaius 2.0 has minimal external dependencies, is non-static, and DI friendly.
 
-# Getting Started
+## Getting Started
 
 Archaius provides a set of specialized configuration classes that may be combined
 using CompositeConfig into a specific override structure.  For convenience you may 
@@ -29,20 +27,20 @@ Property<String> prop = config.createProperty("propertyname").asString();
 
 ```
 
-# Accessing configuration
+## Accessing configuration
 
 All Config derived classes provide access to their underlying configuration via the numerous 
 getString(), getInt(), getBoolean() methods.  In additional to basic primitives and collections
 Config will allow parsing to any type that has a constructor that takes a single String 
 argument or a static valueOf(String.class) method.  
 
-# Replacements
+## Replacements
 
 Archaius supports standard variable replacement syntax such as ${other.property.name}.  Note that
 once added to AppConfig replacement values may exist in any of the configurations and are
 resolved in first seen order.  
 
-# Configuration loaders
+## Configuration loaders
 
 Archaius has a default built in loader for .properties files but can also be extended with custom
 property specifications such as HOCON.  In addition multiple contextual overrides for a single 
@@ -59,7 +57,7 @@ AppConfig appConfig = DefaultAppConfig.builder()
     ...
 ```
 
-# Dynamic Properties
+## Dynamic Properties
 
 One of the core differentiators between Archaius and other configuration libraries
 is its support for dynamically changing configuration.  Tranditionaly applications 
@@ -72,7 +70,7 @@ handler.
 Dynamic configuration support is split into the configuration loading and property
 value resolution.
 
-## Configuration loading
+### Configuration loading
 
 When adding a DynamicConfig derived configuration AppConfig will automatically register for
 configuration change notifications and incorporate new values into the main configuration.  
@@ -88,7 +86,7 @@ appConfig.addConfig(new PollingDynamicConfg(
             new FixedPollingStrategy(30, TimeUnit.SECONDS)) 
 ```
 
-## Property access
+### Property access
 
 Use the Property API for optimized access to any property that is expected to be updated at
 runtime.  Access to dynamic configuration follows two access patterns.  The first (and most common)
@@ -125,7 +123,7 @@ Property<Integer> timeout = appConfig
 Note that before addObserver() returns the PropertyObserver will be called with the current value of the property
 or null if the property does not exist in the configuration.
 
-# Setting property override from code
+## Setting property override from code
 
 In addition to sourced DynamicConfig and static file based configurations AppConfig offers a mechanism to 
 manually set runtime overrides from code. 
@@ -138,7 +136,7 @@ To set an override
 appConfig.setProperty("service.timeout", 100);
 ```
 
-## Integration with DI frameworks
+### Integration with DI frameworks
 
 The API discussed thus far implies that configuration is loaded directly through code.  This approach makes testing
 difficult as it requires properties to be set in order to test code instead of using more power techniques
@@ -146,7 +144,7 @@ such as mocking.  Archaius-core provides a set of classes and annotations to be 
 so that configuration may be mapped to object at creation type as part of lifecycle management.  There is also
 a feature to create dynamic proxies from configuration annotated classes.
 
-## Injecting config,
+### Injecting config,
 
 ```java
 public class MyService {
@@ -159,7 +157,7 @@ public class MyService {
 }
 ```
 
-## Configuration mapping
+### Configuration mapping
 
 With configuration mapping the DI framework (such as Guice) will 'inject' the configuration into the class 
 after the class has been instantiated.  When using Governator configuration will be injected prior to 
@@ -186,7 +184,7 @@ public class MyService {
 }
 ```
 
-## Configuration proxy
+### Configuration proxy
 
 The simplest approach to configuration mapping is to use the proxy feature where an annotated interface 
 can proxy directly to fast properties.
