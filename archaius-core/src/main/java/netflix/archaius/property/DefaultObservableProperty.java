@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * stored in a CopyOnWriteArrayList and items are retrieved via a linear scan.
  * 
  * Once created a fast property cannot be removed.  However, observer may be
- * aded and removed. 
+ * added and removed. 
  * 
  * @author elandau
  *
@@ -32,16 +32,34 @@ public class DefaultObservableProperty implements ObservableProperty {
     private final Logger LOG = LoggerFactory.getLogger(DefaultObservableProperty.class);
     
     enum Type {
-        INTEGER,
-        STRING,
-        BYTE,
-        BIG_DECIMAL,
-        BIG_INTEGER,
-        SHORT,
-        DOUBLE,
-        FLOAT,
-        BOOLEAN,
-        CUSTOM, // Must be last
+        INTEGER     (int.class,     Integer.class),
+        BYTE        (byte.class,    Byte.class),
+        SHORT       (short.class,   Short.class),
+        DOUBLE      (double.class,  Double.class),
+        FLOAT       (float.class,   Float.class),
+        BOOLEAN     (boolean.class, Boolean.class),
+        LONG        (long.class,    Long.class),
+        STRING      (String.class),
+        BIG_DECIMAL (BigDecimal.class),
+        BIG_INTEGER (BigInteger.class),
+        CUSTOM      ();     // Must be last
+        
+        private final Class<?>[] types;
+        
+        Type(Class<?> ... type) {
+            types = type;
+        }
+        
+        static Type fromClass(Class<?> clazz) {
+            for (Type type : values()) {
+                for (Class<?> cls : type.types) {
+                    if (cls.equals(clazz)) {
+                        return type;
+                    }
+                }
+            }
+            return CUSTOM;
+        }
     }
 
     private final String key;
@@ -55,10 +73,13 @@ public class DefaultObservableProperty implements ObservableProperty {
     }
 
     @Override
-    public void update() {
+    public synchronized void update() {
+        boolean didUpdate = false;
         for (AbstractProperty<?> property : cache) {
-            property.update();
+            didUpdate |= property.update();
         }
+        if (didUpdate)  
+            lastUpdateTimeInMillis = System.currentTimeMillis();
     }
 
     public abstract class AbstractProperty<T> implements Property<T> {
@@ -105,34 +126,35 @@ public class DefaultObservableProperty implements ObservableProperty {
             // Noop - for now let's keep this in the cache.
         }
 
-        void update() {
+        boolean update() {
             try {
                 T next = getCurrent();
                 if ((next == null || existing == null) && next == existing) {
-                    return;
+                    return false;
                 }
                 else if (next == null || existing == null || !existing.equals(next)) {
                     existing = next;
-                    lastUpdateTimeInMillis = System.currentTimeMillis();
+                    // TODO: We need a plugable concurrency model here
                     for (PropertyObserver<T> observer : observers) {
                         observer.onChange(existing);
                     }
+                    return true;
                 }
             }
             catch (Exception e) {
                 LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
+                // TODO: We need a plugable concurrency model here
                 for (PropertyObserver<T> observer : observers) {
                     observer.onError(e);
                 }
             }
+            return false;
         }
         
         @Override
         public T get(T defaultValue) {
             T ret = existing;
-            if (ret == null) 
-                return defaultValue;
-            return ret;
+            return ret == null ? defaultValue : ret;
         }
         
         @Override
@@ -163,6 +185,7 @@ public class DefaultObservableProperty implements ObservableProperty {
             }
         }
         
+        newProperty.update();
         return newProperty;
     }
     
@@ -204,6 +227,20 @@ public class DefaultObservableProperty implements ObservableProperty {
                 @Override
                 protected Integer getCurrent() throws Exception {
                     return config.getInteger(key, null);
+                }
+            });
+        }
+        return prop;
+    }
+
+    @Override
+    public Property<Long> asLong() {
+        Property<Long> prop = get(Type.LONG.ordinal());
+        if (prop == null) {
+            return add(new AbstractProperty<Long>(Type.LONG) {
+                @Override
+                protected Long getCurrent() throws Exception {
+                    return config.getLong(key, null);
                 }
             });
         }
@@ -311,31 +348,55 @@ public class DefaultObservableProperty implements ObservableProperty {
     /**
      * No caching for custom types.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Property<T> asType(Class<T> type) {
-        final Constructor<T> constructor;
-        try {
-            constructor = type.getConstructor(String.class);
-            if (constructor != null) {
-                return add(new AbstractProperty<T>(Type.CUSTOM) {
-                    @Override
-                    protected T getCurrent() throws Exception {
-                        String value = config.getString(key);
-                        if (value == null) {
-                            return null;
-                        }
-                        else { 
-                            return constructor.newInstance(value);
-                        }
+        switch (Type.fromClass(type)) {
+        case INTEGER:
+            return (Property<T>) asInteger();
+        case BYTE:
+            return (Property<T>) asByte();
+        case SHORT:
+            return (Property<T>) asShort();
+        case DOUBLE:
+            return (Property<T>) asDouble();
+        case FLOAT:
+            return (Property<T>) asFloat();
+        case BOOLEAN:
+            return (Property<T>) asBoolean();
+        case STRING:
+            return (Property<T>) asString();
+        case LONG:
+            return (Property<T>) asLong();
+        case BIG_DECIMAL:
+            return (Property<T>) asBigDecimal();
+        case BIG_INTEGER:
+            return (Property<T>) asBigInteger();
+        default: {
+                final Constructor<T> constructor;
+                try {
+                    constructor = type.getConstructor(String.class);
+                    if (constructor != null) {
+                        return add(new AbstractProperty<T>(Type.CUSTOM) {
+                            @Override
+                            protected T getCurrent() throws Exception {
+                                String value = config.getString(key);
+                                if (value == null) {
+                                    return null;
+                                }
+                                else { 
+                                    return constructor.newInstance(value);
+                                }
+                            }
+                        });
                     }
-                });
+                } catch (NoSuchMethodException e) {
+                } catch (SecurityException e) {
+                    throw new UnsupportedOperationException("No parser for type " + type.getName(), e);
+                }
+              
+                throw new UnsupportedOperationException("No parser for type " + type.getName());
             }
-        } catch (NoSuchMethodException e) {
-        } catch (SecurityException e) {
-            throw new UnsupportedOperationException("No parser for type " + type.getName(), e);
         }
-      
-        throw new UnsupportedOperationException("No parser for type " + type.getName());
     }
-
 }

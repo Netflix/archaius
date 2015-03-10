@@ -26,7 +26,6 @@ public class DefaultConfigLoader implements ConfigLoader {
         private List<ConfigReader>  loaders = new ArrayList<ConfigReader>();
         private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
         private boolean             failOnFirst = true;
-        private String              name = "";
         private String              includeKey = "@next";
         private StrInterpolator     interpolator;
         

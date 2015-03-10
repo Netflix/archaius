@@ -4,10 +4,9 @@ import javax.inject.Inject;
 
 import netflix.archaius.AppConfig;
 import netflix.archaius.CascadeStrategy;
-import netflix.archaius.Config;
 import netflix.archaius.exceptions.ConfigException;
-import netflix.archaius.mapper.ConfigBinder;
-import netflix.archaius.mapper.DefaultConfigBinder;
+import netflix.archaius.mapper.ConfigMapper;
+import netflix.archaius.mapper.DefaultConfigMapper;
 import netflix.archaius.mapper.IoCContainer;
 import netflix.archaius.mapper.annotations.Configuration;
 import netflix.archaius.mapper.annotations.ConfigurationSource;
@@ -15,7 +14,6 @@ import netflix.archaius.mapper.annotations.ConfigurationSource;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Provides;
 import com.google.inject.ProvisionException;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
@@ -33,7 +31,7 @@ public class ArchaiusModule extends AbstractModule {
         private Injector injector;
         
         @Inject
-        private ConfigBinder binder;
+        private ConfigMapper mapper = new DefaultConfigMapper();
         
         @Override
         public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
@@ -73,10 +71,9 @@ public class ArchaiusModule extends AbstractModule {
                     @Override
                     public void afterInjection(I injectee) {
                         try {
-                            binder.bindConfig(injectee, ConfigurationInjectingListener.this);
+                            mapper.mapConfig(injectee, appConfig, ConfigurationInjectingListener.this);
                         }
                         catch (Exception e) {
-                            e.printStackTrace();
                             throw new ProvisionException("Unable to bind configuration to " + injectee.getClass(), e);
                         }
                     }
@@ -96,10 +93,5 @@ public class ArchaiusModule extends AbstractModule {
         requestInjection(listener);
         
         bindListener(Matchers.any(), listener);
-    }
-    
-    @Provides
-    public ConfigBinder get(Config config) {
-        return new DefaultConfigBinder(config);
     }
 }

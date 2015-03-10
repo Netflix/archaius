@@ -1,19 +1,23 @@
 package netflix.archaius.mapper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
 import netflix.archaius.Config;
+import netflix.archaius.ObservablePropertyFactory;
+import netflix.archaius.Property;
 import netflix.archaius.exceptions.MappingException;
 import netflix.archaius.mapper.annotations.Configuration;
+import netflix.archaius.mapper.annotations.DefaultValue;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-public class DefaultConfigBinder implements ConfigBinder {
-    private final Config config;
+public class DefaultConfigMapper implements ConfigMapper {
     private static final IoCContainer NULL_IOC_CONTAINER = new IoCContainer() {
         @Override
         public <T> T getInstance(String name, Class<T> type) {
@@ -21,17 +25,13 @@ public class DefaultConfigBinder implements ConfigBinder {
         }
     };
     
-    public DefaultConfigBinder(Config config) {
-        this.config = config;
-    }
-    
     @Override
-    public <T> void bindConfig(T injectee) throws MappingException {
-        bindConfig(injectee, NULL_IOC_CONTAINER);
+    public <T> void mapConfig(T injectee, Config config) throws MappingException {
+        mapConfig(injectee, config, NULL_IOC_CONTAINER);
     }
 
     @Override
-    public <T> void bindConfig(T injectee, IoCContainer ioc) throws MappingException {
+    public <T> void mapConfig(T injectee, Config config, IoCContainer ioc) throws MappingException {
         Configuration configAnnot = injectee.getClass().getAnnotation(Configuration.class);
         if (configAnnot == null) {
             return;
@@ -148,6 +148,101 @@ public class DefaultConfigBinder implements ConfigBinder {
                     throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
                 }
             }
+        }
+    }
+
+    @Override
+    public <T> T newProxy(Class<T> type, ObservablePropertyFactory factory) {
+        Configuration annot = type.getAnnotation(Configuration.class);
+        
+        String prefix = annot == null 
+                      ? "" 
+                      : !annot.prefix().isEmpty() && !annot.prefix().endsWith(".")
+                          ? annot.prefix() + "."
+                          : annot.prefix();
+        
+        // Iterate through all declared methods of the class looking for setter methods.
+        // Each setter will be mapped to a Property<T> for the property name:
+        //      prefix + lowerCamelCaseDerivedPropertyName
+        final Map<Method, MethodInvoker<?>> properties = new HashMap<Method, MethodInvoker<?>>();
+        for (Method m : type.getDeclaredMethods()) {
+            if (!m.getName().startsWith("get")) {
+                continue;
+            }
+            
+            Object defaultValue = null;
+            DefaultValue annotDefaultValue = m.getAnnotation(DefaultValue.class);
+            Class<?> returnType = m.getReturnType();
+            if (annotDefaultValue != null) {
+                try {
+                    if (returnType.equals(String.class)) {
+                        defaultValue = annotDefaultValue.value();
+                    }
+                    else if (returnType.isPrimitive()) {
+                        if (returnType.equals(boolean.class)) {
+                            defaultValue = Boolean.parseBoolean(annotDefaultValue.value());
+                        }
+                        else if (returnType.equals(int.class)) {
+                            defaultValue = Integer.parseInt(annotDefaultValue.value());
+                        }
+                        else if (returnType.equals(long.class)) {
+                            defaultValue = Long.parseLong(annotDefaultValue.value());
+                        }
+                        else if (returnType.equals(short.class)) {
+                            defaultValue = Short.parseShort(annotDefaultValue.value());
+                        }
+                        else if (returnType.equals(double.class)) {
+                            defaultValue = Double.parseDouble(annotDefaultValue.value());
+                        }
+                        else if (returnType.equals(float.class)) {
+                            defaultValue = Float.parseFloat(annotDefaultValue.value());
+                        }
+                    }
+                    else {
+                        Method valueOf = returnType.getMethod("valueOf", String.class);
+                        if (valueOf != null) {
+                            defaultValue = valueOf.invoke(null, annotDefaultValue.value());
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("No accessible valueOf(String) method to parse default value for type " + returnType.getName(), e);
+                }
+            }
+            
+            if (returnType.isPrimitive() && defaultValue == null) {
+                throw new RuntimeException("Method with primite return type must have a @DefaultValue.  method=" + m.getName());
+            }
+            
+            // TODO: default value
+            // TODO: sub proxy for non-primitive types
+            String propName = prefix + Character.toLowerCase(m.getName().charAt(3)) + m.getName().substring(4);
+            
+            Property<?> prop = factory.createProperty(propName).asType(m.getReturnType());
+            
+            properties.put(m, new MethodInvoker(prop, defaultValue));
+        }
+        
+        final InvocationHandler handler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                MethodInvoker<?> prop = properties.get(method);
+                return prop.invoke();
+            }
+        };
+        return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
+    }
+    
+    static class MethodInvoker<T> {
+        final T defaultValue;
+        final Property<T> property;
+        
+        public MethodInvoker(Property<T> property, T defaultValue) {
+            this.property = property;
+            this.defaultValue = defaultValue;
+        }
+        
+        T invoke() {
+            return property.get(defaultValue);
         }
     }
 }
