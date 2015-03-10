@@ -30,7 +30,6 @@ public class ArchaiusModule extends AbstractModule {
         @Inject
         private Injector injector;
         
-        @Inject
         private ConfigMapper mapper = new DefaultConfigMapper();
         
         @Override
