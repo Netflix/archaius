@@ -14,15 +14,12 @@ public interface PropertyObserver<T> {
      * Notification that the property value changed.  next=null indicates that the property
      * has been deleted.
      * 
-     * @param propName
-     * @param prevValue
-     * @param newValue
+     * @param value The new value for the property.
      */
     public void onChange(T value);
     
     /**
      * Notification that a property update failed
-     * @param propName
      * @param error
      */
     public void onError(Throwable error);

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
- *
+ * Interface for converting properties between various types.
  */
 public interface PropertyConversions {
 

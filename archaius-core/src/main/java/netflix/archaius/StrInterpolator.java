@@ -19,7 +19,6 @@ public interface StrInterpolator {
      * for infinite recursion. 
      * 
      * @param key
-     * @param lookup
      * @return
      */
     Object resolve(String key);

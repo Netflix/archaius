@@ -22,8 +22,6 @@ package netflix.archaius;
  * TODO: Chain properties
  * TODO: Property validator
  * 
- * @param callback
- * @return
  */
 public interface ObservableProperty extends PropertyConversions {
     
