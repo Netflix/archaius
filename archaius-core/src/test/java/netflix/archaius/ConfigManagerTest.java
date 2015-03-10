@@ -29,7 +29,7 @@ public class ConfigManagerTest {
         config.addConfigLast(new EnvironmentConfig());
         config.addConfigLast(new SystemConfig());
         
-        Property<String> prop = config.createProperty("abc").asString();
+        Property<String> prop = config.observeProperty("abc").asString();
         
         prop.addObserver(new DefaultPropertyObserver<String>() {
             @Override

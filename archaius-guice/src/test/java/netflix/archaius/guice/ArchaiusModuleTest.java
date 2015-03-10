@@ -14,11 +14,11 @@ import netflix.archaius.exceptions.MappingException;
 import netflix.archaius.mapper.DefaultConfigMapper;
 import netflix.archaius.mapper.annotations.Configuration;
 import netflix.archaius.mapper.annotations.ConfigurationSource;
+import netflix.archaius.mapper.annotations.DefaultValue;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -33,7 +33,7 @@ public class ArchaiusModuleTest {
     }
     
     @Singleton
-    @Configuration(prefix="prefix-${env}")
+    @Configuration(prefix="prefix-${env}", allowFields=true)
     @ConfigurationSource(value={"moduleTest"}, cascading=MyCascadingStrategy.class)
     public static class MyServiceConfig {
         private String  str_value;
@@ -92,9 +92,8 @@ public class ArchaiusModuleTest {
     @Test
     public void test() {
         Injector injector = Guice.createInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
+            new ArchaiusModule() {
+                protected AppConfig createAppConfig() {
                     Properties props = new Properties();
                     props.setProperty("prefix-prod.str_value", "str_value");
                     props.setProperty("prefix-prod.int_value", "123");
@@ -102,13 +101,10 @@ public class ArchaiusModuleTest {
                     props.setProperty("prefix-prod.double_value", "456.0");
                     props.setProperty("env", "prod");
                     
-                    AppConfig config = DefaultAppConfig.builder().withProperties(props).build();
-                    bind(Config.class).toInstance(config);
-                    bind(AppConfig.class).toInstance(config);
+                    return DefaultAppConfig.builder().withProperties(props).build();
                 }
-            },
-            new ArchaiusModule()
-            );
+            }
+        );
         
         MyService service = injector.getInstance(MyService.class);
         Assert.assertTrue(service.getValue());
@@ -128,22 +124,22 @@ public class ArchaiusModuleTest {
     @Test
     public void testNamedInjection() {
         Injector injector = Guice.createInjector(
-            new AbstractModule() {
-                @Override
+            new ArchaiusModule() {
                 protected void configure() {
+                    super.configure();
+                    
+                    bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
+                    bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
+                }
+                
+                protected AppConfig createAppConfig() {
                     Properties props = new Properties();
                     props.setProperty("prefix-prod.named", "name1");
                     props.setProperty("env", "prod");
                     
-                    bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
-                    bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
-                    
-                    AppConfig config = DefaultAppConfig.builder().withProperties(props).build();
-                    bind(Config.class).toInstance(config);
-                    bind(AppConfig.class).toInstance(config);
+                    return DefaultAppConfig.builder().withProperties(props).build();
                 }
-            },
-            new ArchaiusModule()
+            }
             );
             
         MyService service = injector.getInstance(MyService.class);
@@ -154,7 +150,7 @@ public class ArchaiusModuleTest {
         Assert.assertTrue(serviceConfig.named instanceof Named1);
     }
 
-    @Configuration(prefix="prefix.${name}.${id}", params={"name", "id"})
+    @Configuration(prefix="prefix.${name}.${id}", params={"name", "id"}, allowFields=true)
     public static class ChildService {
         private final String name;
         private final Long id;
@@ -177,5 +173,29 @@ public class ArchaiusModuleTest {
         ChildService service = new ChildService("foo", 123L);
         binder.mapConfig(service, config);
         Assert.assertEquals("loaded", service.loaded);
+    }
+    
+    public static interface TestProxyConfig {
+        @DefaultValue("default")
+        String getString();
+    }
+    
+    @Test
+    public void testProxy() {
+        Injector injector = Guice.createInjector(
+                new ArchaiusModule(),
+                ArchaiusModule.forProxy(TestProxyConfig.class)
+            );
+        
+        AppConfig appConfig = injector.getInstance(AppConfig.class);
+        
+        TestProxyConfig config = injector.getInstance(TestProxyConfig.class);
+        Assert.assertEquals("default", config.getString());
+        
+        appConfig.setProperty("string", "new");
+        Assert.assertEquals("new", config.getString());
+        
+        appConfig.clearProperty("string");
+        Assert.assertEquals("default", config.getString());
     }
 }

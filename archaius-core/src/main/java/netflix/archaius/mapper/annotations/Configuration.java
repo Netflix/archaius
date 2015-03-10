@@ -38,10 +38,25 @@ public @interface Configuration
     /**
      * @return field names to use for replacement
      */
-    String[]      params() default {};
+    String[]    params() default {};
     
     /**
      * @return user displayable description of this configuration
      */
     String      documentation() default "";
+    
+    /**
+     * @return true to allow mapping configuration to fields
+     */
+    boolean     allowFields() default false;
+    
+    /**
+     * @return true to allow mapping configuration to setters
+     */
+    boolean     allowSetters() default true;
+    
+    /**
+     * @return Method to call after configuration is bound
+     */
+    String      postConfigure() default "";
 }

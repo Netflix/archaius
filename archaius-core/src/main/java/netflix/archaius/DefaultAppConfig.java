@@ -224,7 +224,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             
             this.dynamicObserver = new CachingDynamicConfigObserver(new ObservablePropertyFactory() {
                 @Override
-                public ObservableProperty createProperty(String propName) {
+                public ObservableProperty observeProperty(String propName) {
                     return new DefaultObservableProperty(propName, DefaultAppConfig.this);
                 }
             });
@@ -278,7 +278,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     }
     
     @Override
-    public ObservableProperty createProperty(String propName) {
+    public ObservableProperty observeProperty(String propName) {
         return dynamicObserver.create(propName);
     }
 

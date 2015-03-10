@@ -13,7 +13,7 @@ public class PrefixedObservablePropertyFactory implements ObservablePropertyFact
     }
     
     @Override
-    public ObservableProperty createProperty(String propName) {
-        return delegate.createProperty(prefix + propName);
+    public ObservableProperty observeProperty(String propName) {
+        return delegate.observeProperty(prefix + propName);
     }
 }
