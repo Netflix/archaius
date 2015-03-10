@@ -13,8 +13,7 @@ public class PropertyTest {
         private Property<Integer> value2;
         
         public MyService(DefaultAppConfig config) {
-            value  = config.observeProperty("foo").asInteger();
-            value.addObserver(new MethodInvoker<Integer>(this, "setValue"));
+            value  = config.observeProperty("foo").asInteger().addObserver(new MethodInvoker<Integer>(this, "setValue"));
             value2 = config.observeProperty("foo").asInteger();
         }
         

@@ -43,7 +43,7 @@ public interface Property<T> {
      */
     void unsubscribe();
 
-    void addObserver(PropertyObserver<T> observer);
+    Property<T> addObserver(PropertyObserver<T> observer);
 
     void removeObserver(PropertyObserver<T> observer);
 }

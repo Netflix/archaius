@@ -112,8 +112,9 @@ public class DefaultObservableProperty implements ObservableProperty {
         }
         
         @Override
-        public void addObserver(PropertyObserver<T> observer) {
+        public Property<T> addObserver(PropertyObserver<T> observer) {
             this.observers.add(observer);
+            return this;
         }
         
         @Override
