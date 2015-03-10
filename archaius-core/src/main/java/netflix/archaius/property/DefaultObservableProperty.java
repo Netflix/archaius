@@ -7,10 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
-import netflix.archaius.Config;
-import netflix.archaius.ObservableProperty;
-import netflix.archaius.Property;
-import netflix.archaius.PropertyObserver;
+import netflix.archaius.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author elandau
  *
  */
-public class DefaultObservableProperty implements ObservableProperty {
+public class DefaultObservableProperty implements ObservableProperty, PropertyConversions {
     private final Logger LOG = LoggerFactory.getLogger(DefaultObservableProperty.class);
     
     enum Type {
