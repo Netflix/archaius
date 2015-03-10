@@ -5,7 +5,7 @@ import java.util.Collection;
 import netflix.archaius.Config;
 import netflix.archaius.exceptions.ConfigException;
 
-public interface CompositeConfig {
+public interface CompositeConfig extends Config {
     public static interface Listener {
         void onConfigAdded(Config child);
     }
