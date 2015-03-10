@@ -3,16 +3,16 @@
 Archaius is a configuration library for accessing a mixture of static as well
 as dynamic configuration as a single configuration unit.
 
-Archaius has minimal external dependencies, is non-static, and DI friendly.
+Archaius 2.0 has minimal external dependencies, is non-static, and DI friendly.
 
 # Getting Started
 
-Archaius provides a set of specialized configuration objects that may be combined
+Archaius provides a set of specialized configuration classes that may be combined
 using CompositeConfig into a specific override structure.  For convenience you may 
-also use AppConfig as a best practices combination of runtime overrides,
+also use DefaultAppConfig as a best practices combination of runtime overrides,
 remote configuration, environment, system, application and library configuration 
 levels.  All access to the configuration in application should go through an instance 
-of AppConfig.  
+of AppConfig.  The remainder of this document describes the DefaultAppConfig API.  
 
 ```java
 // Create the config.  This will load configuration from config.properties
@@ -25,21 +25,22 @@ config.getString("propertyname");
 config.addConfig(config.newLoader().load("library");
 
 // Get a fast property
-config.createProperty("propertyname").asString();
+Property<String> prop = config.createProperty("propertyname").asString();
 
 ```
 
-# Reading configuration
+# Accessing configuration
 
 All Config derived classes provide access to their underlying configuration via the numerous 
 getString(), getInt(), getBoolean() methods.  In additional to basic primitives and collections
-Config will allow creation of any class that has a constructor that takes a single String parameter.
+Config will allow parsing to any type that has a constructor that takes a single String 
+argument or a static valueOf(String.class) method.  
 
 # Replacements
 
 Archaius supports standard variable replacement syntax such as ${other.property.name}.  Note that
-once added to the ConfigManager replacement values may exist in any of the configurations and are
-resolved in first seen order.
+once added to AppConfig replacement values may exist in any of the configurations and are
+resolved in first seen order.  
 
 # Configuration loaders
 
@@ -49,62 +50,69 @@ configuration resource name may be derived using a CascadeStrategy.  The strateg
 replacements from already loaded configurations (such as System and Environment properties).
 
 For example, the following cascade policy will attempt to load the following permuatations in addition
-to the base resource name:  basename, basename-${env}, basename-${env}-${region}.  
+to the base resource name, basename: basename-${env}, basename-${env}-${region}.  
 
 ``` java
-DefaultConfigLoader loader = DefaultConfigLoader.builder()
-    .withStrInterpolator(rootConfig.getStrInterpolator())
+AppConfig appConfig = DefaultAppConfig.builder()
     .withConfigLoader(new TypesafeLoader())
     .withDefaultCascadeStrategy(new ConcatCascadeStrategy("${env}", "${region}"))
     ...
 ```
 
-
-```java    
-// libraryConfigs is a layer that tracks configurations at the libraries layer
-CompositeConfig libraryConfigs = new CompositeConfig("LIBRARIES");
-...
-// Load a configuration, using the default cascading, for the resource name 'foo'
-libraryConfigs.addConfigFirst(loader.newLoader().load("foo"));
-```
-
 # Dynamic Properties
 
-Dynamic configuration support is split into the configuration loading and property value resolution.
+One of the core differentiators between Archaius and other configuration libraries
+is its support for dynamically changing configuration.  Tranditionaly applications 
+require a restart whenever configuration changes.  This can result in unncessary 
+service interruption during minor configuration changes, such as timeout values.  Through
+Archaius, code can have direct access to the most recent configuration without the need to 
+restart.  In addition, code can react to configuration changes by registering a change
+handler.  
+
+Dynamic configuration support is split into the configuration loading and property
+value resolution.
 
 ## Configuration loading
 
-A dynamic configuration implements DynamicConfig in addition to the core Config interface.  When adding
-a DynamicConfig derived configuration ConfigManager will automatically register for configuration 
-change notifications and incorporate new values into the main configuration.  Archaius provides a base
-PollingDynamicConfg for use with configuration sources that are polled frequently to refresh the entire
-configuration snapshot.  Implement Config and DynamicConfig directly For better optimized configuration 
-sources, such as ZooKeeper, which offer per property notification.
+When adding a DynamicConfig derived configuration AppConfig will automatically register for
+configuration change notifications and incorporate new values into the main configuration.  
+Archaius provides a base PollingDynamicConfig for use with configuration sources that are
+polled frequently to refresh the entire configuration snapshot.  Implement DynamicConfig 
+directly for fine grained configuration sources, such as ZooKeeper, which support notification 
+on a per property granularity.
+
+```java
+appConfig.addConfig(new PollingDynamicConfg(
+            "REMOTE", 
+            new URLConfigReader("http://remoteconfigservice/snapshot"), 
+            new FixedPollingStrategy(30, TimeUnit.SECONDS)) 
+```
 
 ## Property access
 
-Use the Property API to provide optimized access for dynamic configuration.  Access to dynamic configuration
-usually follows two access patterns.  The first is to react to changes in property values (similar to pub-sub).
-The second is getting the most up to date value of a property, such as buffer size limits, in a hot execution path.
-The Property implementation in archaius reacts to configuration changes and caches the resolved configuration
-so that the hot execution path accesses the cache instead of constantly resolving and interpolating values.
+Use the Property API for optimized access to any property that is expected to be updated at
+runtime.  Access to dynamic configuration follows two access patterns.  The first (and most common)
+is to get the most recent value.  The second, and more advanced access pattern is to react
+to property value changes via a PropertyObserver. 
 
 To create a Property object
 
 ```java
-Property<Integer> timeout = configManager.observe("server.timeout").asInteger(DEFAULT_TIMEOUT_VALUE);
+Property<Integer> timeout = appConfig.observeProperty("server.timeout").asInteger(DEFAULT_TIMEOUT_VALUE);
 ```
 
 To access the cached property value
 ```java
-socket.setReadTimeout(timeout.get());
+Thread.sleep(timeout.get(DEFAULT_TIMEOUT_VALUE));
 ```
 
 To react to property change notification
 
 ```java
-Property<Integer> timeout = configManager.observe("server.timeout").asInteger(DEFAULT_TIMEOUT_VALUE, 
-    new PropertyObserver<Integer>() {
+Property<Integer> timeout = appConfig
+    .observeProperty("server.timeout")
+    .asInteger() 
+    .addObserver(new PropertyObserver<Integer>() {
         public void onChange(Integer value) {
             socket.setReadTimeout(value);
         }
@@ -114,33 +122,99 @@ Property<Integer> timeout = configManager.observe("server.timeout").asInteger(DE
     });
 ```
 
-Note that before asInteger returns the PropertyObserver will be call with the current value of the property
-or the specified default if the property does not existing in the configuration.
+Note that before addObserver() returns the PropertyObserver will be called with the current value of the property
+or null if the property does not exist in the configuration.
 
 # Setting property override from code
 
-In addition to sourced DynamicConfig and static file based configurations Archaius offers a mechanism to 
-manually set runtime overrides.  
+In addition to sourced DynamicConfig and static file based configurations AppConfig offers a mechanism to 
+manually set runtime overrides from code. 
 
-The example below shows an override layer being added as the first Config in ConfigManager so that any
-overrides take precedence.  
-
-```java
-CompositeConfig manager = CompositeConfig.builder() 
-    .addConfig(overrides = new SimpleDynamicConfig())
-    .addConfig(new PollingDynamicConfg(
-            "REMOTE", 
-            new URLConfigReader("http://remoteconfigservice/snapshot"), 
-            new FixedPollingStrategy(30, TimeUnit.SECONDS)) 
-    .addConfig(application = new CompositeConfig())
-    .addConfig(library = new CompositeConfig())
-    .addConfig(new SystemConfig()) 
-    .addConfig(new EnvironmentConfig())
-    .build();
-```
+The example below shows an override layer being added as the first Config in a CompositeConfig so that any
+overrides take precedence.  Note that this structure is
 
 To set an override
 ```java
-overrides.setProperty("service.timeout", 100);
+appConfig.setProperty("service.timeout", 100);
 ```
+
+## Integration with DI frameworks
+
+The API discussed thus far implies that configuration is loaded directly through code.  This approach makes testing
+difficult as it requires properties to be set in order to test code instead of using more power techniques
+such as mocking.  Archaius-core provides a set of classes and annotations to be integrated into DI frameworks
+so that configuration may be mapped to object at creation type as part of lifecycle management.  There is also
+a feature to create dynamic proxies from configuration annotated classes.
+
+## Injecting config,
+
+```java
+public class MyService {
+    private final int timeout;
+
+    @Inject
+    public MyService(Config config) {
+        timeout = config.getInteger("prefix.timeout");
+    }
+}
+```
+
+## Configuration mapping
+
+With configuration mapping the DI framework (such as Guice) will 'inject' the configuration into the class 
+after the class has been instantiated.  When using Governator configuration will be injected prior to 
+@PostConstruct being invoked.  Outside of governator a postConfig method can be specified on the 
+@Configuration annotation.  Tighter integration with DI frameworks other than Guice can make sure configuration
+is mapped before @PostConstruct is called.
+
+```java
+@Configuration(prefix="prefix", postConfig="postConfig")
+public class MyService {
+    private int timeout = 1000;
+    
+    @Inject
+    public MyService() {
+    }
+
+    // Will be set from property 'prefix.timeout'
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    private void postConfig() {
+    }
+}
+```
+
+## Configuration proxy
+
+The simplest approach to configuration mapping is to use the proxy feature where an annotated interface 
+can proxy directly to fast properties.
+
+```java
+@Singleton
+public class MyService {
+    public MyService(MyConfig config) {
+    }
+}
+
+@Configuration(prefix="prefix")
+public interface MyConfig {
+    @DefaultValue("10000")
+    int getTimeout();
+}
+```
+
+When using archaius-guice create a binding for the proxy interface like this (a more terse API will be provided later)
+
+```java
+new AbstractModule() {
+    protected void configure() {
+        bind(MyConfig.class).toProvider(Providers.guicify(ArchaiusModule.forProxy(MyConfig.class));
+    }
+}
+```
+
+
+
 
