@@ -1,7 +1,7 @@
 package netflix.archaius.mapper;
 
 import netflix.archaius.Config;
-import netflix.archaius.ObservablePropertyFactory;
+import netflix.archaius.PropertyFactory;
 import netflix.archaius.exceptions.MappingException;
 
 /**
@@ -41,5 +41,5 @@ public interface ConfigMapper {
      * @param config
      * @return
      */
-    <T> T newProxy(Class<T> type, ObservablePropertyFactory factory);
+    <T> T newProxy(Class<T> type, PropertyFactory factory);
 }

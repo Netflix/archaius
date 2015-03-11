@@ -13,8 +13,8 @@ public class PropertyTest {
         private Property<Integer> value2;
         
         public MyService(DefaultAppConfig config) {
-            value  = config.observeProperty("foo").asInteger().addObserver(new MethodInvoker<Integer>(this, "setValue"));
-            value2 = config.observeProperty("foo").asInteger();
+            value  = config.connectProperty("foo").asInteger().addObserver(new MethodInvoker<Integer>(this, "setValue"));
+            value2 = config.connectProperty("foo").asInteger();
         }
         
         public void setValue(Integer value) {
@@ -45,9 +45,9 @@ public class PropertyTest {
         
         System.out.println("Configs: " + config.getChildConfigNames());
         
-        Property<Integer> intProp1 = config.observeProperty("foo").asInteger();
-        Property<Integer> intProp2 = config.observeProperty("foo").asInteger();
-        Property<String>  strProp  = config.observeProperty("foo").asString();
+        Property<Integer> intProp1 = config.connectProperty("foo").asInteger();
+        Property<Integer> intProp2 = config.connectProperty("foo").asInteger();
+        Property<String>  strProp  = config.connectProperty("foo").asString();
 
         Assert.assertSame(intProp1, intProp2);
         

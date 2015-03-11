@@ -12,7 +12,8 @@ import netflix.archaius.config.SystemConfig;
 import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 import netflix.archaius.loaders.PropertiesConfigReader;
-import netflix.archaius.property.DefaultObservableProperty;
+import netflix.archaius.property.DefaultPropertyContainer;
+import netflix.archaius.property.PropertyFactoryDynamicConfigObserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * 
  * <h1>Dynamic configuration</h1>
  * 
- * In addition to static configurations AppConfig exposes an API to fetch {@link ObservableProperty} 
+ * In addition to static configurations AppConfig exposes an API to fetch {@link PropertyDsl} 
  * objects through which client code can receive update notification for properties.  Note that 
  * updates to ObservableProperty are pushed once an underlying DynamicConfig configuration 
  * changes.  Multiple DynamicConfig's may be added to the ConfigManager and all will be automatically
@@ -178,7 +179,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     private final SimpleDynamicConfig          runtime;
     private final CascadingCompositeConfig     dynamic;
     private final CascadingCompositeConfig     library;
-    private final CachingDynamicConfigObserver dynamicObserver;
+    private final PropertyFactoryDynamicConfigObserver dynamicObserver;
     private final DefaultConfigLoader          loader;
     
     public DefaultAppConfig(Builder builder) {
@@ -222,10 +223,10 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             
             this.setStrInterpolator(builder.interpolator.create(this));
             
-            this.dynamicObserver = new CachingDynamicConfigObserver(new ObservablePropertyFactory() {
+            this.dynamicObserver = new PropertyFactoryDynamicConfigObserver(new PropertyFactory() {
                 @Override
-                public ObservableProperty observeProperty(String propName) {
-                    return new DefaultObservableProperty(propName, DefaultAppConfig.this);
+                public PropertyContainer connectProperty(String propName) {
+                    return new DefaultPropertyContainer(propName, DefaultAppConfig.this);
                 }
             });
             
@@ -278,13 +279,13 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     }
     
     @Override
-    public ObservableProperty observeProperty(String propName) {
+    public PropertyContainer connectProperty(String propName) {
         return dynamicObserver.create(propName);
     }
 
     @Override
     public void setProperty(String propName, Object propValue) {
-        ObservableProperty prop = dynamicObserver.get(propName);
+        PropertyContainer prop = dynamicObserver.get(propName);
         runtime.setProperty(propName, propValue);
         if (prop != null) {
             prop.update();
@@ -293,7 +294,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
 
     @Override
     public void clearProperty(String propName) {
-        ObservableProperty prop = dynamicObserver.get(propName);
+        PropertyContainer prop = dynamicObserver.get(propName);
         runtime.clearProperty(propName);
         if (prop != null) {
             prop.update();

@@ -8,7 +8,7 @@ package netflix.archaius;
  * @author elandau
  *
  */
-public interface DynamicConfig {
+public interface DynamicConfig extends Config {
     /**
      * Register a listener that will receive a call for each property that is added, removed
      * or updated.  It is recommended that the callbacks be invoked only after a full refresh
