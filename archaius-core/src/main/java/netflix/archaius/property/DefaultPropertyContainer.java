@@ -8,8 +8,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
 import netflix.archaius.Config;
-import netflix.archaius.ObservableProperty;
 import netflix.archaius.Property;
+import netflix.archaius.PropertyContainer;
 import netflix.archaius.PropertyObserver;
 
 import org.slf4j.Logger;
@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
  * @author elandau
  *
  */
-public class DefaultObservableProperty implements ObservableProperty {
-    private final Logger LOG = LoggerFactory.getLogger(DefaultObservableProperty.class);
+public class DefaultPropertyContainer implements PropertyContainer {
+    private final Logger LOG = LoggerFactory.getLogger(DefaultPropertyContainer.class);
     
     enum Type {
         INTEGER     (int.class,     Integer.class),
@@ -67,7 +67,7 @@ public class DefaultObservableProperty implements ObservableProperty {
     private final CopyOnWriteArrayList<AbstractProperty<?>> cache = new CopyOnWriteArrayList<AbstractProperty<?>>();
     private volatile long lastUpdateTimeInMillis = 0;
     
-    public DefaultObservableProperty(String key, Config config) {
+    public DefaultPropertyContainer(String key, Config config) {
         this.key = key;
         this.config = config;
     }
@@ -163,8 +163,8 @@ public class DefaultObservableProperty implements ObservableProperty {
             return units.convert(lastUpdateTimeInMillis, TimeUnit.MILLISECONDS);
         }
 
-        private DefaultObservableProperty getOuterType() {
-            return DefaultObservableProperty.this;
+        private DefaultPropertyContainer getOuterType() {
+            return DefaultPropertyContainer.this;
         }
         
         protected abstract T getCurrent() throws Exception;

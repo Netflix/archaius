@@ -3,15 +3,16 @@ package netflix.archaius;
 import java.util.concurrent.TimeUnit;
 
 /**
- * API to access latest cached value for a Property.  When creating a Property object from the config manager
- * the property will auto register for change notifications. 
+ * API to access latest cached value for a Property.  A Property is created from a PropertyFactory
+ * that is normally bound to a top level configuration object such ask {@link AppConfig}.  Through
+ * a Property its also possible to receive a stream of property update notifications.
  * 
  * {@code 
  * class MyService {
  *     private final Property<String> prop;
  *     
- *     MyService(ConfigManager config) {
- *        prop = config.observe("foo.prop").asString("defaultValue");
+ *     MyService(PropertyFactroy config) {
+ *        prop = config.connectProperty("foo.prop").asString("defaultValue");
  *     }
  *     
  *     void doSomething() {
@@ -20,6 +21,9 @@ import java.util.concurrent.TimeUnit;
  *     }
  * }
  * }
+ * 
+ * TODO: Chain properties
+ * TODO: Property validator
  * 
  * @author elandau
  *

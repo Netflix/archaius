@@ -3,8 +3,8 @@ package netflix.archaius.mapper;
 import java.util.Properties;
 
 import netflix.archaius.DefaultAppConfig;
-import netflix.archaius.PrefixedObservablePropertyFactory;
 import netflix.archaius.mapper.annotations.DefaultValue;
+import netflix.archaius.property.PrefixedObservablePropertyFactory;
 
 import org.junit.Assert;
 import org.junit.Test;

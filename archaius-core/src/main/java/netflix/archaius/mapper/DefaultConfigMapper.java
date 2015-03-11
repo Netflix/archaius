@@ -11,7 +11,7 @@ import java.util.Map;
 import netflix.archaius.Config;
 import netflix.archaius.Decoder;
 import netflix.archaius.DefaultDecoder;
-import netflix.archaius.ObservablePropertyFactory;
+import netflix.archaius.PropertyFactory;
 import netflix.archaius.Property;
 import netflix.archaius.exceptions.MappingException;
 import netflix.archaius.mapper.annotations.Configuration;
@@ -178,7 +178,7 @@ public class DefaultConfigMapper implements ConfigMapper {
     }
 
     @Override
-    public <T> T newProxy(Class<T> type, ObservablePropertyFactory factory) {
+    public <T> T newProxy(Class<T> type, PropertyFactory factory) {
         Configuration annot = type.getAnnotation(Configuration.class);
         
         String prefix = annot == null 
@@ -215,7 +215,7 @@ public class DefaultConfigMapper implements ConfigMapper {
             // TODO: sub proxy for non-primitive types
             String propName = prefix + Character.toLowerCase(m.getName().charAt(3)) + m.getName().substring(4);
             
-            Property<?> prop = factory.observeProperty(propName).asType(m.getReturnType());
+            Property<?> prop = factory.connectProperty(propName).asType(m.getReturnType());
             
             properties.put(m, new MethodInvoker(prop, defaultValue));
         }
