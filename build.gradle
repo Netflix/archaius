@@ -15,5 +15,5 @@ subprojects {
         jcenter()
     }
 
-    group = "netflix.${githubProjectName}"
+    group = "com.netflix.${githubProjectName}"
 }
