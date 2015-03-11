@@ -8,7 +8,7 @@ import netflix.archaius.AppConfig;
 import netflix.archaius.CascadeStrategy;
 import netflix.archaius.Config;
 import netflix.archaius.DefaultAppConfig;
-import netflix.archaius.ObservablePropertyFactory;
+import netflix.archaius.PropertyFactory;
 import netflix.archaius.exceptions.ConfigException;
 import netflix.archaius.mapper.ConfigMapper;
 import netflix.archaius.mapper.DefaultConfigMapper;
@@ -38,7 +38,7 @@ public class ArchaiusModule extends AbstractModule {
         ConfigMapper mapper;
         
         @Inject
-        ObservablePropertyFactory factory;
+        PropertyFactory factory;
         
         public ConfigProvider(Class<T> type) {
             this.type = type;
@@ -153,7 +153,7 @@ public class ArchaiusModule extends AbstractModule {
 
     @Provides
     @Singleton
-    private ObservablePropertyFactory createObservablePropertyFactory(AppConfig config) {
+    private PropertyFactory createObservablePropertyFactory(AppConfig config) {
         return config;
     }
 
