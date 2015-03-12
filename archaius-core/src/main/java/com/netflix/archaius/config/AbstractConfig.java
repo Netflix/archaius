@@ -344,7 +344,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        return get(type, null);
+        return get(type, key, null);
     }
 
     @Override
