@@ -19,7 +19,7 @@ public class EnvironmentConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return properties.get(key);
     }
 

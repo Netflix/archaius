@@ -25,7 +25,7 @@ public class AbstractConfigTest {
         }
 
         @Override
-        public Object getRawProperty(String key) {
+        public String getRawString(String key) {
             return "bar";
         }
     };

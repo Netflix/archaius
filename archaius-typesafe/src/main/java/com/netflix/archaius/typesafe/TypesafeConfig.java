@@ -27,7 +27,7 @@ public class TypesafeConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return config.getString(key);
     }
 

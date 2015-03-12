@@ -30,7 +30,7 @@ public class MapConfig extends AbstractConfig {
      */
     public static class Builder {
         final String name;
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, String> map = new HashMap<String, String>();
         
         public Builder(String name) {
             this.name = name;
@@ -50,14 +50,14 @@ public class MapConfig extends AbstractConfig {
         return new Builder(name);
     }
     
-    private Map<String, Object> props = new HashMap<String, Object>();
+    private Map<String, String> props = new HashMap<String, String>();
     
     /**
      * Construct a MapConfig as a copy of the provided Map
      * @param name
      * @param props
      */
-    public MapConfig(String name, Map<String, Object> props) {
+    public MapConfig(String name, Map<String, String> props) {
         super(name);
         this.props.putAll(props);
         this.props = Collections.unmodifiableMap(this.props);
@@ -72,7 +72,7 @@ public class MapConfig extends AbstractConfig {
         super(name);
         
         for (Entry<Object, Object> entry : props.entrySet()) {
-            this.props.put(entry.getKey().toString(), entry.getValue());
+            this.props.put(entry.getKey().toString(), entry.getValue().toString());
         }
         this.props = Collections.unmodifiableMap(this.props);
     }
@@ -90,7 +90,7 @@ public class MapConfig extends AbstractConfig {
             Iterator<String> keys = config.getKeys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                props.put(key, config.getRawProperty(key));
+                props.put(key, config.getRawString(key));
             }
         }
         
@@ -98,7 +98,7 @@ public class MapConfig extends AbstractConfig {
     }
     
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return props.get(key);
     }
 

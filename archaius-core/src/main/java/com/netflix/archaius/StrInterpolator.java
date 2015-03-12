@@ -22,5 +22,5 @@ public interface StrInterpolator {
      * @param lookup
      * @return
      */
-    Object resolve(String key);
+    String resolve(String key);
 }

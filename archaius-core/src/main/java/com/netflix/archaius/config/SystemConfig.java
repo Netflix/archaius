@@ -19,7 +19,7 @@ public class SystemConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return props.getProperty(key);
     }
 

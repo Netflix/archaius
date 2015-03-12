@@ -16,7 +16,7 @@ public class PropertyConfigReaderTest {
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();
-            System.out.println("Key : " + key + " " + config.getRawProperty(key));
+            System.out.println("Key : " + key + " " + config.getRawString(key));
         }
         
         System.out.println(config.getList("application.list"));
@@ -24,7 +24,7 @@ public class PropertyConfigReaderTest {
         System.out.println(config.getList("application.map"));
         System.out.println(config.getList("application.set"));
         
-        System.out.println(config.getBoolean("application.list"));
-        System.out.println(config.getInteger("application.list"));
+//        System.out.println(config.getBoolean("application.list"));
+//        System.out.println(config.getInteger("application.list"));
     }
 }

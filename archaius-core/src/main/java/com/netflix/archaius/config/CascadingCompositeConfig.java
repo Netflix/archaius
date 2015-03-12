@@ -133,10 +133,10 @@ public class CascadingCompositeConfig extends AbstractConfig implements Composit
     }    
     
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         for (Config child : children) {
             if (child.containsProperty(key)) {
-                return child.getRawProperty(key);
+                return child.getRawString(key);
             }
         }
         

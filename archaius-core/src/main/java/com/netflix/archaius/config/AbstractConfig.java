@@ -53,8 +53,8 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public Object interpolate(String key) {
-        Object prop = getRawProperty(key);
+    public String interpolate(String key) {
+        String prop = getRawString(key);
         if (prop == null) {
             return null;    // TODO: Should this thrown an exception?
         }
@@ -68,9 +68,9 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Long getLong(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
-            return notFound(null);
+            return notFound();
         try {
             return Long.parseLong(value);
         }
@@ -81,7 +81,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Long getLong(String key, Long defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return defaultValue;
         try {
@@ -94,7 +94,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public String getString(String key) {
-        Object value = getRawProperty(key);
+        Object value = getRawString(key);
         if (value == null) 
             return notFound();
         return value.toString();
@@ -102,7 +102,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public String getString(String key, String defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         return value;
@@ -110,7 +110,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Double getDouble(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         try {
@@ -123,7 +123,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Double getDouble(String key, Double defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {   
@@ -136,7 +136,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Integer getInteger(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
 
@@ -150,7 +150,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Integer getInteger(String key, Integer defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         
@@ -164,7 +164,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Boolean getBoolean(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         
@@ -179,7 +179,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Boolean getBoolean(String key, Boolean defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
@@ -193,7 +193,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Short getShort(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         
@@ -207,7 +207,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Short getShort(String key, Short defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {
@@ -220,7 +220,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigInteger getBigInteger(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         try {
@@ -233,7 +233,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {
@@ -246,7 +246,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigDecimal getBigDecimal(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         try {
@@ -259,7 +259,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigDecimal getBigDecimal(String key, BigDecimal defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {
@@ -272,7 +272,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Float getFloat(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         try {
@@ -285,7 +285,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Float getFloat(String key, Float defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {
@@ -298,7 +298,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Byte getByte(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound();
         try {
@@ -311,7 +311,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Byte getByte(String key, Byte defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) 
             return notFound(defaultValue);
         try {
@@ -324,7 +324,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public List getList(String key) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) {
             return notFound();
         }
@@ -334,7 +334,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public List getList(String key, List defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) {
             return notFound(defaultValue);
         }
@@ -349,7 +349,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        String value = getString(key);
+        String value = getRawString(key);
         if (value == null) {
             return notFound(defaultValue);
         }

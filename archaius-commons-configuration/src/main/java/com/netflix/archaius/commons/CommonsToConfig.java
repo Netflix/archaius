@@ -33,7 +33,7 @@ public class CommonsToConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return config.getString(key);
     }
 

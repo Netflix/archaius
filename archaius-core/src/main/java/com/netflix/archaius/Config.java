@@ -69,12 +69,12 @@ public interface Config {
      * @param key
      * @return
      */
-    Object getRawProperty(String key);
+    String getRawString(String key);
     
     /**
      * Return the interpolated String value for a property
      */
-    Object interpolate(String key);
+    String interpolate(String key);
     
     /**
      * Return a subset of the configuration prefixed by a key.

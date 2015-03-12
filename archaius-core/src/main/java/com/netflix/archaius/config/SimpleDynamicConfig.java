@@ -13,11 +13,11 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
         super(name);
     }
 
-    private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
+    private ConcurrentMap<String, String> props = new ConcurrentHashMap<String, String>();
     
     @Override
-    public void setProperty(String propName, Object propValue) {
-        props.put(propName, propValue);
+    public <T> void setProperty(String propName, T propValue) {
+        props.put(propName, propValue.toString());
         notifyOnUpdate(propName);
     }
     
@@ -31,7 +31,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();
-            props.put(key, config.getRawProperty(key));
+            props.put(key, config.getRawString(key));
         }
     }
     
@@ -46,7 +46,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return props.get(key);
     }
     
