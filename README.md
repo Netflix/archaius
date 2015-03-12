@@ -1,7 +1,16 @@
 Archaius is a configuration library for accessing a mixture of static as well
-as dynamic configuration as a single configuration unit.
+as dynamic configurations as a single configuration unit.
 
-Archaius 2.0 has minimal external dependencies, is non-static, and DI friendly.
+## Features
+* Lock-free reads
+* Non-static
+* DI friendly
+
+## 2.x Changes
+* **Not backwards compatible**
+* Clean separation of API and backing configurations (i.e. commons-configuration, typesafe-configuration, etc)
+* Minimal external dependencies
+* Improved bootstrapping process that doesn't rely on class loading
 
 ## Getting Started
 
@@ -22,7 +31,7 @@ config.getString("propertyname");
 // Load configuration into the libraries level
 config.addConfig(config.newLoader().load("library");
 
-// Get a fast property
+// Get a property
 Property<String> prop = config.createProperty("propertyname").asString();
 
 ```
