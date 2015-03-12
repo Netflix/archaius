@@ -12,6 +12,7 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.exceptions.ParseException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 
 public abstract class AbstractConfig implements Config {
@@ -20,7 +21,6 @@ public abstract class AbstractConfig implements Config {
     private StrInterpolator interpolator;
     private Config parent;
     private Decoder decoder;
-    private boolean throwExceptionOnMissing = false;
 
     public AbstractConfig(String name) {
         this.name = name;
@@ -56,7 +56,7 @@ public abstract class AbstractConfig implements Config {
     public Object interpolate(String key) {
         Object prop = getRawProperty(key);
         if (prop == null) {
-            return null;
+            return null;    // TODO: Should this thrown an exception?
         }
         return interpolator.resolve(prop.toString());
     }
@@ -75,7 +75,7 @@ public abstract class AbstractConfig implements Config {
             return Long.parseLong(value);
         }
         catch (NumberFormatException e) {
-            return null;
+            return parseError(key, value, e);
         }
     }
 
@@ -88,7 +88,7 @@ public abstract class AbstractConfig implements Config {
             return Long.parseLong(value);
         }
         catch (NumberFormatException e) {
-            return defaultValue;
+            return parseError(key, value, e);
         }
     }
 
@@ -117,7 +117,7 @@ public abstract class AbstractConfig implements Config {
             return Double.parseDouble(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -130,7 +130,7 @@ public abstract class AbstractConfig implements Config {
             return Double.parseDouble(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -144,7 +144,7 @@ public abstract class AbstractConfig implements Config {
             return Integer.parseInt(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -158,7 +158,7 @@ public abstract class AbstractConfig implements Config {
             return Integer.parseInt(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -166,7 +166,7 @@ public abstract class AbstractConfig implements Config {
     public Boolean getBoolean(String key) {
         String value = getString(key);
         if (value == null) 
-            return notFound(null);
+            return notFound();
         
         if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
             return Boolean.TRUE;
@@ -174,21 +174,21 @@ public abstract class AbstractConfig implements Config {
         else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
             return Boolean.FALSE;
         }
-        return parseError(null);
+        return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
     }
 
     @Override
     public Boolean getBoolean(String key, Boolean defaultValue) {
         String value = getString(key);
         if (value == null) 
-            return defaultValue;
+            return notFound(defaultValue);
         if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
             return Boolean.TRUE;
         } 
         else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
             return Boolean.FALSE;
         }
-        return parseError(null, defaultValue);
+        return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
     }
 
     @Override
@@ -201,7 +201,7 @@ public abstract class AbstractConfig implements Config {
             return Short.parseShort(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -214,7 +214,7 @@ public abstract class AbstractConfig implements Config {
             return Short.parseShort(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -227,7 +227,7 @@ public abstract class AbstractConfig implements Config {
             return BigInteger.valueOf(Long.valueOf(value));
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -235,12 +235,12 @@ public abstract class AbstractConfig implements Config {
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
         String value = getString(key);
         if (value == null) 
-            return notFound();
+            return notFound(defaultValue);
         try {
             return BigInteger.valueOf(Long.valueOf(value));
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractConfig implements Config {
             return BigDecimal.valueOf(Long.valueOf(value));
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -266,7 +266,7 @@ public abstract class AbstractConfig implements Config {
             return BigDecimal.valueOf(Long.valueOf(value));
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -279,7 +279,7 @@ public abstract class AbstractConfig implements Config {
             return Float.parseFloat(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -287,12 +287,12 @@ public abstract class AbstractConfig implements Config {
     public Float getFloat(String key, Float defaultValue) {
         String value = getString(key);
         if (value == null) 
-            return notFound();
+            return notFound(defaultValue);
         try {
             return Float.parseFloat(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -305,7 +305,7 @@ public abstract class AbstractConfig implements Config {
             return Byte.parseByte(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e);
+            return parseError(key, value, e);
         }
     }
 
@@ -318,7 +318,7 @@ public abstract class AbstractConfig implements Config {
             return Byte.parseByte(value);
         }
         catch (NumberFormatException e) {
-            return parseError(e, defaultValue);
+            return parseError(key, value, e);
         }
     }
 
@@ -351,7 +351,7 @@ public abstract class AbstractConfig implements Config {
     public <T> T get(Class<T> type, String key, T defaultValue) {
         String value = getString(key);
         if (value == null) {
-            return defaultValue;
+            return notFound(defaultValue);
         }
         return decoder.decode(type, value);
     }
@@ -370,22 +370,21 @@ public abstract class AbstractConfig implements Config {
         return result.iterator();
     }
 
+    /**
+     * Handle notFound when a defaultValue is provided.
+     * @param defaultValue
+     * @return
+     */
     private <T> T notFound(T defaultValue) {
         return defaultValue;
     }
     
     private <T> T notFound() {
-        if (throwExceptionOnMissing) 
-            throw new NoSuchElementException();
-        return null;
+        throw new NoSuchElementException();
     }
     
-    private <T> T parseError(Exception e, T defaultValue) {
-        return defaultValue;
-    }
-    
-    private <T> T parseError(Exception e) {
-        return null;
+    private <T> T parseError(String key, String value, Exception e) {
+        throw new ParseException("Error parsing value '" + value + "' for property '" + key + "'", e);
     }
     
     @Override
