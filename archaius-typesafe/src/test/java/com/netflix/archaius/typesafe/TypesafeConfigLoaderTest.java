@@ -8,7 +8,6 @@ import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.typesafe.TypesafeConfigReader;
 
 public class TypesafeConfigLoaderTest {
     @Test
