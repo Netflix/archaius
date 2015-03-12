@@ -99,11 +99,7 @@ public class MapConfig extends AbstractConfig {
     
     @Override
     public Object getRawProperty(String key) {
-        Object obj = props.get(key);
-        if (obj == null) {
-            return null;
-        }
-        return obj;
+        return props.get(key);
     }
 
     @Override
