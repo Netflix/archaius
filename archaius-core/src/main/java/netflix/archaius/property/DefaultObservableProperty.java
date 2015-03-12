@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import netflix.archaius.Config;
 import netflix.archaius.ObservableProperty;
 import netflix.archaius.Property;
-import netflix.archaius.PropertyConversions;
 import netflix.archaius.PropertyObserver;
 
 import org.slf4j.Logger;
@@ -18,18 +17,18 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of ObservableProperty which reuses the same object for each
- * type.  This implementation is assumes that each property is mostly accessed
+ * type.  This implementation is assumes that each fast property is mostly accessed
  * as the same type but allows for additional types to be deserialized.  
  * Instead of incurring the overhead for caching in a hash map, the objects are 
  * stored in a CopyOnWriteArrayList and items are retrieved via a linear scan.
  * 
- * Once created a property cannot be removed.  However, observers may be
+ * Once created a fast property cannot be removed.  However, observer may be
  * added and removed. 
  * 
  * @author elandau
  *
  */
-public class DefaultObservableProperty implements ObservableProperty, PropertyConversions {
+public class DefaultObservableProperty implements ObservableProperty {
     private final Logger LOG = LoggerFactory.getLogger(DefaultObservableProperty.class);
     
     enum Type {
