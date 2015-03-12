@@ -201,6 +201,7 @@ can proxy directly to fast properties.
 ```java
 @Singleton
 public class MyService {
+    @Inject
     public MyService(MyConfig config) {
     }
 }
