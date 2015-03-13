@@ -37,7 +37,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         decoder = new DefaultDecoder();
     }
 
-    private void setDecoder(Decoder decoder) {
+    protected void setDecoder(Decoder decoder) {
         this.decoder = decoder;
     }
 
