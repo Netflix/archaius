@@ -1,14 +1,11 @@
 package com.netflix.archaius.config;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
-import com.netflix.archaius.Config;
 
 /**
  * Config backed by an immutable map.
@@ -74,26 +71,6 @@ public class MapConfig extends AbstractConfig {
         for (Entry<Object, Object> entry : props.entrySet()) {
             this.props.put(entry.getKey().toString(), entry.getValue().toString());
         }
-        this.props = Collections.unmodifiableMap(this.props);
-    }
-
-    /**
-     * Construct a MapConfig with a single Map that is a union of the provied configs
-     * where the last added value wins
-     * @param name
-     * @param configs
-     */
-    public MapConfig(String name, Collection<Config> configs) {
-        super(name);
-        
-        for (Config config : configs) {
-            Iterator<String> keys = config.getKeys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                props.put(key, config.getRawString(key));
-            }
-        }
-        
         this.props = Collections.unmodifiableMap(this.props);
     }
     

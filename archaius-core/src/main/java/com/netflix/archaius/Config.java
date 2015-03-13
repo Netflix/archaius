@@ -65,13 +65,6 @@ public interface Config {
     Iterator<String> getKeys(String prefix);
     
     /**
-     * Return the raw String value for a property
-     * @param key
-     * @return
-     */
-    String getRawString(String key);
-    
-    /**
      * Return the interpolated String value for a property
      */
     String interpolate(String key);

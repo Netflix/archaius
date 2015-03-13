@@ -44,10 +44,12 @@ public abstract class AbstractConfig implements Config {
         this.decoder = decoder;
     }
 
+    @Override
     public Config getParent() {
         return parent;
     }
     
+    @Override
     public void setParent(Config config) {
         this.parent = config;
     }
@@ -224,7 +226,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound();
         try {
-            return BigInteger.valueOf(Long.valueOf(value));
+            return new BigInteger(value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -237,7 +239,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(defaultValue);
         try {
-            return BigInteger.valueOf(Long.valueOf(value));
+            return new BigInteger(value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -250,7 +252,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound();
         try {
-            return BigDecimal.valueOf(Long.valueOf(value));
+            return new BigDecimal(value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -263,7 +265,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(defaultValue);
         try {
-            return BigDecimal.valueOf(Long.valueOf(value));
+            return new BigDecimal(value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -397,6 +399,13 @@ public abstract class AbstractConfig implements Config {
         return name;
     }
     
+    /**
+     * Return the raw String value for a property
+     * @param key
+     * @return
+     */
+    protected abstract String getRawString(String key);
+
     @Override
     public void accept(Visitor visitor) {
         Iterator<String> iter = getKeys();

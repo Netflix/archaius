@@ -6,8 +6,6 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.netflix.archaius.Config;
-
 public class SimpleDynamicConfig extends AbstractDynamicConfig implements SettableConfig {
     public SimpleDynamicConfig(String name) {
         super(name);
@@ -27,14 +25,6 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
         notifyOnUpdate(propName);
     }
 
-    public void appendConfig(Config config) {
-        Iterator<String> iter = config.getKeys();
-        while (iter.hasNext()) {
-            String key = iter.next();
-            props.put(key, config.getRawString(key));
-        }
-    }
-    
     @Override
     public boolean containsProperty(String key) {
         return props.containsKey(key);

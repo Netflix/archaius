@@ -1,6 +1,7 @@
 package com.netflix.archaius.typesafe;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.netflix.archaius.config.AbstractConfig;
@@ -28,7 +29,11 @@ public class TypesafeConfig extends AbstractConfig {
 
     @Override
     public String getRawString(String key) {
-        return config.getString(key);
+        return config.getValue(key).unwrapped().toString();
+    }
+
+    public List getList(String key) {
+        throw new UnsupportedOperationException("Not supported yet");
     }
 
     @Override

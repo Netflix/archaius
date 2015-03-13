@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.loaders.PropertiesConfigReader;
 
 public class PropertyConfigReaderTest {
     @Test
@@ -16,7 +15,7 @@ public class PropertyConfigReaderTest {
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();
-            System.out.println("Key : " + key + " " + config.getRawString(key));
+            System.out.println("Key : " + key + " " + config.getString(key));
         }
         
         System.out.println(config.getList("application.list"));

@@ -33,8 +33,7 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
 
         @Override
         public String lookup(String key) {
-            Object obj = config.getRawString(key);
-            return (obj == null) ? key : obj.toString();
+            return config.getString(key, key);
         }
     }
 }

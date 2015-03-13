@@ -2,6 +2,7 @@ package com.netflix.archaius.config;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.NoSuchElementException;
 
 import com.netflix.archaius.Config;
 
@@ -14,7 +15,7 @@ import com.netflix.archaius.Config;
  * @author elandau
  *
  */
-public class PrefixedViewConfig extends AbstractConfig {
+public class PrefixedViewConfig extends DelegatingConfig {
     private final Config config;
     private final String prefix;
     
@@ -45,13 +46,23 @@ public class PrefixedViewConfig extends AbstractConfig {
 
     @Override
     public boolean isEmpty() {
-        // TODO: Property implementation
-        return config.isEmpty();
+        // This is terribly inefficient
+        return !config.getKeys().hasNext();
     }
 
     @Override
-    public String getRawString(String key) {
-        return config.getRawString(prefix + key);
+    public void accept(Visitor visitor) {
+        config.accept(visitor);
+    }
+
+    @Override
+    protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
+        if (config.containsProperty(prefix + key)) {
+            return config;
+        }
+        if (failOnNotFound)
+            throw new NoSuchElementException("No child configuration has property " + key);
+        return null;
     }
 
 }
