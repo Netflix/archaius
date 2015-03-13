@@ -2,11 +2,11 @@ package com.netflix.config;
 
 import java.util.Iterator;
 
-import netflix.archaius.config.AbstractDynamicConfig;
-
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
+
+import com.netflix.archaius.config.AbstractDynamicConfig;
 
 public class PropertyListenerToDynamicConfig extends AbstractDynamicConfig {
 
@@ -50,7 +50,8 @@ public class PropertyListenerToDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
-        return config.getProperty(key);
+    public String getRawString(String key) {
+        // TODO: This could be a list
+        return config.getProperty(key).toString();
     }
 }
