@@ -22,10 +22,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.netflix.archaius.Config;
+import com.netflix.archaius.Decoder;
+import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -38,13 +41,19 @@ import com.netflix.archaius.exceptions.ConfigException;
  *
  * TODO: Optional cache of queried properties
  */
-public class CascadingCompositeConfig extends AbstractConfig implements CompositeConfig {
+public class CascadingCompositeConfig extends DelegatingConfig implements CompositeConfig {
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
     private final Map<String, Config>           lookup    = new LinkedHashMap<String, Config>();
     private final CopyOnWriteArraySet<Listener> listeners = new CopyOnWriteArraySet<Listener>();
+    private Decoder decoder;
     
     public CascadingCompositeConfig(String name) {
         super(name);
+        decoder = new DefaultDecoder();
+    }
+
+    protected void setDecoder(Decoder decoder) {
+        this.decoder = decoder;
     }
 
     @Override
@@ -147,14 +156,15 @@ public class CascadingCompositeConfig extends AbstractConfig implements Composit
         }
     }    
     
-    @Override
-    public Object getRawProperty(String key) {
+    protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
         for (Config child : children) {
             if (child.containsProperty(key)) {
-                return child.getRawProperty(key);
+                return child;
             }
         }
         
+        if (failOnNotFound)
+            throw new NoSuchElementException("No child configuration has property " + key);
         return null;
     }
 
@@ -213,8 +223,6 @@ public class CascadingCompositeConfig extends AbstractConfig implements Composit
                 cv.visit(child);
             }
         }
-        else {
-            super.accept(visitor);
-        }
     }
+
 }

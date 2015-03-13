@@ -15,11 +15,9 @@
  */
 package com.netflix.archaius;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultAppConfig;
-import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.Property;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.MapConfig;
@@ -75,7 +73,6 @@ public class ConfigManagerTest {
                     .put("region", "us-east")
                     .build());
 
-        String str = config.getString("application.prop1");
-        System.out.println(str);
+        Assert.assertTrue(config.getBoolean("application.loaded"));
     }
 }

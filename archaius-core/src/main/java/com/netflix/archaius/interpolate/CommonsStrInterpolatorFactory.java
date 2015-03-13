@@ -41,15 +41,14 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
         }
         
         @Override
-        public Object resolve(String key) {
-            Object obj = sub.replace(key);
+        public String resolve(String key) {
+            String obj = sub.replace(key);
             return (obj == null) ? key : obj;
         }
 
         @Override
         public String lookup(String key) {
-            Object obj = config.getRawProperty(key);
-            return (obj == null) ? key : obj.toString();
+            return config.getRawString(key);
         }
     }
 }

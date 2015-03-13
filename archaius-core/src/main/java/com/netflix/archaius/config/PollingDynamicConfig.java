@@ -36,11 +36,11 @@ import org.slf4j.LoggerFactory;
 public class PollingDynamicConfig extends AbstractDynamicConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
-    private volatile Map<String, Object> current = new HashMap<String, Object>();
+    private volatile Map<String, String> current = new HashMap<String, String>();
     private final AtomicBoolean busy = new AtomicBoolean();
-    private final Callable<Map<String, Object>> reader;
+    private final Callable<Map<String, String>> reader;
     
-    public PollingDynamicConfig(String name, Callable<Map<String, Object>> reader, PollingStrategy strategy) {
+    public PollingDynamicConfig(String name, Callable<Map<String, String>> reader, PollingStrategy strategy) {
         super(name);
         
         this.reader = reader;
@@ -69,7 +69,7 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return current.get(key);
     }
 
@@ -77,7 +77,7 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
         // OK to ignore calls to update() if already busy updating 
         if (busy.compareAndSet(false, true)) {
             try {
-                Map<String, Object> newConfig = reader.call();
+                Map<String, String> newConfig = reader.call();
                 current = newConfig;
                 notifyOnUpdate();
             }

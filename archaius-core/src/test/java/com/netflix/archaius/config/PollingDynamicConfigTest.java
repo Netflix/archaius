@@ -48,7 +48,7 @@ public class PollingDynamicConfigTest {
                 server.getServerPathURI("/prop1").toURL()
                 );
         
-        Map<String, Object> result;
+        Map<String, String> result;
         
         prop1.setProperty("a", "a_value");
         result = reader.call();
@@ -74,7 +74,7 @@ public class PollingDynamicConfigTest {
         prop1.setProperty("a", "A");
         prop2.setProperty("b", "B");
         
-        Map<String, Object> result = reader.call();
+        Map<String, String> result = reader.call();
 
         Assert.assertEquals(2, result.size());
         Assert.assertEquals("A", result.get("a"));

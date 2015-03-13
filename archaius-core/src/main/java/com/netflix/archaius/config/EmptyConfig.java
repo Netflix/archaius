@@ -40,7 +40,7 @@ public class EmptyConfig extends AbstractConfig {
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return null;
     }
 

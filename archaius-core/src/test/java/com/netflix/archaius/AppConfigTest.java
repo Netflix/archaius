@@ -58,4 +58,43 @@ public class AppConfigTest {
         
         config.accept(new PrintStreamVisitor());
     }
+    
+    @Test
+    public void interpolationShouldWork() {
+        System.setProperty("env", "prod");
+        
+        DefaultAppConfig config = DefaultAppConfig.builder()
+            .withApplicationConfigName("application")
+            .build();
+        
+        config.setProperty("replacement.env", "${env}");
+        
+        Assert.assertEquals("prod", config.getString("replacement.env"));
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void infiniteInterpolationRecursionShouldFail() {
+        System.setProperty("env", "${env}");
+        
+        DefaultAppConfig config = DefaultAppConfig.builder()
+            .withApplicationConfigName("application")
+            .build();
+        
+        config.setProperty("replacement.env", "${env}");
+        
+        Assert.assertEquals("prod", config.getString("replacement.env"));
+    }
+    
+    @Test
+    public void numericInterpolationShouldWork() {
+        DefaultAppConfig config = DefaultAppConfig.builder()
+                .withApplicationConfigName("application")
+                .build();
+            
+        config.setProperty("default", "123");
+        config.setProperty("value",   "${default}");
+        
+        Assert.assertEquals((long)123L, (long)config.getLong("value"));
+    }
+    
 }

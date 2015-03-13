@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.netflix.archaius.cascade.SimpleCascadeStrategy;
+import com.netflix.archaius.config.CascadingCompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
@@ -165,7 +166,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                             String fileToLoad = resourcePermutationName;
                             do {
                                 try {
-                                    config = loader.load(classLoader, name, resourcePermutationName);
+                                    config = loader.load(classLoader, resourcePermutationName, resourcePermutationName);
                                     try {
                                         fileToLoad = config.getString(includeKey);
                                     }
@@ -192,11 +193,25 @@ public class DefaultConfigLoader implements ConfigLoader {
                     configs.add(new MapConfig(name, overrides));
                 }
                 
-                Config config = configs.isEmpty() 
-                        ? null                             // none 
-                        : configs.size() == 1
-                           ? configs.get(0)                // one 
-                           : new MapConfig(name, configs); // multiple
+                final Config config;
+                // none
+                if (configs.isEmpty()) {
+                    return null;
+                }
+                // single
+                else if (configs.size() == 1) {
+                    config = configs.get(0);
+                }
+                // multiple
+                else {
+                    CascadingCompositeConfig cConfig = new CascadingCompositeConfig(name);
+                    try {
+                        cConfig.addConfigsLast(configs);
+                    } catch (ConfigException e) {
+                        throw new RuntimeException(e);
+                    }
+                    config = cConfig;
+                }
                 
                 if (loadToSystem) {
                     Iterator<String> keys = config.getKeys();

@@ -24,6 +24,8 @@ public class PrintStreamVisitor implements Config.Visitor, CascadingCompositeCon
     private final PrintStream stream;
     private String prefix = "";
     
+    public static PrintStreamVisitor OUT = new PrintStreamVisitor(System.out);
+    
     public PrintStreamVisitor(PrintStream stream) {
         this.stream = stream;
     }

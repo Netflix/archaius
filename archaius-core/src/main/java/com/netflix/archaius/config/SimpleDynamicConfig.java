@@ -21,18 +21,16 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.netflix.archaius.Config;
-
 public class SimpleDynamicConfig extends AbstractDynamicConfig implements SettableConfig {
     public SimpleDynamicConfig(String name) {
         super(name);
     }
 
-    private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
+    private ConcurrentMap<String, String> props = new ConcurrentHashMap<String, String>();
     
     @Override
-    public void setProperty(String propName, Object propValue) {
-        props.put(propName, propValue);
+    public <T> void setProperty(String propName, T propValue) {
+        props.put(propName, propValue.toString());
         notifyOnUpdate(propName);
     }
     
@@ -42,14 +40,6 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
         notifyOnUpdate(propName);
     }
 
-    public void appendConfig(Config config) {
-        Iterator<String> iter = config.getKeys();
-        while (iter.hasNext()) {
-            String key = iter.next();
-            props.put(key, config.getRawProperty(key));
-        }
-    }
-    
     @Override
     public boolean containsProperty(String key) {
         return props.containsKey(key);
@@ -61,7 +51,7 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
     }
 
     @Override
-    public Object getRawProperty(String key) {
+    public String getRawString(String key) {
         return props.get(key);
     }
     

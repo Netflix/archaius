@@ -27,7 +27,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-public class URLConfigReader implements Callable<Map<String, Object>> {
+public class URLConfigReader implements Callable<Map<String, String>> {
     private final URL[] configUrls;
 
     /**
@@ -64,8 +64,8 @@ public class URLConfigReader implements Callable<Map<String, Object>> {
     }
     
     @Override
-    public Map<String, Object> call() throws IOException {
-        Map<String, Object> map = new HashMap<String, Object>();
+    public Map<String, String> call() throws IOException {
+        Map<String, String> map = new HashMap<String, String>();
         for (URL url: configUrls) {
             Properties props = new Properties();
             InputStream fin = url.openStream();
@@ -76,7 +76,7 @@ public class URLConfigReader implements Callable<Map<String, Object>> {
                 fin.close();
             }
             for (Entry<Object, Object> entry: props.entrySet()) {
-                map.put((String) entry.getKey(), entry.getValue());
+                map.put((String) entry.getKey(), entry.getValue().toString());
             }
         }
         return map;

@@ -21,6 +21,6 @@ import com.netflix.archaius.Config;
 
 public interface SettableConfig extends Config {
     void setProperties(Properties properties);
-    void setProperty(String propName, Object propValue);
+    <T> void setProperty(String propName, T propValue);
     void clearProperty(String propName);
 }

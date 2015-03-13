@@ -125,7 +125,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
          * loading application and library properties.  If no loaders are added AppConfig
          * will use PropertiesConfigLoader.
          */
-        public Builder withConfigLoader(ConfigReader loader) {
+        public Builder withConfigReader(ConfigReader loader) {
             this.loaders.add(loader);
             return this;
         }
@@ -223,7 +223,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             }
 
             if (builder.decoder != null) {
-                super.setDecoder(builder.decoder);
+                setDecoder(builder.decoder);
             }
 
             loader = DefaultConfigLoader.builder()

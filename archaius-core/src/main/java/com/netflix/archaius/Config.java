@@ -34,6 +34,7 @@ public interface Config {
      * @return  Arbitrary name assigned to this configuration
      */
     String getName();
+    String getRawString(String key);
     
     Long getLong(String key);
     Long getLong(String key, Long defaultValue);
@@ -80,16 +81,9 @@ public interface Config {
     Iterator<String> getKeys(String prefix);
     
     /**
-     * Return the raw String value for a property
-     * @param key
-     * @return
-     */
-    Object getRawProperty(String key);
-    
-    /**
      * Return the interpolated String value for a property
      */
-    Object interpolate(String key);
+    String interpolate(String key);
     
     /**
      * Return a subset of the configuration prefixed by a key.
