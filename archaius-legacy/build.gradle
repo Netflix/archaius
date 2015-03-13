@@ -16,6 +16,10 @@
 
 apply plugin: 'java'
 
+tasks.withType(Test) { 
+    forkEvery = 1 
+}
+
 dependencies {
     compile  project(':archaius-commons-configuration')
     compile 'com.google.code.findbugs:annotations:2.0.0'
