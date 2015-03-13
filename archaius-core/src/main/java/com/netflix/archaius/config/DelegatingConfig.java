@@ -24,6 +24,11 @@ public abstract class DelegatingConfig implements Config {
     protected abstract Config getConfigWithProperty(String key, boolean failOnNotFound);
     
     @Override
+    public String getRawString(String key) {
+        return getConfigWithProperty(key, false).getRawString(key);
+    }
+    
+    @Override
     public Long getLong(String key) {
         return getConfigWithProperty(key, true).getLong(key);
     }
@@ -200,11 +205,7 @@ public abstract class DelegatingConfig implements Config {
 
     @Override
     public String interpolate(String key) {
-        // TODO: This is probably the wrong way to deal with this
-        if (parent != null) {
-            parent.interpolate(key);
-        }
-        return key;
+        return interpolator.resolve(key);
     }
 
     @Override

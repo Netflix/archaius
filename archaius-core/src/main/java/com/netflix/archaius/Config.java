@@ -19,6 +19,7 @@ public interface Config {
      * @return  Arbitrary name assigned to this configuration
      */
     String getName();
+    String getRawString(String key);
     
     Long getLong(String key);
     Long getLong(String key, Long defaultValue);

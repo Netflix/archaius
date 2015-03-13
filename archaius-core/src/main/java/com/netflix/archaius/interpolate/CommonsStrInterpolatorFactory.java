@@ -33,7 +33,7 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
 
         @Override
         public String lookup(String key) {
-            return config.getString(key, key);
+            return config.getRawString(key);
         }
     }
 }
