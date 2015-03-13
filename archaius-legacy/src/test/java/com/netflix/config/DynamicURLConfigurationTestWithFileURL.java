@@ -46,7 +46,7 @@ public class DynamicURLConfigurationTestWithFileURL {
     @Test
     public void testFileURLWithPropertiesUpdatedDynamically() throws IOException, InterruptedException {
 
-        File file = new File("src/test/resources/test.properties");
+        File file = File.createTempFile("DynamicURLConfigurationTestWithFileURL", "testFileURLWithPropertiesUpdatedDynamically");
         populateFile(file, "test.host=12312,123213", "test.host1=13212");
 
         AbstractConfiguration.setDefaultListDelimiter(',');
