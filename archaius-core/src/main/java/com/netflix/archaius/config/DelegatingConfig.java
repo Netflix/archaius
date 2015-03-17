@@ -25,7 +25,8 @@ public abstract class DelegatingConfig implements Config {
     
     @Override
     public String getRawString(String key) {
-        return getConfigWithProperty(key, false).getRawString(key);
+        Config config = getConfigWithProperty(key, false);
+        return config != null ? config.getRawString(key) : null;
     }
     
     @Override

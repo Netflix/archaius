@@ -51,12 +51,12 @@ public class PollingDynamicConfigTest {
         Map<String, String> result;
         
         prop1.setProperty("a", "a_value");
-        result = reader.call();
+        result = reader.call().getToAdd();
         Assert.assertFalse(result.isEmpty());
         Assert.assertEquals("a_value", result.get("a"));
         
         prop1.setProperty("a", "b_value");
-        result = reader.call();
+        result = reader.call().getToAdd();
         Assert.assertFalse(result.isEmpty());
         Assert.assertEquals("b_value", result.get("a"));
     }
@@ -74,7 +74,7 @@ public class PollingDynamicConfigTest {
         prop1.setProperty("a", "A");
         prop2.setProperty("b", "B");
         
-        Map<String, String> result = reader.call();
+        Map<String, String> result = reader.call().getToAdd();
 
         Assert.assertEquals(2, result.size());
         Assert.assertEquals("A", result.get("a"));

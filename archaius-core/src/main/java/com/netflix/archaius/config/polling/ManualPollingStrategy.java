@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.config.polling;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,7 +41,7 @@ public class ManualPollingStrategy implements PollingStrategy {
     }
     
     @Override
-    public Future<?> execute(final Callable<Boolean> run) {
+    public Future<?> execute(final Runnable run) {
         return executor.submit(new Runnable() {
             @Override
             public void run() {
@@ -50,7 +49,7 @@ public class ManualPollingStrategy implements PollingStrategy {
                 try {
                     while (null != (request = queue.take())) {
                         try {
-                            run.call();
+                            run.run();
                         } catch (Exception e) {
                             request.error = e;
                         } finally {

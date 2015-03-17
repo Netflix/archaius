@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.config.polling;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,10 +45,10 @@ public class FixedPollingStrategy implements PollingStrategy {
     }
     
     @Override
-    public Future<?> execute(final Callable<Boolean> callback) {
+    public Future<?> execute(final Runnable callback) {
         while (syncInit) {
             try {
-                callback.call();
+                callback.run();
                 break;
             } 
             catch (Exception e) {
@@ -66,7 +65,7 @@ public class FixedPollingStrategy implements PollingStrategy {
             @Override
             public void run() {
                 try {
-                    callback.call();
+                    callback.run();
                 } catch (Exception e) {
                     LOG.warn("Failed to load properties", e);
                 }

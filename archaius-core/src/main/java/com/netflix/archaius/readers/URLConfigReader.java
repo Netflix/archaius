@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +28,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-public class URLConfigReader implements Callable<Map<String, String>> {
+import com.netflix.archaius.config.polling.PollingResponse;
+
+public class URLConfigReader implements Callable<PollingResponse> {
     private final URL[] configUrls;
 
     /**
@@ -64,8 +67,8 @@ public class URLConfigReader implements Callable<Map<String, String>> {
     }
     
     @Override
-    public Map<String, String> call() throws IOException {
-        Map<String, String> map = new HashMap<String, String>();
+    public PollingResponse call() throws IOException {
+        final Map<String, String> map = new HashMap<String, String>();
         for (URL url: configUrls) {
             Properties props = new Properties();
             InputStream fin = url.openStream();
@@ -75,11 +78,27 @@ public class URLConfigReader implements Callable<Map<String, String>> {
             finally {
                 fin.close();
             }
+            
             for (Entry<Object, Object> entry: props.entrySet()) {
                 map.put((String) entry.getKey(), entry.getValue().toString());
             }
         }
-        return map;
+        return new PollingResponse() {
+            @Override
+            public Map<String, String> getToAdd() {
+                return map;
+            }
+
+            @Override
+            public Collection<String> getToRemove() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public boolean hasData() {
+                return true;
+            }
+        };
     }
 
     public List<URL> getConfigUrls() {
