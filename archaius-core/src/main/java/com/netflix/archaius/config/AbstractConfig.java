@@ -87,7 +87,7 @@ public abstract class AbstractConfig implements Config {
     public Long getLong(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return Long.parseLong(value);
         }
@@ -113,7 +113,7 @@ public abstract class AbstractConfig implements Config {
     public String getString(String key) {
         Object value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         return value.toString();
     }
 
@@ -121,7 +121,7 @@ public abstract class AbstractConfig implements Config {
     public String getString(String key, String defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         return value;
     }
 
@@ -129,7 +129,7 @@ public abstract class AbstractConfig implements Config {
     public Double getDouble(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return Double.parseDouble(value);
         }
@@ -142,7 +142,7 @@ public abstract class AbstractConfig implements Config {
     public Double getDouble(String key, Double defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {   
             return Double.parseDouble(value);
         }
@@ -155,7 +155,7 @@ public abstract class AbstractConfig implements Config {
     public Integer getInteger(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
 
         try {   
             return Integer.parseInt(value);
@@ -169,7 +169,7 @@ public abstract class AbstractConfig implements Config {
     public Integer getInteger(String key, Integer defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         
         try {
             return Integer.parseInt(value);
@@ -183,7 +183,7 @@ public abstract class AbstractConfig implements Config {
     public Boolean getBoolean(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         
         if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
             return Boolean.TRUE;
@@ -198,7 +198,7 @@ public abstract class AbstractConfig implements Config {
     public Boolean getBoolean(String key, Boolean defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
             return Boolean.TRUE;
         } 
@@ -212,7 +212,7 @@ public abstract class AbstractConfig implements Config {
     public Short getShort(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         
         try {
             return Short.parseShort(value);
@@ -226,7 +226,7 @@ public abstract class AbstractConfig implements Config {
     public Short getShort(String key, Short defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {
             return Short.parseShort(value);
         }
@@ -239,7 +239,7 @@ public abstract class AbstractConfig implements Config {
     public BigInteger getBigInteger(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return new BigInteger(value);
         }
@@ -252,7 +252,7 @@ public abstract class AbstractConfig implements Config {
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {
             return new BigInteger(value);
         }
@@ -265,7 +265,7 @@ public abstract class AbstractConfig implements Config {
     public BigDecimal getBigDecimal(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return new BigDecimal(value);
         }
@@ -278,7 +278,7 @@ public abstract class AbstractConfig implements Config {
     public BigDecimal getBigDecimal(String key, BigDecimal defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {
             return new BigDecimal(value);
         }
@@ -291,7 +291,7 @@ public abstract class AbstractConfig implements Config {
     public Float getFloat(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return Float.parseFloat(value);
         }
@@ -304,7 +304,7 @@ public abstract class AbstractConfig implements Config {
     public Float getFloat(String key, Float defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {
             return Float.parseFloat(value);
         }
@@ -317,7 +317,7 @@ public abstract class AbstractConfig implements Config {
     public Byte getByte(String key) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound();
+            return notFound(key);
         try {
             return Byte.parseByte(value);
         }
@@ -330,7 +330,7 @@ public abstract class AbstractConfig implements Config {
     public Byte getByte(String key, Byte defaultValue) {
         String value = interpolate(key);
         if (value == null) 
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         try {
             return Byte.parseByte(value);
         }
@@ -343,7 +343,7 @@ public abstract class AbstractConfig implements Config {
     public List getList(String key) {
         String value = interpolate(key);
         if (value == null) {
-            return notFound();
+            return notFound(key);
         }
         String[] parts = value.split(",");
         return Arrays.asList(parts);
@@ -353,7 +353,7 @@ public abstract class AbstractConfig implements Config {
     public List getList(String key, List defaultValue) {
         String value = interpolate(key);
         if (value == null) {
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         }
         String[] parts = value.split(",");
         return Arrays.asList(parts);
@@ -368,7 +368,7 @@ public abstract class AbstractConfig implements Config {
     public <T> T get(Class<T> type, String key, T defaultValue) {
         String value = interpolate(key);
         if (value == null) {
-            return notFound(defaultValue);
+            return notFound(key, defaultValue);
         }
         return decoder.decode(type, value);
     }
@@ -392,12 +392,12 @@ public abstract class AbstractConfig implements Config {
      * @param defaultValue
      * @return
      */
-    private <T> T notFound(T defaultValue) {
+    private <T> T notFound(String key, T defaultValue) {
         return defaultValue;
     }
     
-    private <T> T notFound() {
-        throw new NoSuchElementException();
+    private <T> T notFound(String key) {
+        throw new NoSuchElementException("'" + key + "' not found in configuration " + getName());
     }
     
     private <T> T parseError(String key, String value, Exception e) {

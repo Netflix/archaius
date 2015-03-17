@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
@@ -24,5 +23,5 @@ import java.util.concurrent.Future;
  *
  */
 public interface PollingStrategy {
-    public Future<?> execute(Callable<Boolean> run);
+    public Future<?> execute(Runnable run);
 }

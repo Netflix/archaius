@@ -40,7 +40,7 @@ public class PropertiesConfigReader implements ConfigReader {
     @Override
     public Config load(ClassLoader loader, String name, URL url) throws ConfigException {
         try {
-            return new MapConfig(name, new URLConfigReader(url).call());
+            return new MapConfig(name, new URLConfigReader(url).call().getToAdd());
         } catch (IOException e) {
             throw new ConfigException("Unable to load URL " + url.toString(), e);
         }

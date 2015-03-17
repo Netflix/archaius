@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.config;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.netflix.archaius.config.polling.PollingResponse;
 
 /**
  * Special DynamicConfig that reads an entire snapshot of the configuration
@@ -38,22 +39,16 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
     
     private volatile Map<String, String> current = new HashMap<String, String>();
     private final AtomicBoolean busy = new AtomicBoolean();
-    private final Callable<Map<String, String>> reader;
+    private final Callable<PollingResponse> reader;
     
-    public PollingDynamicConfig(String name, Callable<Map<String, String>> reader, PollingStrategy strategy) {
+    public PollingDynamicConfig(String name, Callable<PollingResponse> reader, PollingStrategy strategy) {
         super(name);
         
         this.reader = reader;
-        strategy.execute(new Callable<Boolean>() {
+        strategy.execute(new Runnable() {
             @Override
-            public Boolean call() throws Exception {
-                try {
-                    update();
-                    return true;
-                }
-                catch (Exception e) {
-                    return false;
-                }
+            public void run() {
+                update();
             }
         });
     }
@@ -73,13 +68,15 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
         return current.get(key);
     }
 
-    private void update() throws IOException {
+    private void update() {
         // OK to ignore calls to update() if already busy updating 
         if (busy.compareAndSet(false, true)) {
             try {
-                Map<String, String> newConfig = reader.call();
-                current = newConfig;
-                notifyOnUpdate();
+                PollingResponse response = reader.call();
+                if (response.hasData()) {
+                    current = response.getToAdd();
+                    notifyOnUpdate();
+                }
             }
             catch (Exception e) {
                 try {

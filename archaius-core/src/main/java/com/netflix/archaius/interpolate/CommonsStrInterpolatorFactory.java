@@ -42,8 +42,7 @@ public class CommonsStrInterpolatorFactory implements StrInterpolatorFactory {
         
         @Override
         public String resolve(String key) {
-            String obj = sub.replace(key);
-            return (obj == null) ? key : obj;
+            return sub.replace(key);
         }
 
         @Override
