@@ -1,19 +1,18 @@
 package com.netflix.archaius.persisted2;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
-
 public class FirstScopePropertyValueResolverTest {
     private final ScopePriorityPropertyValueResolver resolver = new ScopePriorityPropertyValueResolver();
     
     @Test
     public void testSingle() {
-        List<ScopedValue> variations = Lists.newArrayList(
+        List<ScopedValue> variations = Arrays.asList(
             create("1", "s1", "a")
         );
         
@@ -22,7 +21,7 @@ public class FirstScopePropertyValueResolverTest {
     
     @Test
     public void testIdentical() {
-        List<ScopedValue> variations = Lists.newArrayList(
+        List<ScopedValue> variations = Arrays.asList(
             create("1", "s1", "a"),
             create("2", "s1", "a")
         );
@@ -32,7 +31,7 @@ public class FirstScopePropertyValueResolverTest {
     
     @Test
     public void testFirst() {
-        List<ScopedValue> variations = Lists.newArrayList(
+        List<ScopedValue> variations = Arrays.asList(
             create("1", "s1", "a"),
             create("2", "s1", "")
         );
@@ -42,7 +41,7 @@ public class FirstScopePropertyValueResolverTest {
     
     @Test
     public void testSecond() {
-        List<ScopedValue> variations = Lists.newArrayList(
+        List<ScopedValue> variations = Arrays.asList(
             create("1", "s1", ""),
             create("2", "s1", "a")
         );
@@ -52,7 +51,7 @@ public class FirstScopePropertyValueResolverTest {
     
     @Test
     public void test2Scopes() {
-        List<ScopedValue> variations = Lists.newArrayList(
+        List<ScopedValue> variations = Arrays.asList(
             create("1", "s1", "", "s2", ""),
             create("2", "s1", "", "s2", "a")
         );
