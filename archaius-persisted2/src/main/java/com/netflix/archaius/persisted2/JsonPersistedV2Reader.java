@@ -2,6 +2,7 @@ package com.netflix.archaius.persisted2;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import com.netflix.archaius.config.polling.PollingResponse;
 
 /**
@@ -44,7 +44,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
 public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private static final Logger LOG = LoggerFactory.getLogger(JsonPersistedV2Reader.class);
     
-    private final static List<String> DEFAULT_ORDERED_SCOPES = Lists.newArrayList("serverId", "asg", "ami", "cluster", "appId", "env", "countries", "stack", "zone", "region");
+    private final static List<String> DEFAULT_ORDERED_SCOPES = Arrays.asList("serverId", "asg", "ami", "cluster", "appId", "env", "countries", "stack", "zone", "region");
     private final static String DEFAULT_KEY_FIELD   = "key";
     private final static String DEFAULT_VALUE_FIELD = "value";
     private final static String DEFAULT_PATH        = "persistedproperties/properties/property";
