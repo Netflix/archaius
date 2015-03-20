@@ -19,11 +19,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.netflix.archaius.config.AbstractConfig;
+import com.netflix.archaius.config.InterpolatingConfig;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
-public class TypesafeConfig extends AbstractConfig {
+public class TypesafeConfig extends InterpolatingConfig {
 
     private final Config config;
     
@@ -33,7 +33,7 @@ public class TypesafeConfig extends AbstractConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return config.hasPath(key);
     }
 

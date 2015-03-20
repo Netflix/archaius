@@ -34,7 +34,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
  * @author elandau
  *
  */
-public class PollingDynamicConfig extends AbstractDynamicConfig {
+public class PollingDynamicConfig extends InterpolatingConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
     private volatile Map<String, String> current = new HashMap<String, String>();
@@ -54,7 +54,7 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return current.containsKey(key);
     }
 
@@ -75,12 +75,12 @@ public class PollingDynamicConfig extends AbstractDynamicConfig {
                 PollingResponse response = reader.call();
                 if (response.hasData()) {
                     current = response.getToAdd();
-                    notifyOnUpdate();
+                    notifyConfigUpdated();
                 }
             }
             catch (Exception e) {
                 try {
-                    notifyOnError(e);
+                    notifyError(e);
                 }
                 catch (Exception e2) {
                     LOG.warn("Failed to notify error observer for config " + getName());

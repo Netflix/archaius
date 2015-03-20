@@ -19,7 +19,7 @@ import java.util.Iterator;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
-import com.netflix.archaius.config.AbstractConfig;
+import com.netflix.archaius.config.InterpolatingConfig;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
@@ -28,7 +28,7 @@ import com.netflix.archaius.config.AbstractConfig;
  * @author elandau
  *
  */
-public class CommonsToConfig extends AbstractConfig {
+public class CommonsToConfig extends InterpolatingConfig {
 
     private final AbstractConfiguration config;
     
@@ -38,7 +38,7 @@ public class CommonsToConfig extends AbstractConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return config.containsKey(key);
     }
 

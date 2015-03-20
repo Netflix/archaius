@@ -21,7 +21,6 @@ import org.junit.Test;
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.Property;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.property.MethodInvoker;
 
 public class PropertyTest {
     public static class MyService {
@@ -29,8 +28,8 @@ public class PropertyTest {
         private Property<Integer> value2;
         
         public MyService(DefaultAppConfig config) {
-            value  = config.connectProperty("foo").asInteger().addObserver(new MethodInvoker<Integer>(this, "setValue"));
-            value2 = config.connectProperty("foo").asInteger();
+            value  = config.getProperty("foo").asInteger(1).addListener(new MethodInvoker<Integer>(this, "setValue"));
+            value2 = config.getProperty("foo").asInteger(2);
         }
         
         public void setValue(Integer value) {
@@ -42,36 +41,37 @@ public class PropertyTest {
     public void test() throws ConfigException {
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
         
-        System.out.println("Configs: " + config.getChildConfigNames());
+        System.out.println("Configs: " + config.getConfigNames());
         
         MyService service = new MyService(config);
 
-        Assert.assertEquals(1, (int)service.value.get(1));
-        Assert.assertEquals(2, (int)service.value2.get(2));
+        Assert.assertEquals(1, (int)service.value.get());
+        Assert.assertEquals(2, (int)service.value2.get());
         
         config.setProperty("foo", "123");
         
-        Assert.assertEquals(123, (int)service.value.get(1));
-        Assert.assertEquals(123, (int)service.value2.get(2));
+        Assert.assertEquals(123, (int)service.value.get());
+        Assert.assertEquals(123, (int)service.value2.get());
     }
     
     @Test
     public void testPropertyIsCached() throws ConfigException {
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
         
-        System.out.println("Configs: " + config.getChildConfigNames());
+        System.out.println("Configs: " + config.getConfigNames());
         
-        Property<Integer> intProp1 = config.connectProperty("foo").asInteger();
-        Property<Integer> intProp2 = config.connectProperty("foo").asInteger();
-        Property<String>  strProp  = config.connectProperty("foo").asString();
+        Property<Integer> intProp1 = config.getProperty("foo").asInteger(1);
+        Property<Integer> intProp2 = config.getProperty("foo").asInteger(2);
+        Property<String>  strProp  = config.getProperty("foo").asString("3");
 
-        Assert.assertSame(intProp1, intProp2);
+        Assert.assertEquals(1, (int)intProp1.get());
+        Assert.assertEquals(2, (int)intProp2.get());
         
         config.setProperty("foo", "123");
         
-        Assert.assertEquals("123", strProp.get(null));
-        Assert.assertEquals((Integer)123, intProp1.get(null));
-        Assert.assertEquals((Integer)123, intProp2.get(null));
+        Assert.assertEquals("123", strProp.get());
+        Assert.assertEquals((Integer)123, intProp1.get());
+        Assert.assertEquals((Integer)123, intProp2.get());
     }
 
 }

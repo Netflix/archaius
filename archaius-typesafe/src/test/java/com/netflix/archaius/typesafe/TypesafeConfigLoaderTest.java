@@ -37,12 +37,12 @@ public class TypesafeConfigLoaderTest {
                 .withStrInterpolator(config.getStrInterpolator())
                 .build();
         
-        config.addConfigLast(MapConfig.builder("test")
+        config.addConfig(MapConfig.builder("test")
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .build());
         
-        config.addConfigLast(loader.newLoader()
+        config.addConfig(loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
         

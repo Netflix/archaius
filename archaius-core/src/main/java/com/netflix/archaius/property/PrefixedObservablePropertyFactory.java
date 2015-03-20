@@ -31,7 +31,7 @@ public class PrefixedObservablePropertyFactory implements PropertyFactory {
     }
     
     @Override
-    public PropertyContainer connectProperty(String propName) {
-        return delegate.connectProperty(prefix + propName);
+    public PropertyContainer getProperty(String propName) {
+        return delegate.getProperty(prefix + propName);
     }
 }

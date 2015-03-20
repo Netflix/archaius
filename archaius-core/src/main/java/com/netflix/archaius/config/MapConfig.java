@@ -25,7 +25,7 @@ import java.util.Properties;
 /**
  * Config backed by an immutable map.
  */
-public class MapConfig extends AbstractConfig {
+public class MapConfig extends InterpolatingConfig {
 
     /**
      * The builder only provides convenience for fluent style adding of properties
@@ -95,7 +95,7 @@ public class MapConfig extends AbstractConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return props.containsKey(key);
     }
 

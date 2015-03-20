@@ -206,7 +206,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                 else {
                     CascadingCompositeConfig cConfig = new CascadingCompositeConfig(name);
                     try {
-                        cConfig.addConfigsLast(configs);
+                        cConfig.addConfigs(configs);
                     } catch (ConfigException e) {
                         throw new RuntimeException(e);
                     }

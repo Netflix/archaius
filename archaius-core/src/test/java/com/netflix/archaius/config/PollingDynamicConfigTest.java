@@ -24,8 +24,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.netflix.archaius.Config;
-import com.netflix.archaius.DynamicConfigObserver;
-import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.junit.TestHttpServer;
 import com.netflix.archaius.property.PropertiesServerHandler;
@@ -150,13 +148,9 @@ public class PollingDynamicConfigTest {
         final AtomicInteger errorCount = new AtomicInteger();
         final AtomicInteger updateCount = new AtomicInteger();
         
-        config.addListener(new DynamicConfigObserver() {
+        config.addListener(new DefaultConfigListener() {
             @Override
-            public void onUpdate(String propName, Config config) {
-            }
-
-            @Override
-            public void onUpdate(Config config) {
+            public void onConfigUpdated(Config config) {
                 updateCount.incrementAndGet();
             }
 

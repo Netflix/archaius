@@ -18,8 +18,10 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.Map;
 
-public class EnvironmentConfig extends AbstractConfig {
+public class EnvironmentConfig extends InterpolatingConfig {
 
+    public static final EnvironmentConfig INSTANCE = new EnvironmentConfig();
+    
     private static final String DEFAULT_NAME = "ENVIRONMENT";
     
     private final Map<String, String> properties;
@@ -39,7 +41,7 @@ public class EnvironmentConfig extends AbstractConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return properties.containsKey(key);
     }
 

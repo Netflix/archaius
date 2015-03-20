@@ -55,8 +55,8 @@ public class PrefixedViewConfig extends DelegatingConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
-        return config.containsProperty(prefix + key);
+    public boolean containsKey(String key) {
+        return config.containsKey(prefix + key);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class PrefixedViewConfig extends DelegatingConfig {
 
     @Override
     protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
-        if (config.containsProperty(prefix + key)) {
+        if (config.containsKey(prefix + key)) {
             return config;
         }
         if (failOnNotFound)

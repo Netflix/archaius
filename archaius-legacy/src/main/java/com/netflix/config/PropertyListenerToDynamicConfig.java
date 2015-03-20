@@ -21,9 +21,9 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
 
-import com.netflix.archaius.config.AbstractDynamicConfig;
+import com.netflix.archaius.config.InterpolatingConfig;
 
-public class PropertyListenerToDynamicConfig extends AbstractDynamicConfig {
+public class PropertyListenerToDynamicConfig extends InterpolatingConfig {
 
     private DynamicConfiguration config;
 
@@ -38,10 +38,10 @@ public class PropertyListenerToDynamicConfig extends AbstractDynamicConfig {
                     case AbstractConfiguration.EVENT_ADD_PROPERTY:
                     case AbstractConfiguration.EVENT_SET_PROPERTY:
                     case AbstractConfiguration.EVENT_CLEAR_PROPERTY:
-                        notifyOnUpdate(event.getPropertyName());
+                        notifyConfigUpdated(event.getPropertyName());
                         break;
                     case AbstractConfiguration.EVENT_CLEAR:
-                        notifyOnUpdate();
+                        notifyConfigUpdated();
                         break;
                     }
                 }
@@ -50,7 +50,7 @@ public class PropertyListenerToDynamicConfig extends AbstractDynamicConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return config.containsKey(key);
     }
 
