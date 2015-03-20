@@ -302,7 +302,11 @@ public abstract class InterpolatingConfig extends AbstractConfig {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        return get(type, key, null);
+        String value = interpolate(key);
+        if (value == null) {
+            return notFound(key);
+        }
+        return getDecoder().decode(type, value);
     }
 
     @Override

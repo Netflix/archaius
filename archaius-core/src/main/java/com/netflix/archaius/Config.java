@@ -130,27 +130,23 @@ public interface Config {
     boolean isEmpty();
     
     /**
-     * Return an interator to all property names owned by this conifg
-     * @return
+     * @return Return an iterator to all property names owned by this config
      */
     Iterator<String> getKeys();
     
     /**
-     * Return an interator to all prefixed property names owned by this conifg
-     * @return
+     * @return Return an interator to all prefixed property names owned by this config
      */
     Iterator<String> getKeys(String prefix);
     
     /**
-     * Return the interpolated String value for a property
+     * @return Return the interpolated String value for a property
      */
     String interpolate(String key);
     
     /**
-     * Return a subset of the configuration prefixed by a key.
-     * 
-     * @param key
-     * @return
+     * @param prefix
+     * @return Return a subset of the configuration prefixed by a key.
      */
     Config getPrefixedView(String prefix);
     

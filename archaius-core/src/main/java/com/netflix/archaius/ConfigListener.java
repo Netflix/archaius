@@ -25,30 +25,31 @@ package com.netflix.archaius;
 public interface ConfigListener {
     /**
      * Notification that a configuration was added.  This will normally only be called
-     * for CompositeConfig derived implementation
+     * for CompositeConfig derived implementations.
      * @param config
      */
     public void onConfigAdded(Config config);
     
     /**
      * Notification that a configuration was removed.  This will normally only be called
-     * for CompositeConfig derived implementation
+     * for CompositeConfig derived implementations.
      * @param config
      */
     public void onConfigRemoved(Config config);
     
     /**
-     * Notify the parent that the value of a key has changed.  The parent is expected
-     * to refresh its complete state.
+     * Notify the listener that the value of a property has changed.  This is normally in 
+     * response to an incremental update to a dynamic configuration.
      * 
      * @param propName
      */
     public void onConfigUpdated(String propName, Config config);
 
     /**
-     * Notification that the entire DynamicConfig was updated.  Respond to this by 
-     * invalidating the entire property registration cache as it is more efficient
-     * than trying to determine the delta.
+     * Notify the listener that the entire configuration of a child has changed.  This is 
+     * normally in response to a snapshot update to a dynamic configuration. A listener will
+     * likely respond to this by invalidating the entire property registration cache as it 
+     * is more efficient than trying to determine the delta.
      * @param config
      */
     public void onConfigUpdated(Config config);
