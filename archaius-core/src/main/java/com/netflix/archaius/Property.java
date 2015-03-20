@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
  *     private final Property<String> prop;
  *     
  *     MyService(PropertyFactroy config) {
- *        prop = config.connectProperty("foo.prop").asString("defaultValue");
+ *        prop = config.connectProperty("foo.prop").asString();
  *     }
  *     
  *     void doSomething() {
  *         // Will print out the most up to date value for the property
- *         System.out.println(prop.get());
+ *         System.out.println(prop.get("defaultValue"));
  *     }
  * }
  * }
