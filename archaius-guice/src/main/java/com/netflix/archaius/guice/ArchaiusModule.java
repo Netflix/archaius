@@ -21,6 +21,7 @@ import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
@@ -89,7 +90,7 @@ public class ArchaiusModule extends AbstractModule {
                         if (source != null) {
                             for (String value : source.value()) {
                                 try {
-                                    appConfig.addConfigFirst(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
+                                    ((CompositeConfig)appConfig).addConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
                                 } catch (ConfigException e) {
                                     throw new ProvisionException("Unable to load configuration for " + value + " at source " + injectee.getClass(), e);
                                 }

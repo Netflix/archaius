@@ -18,7 +18,9 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.Properties;
 
-public class SystemConfig extends AbstractConfig {
+public class SystemConfig extends InterpolatingConfig {
+
+    public static final SystemConfig INSTANCE = new SystemConfig();
 
     private static final String DEFAULT_NAME = "SYSTEM";
     
@@ -39,7 +41,7 @@ public class SystemConfig extends AbstractConfig {
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return props.containsKey(key);
     }
 

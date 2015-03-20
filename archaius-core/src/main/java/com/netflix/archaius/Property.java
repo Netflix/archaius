@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * class MyService {
  *     private final Property<String> prop;
  *     
- *     MyService(PropertyFactroy config) {
+ *     MyService(PropertyFactory config) {
  *        prop = config.connectProperty("foo.prop").asString("defaultValue");
  *     }
  *     
@@ -48,7 +48,7 @@ public interface Property<T> {
     /**
      * @return  Most recent value for the property
      */
-    T get(T defaultValue);
+    T get();
     
     /**
      * Get the last time the property was updated
@@ -62,7 +62,9 @@ public interface Property<T> {
      */
     void unsubscribe();
 
-    Property<T> addObserver(PropertyObserver<T> observer);
+    Property<T> addListener(PropertyListener<T> listener);
 
-    void removeObserver(PropertyObserver<T> observer);
+    void removeListener(PropertyListener<T> listener);
+    
+    
 }

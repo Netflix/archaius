@@ -25,7 +25,7 @@ import com.netflix.archaius.config.SimpleDynamicConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.loaders.PropertiesConfigReader;
-import com.netflix.archaius.property.DefaultPropertyObserver;
+import com.netflix.archaius.property.DefaultPropertyListener;
 
 public class ConfigManagerTest {
     @Test
@@ -36,18 +36,16 @@ public class ConfigManagerTest {
                 .withApplicationConfigName("application")
                 .build();
         
-        config.addConfigLast(dyn);
-        config.addConfigLast(MapConfig.builder("test")
+        config.addConfig(dyn);
+        config.addConfig(MapConfig.builder("test")
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .put("c",      123)
                         .build());
-        config.addConfigLast(new EnvironmentConfig());
-        config.addConfigLast(new SystemConfig());
         
-        Property<String> prop = config.connectProperty("abc").asString();
+        Property<String> prop = config.getProperty("abc").asString("defaultValue");
         
-        prop.addObserver(new DefaultPropertyObserver<String>() {
+        prop.addListener(new DefaultPropertyListener<String>() {
             @Override
             public void onChange(String next) {
                 System.out.println("Configuration changed : " + next);
@@ -68,7 +66,7 @@ public class ConfigManagerTest {
                 .withConfigReader(new PropertiesConfigReader())
                 .build();
                 
-        config.addConfigLast(MapConfig.builder("test")
+        config.addConfig(MapConfig.builder("test")
                     .put("env",    "prod")
                     .put("region", "us-east")
                     .build());

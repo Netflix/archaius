@@ -114,6 +114,7 @@ public class DefaultConfigMapper implements ConfigMapper {
                 Class<?> type = field.getType();
                 Object value = null;
                 if (type.isInterface()) {
+                    // TODO: Do Class.newInstance() if objName is a classname
                     String objName = config.getString(prefix + name, null);
                     if (objName != null) {
                         value = ioc.getInstance(objName, type);
@@ -128,7 +129,6 @@ public class DefaultConfigMapper implements ConfigMapper {
                         field.setAccessible(true);
                         field.set(injectee, value);
                     } catch (Exception e) {
-                        e.printStackTrace();
                         throw new MappingException("Unable to inject field " + injectee.getClass() + "." + name + " with value " + value, e);
                     }
                 }
@@ -192,6 +192,7 @@ public class DefaultConfigMapper implements ConfigMapper {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T newProxy(Class<T> type, PropertyFactory factory) {
         Configuration annot = type.getAnnotation(Configuration.class);
@@ -205,7 +206,7 @@ public class DefaultConfigMapper implements ConfigMapper {
         // Iterate through all declared methods of the class looking for setter methods.
         // Each setter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
-        final Map<Method, MethodInvoker<?>> properties = new HashMap<Method, MethodInvoker<?>>();
+        final Map<Method, Property<?>> properties = new HashMap<Method, Property<?>>();
         for (Method m : type.getDeclaredMethods()) {
             if (!m.getName().startsWith("get")) {
                 continue;
@@ -229,33 +230,15 @@ public class DefaultConfigMapper implements ConfigMapper {
             // TODO: default value
             // TODO: sub proxy for non-primitive types
             String propName = prefix + Character.toLowerCase(m.getName().charAt(3)) + m.getName().substring(4);
-            
-            Property<?> prop = factory.connectProperty(propName).asType(m.getReturnType());
-            
-            properties.put(m, new MethodInvoker(prop, defaultValue));
+            properties.put(m, factory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue));
         }
         
         final InvocationHandler handler = new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                MethodInvoker<?> prop = properties.get(method);
-                return prop.invoke();
+                return properties.get(method).get();
             }
         };
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
-    }
-    
-    static class MethodInvoker<T> {
-        final T defaultValue;
-        final Property<T> property;
-        
-        public MethodInvoker(Property<T> property, T defaultValue) {
-            this.property = property;
-            this.defaultValue = defaultValue;
-        }
-        
-        T invoke() {
-            return property.get(defaultValue);
-        }
     }
 }

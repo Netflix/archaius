@@ -23,9 +23,9 @@ import org.junit.Test;
 
 public class AbstractConfigTest {
 
-    private final AbstractConfig config = new AbstractConfig("test") {
+    private final AbstractConfig config = new InterpolatingConfig("test") {
         @Override
-        public boolean containsProperty(String key) {
+        public boolean containsKey(String key) {
             return "foo".equals(key);
         }
 

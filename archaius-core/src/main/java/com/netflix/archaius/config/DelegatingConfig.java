@@ -7,18 +7,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.netflix.archaius.Config;
-import com.netflix.archaius.StrInterpolator;
-import com.netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 
-public abstract class DelegatingConfig implements Config {
+public abstract class DelegatingConfig extends AbstractConfig {
     
-    private final String name;
-    private Config parent;
-    private StrInterpolator interpolator;
-
     public DelegatingConfig(String name) {
-        this.name = name;
-        this.interpolator = CommonsStrInterpolatorFactory.INSTANCE.create(this);
+        super(name);
     }
     
     protected abstract Config getConfigWithProperty(String key, boolean failOnNotFound);
@@ -200,35 +193,7 @@ public abstract class DelegatingConfig implements Config {
     }
     
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String interpolate(String key) {
-        return interpolator.resolve(key);
-    }
-
-    @Override
-    public Config subset(String prefix) {
+    public Config getPrefixedView(String prefix) {
         return new PrefixedViewConfig(prefix, this);
-    }
-
-    @Override
-    public Config getParent() {
-        return parent;
-    }
-    
-    @Override
-    public void setParent(Config config) {
-        this.parent = config;
-    }
-
-    public void setStrInterpolator(StrInterpolator interpolator) {
-        this.interpolator = interpolator;
-    }
-    
-    public StrInterpolator getStrInterpolator() {
-        return this.interpolator;
     }
 }

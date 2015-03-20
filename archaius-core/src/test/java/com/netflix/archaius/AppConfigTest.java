@@ -44,14 +44,15 @@ public class AppConfigTest {
         
         Assert.assertFalse(config.getBoolean("libA.loaded", false));
         
-        config.addConfigLast(config.newLoader().load("libA"));
+        config.addConfig(config.newLoader().load("libA"));
         
         Assert.assertTrue(config.getBoolean("libA.loaded"));
         Assert.assertFalse(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
-        config.addConfigFirst(config.newLoader().load("libB"));
+        config.addConfig(config.newLoader().load("libB"));
         
+        System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));
         Assert.assertTrue(config.getBoolean("libB.loaded"));
         Assert.assertEquals("libB", config.getString("libA.overrideA"));

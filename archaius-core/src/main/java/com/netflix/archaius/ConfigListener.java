@@ -22,14 +22,28 @@ package com.netflix.archaius;
  * 
  * @author elandau
  */
-public interface DynamicConfigObserver {
+public interface ConfigListener {
+    /**
+     * Notification that a configuration was added.  This will normally only be called
+     * for CompositeConfig derived implementation
+     * @param config
+     */
+    public void onConfigAdded(Config config);
+    
+    /**
+     * Notification that a configuration was removed.  This will normally only be called
+     * for CompositeConfig derived implementation
+     * @param config
+     */
+    public void onConfigRemoved(Config config);
+    
     /**
      * Notify the parent that the value of a key has changed.  The parent is expected
      * to refresh its complete state.
      * 
      * @param propName
      */
-    public void onUpdate(String propName, Config config);
+    public void onConfigUpdated(String propName, Config config);
 
     /**
      * Notification that the entire DynamicConfig was updated.  Respond to this by 
@@ -37,7 +51,7 @@ public interface DynamicConfigObserver {
      * than trying to determine the delta.
      * @param config
      */
-    public void onUpdate(Config config);
+    public void onConfigUpdated(Config config);
     
     /**
      * Notify of an error in the configuration listener.  The error indicates that the

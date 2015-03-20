@@ -13,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius;
+package com.netflix.archaius.property;
 
-/**
- * Handler for property change notifications.  
- * 
- * @see {@link DefaultAppConfig} for usage example
- * 
- * @author elandau
- *
- * @param <T>
- */
-public interface PropertyObserver<T> {
-    /**
-     * Notification that the property value changed.  next=null indicates that the property
-     * has been deleted.
-     * 
-     * @param value The new value for the property.
-     */
-    public void onChange(T value);
+import com.netflix.archaius.PropertyListener;
+
+public class DefaultPropertyListener<T> implements PropertyListener<T> {
+    @Override
+    public void onChange(T value) {
+    }
     
-    /**
-     * Notification that a property update failed
-     * @param error
-     */
-    public void onError(Throwable error);
+    @Override
+    public void onParseError(Throwable error) {
+    }
 }

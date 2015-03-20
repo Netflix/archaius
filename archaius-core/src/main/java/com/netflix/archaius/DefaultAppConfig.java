@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.cascade.SimpleCascadeStrategy;
 import com.netflix.archaius.config.CascadingCompositeConfig;
+import com.netflix.archaius.config.DefaultConfigListener;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SimpleDynamicConfig;
 import com.netflix.archaius.config.SystemConfig;
@@ -31,7 +32,7 @@ import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolatorFactory;
 import com.netflix.archaius.loaders.PropertiesConfigReader;
 import com.netflix.archaius.property.DefaultPropertyContainer;
-import com.netflix.archaius.property.PropertyFactoryDynamicConfigObserver;
+import com.netflix.archaius.property.PropertyFactoryDynamicConfigListener;
 
 /**
  * Main AppConfig to be used as the top level entry point for application configuration.
@@ -39,21 +40,18 @@ import com.netflix.archaius.property.PropertyFactoryDynamicConfigObserver;
  * application configuration by extending composite configuration for a specific override
  * structure.  
  * 
- * <h1>Initialization</h1>
- * The {@link DefaultAppConfig} is constructed using a builder through which it can be customized.
- * 
- * <h1>Top level Config API</h1>
+ * <h1>Override structure</h1>
  * The {@link DefaultAppConfig} is a CompositeConfig and as such serves as the top level container 
  * for retrieving configurations.  Configurations follow a specific override structure,
  * 
  * RUNTIME      - Properties set via code have absolute priority
- * DYNAMIC      - Properties loaded from a remote override service.  DynamicConfig derived
+ * OVERRIDE     - Properties loaded from a remote override service.  DynamicConfig derived
  *                objects are added to this layer by calling {@link DefaultAppConfig#addConfigXXX()}
+ * SYSTEM       - System.getProperties()
+ * ENVIRONMENT  - System.getenv()
  * APPLICATION  - Properties loaded at startup from 'config.properties' and variants
  * LIBRARY      - Properties loaded by libraries or subsystems of the application.
  *                Calling {@link DefaultAppConfig#addConfigXXX()} loads Configs into this layer.
- * SYSTEM       - System.getProperties()
- * ENVIRONMENT  - System.getenv()
  * 
  * <h1>Dynamic configuration</h1>
  * 
@@ -81,15 +79,15 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     
     public static class Builder {
         private StrInterpolatorFactory    interpolator;
-        private final List<ConfigReader>  loaders              = new ArrayList<ConfigReader>();
-        private CascadeStrategy           defaultStrategy      = DEFAULT_CASCADE_STRATEGY;
-        private boolean                   failOnFirst          = true;
-        private boolean                   includeSystem        = true;
-        private boolean                   includeEnvironment   = true;
-        private boolean                   includeDynamicConfig = true;
-        private String                    configName           = DEFAULT_APP_CONFIG_NAME;
+        private final List<ConfigReader>  loaders                = new ArrayList<ConfigReader>();
+        private CascadeStrategy           defaultStrategy        = DEFAULT_CASCADE_STRATEGY;
+        private boolean                   failOnFirst            = true;
+        private boolean                   enableSystemLayer      = true;
+        private boolean                   enableEnvironmentLayer = true;
+        private boolean                   enableOverrideLayer    = true;
+        private String                    configName             = DEFAULT_APP_CONFIG_NAME;
         private Properties                props;
-        private Decoder                   decoder              = new DefaultDecoder();
+        private Decoder                   decoder;
 
         public Builder withStrInterpolator(StrInterpolatorFactory interpolator) {
             this.interpolator = interpolator;
@@ -99,24 +97,24 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         /**
          * Call to include or exclude SystemConfig.  Default is true.
          */
-        public Builder withSystemConfig(boolean flag) {
-            this.includeSystem = flag;
+        public Builder withSystemLayer(boolean flag) {
+            this.enableSystemLayer = flag;
             return this;
         }
         
         /**
          * Call to include or exclude EnvironmentConfig.  Default is true.
          */
-        public Builder withEnvironmentConfig(boolean flag) {
-            this.includeEnvironment = flag;
+        public Builder withEnvironmentLayer(boolean flag) {
+            this.enableEnvironmentLayer = flag;
             return this;
         }
         
         /**
          * Call to include or exclude DynamicConfig. Default is true.
          */
-        public Builder withDynamicConfig(boolean flag) {
-            this.includeDynamicConfig = flag;
+        public Builder withOverrideLayer(boolean flag) {
+            this.enableOverrideLayer = flag;
             return this;
         }
         
@@ -192,10 +190,10 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     }
     
     private final SimpleDynamicConfig          runtime;
-    private final CascadingCompositeConfig     dynamic;
+    private final CascadingCompositeConfig     override;
     private final CascadingCompositeConfig     library;
-    private final PropertyFactoryDynamicConfigObserver dynamicObserver;
     private final DefaultConfigLoader          loader;
+    private final PropertyFactoryDynamicConfigListener dynamicObserver;
     
     public DefaultAppConfig(Builder builder) {
         super(NAME);
@@ -204,28 +202,30 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             // The following are added first, before application configuration
             // to allow for replacements in the application configuration cascade
             // loading.
-            super.addConfigLast(runtime = new SimpleDynamicConfig(OVERRIDE_LAYER));
+            super.addConfig(runtime = new SimpleDynamicConfig(OVERRIDE_LAYER));
             runtime.setProperties(builder.props);
             
-            if (builder.includeDynamicConfig) {
-                super.addConfigLast(dynamic = new CascadingCompositeConfig(DYNAMIC_LAYER));
+            if (builder.enableOverrideLayer) {
+                super.addConfig(override = new CascadingCompositeConfig(DYNAMIC_LAYER));
             }
             else {
-                dynamic = null;
+                override = null;
             }
             
-            if (builder.includeSystem) {
-                super.addConfigLast(new SystemConfig());
+            if (builder.enableSystemLayer) {
+                super.addConfig(new SystemConfig());
             }
             
-            if (builder.includeEnvironment) {
-                super.addConfigLast(new EnvironmentConfig());
+            if (builder.enableEnvironmentLayer) {
+                super.addConfig(new EnvironmentConfig());
             }
 
             if (builder.decoder != null) {
                 setDecoder(builder.decoder);
             }
 
+            this.setStrInterpolator(builder.interpolator.create(this));
+            
             loader = DefaultConfigLoader.builder()
                     .withConfigReader(builder.loaders)
                     .withDefaultCascadingStrategy(builder.defaultStrategy)
@@ -233,26 +233,24 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
                     .withStrInterpolator(getStrInterpolator())
                     .build();
                 
-            super.addConfigLast(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
-            super.addConfigLast(library = new CascadingCompositeConfig(LIBRARY_LAYER));
+            super.addConfig(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
+            super.addConfig(library = new CascadingCompositeConfig(LIBRARY_LAYER));
             
-            this.setStrInterpolator(builder.interpolator.create(this));
-            
-            this.dynamicObserver = new PropertyFactoryDynamicConfigObserver(new PropertyFactory() {
+            this.dynamicObserver = new PropertyFactoryDynamicConfigListener(new PropertyFactory() {
                 @Override
-                public PropertyContainer connectProperty(String propName) {
+                public PropertyContainer getProperty(String propName) {
                     return new DefaultPropertyContainer(propName, DefaultAppConfig.this);
                 }
             });
             
-            library.addListener(new Listener() {
+            library.addListener(new DefaultConfigListener() {
                 @Override
                 public void onConfigAdded(Config child) {
                     dynamicObserver.invalidate();
-                }                
+                }
             });
-            if (dynamic != null) {
-                dynamic.addListener(new Listener() {
+            if (override != null) {
+                override.addListener(new DefaultConfigListener() {
                     @Override
                     public void onConfigAdded(Config child) {
                         dynamicObserver.invalidate();
@@ -265,28 +263,16 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         }
     }
     
-    public void addConfigFirst(Config child) throws ConfigException {
+    @Override
+    public void addLibraryConfig(Config child) throws ConfigException {
         LOG.info("Adding configuration : " + child.getName());
-        if (child instanceof DynamicConfig) {
-            DynamicConfig dynamicChild = (DynamicConfig)child;
-            dynamicChild.addListener(dynamicObserver);
-            this.dynamic.addConfigFirst(child);
-        } 
-        else {
-            this.library.addConfigFirst(child);
-        }
+        this.library.addConfig(child);
     }
     
-    public void addConfigLast(Config child) throws ConfigException {
+    @Override
+    public void addOverrideConfig(Config child) throws ConfigException {
         LOG.info("Adding configuration : " + child.getName());
-        if (child instanceof DynamicConfig) {
-            DynamicConfig dynamicChild = (DynamicConfig)child;
-            dynamicChild.addListener(dynamicObserver);
-            this.dynamic.addConfigLast(child);
-        }
-        else {
-            this.library.addConfigLast(child);
-        }
+        this.override.addConfig(child);
     }
     
     public Loader newLoader() {
@@ -294,7 +280,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     }
     
     @Override
-    public PropertyContainer connectProperty(String propName) {
+    public PropertyContainer getProperty(String propName) {
         return dynamicObserver.create(propName);
     }
 

@@ -5,7 +5,6 @@ import java.net.URL;
 import com.netflix.archaius.ConfigReader;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException.Missing;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 

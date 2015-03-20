@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class SimpleDynamicConfig extends AbstractDynamicConfig implements SettableConfig {
+public class SimpleDynamicConfig extends InterpolatingConfig implements SettableConfig {
     public SimpleDynamicConfig(String name) {
         super(name);
     }
@@ -31,17 +31,17 @@ public class SimpleDynamicConfig extends AbstractDynamicConfig implements Settab
     @Override
     public <T> void setProperty(String propName, T propValue) {
         props.put(propName, propValue.toString());
-        notifyOnUpdate(propName);
+        notifyConfigUpdated(propName);
     }
     
     @Override
     public void clearProperty(String propName) {
         props.remove(propName);
-        notifyOnUpdate(propName);
+        notifyConfigUpdated(propName);
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         return props.containsKey(key);
     }
 

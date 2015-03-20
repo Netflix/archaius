@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Core API for accessing a configuration.  The API is readonly.
+ * Core API for reading a configuration.  The API is read only.
  * 
  * @author elandau
  */
@@ -31,12 +31,44 @@ public interface Config {
     }
     
     /**
+     * Register a listener that will receive a call for each property that is added, removed
+     * or updated.  It is recommended that the callbacks be invoked only after a full refresh
+     * of the properties to ensure they are in a consistent state.
+     * 
+     * @param listener
+     */
+    void addListener(ConfigListener listener);
+
+    /**
+     * Remove a previously registered listener.
+     * @param listener
+     */
+    void removeListener(ConfigListener listener);
+
+    /**
      * @return  Arbitrary name assigned to this configuration
      */
     String getName();
+    
+    /**
+     * Return the raw, uninterpolated, string associated with a key.
+     * @param key
+     */
     String getRawString(String key);
     
+    /**
+     * Parse the property as a long.
+     * @param key
+     */
     Long getLong(String key);
+    
+    /**
+     * Parse the property as a long but return a default if no property defined or the
+     * property cannot be parsed successfully. 
+     * @param key
+     * @param defaultValue
+     * @return
+     */
     Long getLong(String key, Long defaultValue);
 
     String getString(String key);
@@ -66,18 +98,47 @@ public interface Config {
     Byte getByte(String key);
     Byte getByte(String key, Byte defaultValue);
     
+    /**
+     * Get the property as a list.  Depending on the underlying implementation the list
+     * may be derived from a comma delimited string or from an actual list structure.
+     * @param key
+     * @return
+     */
     List<?> getList(String key);
-    List<?> getList(String key, List<?> defaultValue);
     
+    List<?> getList(String key, List<?> defaultValue);
+
+    /**
+     * Get the property from the Decoder.  All basic data types as well any type
+     * will a valueOf or String contructor will be supported.
+     * @param type
+     * @param key
+     * @return
+     */
     <T> T get(Class<T> type, String key);
     <T> T get(Class<T> type, String key, T defaultValue);
     
-    boolean containsProperty(String key);
+    /**
+     * @param key
+     * @return True if the key is contained within this or any of it's child configurations
+     */
+    boolean containsKey(String key);
     
+    /**
+     * @return True if empty or false otherwise.
+     */
     boolean isEmpty();
     
+    /**
+     * Return an interator to all property names owned by this conifg
+     * @return
+     */
     Iterator<String> getKeys();
     
+    /**
+     * Return an interator to all prefixed property names owned by this conifg
+     * @return
+     */
     Iterator<String> getKeys(String prefix);
     
     /**
@@ -91,19 +152,28 @@ public interface Config {
      * @param key
      * @return
      */
-    Config subset(String prefix);
+    Config getPrefixedView(String prefix);
     
     /**
-     * 
+     * Set the interpolator to be used.  The interpolator is normally created from the top level
+     * configuration object and is passed down to any children as they are added.
      * @param interpolator
      */
-    Config getParent();
-    
-    void setParent(Config config);
-    
     void setStrInterpolator(StrInterpolator interpolator);
-    
+   
     StrInterpolator getStrInterpolator();
     
+    /**
+     * Set the Decoder used by get() to parse any type
+     * @param decoder
+     */
+    void setDecoder(Decoder decoder);
+    
+    Decoder getDecoder();
+    
+    /**
+     * Visitor pattern
+     * @param visitor
+     */
     void accept(Visitor visitor);
 }

@@ -24,11 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.netflix.archaius.Config;
-import com.netflix.archaius.Decoder;
-import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -44,41 +41,18 @@ import com.netflix.archaius.exceptions.ConfigException;
 public class CascadingCompositeConfig extends DelegatingConfig implements CompositeConfig {
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
     private final Map<String, Config>           lookup    = new LinkedHashMap<String, Config>();
-    private final CopyOnWriteArraySet<Listener> listeners = new CopyOnWriteArraySet<Listener>();
-    private Decoder decoder;
     
     public CascadingCompositeConfig(String name) {
         super(name);
-        decoder = new DefaultDecoder();
     }
 
-    protected void setDecoder(Decoder decoder) {
-        this.decoder = decoder;
-    }
-
-    @Override
-    public void addListener(Listener listener) {
-        this.listeners.add(listener);
-    }
-    
-    @Override
-    public void removeListener(Listener listener) {
-        this.listeners.remove(listener);
-    }
-    
-    public void notifyOnAddConfig(Config child) {
-        for (Listener listener : listeners) {
-            listener.onConfigAdded(child);
-        }
-    }
-    
     /**
      * Add a Config to the end of the list so that it has least priority
      * @param child
      * @return
      */
     @Override
-    public synchronized void addConfigLast(Config child) throws ConfigException {
+    public synchronized void addConfig(Config child) throws ConfigException {
         if (child == null) {
             return;
         }
@@ -87,78 +61,55 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         }
 
         lookup.put(child.getName(), child);
-        children.add(child);
-        postConfigAdd(child);
-    }
-    
-    /**
-     * Add a Config to the end of the list so that it has highest priority
-     * @param child
-     * @return
-     */
-    @Override
-    public synchronized void addConfigFirst(Config child) throws ConfigException {
-        if (child == null) {
-            return;
-        }
-        if (lookup.containsKey(child.getName())) {
-            throw new ConfigException("Configuration with name " + child.getName() + " already exists");
-        }
-        lookup.put(child.getName(), child);
-
         children.add(0, child);
         postConfigAdd(child);
     }
     
     @Override
-    public synchronized Collection<String> getChildConfigNames() {
+    public synchronized Collection<String> getConfigNames() {
         List<String> result = new ArrayList<String>();
         result.addAll(this.lookup.keySet());
         return result;
     }
     
     protected void postConfigAdd(Config child) {
-        child.setStrInterpolator(this.getStrInterpolator());
-        child.setParent(this);
-        notifyOnAddConfig(child);
+        child.setStrInterpolator(getStrInterpolator());
+        child.setDecoder(getDecoder());
+        notifyConfigAdded(child);
+        child.addListener(new ForwardingConfigListener(getListeners(), this));
     }
     
     @Override
-    public void addConfigsLast(Collection<Config> config) throws ConfigException {
+    public void addConfigs(Collection<Config> config) throws ConfigException {
         for (Config child : config) {
-            addConfigLast(child);
+            addConfig(child);
         }
     }
     
     @Override
-    public void addConfigsFirst(Collection<Config> config) throws ConfigException {
-        for (Config child : config) {
-            addConfigFirst(child);
-        }
-    }
-    
-    @Override
-    public synchronized boolean replace(Config child) {
+    public synchronized void replaceConfig(Config child) throws ConfigException {
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i).getName().equals(child.getName())) {
                 children.set(i, child);
                 postConfigAdd(child);
-                return true;
+                return;
             }
         }
-        return false;
+        addConfig(child);
     }
     
     @Override
-    public synchronized void removeConfig(Config child) {
+    public synchronized boolean removeConfig(Config child) {
         if (this.children.remove(child)) {
             this.lookup.remove(child.getName());
+            return true;
         }
+        return false;
     }    
     
     protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
         for (Config child : children) {
-            if (child.containsProperty(key)) {
+            if (child.containsKey(key)) {
                 return child;
             }
         }
@@ -169,9 +120,9 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
     }
 
     @Override
-    public boolean containsProperty(String key) {
+    public boolean containsKey(String key) {
         for (Config child : children) {
-            if (child.containsProperty(key)) {
+            if (child.containsKey(key)) {
                 return true;
             }
         }
@@ -223,6 +174,10 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
                 cv.visit(child);
             }
         }
+        else {
+            for (Config child : children) {
+                child.accept(visitor);
+            }
+        }
     }
-
 }

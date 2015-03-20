@@ -24,7 +24,7 @@ package com.netflix.archaius;
  */
 public interface PropertyFactory {
     /**
-     * Create an observable for the property name.  
+     * Create a property for the property name.  
      */
-    public PropertyContainer connectProperty(String propName);
+    public PropertyContainer getProperty(String propName);
 }

@@ -21,63 +21,63 @@ import java.math.BigInteger;
 public interface PropertyContainer {
     
     /**
-     * Notify the observable that it should fetch the latest property value
+     * Notify the container that it should fetch the latest property value
      */
     void update();
     
     /**
      * Parse the property as a string 
      */
-    Property<String> asString();
+    Property<String> asString(String defaultValue);
     
     /**
      * Parse the property as an int 
      */
-    Property<Integer> asInteger();
+    Property<Integer> asInteger(Integer defaultValue);
     
     /**
      * Parse the property as a Long 
      */
-    Property<Long> asLong();
+    Property<Long> asLong(Long defaultValue);
     
     /**
      * Parse the property as a double 
      */
-    Property<Double> asDouble();
+    Property<Double> asDouble(Double defaultValue);
     
     /**
      * Parse the property as a float 
      */
-    Property<Float> asFloat();
+    Property<Float> asFloat(Float defaultValue);
     
     /**
      * Parse the property as a short 
      */
-    Property<Short> asShort();
+    Property<Short> asShort(Short defaultValue);
     
     /**
      * Parse the property as a byte 
      */
-    Property<Byte> asByte();
+    Property<Byte> asByte(Byte defaultValue);
     
     /**
      * Parse the property as a boolean 
      */
-    Property<Boolean> asBoolean();
+    Property<Boolean> asBoolean(Boolean defaultValue);
 
     /**
      * Parse the property as a BigDecimal 
      */
-    Property<BigDecimal> asBigDecimal();
+    Property<BigDecimal> asBigDecimal(BigDecimal defaultValue);
 
     /**
      * Parse the property as a BigInteger 
      */
-    Property<BigInteger> asBigInteger();
+    Property<BigInteger> asBigInteger(BigInteger defaultValue);
     
     /**
      * Custom parsing based on the provided type.  An implementation of ObservableProperty 
      * should be optimized to call one of the known parsing methods based on type. 
      */
-    <T> Property<T> asType(Class<T> type);
+    <T> Property<T> asType(Class<T> type, T defaultValue);
 }
