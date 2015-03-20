@@ -3,13 +3,17 @@ package com.netflix.archaius.persisted2;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -47,11 +51,11 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private final static List<String> DEFAULT_ORDERED_SCOPES = Arrays.asList("serverId", "asg", "ami", "cluster", "appId", "env", "countries", "stack", "zone", "region");
     private final static String DEFAULT_KEY_FIELD   = "key";
     private final static String DEFAULT_VALUE_FIELD = "value";
-    private final static String DEFAULT_PATH        = "persistedproperties/properties/property";
+    private final static List<String> DEFAULT_PATH  = Arrays.asList("persistedproperties", "properties", "property");
             
     public static class Builder {
         private final Callable<InputStream> reader;
-        private String       path        = DEFAULT_PATH;
+        private List<String> path        = DEFAULT_PATH;
         private List<String> scopeFields = DEFAULT_ORDERED_SCOPES;
         private String       keyField    = DEFAULT_KEY_FIELD;
         private String       valueField  = DEFAULT_VALUE_FIELD;
@@ -63,7 +67,13 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         }
         
         public Builder withPath(String path) {
-            this.path = path;
+            return withPath(Arrays.asList(StringUtils.split(path, "/")));
+        }
+        
+        public Builder withPath(List<String> path) {
+            List<String> copy = new ArrayList<String>();
+            copy.addAll(path);
+            this.path = Collections.unmodifiableList(copy);
             return this;
         }
         
@@ -109,7 +119,7 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private final List<String>            scopeFields;
     private final String                  keyField;
     private final String                  valueField;
-    private final String                  path;
+    private final List<String>            path;
 
     private JsonPersistedV2Reader(Builder builder) {
         this.reader        = builder.reader;
@@ -131,16 +141,22 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         }
         
         try {
-            for (final JsonNode property : mapper.readTree(is).path(path))  {
+            JsonNode node = mapper.readTree(is);
+            for (String part : this.path) {
+                node = node.path(part);
+            }
+            
+            for (final JsonNode property : node)  {
                 String key = null;
                 try {
                     key   = property.get(keyField).asText();
                     String value = property.has(valueField) ? property.get(valueField).asText() : "";
                     
-                    LinkedHashMap<String, String> scopes = new LinkedHashMap<String, String>();
+                    LinkedHashMap<String, Set<String>> scopes = new LinkedHashMap<String, Set<String>>();
                     
                     for (String scope : this.scopeFields) {
-                        scopes.put(scope, property.has(scope) ? property.get(scope).asText() : "");
+                        String[] values = StringUtils.splitByWholeSeparator(property.has(scope) ? property.get(scope).asText().toLowerCase() : "", ",");
+                        scopes.put(scope, values.length == 0 ? Collections.<String>emptySet() : immutableSetFrom(values));
                     }
                     
                     // Filter out scopes that don't match at all
@@ -177,6 +193,17 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         }
         
         return PollingResponse.forSnapshot(result);
+    }
+    
+    private static Set<String> immutableSetFrom(String[] values) {
+        if (values.length == 0) {
+            return Collections.<String>emptySet();
+        }
+        else {
+            HashSet<String> set = new HashSet<String>();
+            set.addAll(Arrays.asList(values));
+            return Collections.unmodifiableSet(set);
+        }
     }
 
 }

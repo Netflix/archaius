@@ -2,6 +2,7 @@ package com.netflix.archaius.persisted2;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * PropertyValueResolver that picks the first PropervyValue that has a higher 
@@ -16,7 +17,7 @@ import java.util.List;
  * 
  * For example,
  * 
- *    value1 :  cluster="", app="foo"
+ *    value1 :  cluster="",      app="foo"
  *    value2 :  cluster="foo-1", app="foo"
  * 
  * The resolver will choose value2 since cluster is a higher scope and value2 has 
@@ -26,18 +27,22 @@ import java.util.List;
  */
 public class ScopePriorityPropertyValueResolver implements ScopedValueResolver  {
     @Override
-    public String resolve(String propName, List<ScopedValue> variations) {
-        Iterator<ScopedValue> iter = variations.iterator();
+    public String resolve(String propName, List<ScopedValue> scopesValues) {
+        // Select the first as the starting candidate
+        Iterator<ScopedValue> iter = scopesValues.iterator();
         ScopedValue p1 = iter.next();
+        
+        // For each subsequent variation
         while (iter.hasNext()) {
             ScopedValue p2 = iter.next();
             
-            Iterator<String> s1 = p1.getScopes().values().iterator();
-            Iterator<String> s2 = p2.getScopes().values().iterator();
+            Iterator<Set<String>> s1 = p1.getScopes().values().iterator();
+            Iterator<Set<String>> s2 = p2.getScopes().values().iterator();
             
+            // Iterate through scopes in priority order
             while (s1.hasNext()) {
-                String v1 = s1.next();
-                String v2 = s2.next();
+                Set<String> v1 = s1.next();
+                Set<String> v2 = s2.next();
                 if (v1.isEmpty() && !v2.isEmpty()) {
                     p1 = p2;
                     break;
@@ -45,6 +50,8 @@ public class ScopePriorityPropertyValueResolver implements ScopedValueResolver  
                 else if (!v1.isEmpty() && v2.isEmpty()) {
                     break;
                 }
+                
+                // Continue as long as no scope yet or both have scopes
             }
         }
                 
