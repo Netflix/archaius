@@ -160,7 +160,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         sb.append(getName()).append("[");
         
         for (Config child : children) {
-            sb.append(child).append(" ");
+            sb.append(child.toString()).append(" ");
         }
         sb.append("]");
         return sb.toString();

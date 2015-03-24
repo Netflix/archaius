@@ -38,7 +38,7 @@ public class PropertyListenerToDynamicConfig extends InterpolatingConfig {
                     case AbstractConfiguration.EVENT_ADD_PROPERTY:
                     case AbstractConfiguration.EVENT_SET_PROPERTY:
                     case AbstractConfiguration.EVENT_CLEAR_PROPERTY:
-                        notifyConfigUpdated(event.getPropertyName());
+                        notifyConfigUpdated();
                         break;
                     case AbstractConfiguration.EVENT_CLEAR:
                         notifyConfigUpdated();

@@ -33,14 +33,6 @@ public class PropertyFactoryDynamicConfigListener implements ConfigListener {
     }
     
     @Override
-    public void onConfigUpdated(String key, Config config) {
-        PropertyContainer property = registry.get(key);
-        if (property != null) {
-            property.update();
-        }
-    }
-    
-    @Override
     public void onConfigAdded(Config config) {
         invalidate();
     }

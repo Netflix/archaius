@@ -26,13 +26,6 @@ public class ForwardingConfigListener implements ConfigListener {
     }
 
     @Override
-    public void onConfigUpdated(String propName, Config config) {
-        for (ConfigListener listener : listeners) {
-            listener.onConfigUpdated(propName, this.config);
-        }
-    }
-
-    @Override
     public void onConfigUpdated(Config config) {
         for (ConfigListener listener : listeners) {
             listener.onConfigUpdated(this.config);

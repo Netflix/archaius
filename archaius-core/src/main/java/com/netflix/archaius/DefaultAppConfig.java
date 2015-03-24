@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.cascade.SimpleCascadeStrategy;
 import com.netflix.archaius.config.CascadingCompositeConfig;
-import com.netflix.archaius.config.DefaultConfigListener;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SimpleDynamicConfig;
 import com.netflix.archaius.config.SystemConfig;
@@ -243,19 +242,9 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
                 }
             });
             
-            library.addListener(new DefaultConfigListener() {
-                @Override
-                public void onConfigAdded(Config child) {
-                    dynamicObserver.invalidate();
-                }
-            });
+            library.addListener(dynamicObserver);
             if (override != null) {
-                override.addListener(new DefaultConfigListener() {
-                    @Override
-                    public void onConfigAdded(Config child) {
-                        dynamicObserver.invalidate();
-                    }
-                });
+                override.addListener(dynamicObserver);
             }
         }
         catch (Exception e) {
@@ -264,15 +253,15 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     }
     
     @Override
-    public void addLibraryConfig(Config child) throws ConfigException {
-        LOG.info("Adding configuration : " + child.getName());
-        this.library.addConfig(child);
-    }
-    
-    @Override
     public void addOverrideConfig(Config child) throws ConfigException {
         LOG.info("Adding configuration : " + child.getName());
         this.override.addConfig(child);
+    }
+    
+    @Override
+    public void addConfig(Config child) throws ConfigException {
+        LOG.info("Adding configuration : " + child.getName());
+        this.library.addConfig(child);
     }
     
     public Loader newLoader() {

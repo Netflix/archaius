@@ -26,16 +26,6 @@ import com.netflix.archaius.exceptions.ConfigException;
 public interface AppConfig extends PropertyFactory, SettableConfig, ConfigLoader {
 
     /**
-     * Add a library's configuration into the config.  All library configurations
-     * will be loaded into the same override layer.  Properties in an added library
-     * take precedence over properties in previously loaded libraries. 
-     * 
-     * @param child
-     * @throws ConfigException
-     */
-    void addLibraryConfig(Config child) throws ConfigException;
-
-    /**
      * Add config into the top level override layer.  Override properties take
      * precendence of previously added override properties
      * 

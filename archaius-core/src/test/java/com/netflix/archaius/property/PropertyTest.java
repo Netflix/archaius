@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.Property;
+import com.netflix.archaius.config.SimpleDynamicConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
 public class PropertyTest {
@@ -68,6 +69,29 @@ public class PropertyTest {
         Assert.assertEquals(2, (int)intProp2.get());
         
         config.setProperty("foo", "123");
+        
+        Assert.assertEquals("123", strProp.get());
+        Assert.assertEquals((Integer)123, intProp1.get());
+        Assert.assertEquals((Integer)123, intProp2.get());
+    }
+
+    @Test
+    public void testUpdateDynamicChild() throws ConfigException {
+        SimpleDynamicConfig dynamic = new SimpleDynamicConfig("dyn");
+        
+        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
+        config.addOverrideConfig(dynamic);
+        
+        System.out.println("Configs: " + config.toString());
+        
+        Property<Integer> intProp1 = config.getProperty("foo").asInteger(1);
+        Property<Integer> intProp2 = config.getProperty("foo").asInteger(2);
+        Property<String>  strProp  = config.getProperty("foo").asString("3");
+
+        Assert.assertEquals(1, (int)intProp1.get());
+        Assert.assertEquals(2, (int)intProp2.get());
+        
+        dynamic.setProperty("foo", "123");
         
         Assert.assertEquals("123", strProp.get());
         Assert.assertEquals((Integer)123, intProp1.get());

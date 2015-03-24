@@ -14,10 +14,6 @@ public class DefaultConfigListener implements ConfigListener {
     }
 
     @Override
-    public void onConfigUpdated(String propName, Config config) {
-    }
-
-    @Override
     public void onConfigUpdated(Config config) {
     }
 

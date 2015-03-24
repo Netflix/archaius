@@ -73,12 +73,6 @@ public abstract class AbstractConfig implements Config {
         listeners.remove(listener);
     }
     
-    protected void notifyConfigUpdated(String key) {
-        for (ConfigListener listener : listeners) {
-            listener.onConfigUpdated(key, this);
-        }
-    }
-    
     protected void notifyConfigUpdated() {
         for (ConfigListener listener : listeners) {
             listener.onConfigUpdated(this);
