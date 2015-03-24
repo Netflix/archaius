@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
+import com.netflix.archaius.ConfigListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -219,7 +220,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
      * @return
      */
     @SuppressWarnings("unchecked")
-    private <T> CachedProperty<T> add(CachedProperty<T> newProperty) {
+    private <T> CachedProperty<T> add(final CachedProperty<T> newProperty) {
         while (!cache.addIfAbsent(newProperty)) {
             for (CachedProperty<?> property : cache) {
                 if (property.type == newProperty.type) {
@@ -227,7 +228,32 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 }
             }
         }
-        
+
+        config.addListener(new ConfigListener() {
+            @Override
+            public void onConfigAdded(Config config) {
+                newProperty.update();
+            }
+
+            @Override
+            public void onConfigRemoved(Config config) {
+                newProperty.update();
+            }
+
+            @Override
+            public void onConfigUpdated(String propName, Config config) {
+                newProperty.update();
+            }
+
+            @Override
+            public void onConfigUpdated(Config config) {
+                newProperty.update();
+            }
+
+            @Override
+            public void onError(Throwable error, Config config) {
+            }
+        });
         newProperty.update();
         return newProperty;
     }
