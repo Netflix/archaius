@@ -199,6 +199,12 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         super(NAME);
         
         try {
+            if (builder.decoder != null) {
+                setDecoder(builder.decoder);
+            }
+
+            this.setStrInterpolator(builder.interpolator.create(this));
+
             // The following are added first, before application configuration
             // to allow for replacements in the application configuration cascade
             // loading.
@@ -219,12 +225,6 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             if (builder.enableEnvironmentLayer) {
                 super.addConfig(new EnvironmentConfig());
             }
-
-            if (builder.decoder != null) {
-                setDecoder(builder.decoder);
-            }
-
-            this.setStrInterpolator(builder.interpolator.create(this));
             
             loader = DefaultConfigLoader.builder()
                     .withConfigReader(builder.loaders)
