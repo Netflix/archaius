@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.property;
 
+import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.config.SimpleDynamicConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -72,6 +74,29 @@ public class PropertyTest {
         Assert.assertEquals("123", strProp.get());
         Assert.assertEquals((Integer)123, intProp1.get());
         Assert.assertEquals((Integer)123, intProp2.get());
+    }
+
+    @Test
+    public void testPropertyOverride() throws ConfigException {
+        SimpleDynamicConfig overrides = new SimpleDynamicConfig("test");
+        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
+        config.addOverrideConfig(overrides);
+
+        // Get default
+        Property<String> strProp = config.getProperty("foo").asString("3");
+        Assert.assertEquals("3", strProp.get());
+
+        // Set on override
+        overrides.setProperty("foo", "123");
+        Assert.assertEquals("123", strProp.get());
+
+        // Update on override
+        overrides.setProperty("foo", "456");
+        Assert.assertEquals("456", strProp.get());
+
+        // Clear on override
+        overrides.clearProperty("foo");
+        Assert.assertEquals("3", strProp.get());
     }
 
 }
