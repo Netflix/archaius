@@ -19,6 +19,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -205,6 +206,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                 // multiple
                 else {
                     CascadingCompositeConfig cConfig = new CascadingCompositeConfig(name);
+                    Collections.reverse(configs);
                     try {
                         cConfig.addConfigs(configs);
                     } catch (ConfigException e) {
@@ -241,7 +243,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             @Override
             public Config load(File file) throws ConfigException {
                 try {
-                    return load(file.toURL());
+                    return load(file.toURI().toURL());
                 } catch (MalformedURLException e) {
                     throw new ConfigException("Failed to load file " + file, e);
                 }

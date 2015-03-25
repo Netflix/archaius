@@ -55,7 +55,7 @@ public class AppConfigTest {
         System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));
         Assert.assertTrue(config.getBoolean("libB.loaded"));
-        Assert.assertEquals("libB", config.getString("libA.overrideA"));
+        Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
         config.accept(new PrintStreamVisitor());
     }
