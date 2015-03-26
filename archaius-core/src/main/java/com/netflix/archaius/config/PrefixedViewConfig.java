@@ -20,6 +20,9 @@ import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 
 import com.netflix.archaius.Config;
+import com.netflix.archaius.ConfigListener;
+import com.netflix.archaius.Decoder;
+import com.netflix.archaius.StrInterpolator;
 
 /**
  * View into another Config for properties starting with a specified prefix.
@@ -80,4 +83,31 @@ public class PrefixedViewConfig extends DelegatingConfig {
         return null;
     }
 
+    @Override
+    public synchronized void setDecoder(Decoder decoder)
+    {
+        super.setDecoder(decoder);
+        config.setDecoder(decoder);
+    }
+
+    @Override
+    public synchronized void setStrInterpolator(StrInterpolator interpolator)
+    {
+        super.setStrInterpolator(interpolator);
+        config.setStrInterpolator(interpolator);
+    }
+
+    @Override
+    public synchronized void addListener(ConfigListener listener)
+    {
+        super.addListener(listener);
+        config.addListener(listener);
+    }
+
+    @Override
+    public synchronized void removeListener(ConfigListener listener)
+    {
+        super.removeListener(listener);
+        config.removeListener(listener);
+    }
 }

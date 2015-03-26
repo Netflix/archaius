@@ -75,9 +75,9 @@ public class ConcatCascadeStrategy implements CascadeStrategy {
         String current = name;
         for (String param : parameters) {
             current += separator + param;
-            result.add(interpolator.resolve(current).toString());
+            result.add(interpolator.resolve(current));
         }
-        
+
         return result;
     }
 

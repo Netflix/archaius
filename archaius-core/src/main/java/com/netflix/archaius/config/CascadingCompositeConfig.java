@@ -26,6 +26,9 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.netflix.archaius.Config;
+import com.netflix.archaius.ConfigListener;
+import com.netflix.archaius.Decoder;
+import com.netflix.archaius.StrInterpolator;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -61,8 +64,8 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         }
 
         lookup.put(child.getName(), child);
-        children.add(0, child);
-        postConfigAdd(child);
+        children.add(child);
+        postConfigUpdate(child);
     }
     
     @Override
@@ -72,7 +75,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         return result;
     }
     
-    protected void postConfigAdd(Config child) {
+    protected void postConfigUpdate(Config child) {
         child.setStrInterpolator(getStrInterpolator());
         child.setDecoder(getDecoder());
         notifyConfigAdded(child);
@@ -91,7 +94,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i).getName().equals(child.getName())) {
                 children.set(i, child);
-                postConfigAdd(child);
+                postConfigUpdate(child);
                 return;
             }
         }
@@ -178,6 +181,41 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
             for (Config child : children) {
                 child.accept(visitor);
             }
+        }
+    }
+
+    @Override
+    public synchronized void setDecoder(Decoder decoder) {
+        super.setDecoder(decoder);
+        for (Config config : children) {
+            postConfigUpdate(config);
+        }
+    }
+
+    @Override
+    public synchronized void setStrInterpolator(StrInterpolator interpolator)
+    {
+        super.setStrInterpolator(interpolator);
+        for (Config config : children) {
+            postConfigUpdate(config);
+        }
+    }
+
+    @Override
+    public synchronized void addListener(ConfigListener listener)
+    {
+        super.addListener(listener);
+        for (Config config : children) {
+            postConfigUpdate(config);
+        }
+    }
+
+    @Override
+    public synchronized void removeListener(ConfigListener listener)
+    {
+        super.removeListener(listener);
+        for (Config config : children) {
+            postConfigUpdate(config);
         }
     }
 }

@@ -44,32 +44,32 @@ public abstract class AbstractConfig implements Config {
     }
     
     @Override
-    final public void setDecoder(Decoder decoder) {
-        this.decoder = decoder;
-    }
-    
-    @Override
     final public Decoder getDecoder() {
         return this.decoder;
     }
-    
+
+    @Override
+    public void setDecoder(Decoder decoder) {
+        this.decoder = decoder;
+    }
+
     @Override
     final public StrInterpolator getStrInterpolator() {
         return this.interpolator;
     }
-    
+
     @Override
-    final public void setStrInterpolator(StrInterpolator interpolator) {
+    public void setStrInterpolator(StrInterpolator interpolator) {
         this.interpolator = interpolator;
     }
     
     @Override
-    final public void addListener(ConfigListener listener) {
+    public void addListener(ConfigListener listener) {
         listeners.add(listener);
     }
     
     @Override
-    final public void removeListener(ConfigListener listener) {
+    public void removeListener(ConfigListener listener) {
         listeners.remove(listener);
     }
     
