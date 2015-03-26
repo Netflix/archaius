@@ -31,13 +31,13 @@ public class SimpleDynamicConfig extends InterpolatingConfig implements Settable
     @Override
     public <T> void setProperty(String propName, T propValue) {
         props.put(propName, propValue.toString());
-        notifyConfigUpdated(propName);
+        notifyConfigUpdated();
     }
     
     @Override
     public void clearProperty(String propName) {
         props.remove(propName);
-        notifyConfigUpdated(propName);
+        notifyConfigUpdated();
     }
 
     @Override

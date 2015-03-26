@@ -38,14 +38,6 @@ public interface ConfigListener {
     public void onConfigRemoved(Config config);
     
     /**
-     * Notify the listener that the value of a property has changed.  This is normally in 
-     * response to an incremental update to a dynamic configuration.
-     * 
-     * @param propName
-     */
-    public void onConfigUpdated(String propName, Config config);
-
-    /**
      * Notify the listener that the entire configuration of a child has changed.  This is 
      * normally in response to a snapshot update to a dynamic configuration. A listener will
      * likely respond to this by invalidating the entire property registration cache as it 
