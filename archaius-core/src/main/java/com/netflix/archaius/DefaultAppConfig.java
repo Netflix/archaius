@@ -89,6 +89,10 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         private Decoder                   decoder;
 
         public Builder withStrInterpolator(StrInterpolatorFactory interpolator) {
+            if (interpolator == null) {
+                throw new IllegalArgumentException("StrInterpolatorFactory cannot be null or empty");
+            }
+
             this.interpolator = interpolator;
             return this;
         }
@@ -123,7 +127,9 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
          * will use PropertiesConfigLoader.
          */
         public Builder withConfigReader(ConfigReader loader) {
-            this.loaders.add(loader);
+            if (loader != null) {   
+                this.loaders.add(loader);
+            }
             return this;
         }
 
@@ -132,7 +138,9 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
          * Library cascade strategies may be configured on the loader returned by newLoader.
          */
         public Builder withDefaultCascadingStrategy(CascadeStrategy strategy) {
-            this.defaultStrategy = strategy;
+            this.defaultStrategy = strategy == null 
+                                 ? DEFAULT_CASCADE_STRATEGY 
+                                 : strategy;
             return this;
         }
 
@@ -157,6 +165,10 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
          * Name of application configuration to load at startup.  Default is 'config'.
          */
         public Builder withApplicationConfigName(String name) {
+            if (name == null || name.isEmpty()) {
+                throw new IllegalArgumentException("Name cannot be null or empty");
+            }
+            
             this.configName = name;
             return this;
         }
@@ -165,6 +177,9 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
          * Decoder used to decode properties to arbitrary types.
          */
         public Builder withDecoder(Decoder decoder) {
+            if (decoder == null) {
+                throw new IllegalArgumentException("Decoder cannot be null");
+            }
             this.decoder = decoder;
             return this;
         }

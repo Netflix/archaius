@@ -21,8 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.DefaultAppConfig;
+import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
-import com.netflix.archaius.mapper.annotations.DefaultValue;
 import com.netflix.archaius.property.PrefixedObservablePropertyFactory;
 
 public class DefaultConfigMapperTest {

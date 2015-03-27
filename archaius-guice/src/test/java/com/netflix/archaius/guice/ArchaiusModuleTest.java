@@ -30,14 +30,14 @@ import com.netflix.archaius.AppConfig;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.Property;
+import com.netflix.archaius.annotations.Configuration;
+import com.netflix.archaius.annotations.ConfigurationSource;
+import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
-import com.netflix.archaius.mapper.annotations.Configuration;
-import com.netflix.archaius.mapper.annotations.ConfigurationSource;
-import com.netflix.archaius.mapper.annotations.DefaultValue;
 
 public class ArchaiusModuleTest {
     
