@@ -275,6 +275,11 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     
     @Override
     public void addConfig(Config child) throws ConfigException {
+        addLibraryConfig(child);
+    }
+    
+    @Override
+    public void addLibraryConfig(Config child) throws ConfigException {
         LOG.info("Adding configuration : " + child.getName());
         this.library.addConfig(child);
     }

@@ -27,10 +27,19 @@ public interface AppConfig extends PropertyFactory, SettableConfig, ConfigLoader
 
     /**
      * Add config into the top level override layer.  Override properties take
-     * precendence of previously added override properties
+     * precedence of previously added override properties
      * 
      * @param child
      * @throws ConfigException
      */
     void addOverrideConfig(Config child) throws ConfigException;
+    
+    /**
+     * Add config into the library layer.  Override properties take
+     * precedence of previously added override properties
+     * 
+     * @param child
+     * @throws ConfigException
+     */
+    void addLibraryConfig(Config child) throws ConfigException;
 }
