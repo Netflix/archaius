@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.archaius.mapper.annotations;
+package com.netflix.archaius.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

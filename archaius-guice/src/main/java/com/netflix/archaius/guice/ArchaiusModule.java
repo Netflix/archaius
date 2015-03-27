@@ -36,13 +36,13 @@ import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.annotations.Configuration;
+import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.mapper.IoCContainer;
-import com.netflix.archaius.mapper.annotations.Configuration;
-import com.netflix.archaius.mapper.annotations.ConfigurationSource;
 
 public class ArchaiusModule extends AbstractModule {
     

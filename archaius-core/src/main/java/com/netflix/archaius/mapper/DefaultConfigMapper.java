@@ -30,9 +30,9 @@ import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.Property;
 import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.annotations.Configuration;
+import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.exceptions.MappingException;
-import com.netflix.archaius.mapper.annotations.Configuration;
-import com.netflix.archaius.mapper.annotations.DefaultValue;
 
 public class DefaultConfigMapper implements ConfigMapper {
     private static final IoCContainer NULL_IOC_CONTAINER = new IoCContainer() {
@@ -98,7 +98,7 @@ public class DefaultConfigMapper implements ConfigMapper {
         
         // Interpolate using any replacements loaded into the configuration
         prefix = config.getStrInterpolator().resolve(prefix).toString();
-        if (!prefix.isEmpty() || !prefix.endsWith("."))
+        if (!prefix.isEmpty() && !prefix.endsWith("."))
             prefix += ".";
         
         // Iterate and set fields
