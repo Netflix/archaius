@@ -9,12 +9,24 @@ To enable create Guice bindings for Config and AppConfig and install a single gu
 
 ```java
 Injector injector = Guice.createInjector(
+    new DefaultArchaiusModule()
+    );
+```
+
+For users that need to customize the `AppConfig` object, the `AchaiusModule` can be used
+instead. The user is responsible for providing bindings for the `ConfigMapper` and `AppConfig`
+instances to use.
+
+```java
+Injector injector = Guice.createInjector(
     new AbstractModule() {
         @Override
         protected void configure() {
-            AppConfig config = AppConfig.createDefaultConfig();
-            bind(Config.class).toInstance(config);
+            final AppConfig config = DefaultAppConfig.builder()
+                .withApplicationConfigName("application")
+                .build();
             bind(AppConfig.class).toInstance(config);
+            bind(ConfigMapper.class).toInstance(new DefaultConfigMapper());
         }
     },
     new ArchaiusModule()

@@ -44,6 +44,12 @@ import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.mapper.IoCContainer;
 
+/**
+ * Module to setup DI features of archaius with guice. The user must specify bindings for
+ * {@link AppConfig} and {@link ConfigMapper}.
+ *
+ * @see DefaultArchaiusModule
+ */
 public class ArchaiusModule extends AbstractModule {
     
     public static class ConfigProvider<T> implements Provider<T> {
@@ -146,18 +152,6 @@ public class ArchaiusModule extends AbstractModule {
         requestInjection(listener);
         
         bindListener(Matchers.any(), listener);
-    }
-    
-    @Provides
-    @Singleton
-    protected ConfigMapper createConfigMapper() {
-        return new DefaultConfigMapper();
-    }
-    
-    @Provides
-    @Singleton
-    protected AppConfig createAppConfig() {
-        return DefaultAppConfig.builder().build();
     }
     
     @Provides

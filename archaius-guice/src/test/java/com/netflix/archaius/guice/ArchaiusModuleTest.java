@@ -19,6 +19,9 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.netflix.archaius.mapper.ConfigMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -107,7 +110,13 @@ public class ArchaiusModuleTest {
     @Test
     public void test() {
         Injector injector = Guice.createInjector(
-            new ArchaiusModule() {
+            new AbstractModule() {
+                protected void configure() {
+                    bind(ConfigMapper.class).toInstance(new DefaultConfigMapper());
+                }
+
+                @Provides
+                @Singleton
                 protected AppConfig createAppConfig() {
                     Properties props = new Properties();
                     props.setProperty("prefix-prod.str_value", "str_value");
@@ -118,7 +127,8 @@ public class ArchaiusModuleTest {
                     
                     return DefaultAppConfig.builder().withProperties(props).build();
                 }
-            }
+            },
+            new ArchaiusModule()
         );
         
         MyService service = injector.getInstance(MyService.class);
@@ -139,14 +149,15 @@ public class ArchaiusModuleTest {
     @Test
     public void testNamedInjection() {
         Injector injector = Guice.createInjector(
-            new ArchaiusModule() {
+            new AbstractModule() {
                 protected void configure() {
-                    super.configure();
-                    
+                    bind(ConfigMapper.class).toInstance(new DefaultConfigMapper());
                     bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
                     bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
                 }
-                
+
+                @Provides
+                @Singleton
                 protected AppConfig createAppConfig() {
                     Properties props = new Properties();
                     props.setProperty("prefix-prod.named", "name1");
@@ -154,7 +165,8 @@ public class ArchaiusModuleTest {
                     
                     return DefaultAppConfig.builder().withProperties(props).build();
                 }
-            }
+            },
+            new ArchaiusModule()
             );
             
         MyService service = injector.getInstance(MyService.class);
@@ -198,7 +210,7 @@ public class ArchaiusModuleTest {
     @Test
     public void testProxy() {
         Injector injector = Guice.createInjector(
-                new ArchaiusModule(),
+                new DefaultArchaiusModule(),
                 ArchaiusModule.forProxy(TestProxyConfig.class)
             );
         
