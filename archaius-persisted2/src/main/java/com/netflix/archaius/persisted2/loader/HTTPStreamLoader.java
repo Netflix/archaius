@@ -22,7 +22,7 @@ public class HTTPStreamLoader implements Callable<InputStream> {
         conn.setConnectTimeout(6000);
         conn.setReadTimeout(10000);
         conn.setRequestProperty("Accept",          "application/json");
-        conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+        conn.setRequestProperty("Accept-Encoding", "gzip");
         if (lastEtag != null) {
             conn.setRequestProperty("If-None-Match", lastEtag);
         }
@@ -30,25 +30,19 @@ public class HTTPStreamLoader implements Callable<InputStream> {
         conn.connect();
         
         // force a connection to test if the URL is reachable
-        if (conn.getResponseCode() == 200) {
+        final int status = conn.getResponseCode();
+        if (status == 200) {
             lastEtag = conn.getHeaderField("ETag");
             
             InputStream input = conn.getInputStream();
-            try {
-                if ("gzip".equals(conn.getContentEncoding())) {
-                    input = new GZIPInputStream(input);
-                }
-                return input;
+            if ("gzip".equals(conn.getContentEncoding())) {
+                input = new GZIPInputStream(input);
             }
-            finally {
-                try {
-                    input.close();
-                }
-                catch (Exception e) {
-                    // OK to ignore
-                }
-            }
-        
+            return input;
+        }
+        else if (status == 304) {
+            // It is expected the reader will treat this as a noop response
+            return null;
         }
         else {
             throw new RuntimeException("Failed to read input " + conn.getResponseCode());
