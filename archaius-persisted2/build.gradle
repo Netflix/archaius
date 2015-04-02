@@ -18,8 +18,8 @@ apply plugin: 'java'
 
 dependencies {
     compile  project(':archaius-core')
-    compile  "org.codehaus.jackson:jackson-mapper-asl:1.9.13"
-    compile  "org.codehaus.jackson:jackson-core-asl:1.9.13"
+    compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
 
     testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
     testCompile 'junit:junit:4.11'
