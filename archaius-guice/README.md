@@ -34,7 +34,7 @@ For example,
 ```java
 // Class where configuration is load
 @Singleton
-@ConfigurationSource({"serviceA"}
+@ConfigurationSource({"serviceA"})
 public class ServiceAConfiguration {
 }
 
