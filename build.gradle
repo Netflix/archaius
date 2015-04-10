@@ -31,6 +31,9 @@ subprojects {
 
     apply plugin: 'java'
     tasks.withType(Test) { forkEvery = 1 }
+    test {
+        maxHeapSize = '1g' // or however much memory the tests need
+    }
 }
 
 project(':archaius-core') {
