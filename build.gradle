@@ -23,7 +23,12 @@ subprojects {
 
     tasks.withType(Test) { forkEvery = 1 }
     test {
-        maxHeapSize = '1g' // or however much memory the tests need
+        maxHeapSize = '2g' // or however much memory the tests need
+        testLogging {
+            events 'started', 'failed', 'passed', 'skipped'
+            showStandardStreams  = true
+        }
+
     }
 }
 
