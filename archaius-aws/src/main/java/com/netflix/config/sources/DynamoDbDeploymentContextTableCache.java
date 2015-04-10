@@ -261,7 +261,7 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
             ScanRequest scanRequest = new ScanRequest()
                     .withTableName(table)
                     .withExclusiveStartKey(lastKeysEvaluated);
-            ScanResult result = dbClient.scan(scanRequest);
+            ScanResult result = dbScanWithThroughputBackOff(scanRequest);
             for (Map<String, AttributeValue> item : result.getItems()) {
                 String keyVal = item.get(keyAttributeName.get()).getS();
 

@@ -1,5 +1,6 @@
 Archaius
 =====
+[![Build Status](https://netflixoss.ci.cloudbees.com/buildStatus/icon?job=archaius-master)](https://netflixoss.ci.cloudbees.com/job/archaius-master/)
 
 Features
 -------
