@@ -218,7 +218,7 @@ When using archaius-guice create a binding for the proxy interface like this (a 
 ```java
 new AbstractModule() {
     protected void configure() {
-        bind(MyConfig.class).toProvider(Providers.guicify(ArchaiusModule.forProxy(MyConfig.class));
+        install(ArchaiusModule.forProxy(MyConfig.class));
     }
 }
 ```
