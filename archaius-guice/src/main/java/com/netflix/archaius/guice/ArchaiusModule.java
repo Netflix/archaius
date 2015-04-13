@@ -24,6 +24,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.ProvisionException;
+import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Names;
@@ -35,16 +36,14 @@ import com.netflix.archaius.AppConfig;
 import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
-import com.netflix.archaius.PropertyFactory;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.mapper.IoCContainer;
 
-public class ArchaiusModule extends AbstractModule {
+public final class ArchaiusModule extends AbstractModule {
     
     public static class ConfigProvider<T> implements Provider<T> {
         private Class<T> type;
@@ -53,7 +52,7 @@ public class ArchaiusModule extends AbstractModule {
         ConfigMapper mapper;
         
         @Inject
-        PropertyFactory factory;
+        AppConfig config;
         
         public ConfigProvider(Class<T> type) {
             this.type = type;
@@ -61,7 +60,7 @@ public class ArchaiusModule extends AbstractModule {
 
         @Override
         public T get() {
-            return mapper.newProxy(type, factory);
+            return mapper.newProxy(type, config);
         }
     }
     
@@ -105,7 +104,7 @@ public class ArchaiusModule extends AbstractModule {
                         if (source != null) {
                             for (String value : source.value()) {
                                 try {
-                                    ((CompositeConfig)appConfig).addConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
+                                    appConfig.addLibraryConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
                                 } catch (ConfigException e) {
                                     throw new ProvisionException("Unable to load configuration for " + value + " at source " + injectee.getClass(), e);
                                 }
@@ -139,37 +138,39 @@ public class ArchaiusModule extends AbstractModule {
             return injector.getInstance(Key.get(type, Names.named(name)));
         }
     }
+
+    private final AppConfig appConfig;
+    
+    public ArchaiusModule() {
+        this(null);
+    }
+    
+    public ArchaiusModule(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+    
+    public static ArchaiusModule fromAppConfig(final AppConfig config) {
+        return new ArchaiusModule(config);
+    }
     
     @Override
-    protected void configure() {
+    final protected void configure() {
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
-        
         bindListener(Matchers.any(), listener);
+        
+        bind(ConfigMapper.class).to(DefaultConfigMapper.class).in(Scopes.SINGLETON);
     }
     
     @Provides
     @Singleton
-    protected ConfigMapper createConfigMapper() {
-        return new DefaultConfigMapper();
+    final AppConfig createAppConfig() {
+        return appConfig != null ? appConfig : DefaultAppConfig.createDefault();
     }
     
     @Provides
     @Singleton
-    protected AppConfig createAppConfig() {
-        return DefaultAppConfig.builder().build();
-    }
-    
-    @Provides
-    @Singleton
-    private Config createConfig(AppConfig config) {
+    final Config getConfig(AppConfig config) {
         return config;
     }
-
-    @Provides
-    @Singleton
-    private PropertyFactory createObservablePropertyFactory(AppConfig config) {
-        return config;
-    }
-
 }
