@@ -16,12 +16,12 @@
 package com.netflix.archaius.guice;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.ProvisionException;
 import com.google.inject.Scopes;
@@ -43,6 +43,28 @@ import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.mapper.IoCContainer;
 
+/**
+ * Guice module with default bindings to enable AppConfig injection and 
+ * configuration mapping/binding in a Guice based application.
+ * 
+ * To override the AppConfig binding use Guice's Modules.override()
+ * 
+ * <pre>
+ * ```java
+ * Modules
+ *     .override(new ArchaiusModule())
+ *     .with(new AbstractModule() {
+ *         @Override
+ *         protected void configure() {
+ *             bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+ *         }
+ *     })
+ * ```
+ * </pre>
+ * 
+ * @author elandau
+ *
+ */
 public final class ArchaiusModule extends AbstractModule {
     
     public static class ConfigProvider<T> implements Provider<T> {
@@ -139,35 +161,20 @@ public final class ArchaiusModule extends AbstractModule {
         }
     }
 
-    private final AppConfig appConfig;
-    
-    public ArchaiusModule() {
-        this(null);
-    }
-    
-    public ArchaiusModule(AppConfig appConfig) {
-        this.appConfig = appConfig;
-    }
-    
-    public static ArchaiusModule fromAppConfig(final AppConfig config) {
-        return new ArchaiusModule(config);
-    }
-    
     @Override
     final protected void configure() {
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bindListener(Matchers.any(), listener);
-        
         bind(ConfigMapper.class).to(DefaultConfigMapper.class).in(Scopes.SINGLETON);
     }
     
     @Provides
     @Singleton
-    final AppConfig createAppConfig() {
-        return appConfig != null ? appConfig : DefaultAppConfig.createDefault();
+    final AppConfig getAppConfig() {
+        return DefaultAppConfig.createDefault();
     }
-    
+
     @Provides
     @Singleton
     final Config getConfig(AppConfig config) {

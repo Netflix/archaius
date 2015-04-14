@@ -25,8 +25,10 @@ import org.junit.Test;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import com.netflix.archaius.AppConfig;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
@@ -106,7 +108,7 @@ public class ArchaiusModuleTest {
     
     @Test
     public void test() {
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.setProperty("prefix-prod.str_value", "str_value");
         props.setProperty("prefix-prod.int_value", "123");
         props.setProperty("prefix-prod.bool_value", "true");
@@ -114,7 +116,13 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-            new ArchaiusModule(DefaultAppConfig.builder().withProperties(props).build())
+            Modules.override(new ArchaiusModule())
+                   .with(new AbstractModule() {
+                       @Override
+                       protected void configure() {
+                           bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+                       }
+                   })
         );
         
         MyService service = injector.getInstance(MyService.class);
@@ -137,12 +145,19 @@ public class ArchaiusModuleTest {
     
     @Test
     public void testNamedInjection() {
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.setProperty("prefix-prod.named", "name1");
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-            new ArchaiusModule(DefaultAppConfig.builder().withProperties(props).build()),
+            Modules.override(new ArchaiusModule())
+                   .with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+                        }
+                   })
+            ,
             new AbstractModule() {
                 protected void configure() {
                     bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
