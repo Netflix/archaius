@@ -56,7 +56,7 @@ import com.netflix.archaius.mapper.IoCContainer;
  *     .with(new AbstractModule() {
  *         @Override
  *         protected void configure() {
- *             bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+ *             bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withApplicationConfigName("mayapp").build());
  *         }
  *     })
  * ```
