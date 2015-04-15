@@ -22,10 +22,12 @@ import javax.inject.Inject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import com.netflix.archaius.AppConfig;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultAppConfig;
@@ -36,7 +38,6 @@ import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
-import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 
 public class ArchaiusModuleTest {
@@ -106,19 +107,21 @@ public class ArchaiusModuleTest {
     
     @Test
     public void test() {
+        final Properties props = new Properties();
+        props.setProperty("prefix-prod.str_value", "str_value");
+        props.setProperty("prefix-prod.int_value", "123");
+        props.setProperty("prefix-prod.bool_value", "true");
+        props.setProperty("prefix-prod.double_value", "456.0");
+        props.setProperty("env", "prod");
+        
         Injector injector = Guice.createInjector(
-            new ArchaiusModule() {
-                protected AppConfig createAppConfig() {
-                    Properties props = new Properties();
-                    props.setProperty("prefix-prod.str_value", "str_value");
-                    props.setProperty("prefix-prod.int_value", "123");
-                    props.setProperty("prefix-prod.bool_value", "true");
-                    props.setProperty("prefix-prod.double_value", "456.0");
-                    props.setProperty("env", "prod");
-                    
-                    return DefaultAppConfig.builder().withProperties(props).build();
-                }
-            }
+            Modules.override(new ArchaiusModule())
+                   .with(new AbstractModule() {
+                       @Override
+                       protected void configure() {
+                           bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+                       }
+                   })
         );
         
         MyService service = injector.getInstance(MyService.class);
@@ -131,6 +134,9 @@ public class ArchaiusModuleTest {
         Assert.assertEquals(456.0, serviceConfig.double_value, 0);
 
         Config config = injector.getInstance(Config.class);
+        AppConfig appConfig = injector.getInstance(AppConfig.class);
+        
+        Assert.assertEquals("prod", appConfig.getString("env"));
         
         Assert.assertTrue(config.getBoolean("moduleTest.loaded"));
         Assert.assertTrue(config.getBoolean("moduleTest-prod.loaded"));
@@ -138,21 +144,23 @@ public class ArchaiusModuleTest {
     
     @Test
     public void testNamedInjection() {
+        final Properties props = new Properties();
+        props.setProperty("prefix-prod.named", "name1");
+        props.setProperty("env", "prod");
+        
         Injector injector = Guice.createInjector(
-            new ArchaiusModule() {
+            Modules.override(new ArchaiusModule())
+                   .with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+                        }
+                   })
+            ,
+            new AbstractModule() {
                 protected void configure() {
-                    super.configure();
-                    
                     bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
                     bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
-                }
-                
-                protected AppConfig createAppConfig() {
-                    Properties props = new Properties();
-                    props.setProperty("prefix-prod.named", "name1");
-                    props.setProperty("env", "prod");
-                    
-                    return DefaultAppConfig.builder().withProperties(props).build();
                 }
             }
             );
