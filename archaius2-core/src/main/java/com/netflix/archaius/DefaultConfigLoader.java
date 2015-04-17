@@ -29,6 +29,8 @@ import com.netflix.archaius.cascade.SimpleCascadeStrategy;
 import com.netflix.archaius.config.CascadingCompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -37,6 +39,9 @@ import com.netflix.archaius.exceptions.ConfigException;
  *
  */
 public class DefaultConfigLoader implements ConfigLoader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConfigLoader.class);
+
     private static final SimpleCascadeStrategy DEFAULT_CASCADE_STRATEGY = new SimpleCascadeStrategy();
 
     public static class Builder {
@@ -172,11 +177,12 @@ public class DefaultConfigLoader implements ConfigLoader {
                                         fileToLoad = config.getString(includeKey);
                                     }
                                     catch (Exception e) {
-                                        // TODO: 
+                                        // TODO:
                                         fileToLoad = null;
                                     }
                                     configs.add(config);
                                 } catch (ConfigException e) {
+                                    LOGGER.debug("could not load config '" + fileToLoad + "'", e);
                                     break;
                                 }
                             } while (fileToLoad != null);

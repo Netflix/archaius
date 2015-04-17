@@ -13,9 +13,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +115,7 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private final Callable<InputStream>   reader;
     private final ScopePredicate          predicate;
     private final ScopedValueResolver     valueResolver;
-    private final ObjectMapper            mapper      = new ObjectMapper();
+    private final ObjectMapper            mapper         = new ObjectMapper();
     private final List<String>            scopeFields;
     private final String                  keyField;
     private final String                  valueField;
