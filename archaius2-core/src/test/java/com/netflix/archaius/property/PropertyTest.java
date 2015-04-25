@@ -42,7 +42,7 @@ public class PropertyTest {
     public void test() throws ConfigException {
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
         
-        System.out.println("Configs: " + config.getConfigNames());
+        System.out.println("Configs: " + config.getLayerNames());
         
         MyService service = new MyService(config);
 
@@ -59,7 +59,7 @@ public class PropertyTest {
     public void testPropertyIsCached() throws ConfigException {
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
         
-        System.out.println("Configs: " + config.getConfigNames());
+        System.out.println("Configs: " + config.getLayerNames());
         
         Property<Integer> intProp1 = config.getProperty("foo").asInteger(1);
         Property<Integer> intProp2 = config.getProperty("foo").asInteger(2);
@@ -80,7 +80,7 @@ public class PropertyTest {
         SimpleDynamicConfig dynamic = new SimpleDynamicConfig("dyn");
         
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
-        config.addOverrideConfig(dynamic);
+        config.getCompositeLayer(DefaultAppConfig.DYNAMIC_LAYER).addConfig(dynamic);
         
         System.out.println("Configs: " + config.toString());
         

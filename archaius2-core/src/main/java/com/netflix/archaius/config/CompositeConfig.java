@@ -31,6 +31,8 @@ public interface CompositeConfig extends Config {
         void visit(Config child);
     }
 
+    Config getConfig(String name);
+    
     void addConfig(Config child) throws ConfigException;
 
     void addConfigs(Collection<Config> config) throws ConfigException;

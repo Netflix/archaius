@@ -19,10 +19,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.config.SimpleDynamicConfig;
-import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.loaders.PropertiesConfigReader;
 import com.netflix.archaius.property.DefaultPropertyListener;
@@ -36,8 +34,8 @@ public class ConfigManagerTest {
                 .withApplicationConfigName("application")
                 .build();
         
-        config.addConfig(dyn);
-        config.addConfig(MapConfig.builder("test")
+        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(dyn);
+        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(MapConfig.builder("test")
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .put("c",      123)
@@ -66,7 +64,7 @@ public class ConfigManagerTest {
                 .withConfigReader(new PropertiesConfigReader())
                 .build();
                 
-        config.addConfig(MapConfig.builder("test")
+        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(MapConfig.builder("test")
                     .put("env",    "prod")
                     .put("region", "us-east")
                     .build());

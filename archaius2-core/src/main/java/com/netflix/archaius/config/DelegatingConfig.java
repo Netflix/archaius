@@ -47,7 +47,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getLong(key);
+        return config.getLong(key, defaultValue);
     }
 
     @Override
@@ -60,7 +60,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getString(key);
+        return config.getString(key, defaultValue);
     }
 
     @Override
@@ -73,7 +73,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getDouble(key);
+        return config.getDouble(key, defaultValue);
     }
 
     @Override
@@ -86,7 +86,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getInteger(key);
+        return config.getInteger(key, defaultValue);
     }
 
     @Override
@@ -99,7 +99,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getBoolean(key);
+        return config.getBoolean(key, defaultValue);
     }
 
     @Override
@@ -112,7 +112,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getShort(key);
+        return config.getShort(key, defaultValue);
     }
 
     @Override
@@ -125,7 +125,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getBigInteger(key);
+        return config.getBigInteger(key, defaultValue);
     }
 
     @Override
@@ -138,7 +138,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getBigDecimal(key);
+        return config.getBigDecimal(key, defaultValue);
     }
 
     @Override
@@ -151,7 +151,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getFloat(key);
+        return config.getFloat(key, defaultValue);
     }
 
     @Override
@@ -164,7 +164,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getByte(key);
+        return config.getByte(key, defaultValue);
     }
 
     @Override
@@ -177,7 +177,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.getList(key);
+        return config.getList(key, defaultValue);
     }
 
     @Override
@@ -190,7 +190,7 @@ public abstract class DelegatingConfig extends AbstractConfig {
         Config config = getConfigWithProperty(key, false);
         if (config == null)
             return defaultValue;
-        return config.get(type, key);
+        return config.get(type, key, defaultValue);
     }
 
     @Override

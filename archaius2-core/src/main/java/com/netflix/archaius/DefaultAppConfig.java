@@ -16,6 +16,8 @@
 package com.netflix.archaius;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -24,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.cascade.SimpleCascadeStrategy;
 import com.netflix.archaius.config.CascadingCompositeConfig;
+import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.DelegatingConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SimpleDynamicConfig;
 import com.netflix.archaius.config.SystemConfig;
@@ -63,27 +67,24 @@ import com.netflix.archaius.property.PropertyFactoryDynamicConfigListener;
  * @author elandau
  *
  */
-public class DefaultAppConfig extends CascadingCompositeConfig implements AppConfig {
+public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAppConfig.class);
     
-    private static final String DEFAULT_APP_CONFIG_NAME = "config";
+    public static final String                DEFAULT_APP_CONFIG_NAME = "config";
+    public static final SimpleCascadeStrategy DEFAULT_CASCADE_STRATEGY = new SimpleCascadeStrategy();
     
-    private static final String NAME              = "ROOT";
-    private static final String OVERRIDE_LAYER    = "OVERRIDE";
-    private static final String DYNAMIC_LAYER     = "DYNAMIC";
-    private static final String APPLICATION_LAYER = "APPLICATION";
-    private static final String LIBRARY_LAYER     = "LIBRARY";
-    
-    private static final SimpleCascadeStrategy DEFAULT_CASCADE_STRATEGY = new SimpleCascadeStrategy();
+    public static final String NAME              = "APP_CONFIG";
+    public static final String ROOT              = "ROOT";
+    public static final String OVERRIDE_LAYER    = "OVERRIDE";
+    public static final String DYNAMIC_LAYER     = "DYNAMIC";
+    public static final String APPLICATION_LAYER = "APPLICATION";
+    public static final String LIBRARY_LAYER     = "LIBRARY";
     
     public static class Builder {
         private StrInterpolatorFactory    interpolator;
         private final List<ConfigReader>  loaders                = new ArrayList<ConfigReader>();
         private CascadeStrategy           defaultStrategy        = DEFAULT_CASCADE_STRATEGY;
         private boolean                   failOnFirst            = true;
-        private boolean                   enableSystemLayer      = true;
-        private boolean                   enableEnvironmentLayer = true;
-        private boolean                   enableOverrideLayer    = true;
         private String                    configName             = DEFAULT_APP_CONFIG_NAME;
         private Properties                props;
         private Decoder                   decoder;
@@ -98,30 +99,6 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             return this;
         }
 
-        /**
-         * Call to include or exclude SystemConfig.  Default is true.
-         */
-        public Builder withSystemLayer(boolean flag) {
-            this.enableSystemLayer = flag;
-            return this;
-        }
-        
-        /**
-         * Call to include or exclude EnvironmentConfig.  Default is true.
-         */
-        public Builder withEnvironmentLayer(boolean flag) {
-            this.enableEnvironmentLayer = flag;
-            return this;
-        }
-        
-        /**
-         * Call to include or exclude DynamicConfig. Default is true.
-         */
-        public Builder withOverrideLayer(boolean flag) {
-            this.enableOverrideLayer = flag;
-            return this;
-        }
-        
         /**
          * Can be called multiple times to add multiple ConfigLoader to be used when 
          * loading application and library properties.  If no loaders are added AppConfig
@@ -152,7 +129,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
 
         /**
          * Enable/disable failure if the first file in a cascade list of properties fails 
-         * to load.
+         * to load.  This includes the main application config file.
          */
         public Builder withFailOnFirst(boolean flag) {
             this.failOnFirst = flag;
@@ -190,7 +167,7 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             return this;
         }
         
-        public DefaultAppConfig build() {
+        public DefaultAppConfig build() throws ConfigException {
             if (this.interpolator == null) {
                 this.interpolator = new CommonsStrInterpolatorFactory();
             }
@@ -205,46 +182,40 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
         return new Builder();
     }
     
-    public static DefaultAppConfig createDefault() {
+    public static DefaultAppConfig createDefault() throws ConfigException {
         return new Builder().build();
     }
     
+    private final CascadingCompositeConfig     root;
     private final SimpleDynamicConfig          runtime;
-    private final CascadingCompositeConfig     override;
+    private final CascadingCompositeConfig     dynamic;
     private final CascadingCompositeConfig     library;
     private final DefaultConfigLoader          loader;
     private final PropertyFactoryDynamicConfigListener dynamicObserver;
     
-    public DefaultAppConfig(Builder builder) {
-        super(NAME);
+    public DefaultAppConfig(Builder builder) throws ConfigException {
+        super("APP_CONFIG");
         
         try {
+            this.root = new CascadingCompositeConfig(NAME);
+            
             if (builder.decoder != null) {
                 setDecoder(builder.decoder);
+                this.root.setDecoder(builder.decoder);
             }
 
             this.setStrInterpolator(builder.interpolator.create(this));
+            this.root.setStrInterpolator(this.getStrInterpolator());
 
             // The following are added first, before application configuration
             // to allow for replacements in the application configuration cascade
             // loading.
-            super.addConfig(runtime = new SimpleDynamicConfig(OVERRIDE_LAYER));
+            root.addConfig(runtime = new SimpleDynamicConfig(OVERRIDE_LAYER));
             runtime.setProperties(builder.props);
             
-            if (builder.enableOverrideLayer) {
-                super.addConfig(override = new CascadingCompositeConfig(DYNAMIC_LAYER));
-            }
-            else {
-                override = null;
-            }
-            
-            if (builder.enableSystemLayer) {
-                super.addConfig(new SystemConfig());
-            }
-            
-            if (builder.enableEnvironmentLayer) {
-                super.addConfig(new EnvironmentConfig());
-            }
+            root.addConfig(dynamic = new CascadingCompositeConfig(DYNAMIC_LAYER));
+            root.addConfig(new SystemConfig());
+            root.addConfig(new EnvironmentConfig());
             
             loader = DefaultConfigLoader.builder()
                     .withConfigReader(builder.loaders)
@@ -253,8 +224,8 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
                     .withStrInterpolator(getStrInterpolator())
                     .build();
                 
-            super.addConfig(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
-            super.addConfig(library = new CascadingCompositeConfig(LIBRARY_LAYER));
+            root.addConfig(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
+            root.addConfig(library = new CascadingCompositeConfig(LIBRARY_LAYER));
             
             this.dynamicObserver = new PropertyFactoryDynamicConfigListener(new PropertyFactory() {
                 @Override
@@ -264,31 +235,15 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
             });
             
             library.addListener(dynamicObserver);
-            if (override != null) {
-                override.addListener(dynamicObserver);
-                override.addConfigs(builder.overrideConfigs);
-            }
+            dynamic.addListener(dynamicObserver);
+            dynamic.addConfigs(builder.overrideConfigs);
+        }
+        catch (ConfigException e) {
+            throw e;
         }
         catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ConfigException("Unknown error", e);
         }
-    }
-    
-    @Override
-    public void addOverrideConfig(Config child) throws ConfigException {
-        LOG.info("Adding configuration : " + child.getName());
-        this.override.addConfig(child);
-    }
-    
-    @Override
-    public void addConfig(Config child) throws ConfigException {
-        addLibraryConfig(child);
-    }
-    
-    @Override
-    public void addLibraryConfig(Config child) throws ConfigException {
-        LOG.info("Adding configuration : " + child.getName());
-        this.library.addConfig(child);
     }
     
     public Loader newLoader() {
@@ -322,5 +277,49 @@ public class DefaultAppConfig extends CascadingCompositeConfig implements AppCon
     public void setProperties(Properties properties) {
         runtime.setProperties(properties);
         dynamicObserver.invalidate();
+    }
+
+    @Override
+    public Config getLayer(String name) {
+        return root.getConfig(name);
+    }
+
+    @Override
+    public CompositeConfig getCompositeLayer(String name) throws ConfigException {
+        Config layer = root.getConfig(name);
+        if (layer != null) {
+            if (layer instanceof CompositeConfig) {
+                return (CompositeConfig)layer;
+            }
+            else {
+                throw new ConfigException(String.format("Layer '%s' is not a CompositeConfig", name));
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean containsKey(String key) {
+        return root.containsKey(key);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return root.isEmpty();
+    }
+
+    @Override
+    public Iterator<String> getKeys() {
+        return root.getKeys();
+    }
+
+    @Override
+    protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
+        return root;
+    }
+
+    @Override
+    public Collection<String> getLayerNames() {
+        return root.getConfigNames();
     }
 }

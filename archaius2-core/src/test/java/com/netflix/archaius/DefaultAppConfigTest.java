@@ -20,12 +20,11 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
-public class AppConfigTest {
+public class DefaultAppConfigTest {
     @Test
     public void testAppAndLibraryLoading() throws ConfigException {
         Properties props = new Properties();
@@ -44,13 +43,13 @@ public class AppConfigTest {
         
         Assert.assertFalse(config.getBoolean("libA.loaded", false));
         
-        config.addConfig(config.newLoader().load("libA"));
+        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(config.newLoader().load("libA"));
         
         Assert.assertTrue(config.getBoolean("libA.loaded"));
         Assert.assertFalse(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
-        config.addConfig(config.newLoader().load("libB"));
+        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(config.newLoader().load("libB"));
         
         System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));
@@ -61,7 +60,7 @@ public class AppConfigTest {
     }
     
     @Test
-    public void interpolationShouldWork() {
+    public void interpolationShouldWork() throws ConfigException {
         System.setProperty("env", "prod");
         
         DefaultAppConfig config = DefaultAppConfig.builder()
@@ -74,7 +73,7 @@ public class AppConfigTest {
     }
     
     @Test(expected=IllegalStateException.class)
-    public void infiniteInterpolationRecursionShouldFail() {
+    public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
         System.setProperty("env", "${env}");
         
         DefaultAppConfig config = DefaultAppConfig.builder()
@@ -87,7 +86,7 @@ public class AppConfigTest {
     }
     
     @Test
-    public void numericInterpolationShouldWork() {
+    public void numericInterpolationShouldWork() throws ConfigException  {
         DefaultAppConfig config = DefaultAppConfig.builder()
                 .withApplicationConfigName("application")
                 .build();
@@ -98,4 +97,18 @@ public class AppConfigTest {
         Assert.assertEquals((long)123L, (long)config.getLong("value"));
     }
     
+    @Test(expected=ConfigException.class)
+    public void shouldFailWithNoApplicationConfig() throws ConfigException {
+        DefaultAppConfig.builder()
+            .withApplicationConfigName("non-existant")
+            .build();
+    }
+    
+    @Test
+    public void shouldNotFailWithNoApplicationConfig() throws ConfigException {
+        DefaultAppConfig.builder()
+            .withApplicationConfigName("non-existant")
+            .withFailOnFirst(false)
+            .build();
+    }
 }
