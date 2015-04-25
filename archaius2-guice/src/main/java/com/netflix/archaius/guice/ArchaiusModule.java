@@ -175,7 +175,6 @@ public final class ArchaiusModule extends AbstractModule {
     final AppConfig getAppConfig(CascadeStrategy defaultStrategy) throws ConfigException {
         return DefaultAppConfig.builder()
                 .withDefaultCascadingStrategy(defaultStrategy)
-                .withApplicationConfigName(DefaultAppConfig.DEFAULT_APP_CONFIG_NAME)
                 .build();
     }
 

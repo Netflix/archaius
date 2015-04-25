@@ -73,22 +73,26 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
     public static final String                DEFAULT_APP_CONFIG_NAME = "config";
     public static final SimpleCascadeStrategy DEFAULT_CASCADE_STRATEGY = new SimpleCascadeStrategy();
     
-    public static final String NAME              = "APP_CONFIG";
-    public static final String ROOT              = "ROOT";
-    public static final String OVERRIDE_LAYER    = "OVERRIDE";
-    public static final String DYNAMIC_LAYER     = "DYNAMIC";
-    public static final String APPLICATION_LAYER = "APPLICATION";
-    public static final String LIBRARY_LAYER     = "LIBRARY";
+    public static final String NAME               = "APP_CONFIG";
+    public static final String ROOT               = "ROOT";
+    public static final String RUNTIME_LAYER      = "RUNTIME";
+    public static final String OVERRIDE_LAYER     = "OVERRIDE";
+    public static final String APPLICATION_LAYER  = "APPLICATION";
+    public static final String LIBRARY_LAYER      = "LIBRARY";
     
     public static class Builder {
         private StrInterpolatorFactory    interpolator;
         private final List<ConfigReader>  loaders                = new ArrayList<ConfigReader>();
         private CascadeStrategy           defaultStrategy        = DEFAULT_CASCADE_STRATEGY;
         private boolean                   failOnFirst            = true;
+        private boolean                   enableSystemLayer      = true;
+        private boolean                   enableEnvironmentLayer = true;
+        private boolean                   enableOverrideLayer    = true;
         private String                    configName             = DEFAULT_APP_CONFIG_NAME;
         private Properties                props;
         private Decoder                   decoder;
         private List<Config>              overrideConfigs        = new ArrayList<Config>();
+        private Config                    applicationLayer       = null;
 
         public Builder withStrInterpolator(StrInterpolatorFactory interpolator) {
             if (interpolator == null) {
@@ -111,11 +115,52 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
             return this;
         }
 
+        /**
+         * Add a configuration to the override layer
+         * @param config
+         * @return
+         */
         public Builder withOverrideConfig(Config config) {
             this.overrideConfigs.add(config);
             return this;
         }
         
+        /**
+         * Set the configuration to use for the application layer.  Note that this takes
+         * precedence to an application config name.
+         * 
+         * @param config
+         * @return
+         */
+        public Builder withApplicationConfig(Config config) {
+            this.applicationLayer = config;
+            return this;
+        }
+        
+        /**
+         * Call to include or exclude SystemConfig.  Default is true.
+         */
+        public Builder withSystemLayer(boolean flag) {
+            this.enableSystemLayer = flag;
+            return this;
+        }
+        
+        /**
+         * Call to include or exclude EnvironmentConfig.  Default is true.
+         */
+        public Builder withEnvironmentLayer(boolean flag) {
+            this.enableEnvironmentLayer = flag;
+            return this;
+        }
+        
+        /**
+         * Call to include or exclude DynamicConfig. Default is true.
+         */
+        public Builder withOverrideLayer(boolean flag) {
+            this.enableOverrideLayer = flag;
+            return this;
+        }
+
         /**
          * Default cascade strategy to use for loading application and library properties.
          * Library cascade strategies may be configured on the loader returned by newLoader.
@@ -131,7 +176,7 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
          * Enable/disable failure if the first file in a cascade list of properties fails 
          * to load.  This includes the main application config file.
          */
-        public Builder withFailOnFirst(boolean flag) {
+        public Builder withFailOnFirstCascadeLoad(boolean flag) {
             this.failOnFirst = flag;
             return this;
         }
@@ -187,17 +232,15 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
     }
     
     private final CascadingCompositeConfig     root;
-    private final SimpleDynamicConfig          runtime;
-    private final CascadingCompositeConfig     dynamic;
-    private final CascadingCompositeConfig     library;
+    private final SimpleDynamicConfig          runtimeLayer;
     private final DefaultConfigLoader          loader;
     private final PropertyFactoryDynamicConfigListener dynamicObserver;
     
     public DefaultAppConfig(Builder builder) throws ConfigException {
-        super("APP_CONFIG");
+        super(NAME);
         
         try {
-            this.root = new CascadingCompositeConfig(NAME);
+            this.root = new CascadingCompositeConfig(ROOT);
             
             if (builder.decoder != null) {
                 setDecoder(builder.decoder);
@@ -210,12 +253,21 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
             // The following are added first, before application configuration
             // to allow for replacements in the application configuration cascade
             // loading.
-            root.addConfig(runtime = new SimpleDynamicConfig(OVERRIDE_LAYER));
-            runtime.setProperties(builder.props);
+            root.addConfig(runtimeLayer = new SimpleDynamicConfig(RUNTIME_LAYER));
+            runtimeLayer.setProperties(builder.props);
             
-            root.addConfig(dynamic = new CascadingCompositeConfig(DYNAMIC_LAYER));
-            root.addConfig(new SystemConfig());
-            root.addConfig(new EnvironmentConfig());
+            CascadingCompositeConfig overrideLayer = null;
+            if (builder.enableOverrideLayer) {
+                root.addConfig(overrideLayer = new CascadingCompositeConfig(OVERRIDE_LAYER));
+            }
+            
+            if (builder.enableSystemLayer) {
+                root.addConfig(new SystemConfig());
+            }
+            
+            if (builder.enableEnvironmentLayer) {
+                root.addConfig(new EnvironmentConfig());
+            }
             
             loader = DefaultConfigLoader.builder()
                     .withConfigReader(builder.loaders)
@@ -223,9 +275,16 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
                     .withFailOnFirst(builder.failOnFirst)
                     .withStrInterpolator(getStrInterpolator())
                     .build();
-                
-            root.addConfig(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
-            root.addConfig(library = new CascadingCompositeConfig(LIBRARY_LAYER));
+            
+            if (builder.applicationLayer != null) {
+                root.addConfig(builder.applicationLayer);
+            }
+            else if (builder.configName != null) {
+                root.addConfig(loader.newLoader().withName(APPLICATION_LAYER).load(builder.configName));
+            }
+            
+            final CascadingCompositeConfig library = new CascadingCompositeConfig(LIBRARY_LAYER);
+            root.addConfig(library);
             
             this.dynamicObserver = new PropertyFactoryDynamicConfigListener(new PropertyFactory() {
                 @Override
@@ -235,8 +294,10 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
             });
             
             library.addListener(dynamicObserver);
-            dynamic.addListener(dynamicObserver);
-            dynamic.addConfigs(builder.overrideConfigs);
+            if (overrideLayer != null) {
+                overrideLayer.addListener(dynamicObserver);
+                overrideLayer.addConfigs(builder.overrideConfigs);
+            }
         }
         catch (ConfigException e) {
             throw e;
@@ -258,7 +319,7 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
     @Override
     public void setProperty(String propName, Object propValue) {
         PropertyContainer prop = dynamicObserver.get(propName);
-        runtime.setProperty(propName, propValue);
+        runtimeLayer.setProperty(propName, propValue);
         if (prop != null) {
             prop.update();
         }
@@ -267,7 +328,7 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
     @Override
     public void clearProperty(String propName) {
         PropertyContainer prop = dynamicObserver.get(propName);
-        runtime.clearProperty(propName);
+        runtimeLayer.clearProperty(propName);
         if (prop != null) {
             prop.update();
         }
@@ -275,7 +336,7 @@ public class DefaultAppConfig extends DelegatingConfig implements AppConfig {
 
     @Override
     public void setProperties(Properties properties) {
-        runtime.setProperties(properties);
+        runtimeLayer.setProperties(properties);
         dynamicObserver.invalidate();
     }
 

@@ -80,7 +80,7 @@ public class PropertyTest {
         SimpleDynamicConfig dynamic = new SimpleDynamicConfig("dyn");
         
         DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
-        config.getCompositeLayer(DefaultAppConfig.DYNAMIC_LAYER).addConfig(dynamic);
+        config.getCompositeLayer(DefaultAppConfig.OVERRIDE_LAYER).addConfig(dynamic);
         
         System.out.println("Configs: " + config.toString());
         

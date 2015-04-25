@@ -108,7 +108,7 @@ public class DefaultAppConfigTest {
     public void shouldNotFailWithNoApplicationConfig() throws ConfigException {
         DefaultAppConfig.builder()
             .withApplicationConfigName("non-existant")
-            .withFailOnFirst(false)
+            .withFailOnFirstCascadeLoad(false)
             .build();
     }
 }
