@@ -25,6 +25,7 @@ import org.junit.Test;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -37,6 +38,7 @@ import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 
@@ -106,7 +108,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void test() {
+    public void test() throws ConfigException {
         final Properties props = new Properties();
         props.setProperty("prefix-prod.str_value", "str_value");
         props.setProperty("prefix-prod.int_value", "123");
@@ -119,8 +121,14 @@ public class ArchaiusModuleTest {
                    .with(new AbstractModule() {
                        @Override
                        protected void configure() {
-                           bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
                        }
+                       
+                       @Provides
+                       @Singleton
+                       public AppConfig getAppConfig() throws ConfigException {
+                           return DefaultAppConfig.builder().withProperties(props).build();
+                       }
+
                    })
         );
         
@@ -143,7 +151,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testNamedInjection() {
+    public void testNamedInjection() throws ConfigException {
         final Properties props = new Properties();
         props.setProperty("prefix-prod.named", "name1");
         props.setProperty("env", "prod");
@@ -153,7 +161,12 @@ public class ArchaiusModuleTest {
                    .with(new AbstractModule() {
                         @Override
                         protected void configure() {
-                            bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withProperties(props).build());
+                        }
+                        
+                        @Provides
+                        @Singleton
+                        public AppConfig getAppConfig() throws ConfigException {
+                            return DefaultAppConfig.builder().withProperties(props).build();
                         }
                    })
             ,

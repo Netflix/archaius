@@ -126,7 +126,8 @@ public final class ArchaiusModule extends AbstractModule {
                         if (source != null) {
                             for (String value : source.value()) {
                                 try {
-                                    appConfig.addLibraryConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
+                                    appConfig.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER)
+                                             .addConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
                                 } catch (ConfigException e) {
                                     throw new ProvisionException("Unable to load configuration for " + value + " at source " + injectee.getClass(), e);
                                 }
@@ -171,13 +172,21 @@ public final class ArchaiusModule extends AbstractModule {
     
     @Provides
     @Singleton
-    final AppConfig getAppConfig() {
-        return DefaultAppConfig.createDefault();
+    final AppConfig getAppConfig(CascadeStrategy defaultStrategy) throws ConfigException {
+        return DefaultAppConfig.builder()
+                .withDefaultCascadingStrategy(defaultStrategy)
+                .build();
     }
 
     @Provides
     @Singleton
     final Config getConfig(AppConfig config) {
         return config;
+    }
+    
+    @Provides
+    @Singleton
+    final CascadeStrategy getDefaultCascadeStrategy() {
+        return DefaultAppConfig.DEFAULT_CASCADE_STRATEGY;
     }
 }

@@ -25,12 +25,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.netflix.archaius.cascade.SimpleCascadeStrategy;
 import com.netflix.archaius.config.CascadingCompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -152,13 +153,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             }
 
             @Override
-            public Loader withLoadToSystem(boolean toSystem) {
-                loadToSystem = toSystem;
-                return this;
-            }
-
-            @Override
-            public Config load(String resourceName) {
+            public Config load(String resourceName) throws ConfigException {
                 if (name == null) {
                     name = resourceName;
                 }
@@ -191,7 +186,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                     
                     if (failIfNotLoaded == true) {
                         if (configs.isEmpty())
-                            throw new RuntimeException("Failed to load configuration resource '" + resourceName + "'");
+                            throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
                         failIfNotLoaded = false;
                     }
                 }

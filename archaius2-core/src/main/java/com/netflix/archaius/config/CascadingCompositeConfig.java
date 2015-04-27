@@ -193,8 +193,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
     }
 
     @Override
-    public synchronized void setStrInterpolator(StrInterpolator interpolator)
-    {
+    public synchronized void setStrInterpolator(StrInterpolator interpolator) {
         super.setStrInterpolator(interpolator);
         for (Config config : children) {
             postConfigUpdate(config);
@@ -202,8 +201,7 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
     }
 
     @Override
-    public synchronized void addListener(ConfigListener listener)
-    {
+    public synchronized void addListener(ConfigListener listener) {
         super.addListener(listener);
         for (Config config : children) {
             postConfigUpdate(config);
@@ -211,11 +209,15 @@ public class CascadingCompositeConfig extends DelegatingConfig implements Compos
     }
 
     @Override
-    public synchronized void removeListener(ConfigListener listener)
-    {
+    public synchronized void removeListener(ConfigListener listener) {
         super.removeListener(listener);
         for (Config config : children) {
             postConfigUpdate(config);
         }
+    }
+
+    @Override
+    public Config getConfig(String name) {
+        return lookup.get(name);
     }
 }

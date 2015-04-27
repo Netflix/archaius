@@ -15,6 +15,9 @@
  */
 package com.netflix.archaius;
 
+import java.util.Collection;
+
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
@@ -24,22 +27,27 @@ import com.netflix.archaius.exceptions.ConfigException;
  * @author elandau
  */
 public interface AppConfig extends PropertyFactory, SettableConfig, ConfigLoader {
-
     /**
-     * Add config into the top level override layer.  Override properties take
-     * precedence of previously added override properties
+     * Return a child layer
      * 
-     * @param child
-     * @throws ConfigException
+     * @param name
+     * @return
      */
-    void addOverrideConfig(Config child) throws ConfigException;
+    Config getLayer(String name);
     
     /**
-     * Add config into the library layer.  Override properties take
-     * precedence of previously added override properties
+     * Return a child layer into which other configurations may be loaded.
      * 
-     * @param child
-     * @throws ConfigException
+     * TODO: Throw an exception if not composite
+     * 
+     * @param name
+     * @return
+     * @throws ConfigException 
      */
-    void addLibraryConfig(Config child) throws ConfigException;
+    CompositeConfig getCompositeLayer(String name) throws ConfigException;
+    
+    /**
+     * @return List of layer names in order of override priority
+     */
+    Collection<String> getLayerNames();
 }

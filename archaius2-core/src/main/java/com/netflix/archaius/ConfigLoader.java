@@ -71,13 +71,6 @@ public interface ConfigLoader {
         Loader withOverrides(Properties props);
         
         /**
-         * Once loaded add all the properties to System.setProperty()
-         * @param toSystem
-         * @return
-         */
-        Loader withLoadToSystem(boolean toSystem);
-        
-        /**
          * Load configuration by cascade resource name.
          * @param resourceName
          * @return

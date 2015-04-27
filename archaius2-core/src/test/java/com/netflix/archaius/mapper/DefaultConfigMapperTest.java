@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.property.PrefixedObservablePropertyFactory;
 
@@ -62,7 +63,7 @@ public class DefaultConfigMapperTest {
     }
     
     @Test
-    public void testProxy() {
+    public void testProxy() throws ConfigException {
         Properties props = new Properties();
         props.put("prefix.string",   "loaded");
         props.put("prefix.integer",  1);
@@ -103,7 +104,7 @@ public class DefaultConfigMapperTest {
     }
     
     @Test
-    public void testProxyWithDefaults() {
+    public void testProxyWithDefaults() throws ConfigException{
         DefaultAppConfig config = DefaultAppConfig.builder()
                 .withApplicationConfigName("application")
                 .build();
