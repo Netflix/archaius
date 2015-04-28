@@ -43,7 +43,7 @@ public abstract class AbstractConfig implements Config {
 
     public AbstractConfig() {
         this.decoder = new DefaultDecoder();
-        this.interpolator = CommonsStrInterpolator.INSTNACE;
+        this.interpolator = CommonsStrInterpolator.INSTANCE;
         this.lookup = ConfigStrLookup.from(this);
     }
 

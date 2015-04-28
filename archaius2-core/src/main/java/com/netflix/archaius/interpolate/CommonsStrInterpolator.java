@@ -20,9 +20,12 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 
 import com.netflix.archaius.StrInterpolator;
 
-public class CommonsStrInterpolator implements StrInterpolator {
-    public static final CommonsStrInterpolator INSTNACE = new CommonsStrInterpolator();
+public final class CommonsStrInterpolator implements StrInterpolator {
+    public static final CommonsStrInterpolator INSTANCE = new CommonsStrInterpolator();
 
+    private CommonsStrInterpolator() {
+    }
+    
     @Override
     public Context create(final Lookup lookup) {
         final StrSubstitutor sub = new StrSubstitutor(

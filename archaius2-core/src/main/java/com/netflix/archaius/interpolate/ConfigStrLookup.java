@@ -4,7 +4,7 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.StrInterpolator.Lookup;
 
 /**
- * Interplotor lookup using a Config as the source
+ * Interpolator lookup using a Config as the source
  * @author elandau
  *
  */

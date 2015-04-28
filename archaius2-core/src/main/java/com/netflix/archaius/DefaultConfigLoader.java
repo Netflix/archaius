@@ -56,7 +56,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                                                             return null;
                                                         }
                                                     };
-    private static final StrInterpolator DEFAULT_INTERPOLATOR = CommonsStrInterpolator.INSTNACE;
+    private static final StrInterpolator DEFAULT_INTERPOLATOR = CommonsStrInterpolator.INSTANCE;
                                                     
     public static class Builder {
         private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();

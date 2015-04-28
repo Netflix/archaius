@@ -68,14 +68,14 @@ public class ArchaiusModuleTest {
         @Provides
         @SystemLayer
         public Config getSystem() {
-            return new EmptyConfig();
+            return EmptyConfig.INSTANCE;
         }
        
         @Singleton
         @Provides
         @EnvironmentLayer
         public Config getEnvironment() {
-            return new EmptyConfig();
+            return EmptyConfig.INSTANCE;
         }
        
     }

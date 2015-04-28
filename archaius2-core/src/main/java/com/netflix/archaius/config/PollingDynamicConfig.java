@@ -81,7 +81,7 @@ public class PollingDynamicConfig extends AbstractConfig {
                     notifyError(e, this);
                 }
                 catch (Exception e2) {
-                    LOG.warn("Failed to notify error observer");
+                    LOG.warn("Failed to notify error observer", e2);
                 }
             }
             finally {

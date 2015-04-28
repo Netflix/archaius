@@ -22,6 +22,9 @@ public final class EmptyConfig extends AbstractConfig {
 
     public static final EmptyConfig INSTANCE = new EmptyConfig();
     
+    private EmptyConfig() {
+    }
+    
     @Override
     public boolean containsKey(String key) {
         return false;
