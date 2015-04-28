@@ -15,39 +15,50 @@
  */
 package com.netflix.archaius.guice;
 
+import java.util.Properties;
+import java.util.Set;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.ProvisionException;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
-import com.google.inject.name.Names;
-import com.google.inject.spi.InjectionListener;
-import com.google.inject.spi.TypeEncounter;
-import com.google.inject.spi.TypeListener;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Providers;
-import com.netflix.archaius.AppConfig;
 import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
-import com.netflix.archaius.DefaultAppConfig;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.ConfigurationSource;
+import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.ConfigReader;
+import com.netflix.archaius.DefaultConfigLoader;
+import com.netflix.archaius.DefaultPropertyFactory;
+import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.annotations.ApplicationLayer;
+import com.netflix.archaius.annotations.EnvironmentLayer;
+import com.netflix.archaius.annotations.LibrariesLayer;
+import com.netflix.archaius.annotations.OverrideLayer;
+import com.netflix.archaius.annotations.RuntimeLayer;
+import com.netflix.archaius.annotations.SystemLayer;
+import com.netflix.archaius.cascade.NoCascadeStrategy;
+import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.DefaultSettableConfig;
+import com.netflix.archaius.config.EmptyConfig;
+import com.netflix.archaius.config.EnvironmentConfig;
+import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.interpolate.ConfigStrLookup;
+import com.netflix.archaius.loaders.PropertiesConfigReader;
 import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.DefaultConfigMapper;
-import com.netflix.archaius.mapper.IoCContainer;
 
 /**
- * Guice module with default bindings to enable AppConfig injection and 
+ * Guice module with default bindings to enable Config injection and 
  * configuration mapping/binding in a Guice based application.
  * 
- * To override the AppConfig binding use Guice's Modules.override()
+ * To override the binding use Guice's Modules.override()
  * 
  * <pre>
  * ```java
@@ -56,7 +67,7 @@ import com.netflix.archaius.mapper.IoCContainer;
  *     .with(new AbstractModule() {
  *         @Override
  *         protected void configure() {
- *             bind(AppConfig.class).toInstance(DefaultAppConfig.builder().withApplicationConfigName("mayapp").build());
+ *             bind(Config.class).to ...
  *         }
  *     })
  * ```
@@ -67,6 +78,14 @@ import com.netflix.archaius.mapper.IoCContainer;
  */
 public final class ArchaiusModule extends AbstractModule {
     
+    private static final String DEFAULT_CONFIG_NAME    = "application";
+    private static final String RUNTIME_LAYER_NAME     = "RUNTIME";
+    private static final String OVERRIDE_LAYER_NAME    = "OVERRIDE";
+    private static final String SYSTEM_LAYER_NAME      = "SYSTEM";
+    private static final String ENVIRONMENT_LAYER_NAME = "ENVIRONMENT";
+    private static final String APPLICATION_LAYER_NAME = "APPLICATION";
+    private static final String LIBRARIES_LAYER_NAME   = "LIBRARIES";
+
     public static class ConfigProvider<T> implements Provider<T> {
         private Class<T> type;
         
@@ -74,7 +93,7 @@ public final class ArchaiusModule extends AbstractModule {
         ConfigMapper mapper;
         
         @Inject
-        AppConfig config;
+        PropertyFactory factory;
         
         public ConfigProvider(Class<T> type) {
             this.type = type;
@@ -82,7 +101,7 @@ public final class ArchaiusModule extends AbstractModule {
 
         @Override
         public T get() {
-            return mapper.newProxy(type, config);
+            return mapper.newProxy(type, factory);
         }
     }
     
@@ -97,96 +116,203 @@ public final class ArchaiusModule extends AbstractModule {
         };
     }
     
-    public static class ConfigurationInjectingListener implements TypeListener, IoCContainer {
-        @Inject
-        private AppConfig appConfig;
-        
-        @Inject
-        private Injector injector;
-        
-        @Inject
-        private ConfigMapper mapper;
-        
-        @Override
-        public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
-            Class<?> clazz = typeLiteral.getRawType();
-            
-            //
-            // Configuration Loading
-            //
-            ConfigurationSource source = clazz.getAnnotation(ConfigurationSource.class);
-            if (source != null) {
-                encounter.register(new InjectionListener<I>() {
-                    @Override
-                    public void afterInjection(I injectee) {
-                        ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
-                        CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
-                                                 ? injector.getInstance(source.cascading()) 
-                                                 : null;
-                        if (source != null) {
-                            for (String value : source.value()) {
-                                try {
-                                    appConfig.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER)
-                                             .addConfig(appConfig.newLoader().withCascadeStrategy(strategy).load(value));
-                                } catch (ConfigException e) {
-                                    throw new ProvisionException("Unable to load configuration for " + value + " at source " + injectee.getClass(), e);
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-            
-            //
-            // Configuration binding
-            //
-            Configuration configAnnot = clazz.getAnnotation(Configuration.class);
-            if (configAnnot != null) {
-                encounter.register(new InjectionListener<I>() {
-                    @Override
-                    public void afterInjection(I injectee) {
-                        try {
-                            mapper.mapConfig(injectee, appConfig, ConfigurationInjectingListener.this);
-                        }
-                        catch (Exception e) {
-                            throw new ProvisionException("Unable to bind configuration to " + injectee.getClass(), e);
-                        }
-                    }
-                });
-            }        
-        }
-
-        @Override
-        public <T> T getInstance(String name, Class<T> type) {
-            return injector.getInstance(Key.get(type, Names.named(name)));
-        }
-    }
-
     @Override
     final protected void configure() {
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bindListener(Matchers.any(), listener);
+        
         bind(ConfigMapper.class).to(DefaultConfigMapper.class).in(Scopes.SINGLETON);
+        
+        Multibinder.newSetBinder(binder(), ConfigReader.class)
+            .addBinding().to(PropertiesConfigReader.class);
+        
+        binder().disableCircularProxies();
     }
     
     @Provides
     @Singleton
-    final AppConfig getAppConfig(CascadeStrategy defaultStrategy) throws ConfigException {
-        return DefaultAppConfig.builder()
-                .withDefaultCascadingStrategy(defaultStrategy)
-                .build();
+    @ApplicationLayer
+    final String getApplicationName() {
+        return DEFAULT_CONFIG_NAME;
     }
-
+    
+    public static class RuntimeLayerOptional {
+        @com.google.inject.Inject(optional=true)
+        @RuntimeLayer
+        Properties properties;
+    }
+    
     @Provides
     @Singleton
-    final Config getConfig(AppConfig config) {
+    @RuntimeLayer
+    final SettableConfig getSettableConfig(RuntimeLayerOptional optional) {
+        DefaultSettableConfig config = new DefaultSettableConfig();
+        if (optional.properties != null)
+            config.setProperties(optional.properties);
         return config;
     }
     
     @Provides
     @Singleton
-    final CascadeStrategy getDefaultCascadeStrategy() {
-        return DefaultAppConfig.DEFAULT_CASCADE_STRATEGY;
+    @ApplicationLayer
+    final CascadeStrategy getApplicationCascadeStrategy() {
+        return new NoCascadeStrategy();
+    }
+    
+    /**
+     * Default loader for the application configuration using replacements from 
+     * system and environment configuration
+     * 
+     * @param systemConfig
+     * @param envConfig
+     * @param readers
+     * @param strategy
+     * @param appName
+     * @return
+     * @throws ConfigException
+     */
+    @Provides
+    @Singleton
+    @ApplicationLayer
+    final Config getApplicationLayer(
+            @SystemLayer      Config            systemConfig, 
+            @EnvironmentLayer Config            envConfig, 
+            Set<ConfigReader>                   readers, 
+            @ApplicationLayer CascadeStrategy   strategy,
+            @ApplicationLayer String            appName) throws ConfigException {
+        
+        CompositeConfig config = new CompositeConfig();
+        config.addConfig(SYSTEM_LAYER_NAME, systemConfig);
+        config.addConfig(ENVIRONMENT_LAYER_NAME, envConfig);
+        
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .withStrLookup(ConfigStrLookup.from(config))
+                .withConfigReader(readers)
+                .withDefaultCascadingStrategy(strategy)
+                .withFailOnFirst(false)
+                .build();
+
+        return loader.newLoader().load(appName);
+    }
+    
+    /**
+     * This is the main config loader for the application.
+     * 
+     * @param rootConfig
+     * @param defaultStrategy
+     * @param readers
+     * @return
+     */
+    @Provides
+    @Singleton
+    final ConfigLoader getLoader(
+            Config              config,
+            CascadeStrategy     defaultStrategy,
+            Set<ConfigReader>   readers
+            ) {
+        return DefaultConfigLoader.builder()
+                .withConfigReader(readers)
+                .withDefaultCascadingStrategy(defaultStrategy)
+                .withFailOnFirst(false)
+                .withStrLookup(ConfigStrLookup.from(config))
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    @LibrariesLayer
+    final CompositeConfig getLibrariesLayer() {
+        return new CompositeConfig();
+    }
+    
+    @Provides
+    @Singleton
+    @SystemLayer
+    final Config getSystemLayer() {
+        return new SystemConfig();
+    }
+    
+    @Provides
+    @Singleton
+    @OverrideLayer
+    final CompositeConfig getOverrideLayer() {
+        return new CompositeConfig();
+    }
+    
+    @Provides
+    @Singleton
+    @OverrideLayer
+    final Config getOverrideLayer(@OverrideLayer CompositeConfig config) {
+        return config;
+    }
+    
+    @Provides
+    @Singleton
+    @EnvironmentLayer
+    final Config getEnvironmentLayer() {
+        return new EnvironmentConfig();
+    }
+    
+    @Provides
+    @Singleton
+    final CascadeStrategy getCascadeStrategy(@ApplicationLayer CascadeStrategy strategy) {
+        return strategy;
+    }
+
+    /**
+     * Override the binding to Config.class to specify a different override hierarchy
+     * 
+     * @param librariesLayer
+     * @param applicationLayer
+     * @param settableLayer
+     * @param overrideLayer
+     * @return
+     * @throws ConfigException
+     */
+    @Provides
+    @Singleton
+    final Config getConfig(
+            @RuntimeLayer     SettableConfig     settableLayer,
+            @OverrideLayer    Config             overrideLayer,
+            @SystemLayer      Config             systemLayer,
+            @EnvironmentLayer Config             environmentLayer,
+            @ApplicationLayer Config             applicationLayer, 
+            @LibrariesLayer   CompositeConfig    librariesLayer
+            ) throws ConfigException {
+        
+        CompositeConfig root = new CompositeConfig();
+        root.addConfig(RUNTIME_LAYER_NAME, settableLayer);
+        
+        if (!(overrideLayer instanceof EmptyConfig)) {
+            root.addConfig(OVERRIDE_LAYER_NAME, overrideLayer);
+        }
+        
+        if (!(systemLayer instanceof EmptyConfig)) {
+            root.addConfig(SYSTEM_LAYER_NAME, systemLayer);
+        }
+        
+        if (!(environmentLayer instanceof EmptyConfig)) {
+            root.addConfig(ENVIRONMENT_LAYER_NAME, environmentLayer);
+        }
+        
+        if (!(applicationLayer instanceof EmptyConfig)) {
+            root.addConfig(APPLICATION_LAYER_NAME, applicationLayer);
+        }
+        
+        root.addConfig(LIBRARIES_LAYER_NAME, librariesLayer);
+        
+        return root;
+    }
+    
+    /**
+     * Top level 'fast' property factory which is bound to the root configuration 
+     * @param root
+     * @return
+     */
+    @Provides
+    @Singleton
+    final PropertyFactory getPropertyFactory(final Config root) {
+        return DefaultPropertyFactory.from(root);
     }
 }

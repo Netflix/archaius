@@ -18,25 +18,18 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.Properties;
 
-public class SystemConfig extends InterpolatingConfig {
+public class SystemConfig extends AbstractConfig {
 
     public static final SystemConfig INSTANCE = new SystemConfig();
 
-    private static final String DEFAULT_NAME = "SYSTEM";
-    
     private final Properties props;
     
     public SystemConfig() {
-        this(DEFAULT_NAME);
-    }
-
-    public SystemConfig(String name) {
-        super(name);
         props = System.getProperties();
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return props.getProperty(key);
     }
 

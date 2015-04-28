@@ -25,7 +25,7 @@ import java.util.Properties;
 /**
  * Config backed by an immutable map.
  */
-public class MapConfig extends InterpolatingConfig {
+public class MapConfig extends AbstractConfig {
 
     /**
      * The builder only provides convenience for fluent style adding of properties
@@ -41,12 +41,7 @@ public class MapConfig extends InterpolatingConfig {
      * @author elandau
      */
     public static class Builder {
-        final String name;
         Map<String, String> map = new HashMap<String, String>();
-        
-        public Builder(String name) {
-            this.name = name;
-        }
         
         public <T> Builder put(String key, T value) {
             map.put(key, value.toString());
@@ -54,12 +49,20 @@ public class MapConfig extends InterpolatingConfig {
         }
         
         public MapConfig build() {
-            return new MapConfig(name, map);
+            return new MapConfig(map);
         }
     }
     
-    public static Builder builder(String name) {
-        return new Builder(name);
+    public static Builder builder() {
+        return new Builder();
+    }
+    
+    public static MapConfig from(Properties props) {
+        return new MapConfig(props);
+    }
+    
+    public static MapConfig from(Map<String, String> props) {
+        return new MapConfig(props);
     }
     
     private Map<String, String> props = new HashMap<String, String>();
@@ -69,8 +72,7 @@ public class MapConfig extends InterpolatingConfig {
      * @param name
      * @param props
      */
-    public MapConfig(String name, Map<String, String> props) {
-        super(name);
+    public MapConfig(Map<String, String> props) {
         this.props.putAll(props);
         this.props = Collections.unmodifiableMap(this.props);
     }
@@ -80,9 +82,7 @@ public class MapConfig extends InterpolatingConfig {
      * @param name
      * @param props
      */
-    public MapConfig(String name, Properties props) {
-        super(name);
-        
+    public MapConfig(Properties props) {
         for (Entry<Object, Object> entry : props.entrySet()) {
             this.props.put(entry.getKey().toString(), entry.getValue().toString());
         }
@@ -90,7 +90,7 @@ public class MapConfig extends InterpolatingConfig {
     }
     
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return props.get(key);
     }
 

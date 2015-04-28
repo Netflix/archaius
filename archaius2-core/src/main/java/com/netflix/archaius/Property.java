@@ -62,8 +62,18 @@ public interface Property<T> {
      */
     void unsubscribe();
 
+    /**
+     * Add a listener that will be called whenever the property value changes
+     * @param listener
+     * @return
+     */
     Property<T> addListener(PropertyListener<T> listener);
 
+    /**
+     * Remove a listener
+     * 
+     * @param listener
+     */
     void removeListener(PropertyListener<T> listener);
     
     

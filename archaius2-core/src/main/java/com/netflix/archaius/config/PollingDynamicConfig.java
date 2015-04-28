@@ -34,16 +34,14 @@ import com.netflix.archaius.config.polling.PollingResponse;
  * @author elandau
  *
  */
-public class PollingDynamicConfig extends InterpolatingConfig {
+public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
     private volatile Map<String, String> current = new HashMap<String, String>();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<PollingResponse> reader;
     
-    public PollingDynamicConfig(String name, Callable<PollingResponse> reader, PollingStrategy strategy) {
-        super(name);
-        
+    public PollingDynamicConfig(Callable<PollingResponse> reader, PollingStrategy strategy) {
         this.reader = reader;
         strategy.execute(new Runnable() {
             @Override
@@ -64,7 +62,7 @@ public class PollingDynamicConfig extends InterpolatingConfig {
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return current.get(key);
     }
 
@@ -75,15 +73,15 @@ public class PollingDynamicConfig extends InterpolatingConfig {
                 PollingResponse response = reader.call();
                 if (response.hasData()) {
                     current = response.getToAdd();
-                    notifyConfigUpdated();
+                    notifyConfigUpdated(this);
                 }
             }
             catch (Exception e) {
                 try {
-                    notifyError(e);
+                    notifyError(e, this);
                 }
                 catch (Exception e2) {
-                    LOG.warn("Failed to notify error observer for config " + getName());
+                    LOG.warn("Failed to notify error observer");
                 }
             }
             finally {

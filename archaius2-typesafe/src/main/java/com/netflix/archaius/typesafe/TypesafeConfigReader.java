@@ -25,15 +25,15 @@ import com.typesafe.config.ConfigParseOptions;
 
 public class TypesafeConfigReader implements ConfigReader {
     @Override
-    public com.netflix.archaius.Config load(ClassLoader loader, String name, String resourceName) throws ConfigException {
+    public com.netflix.archaius.Config load(ClassLoader loader, String resourceName) throws ConfigException {
         Config config = ConfigFactory.parseResourcesAnySyntax(loader, resourceName);
-        return new TypesafeConfig(name, config);
+        return new TypesafeConfig(config);
     }
 
     @Override
-    public com.netflix.archaius.Config load(ClassLoader loader, String name, URL url) throws ConfigException {
+    public com.netflix.archaius.Config load(ClassLoader loader, URL url) throws ConfigException {
         Config config = ConfigFactory.parseURL(url, ConfigParseOptions.defaults().setClassLoader(loader));
-        return new TypesafeConfig(name, config);
+        return new TypesafeConfig(config);
     }
 
     @Override

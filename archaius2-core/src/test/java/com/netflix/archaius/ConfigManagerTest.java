@@ -15,33 +15,32 @@
  */
 package com.netflix.archaius;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.config.SimpleDynamicConfig;
+import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.loaders.PropertiesConfigReader;
 import com.netflix.archaius.property.DefaultPropertyListener;
 
 public class ConfigManagerTest {
     @Test
     public void testBasicReplacement() throws ConfigException {
-        SimpleDynamicConfig dyn = new SimpleDynamicConfig("FAST");
+        DefaultSettableConfig dyn = new DefaultSettableConfig();
+
+        CompositeConfig config = new CompositeConfig();
         
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withApplicationConfigName("application")
-                .build();
-        
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(dyn);
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(MapConfig.builder("test")
+        config.addConfig("dyn", dyn);
+        config.addConfig("map", (MapConfig.builder()
                         .put("env",    "prod")
                         .put("region", "us-east")
                         .put("c",      123)
-                        .build());
+                        .build()));
         
-        Property<String> prop = config.getProperty("abc").asString("defaultValue");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<String> prop = factory.getProperty("abc").asString("defaultValue");
         
         prop.addListener(new DefaultPropertyListener<String>() {
             @Override
@@ -51,24 +50,5 @@ public class ConfigManagerTest {
         });
         
         dyn.setProperty("abc", "${c}");
-    }
-    
-    @Test
-    public void testDefaultConfiguration() throws ConfigException {
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withApplicationConfigName("application")
-                .build();
-        
-        DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
-                .withConfigReader(new PropertiesConfigReader())
-                .build();
-                
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(MapConfig.builder("test")
-                    .put("env",    "prod")
-                    .put("region", "us-east")
-                    .build());
-
-        Assert.assertTrue(config.getBoolean("application.loaded"));
     }
 }

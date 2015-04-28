@@ -21,23 +21,19 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class SimpleDynamicConfig extends InterpolatingConfig implements SettableConfig {
-    public SimpleDynamicConfig(String name) {
-        super(name);
-    }
-
+public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
     private ConcurrentMap<String, String> props = new ConcurrentHashMap<String, String>();
     
     @Override
     public <T> void setProperty(String propName, T propValue) {
         props.put(propName, propValue.toString());
-        notifyConfigUpdated();
+        notifyConfigUpdated(this);
     }
     
     @Override
     public void clearProperty(String propName) {
         props.remove(propName);
-        notifyConfigUpdated();
+        notifyConfigUpdated(this);
     }
 
     @Override
@@ -51,7 +47,7 @@ public class SimpleDynamicConfig extends InterpolatingConfig implements Settable
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return props.get(key);
     }
     

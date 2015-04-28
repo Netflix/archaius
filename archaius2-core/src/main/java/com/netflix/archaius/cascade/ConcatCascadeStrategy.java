@@ -67,7 +67,7 @@ public class ConcatCascadeStrategy implements CascadeStrategy {
     }
     
     @Override
-    public List<String> generate(String name, StrInterpolator interpolator) {
+    public List<String> generate(String name, StrInterpolator interpolator, StrInterpolator.Lookup lookup) {
         ArrayList<String> result = new ArrayList<String>();
         
         result.add(name);
@@ -75,7 +75,7 @@ public class ConcatCascadeStrategy implements CascadeStrategy {
         String current = name;
         for (String param : parameters) {
             current += separator + param;
-            result.add(interpolator.resolve(current));
+            result.add(interpolator.create(lookup).resolve(current));
         }
 
         return result;

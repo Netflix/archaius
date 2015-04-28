@@ -33,6 +33,7 @@ import com.netflix.archaius.PropertyFactory;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.exceptions.MappingException;
+import com.netflix.archaius.interpolate.ConfigStrLookup;
 
 public class DefaultConfigMapper implements ConfigMapper {
     private static final IoCContainer NULL_IOC_CONTAINER = new IoCContainer() {
@@ -59,7 +60,7 @@ public class DefaultConfigMapper implements ConfigMapper {
     }
 
     @Override
-    public <T> void mapConfig(T injectee, Config config, IoCContainer ioc) throws MappingException {
+    public <T> void mapConfig(T injectee, final Config config, IoCContainer ioc) throws MappingException {
         Configuration configAnnot = injectee.getClass().getAnnotation(Configuration.class);
         if (configAnnot == null) {
             return;
@@ -97,7 +98,7 @@ public class DefaultConfigMapper implements ConfigMapper {
         }
         
         // Interpolate using any replacements loaded into the configuration
-        prefix = config.getStrInterpolator().resolve(prefix).toString();
+        prefix = config.getStrInterpolator().create(ConfigStrLookup.from(config)).resolve(prefix);
         if (!prefix.isEmpty() && !prefix.endsWith("."))
             prefix += ".";
         

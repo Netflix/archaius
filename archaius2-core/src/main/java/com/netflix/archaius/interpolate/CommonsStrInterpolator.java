@@ -15,15 +15,28 @@
  */
 package com.netflix.archaius.interpolate;
 
+import org.apache.commons.lang3.text.StrLookup;
+import org.apache.commons.lang3.text.StrSubstitutor;
+
 import com.netflix.archaius.StrInterpolator;
 
-public class PassthroughStrInterpolator implements StrInterpolator {
+public class CommonsStrInterpolator implements StrInterpolator {
+    public static final CommonsStrInterpolator INSTNACE = new CommonsStrInterpolator();
+
     @Override
-    public Context create(Lookup lookup) {
+    public Context create(final Lookup lookup) {
+        final StrSubstitutor sub = new StrSubstitutor(
+              new StrLookup<String>() {
+                  @Override
+                  public String lookup(String key) {
+                      return lookup.lookup(key);
+                  }
+              }, "${", "}", '$');
+
         return new Context() {
             @Override
             public String resolve(String value) {
-                return value;
+                return sub.replace(value);
             }
         };
     }

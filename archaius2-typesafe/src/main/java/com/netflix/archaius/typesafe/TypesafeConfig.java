@@ -19,16 +19,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.netflix.archaius.config.InterpolatingConfig;
+import com.netflix.archaius.config.AbstractConfig;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
-public class TypesafeConfig extends InterpolatingConfig {
+public class TypesafeConfig extends AbstractConfig {
 
     private final Config config;
     
-    public TypesafeConfig(String name, Config config) {
-        super(name);
+    public TypesafeConfig(Config config) {
         this.config = config;
     }
 
@@ -43,7 +42,8 @@ public class TypesafeConfig extends InterpolatingConfig {
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
+        // TODO: Handle lists
         return config.getValue(key).unwrapped().toString();
     }
 

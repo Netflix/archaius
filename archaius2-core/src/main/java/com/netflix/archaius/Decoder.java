@@ -21,6 +21,5 @@ package com.netflix.archaius;
  * @author spencergibb
  */
 public interface Decoder {
-
 	<T> T decode(Class<T> type, String encoded);
 }

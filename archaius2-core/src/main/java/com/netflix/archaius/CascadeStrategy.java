@@ -40,5 +40,5 @@ public interface CascadeStrategy {
      * 
      * @return List of all names including the original name
      */
-    List<String> generate(String resource, StrInterpolator interpolator);
+    List<String> generate(String resource, StrInterpolator interpolator, StrInterpolator.Lookup lookup);
 }

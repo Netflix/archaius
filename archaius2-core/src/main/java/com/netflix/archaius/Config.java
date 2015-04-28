@@ -46,15 +46,10 @@ public interface Config {
     void removeListener(ConfigListener listener);
 
     /**
-     * @return  Arbitrary name assigned to this configuration
-     */
-    String getName();
-    
-    /**
-     * Return the raw, uninterpolated, string associated with a key.
+     * Return the raw, uninterpolated, object associated with a key.
      * @param key
      */
-    String getRawString(String key);
+    Object getRawProperty(String key);
     
     /**
      * Parse the property as a long.
@@ -138,11 +133,6 @@ public interface Config {
      * @return Return an interator to all prefixed property names owned by this config
      */
     Iterator<String> getKeys(String prefix);
-    
-    /**
-     * @return Return the interpolated String value for a property
-     */
-    String interpolate(String key);
     
     /**
      * @param prefix
