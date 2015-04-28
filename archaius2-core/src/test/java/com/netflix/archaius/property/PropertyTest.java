@@ -18,9 +18,11 @@ package com.netflix.archaius.property;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultAppConfig;
+import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.Property;
-import com.netflix.archaius.config.SimpleDynamicConfig;
+import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.config.DefaultSettableConfig;
+import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
 public class PropertyTest {
@@ -28,7 +30,7 @@ public class PropertyTest {
         private Property<Integer> value;
         private Property<Integer> value2;
         
-        public MyService(DefaultAppConfig config) {
+        public MyService(PropertyFactory config) {
             value  = config.getProperty("foo").asInteger(1).addListener(new MethodInvoker<Integer>(this, "setValue"));
             value2 = config.getProperty("foo").asInteger(2);
         }
@@ -40,11 +42,10 @@ public class PropertyTest {
     
     @Test
     public void test() throws ConfigException {
-        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
         
-        System.out.println("Configs: " + config.getLayerNames());
-        
-        MyService service = new MyService(config);
+        MyService service = new MyService(factory);
 
         Assert.assertEquals(1, (int)service.value.get());
         Assert.assertEquals(2, (int)service.value2.get());
@@ -57,13 +58,12 @@ public class PropertyTest {
     
     @Test
     public void testPropertyIsCached() throws ConfigException {
-        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
         
-        System.out.println("Configs: " + config.getLayerNames());
-        
-        Property<Integer> intProp1 = config.getProperty("foo").asInteger(1);
-        Property<Integer> intProp2 = config.getProperty("foo").asInteger(2);
-        Property<String>  strProp  = config.getProperty("foo").asString("3");
+        Property<Integer> intProp1 = factory.getProperty("foo").asInteger(1);
+        Property<Integer> intProp2 = factory.getProperty("foo").asInteger(2);
+        Property<String>  strProp  = factory.getProperty("foo").asString("3");
 
         Assert.assertEquals(1, (int)intProp1.get());
         Assert.assertEquals(2, (int)intProp2.get());
@@ -77,21 +77,17 @@ public class PropertyTest {
 
     @Test
     public void testUpdateDynamicChild() throws ConfigException {
-        SimpleDynamicConfig dynamic = new SimpleDynamicConfig("dyn");
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
         
-        DefaultAppConfig config = DefaultAppConfig.builder().withApplicationConfigName("application").build();
-        config.getCompositeLayer(DefaultAppConfig.OVERRIDE_LAYER).addConfig(dynamic);
-        
-        System.out.println("Configs: " + config.toString());
-        
-        Property<Integer> intProp1 = config.getProperty("foo").asInteger(1);
-        Property<Integer> intProp2 = config.getProperty("foo").asInteger(2);
-        Property<String>  strProp  = config.getProperty("foo").asString("3");
+        Property<Integer> intProp1 = factory.getProperty("foo").asInteger(1);
+        Property<Integer> intProp2 = factory.getProperty("foo").asInteger(2);
+        Property<String>  strProp  = factory.getProperty("foo").asString("3");
 
         Assert.assertEquals(1, (int)intProp1.get());
         Assert.assertEquals(2, (int)intProp2.get());
         
-        dynamic.setProperty("foo", "123");
+        config.setProperty("foo", "123");
         
         Assert.assertEquals("123", strProp.get());
         Assert.assertEquals((Integer)123, intProp1.get());

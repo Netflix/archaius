@@ -23,7 +23,7 @@ import org.junit.Test;
 
 public class AbstractConfigTest {
 
-    private final AbstractConfig config = new InterpolatingConfig("test") {
+    private final AbstractConfig config = new AbstractConfig() {
         @Override
         public boolean containsKey(String key) {
             return "foo".equals(key);
@@ -40,7 +40,7 @@ public class AbstractConfigTest {
         }
 
         @Override
-        public String getRawString(String key) {
+        public Object getRawProperty(String key) {
             return "bar";
         }
     };

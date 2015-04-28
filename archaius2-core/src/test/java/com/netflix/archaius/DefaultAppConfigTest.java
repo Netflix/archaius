@@ -21,6 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
+import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
@@ -30,26 +32,37 @@ public class DefaultAppConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        DefaultAppConfig config = DefaultAppConfig.builder()
-            .withApplicationConfigName("application")
-            .withProperties(props)
+        CompositeConfig libraries = new CompositeConfig();
+        CompositeConfig application = new CompositeConfig();
+        
+        CompositeConfig config = CompositeConfig.builder()
+                .withConfig("lib", libraries)
+                .withConfig("app", application)
+                .withConfig("set", MapConfig.from(props))
+                .build();
+
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+            .withStrLookup(config)
             .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}"))
             .build();
         
-        System.out.println(config);
+        application.addConfig("app", loader.newLoader().load("application"));
         
         Assert.assertTrue(config.getBoolean("application.loaded"));
         Assert.assertTrue(config.getBoolean("application-prod.loaded", false));
         
         Assert.assertFalse(config.getBoolean("libA.loaded", false));
         
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(config.newLoader().load("libA"));
+        libraries.addConfig("libA", loader.newLoader().load("libA"));
+        libraries.accept(new PrintStreamVisitor());
+        
+        config.accept(new PrintStreamVisitor());
         
         Assert.assertTrue(config.getBoolean("libA.loaded"));
         Assert.assertFalse(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(config.newLoader().load("libB"));
+        libraries.addConfig("libB", loader.newLoader().load("libB"));
         
         System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));
@@ -61,54 +74,48 @@ public class DefaultAppConfigTest {
     
     @Test
     public void interpolationShouldWork() throws ConfigException {
-        System.setProperty("env", "prod");
+        Config config = MapConfig.builder()
+                .put("env",         "prod")
+                .put("replacement", "${env}")
+                .build();
         
-        DefaultAppConfig config = DefaultAppConfig.builder()
-            .withApplicationConfigName("application")
-            .build();
-        
-        config.setProperty("replacement.env", "${env}");
-        
-        Assert.assertEquals("prod", config.getString("replacement.env"));
+        Assert.assertEquals("prod", config.getString("replacement"));
     }
     
     @Test(expected=IllegalStateException.class)
     public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
-        System.setProperty("env", "${env}");
-        
-        DefaultAppConfig config = DefaultAppConfig.builder()
-            .withApplicationConfigName("application")
-            .build();
-        
-        config.setProperty("replacement.env", "${env}");
+        Config config = MapConfig.builder()
+                .put("env", "${env}")
+                .put("replacement.env", "${env}")
+                .build();
         
         Assert.assertEquals("prod", config.getString("replacement.env"));
     }
     
     @Test
     public void numericInterpolationShouldWork() throws ConfigException  {
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withApplicationConfigName("application")
+        Config config = MapConfig.builder()
+                .put("default",     "123")
+                .put("value",       "${default}")
                 .build();
-            
-        config.setProperty("default", "123");
-        config.setProperty("value",   "${default}");
         
         Assert.assertEquals((long)123L, (long)config.getLong("value"));
     }
     
     @Test(expected=ConfigException.class)
     public void shouldFailWithNoApplicationConfig() throws ConfigException {
-        DefaultAppConfig.builder()
-            .withApplicationConfigName("non-existant")
-            .build();
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .build();
+        
+        loader.newLoader().load("non-existant");
     }
     
     @Test
     public void shouldNotFailWithNoApplicationConfig() throws ConfigException {
-        DefaultAppConfig.builder()
-            .withApplicationConfigName("non-existant")
-            .withFailOnFirstCascadeLoad(false)
-            .build();
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .withFailOnFirst(false)
+                .build();
+        
+        loader.newLoader().load("non-existant");
     }
 }

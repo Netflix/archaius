@@ -43,12 +43,6 @@ public interface ConfigLoader {
         Loader withCascadeStrategy(CascadeStrategy strategy);
         
         /**
-         * Arbitrary name assigned to the loaded Config.
-         * @param name
-         */
-        Loader withName(String name);
-        
-        /**
          * Class loader to use
          * @param loader
          */

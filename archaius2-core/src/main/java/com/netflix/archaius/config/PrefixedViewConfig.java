@@ -17,7 +17,6 @@ package com.netflix.archaius.config;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.NoSuchElementException;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
@@ -33,13 +32,11 @@ import com.netflix.archaius.StrInterpolator;
  * @author elandau
  *
  */
-public class PrefixedViewConfig extends DelegatingConfig {
+public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;
     
     public PrefixedViewConfig(String prefix, Config config) {
-        super(config.getName() + "|" + prefix);
-        
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
     }
@@ -74,15 +71,13 @@ public class PrefixedViewConfig extends DelegatingConfig {
     }
 
     @Override
-    protected Config getConfigWithProperty(String key, boolean failOnNotFound) {
+    public Object getRawProperty(String key) {
         if (config.containsKey(prefix + key)) {
-            return config;
+            return config.getRawProperty(prefix + key);
         }
-        if (failOnNotFound)
-            throw new NoSuchElementException("No child configuration has property " + key);
         return null;
     }
-
+    
     @Override
     public synchronized void setDecoder(Decoder decoder)
     {

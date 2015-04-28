@@ -18,25 +18,18 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.Map;
 
-public class EnvironmentConfig extends InterpolatingConfig {
+public class EnvironmentConfig extends AbstractConfig {
 
     public static final EnvironmentConfig INSTANCE = new EnvironmentConfig();
-    
-    private static final String DEFAULT_NAME = "ENVIRONMENT";
     
     private final Map<String, String> properties;
     
     public EnvironmentConfig() {
-        this(DEFAULT_NAME);
-    }
-
-    public EnvironmentConfig(String name) {
-        super(name);
         this.properties = System.getenv();
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return properties.get(key);
     }
 

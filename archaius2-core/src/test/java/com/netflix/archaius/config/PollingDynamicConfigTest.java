@@ -98,7 +98,7 @@ public class PollingDynamicConfigTest {
                 );
 
         ManualPollingStrategy strategy = new ManualPollingStrategy();
-        PollingDynamicConfig config = new PollingDynamicConfig(null, reader, strategy);
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
         
         // Initialize
         //  a=A
@@ -143,7 +143,7 @@ public class PollingDynamicConfigTest {
                 );
 
         ManualPollingStrategy strategy = new ManualPollingStrategy();
-        PollingDynamicConfig config = new PollingDynamicConfig(null, reader, strategy);
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
         
         final AtomicInteger errorCount = new AtomicInteger();
         final AtomicInteger updateCount = new AtomicInteger();

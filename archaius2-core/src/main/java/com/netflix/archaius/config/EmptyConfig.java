@@ -18,12 +18,13 @@ package com.netflix.archaius.config;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class EmptyConfig extends InterpolatingConfig {
+public final class EmptyConfig extends AbstractConfig {
 
-    public EmptyConfig(String name) {
-        super(name);
+    public static final EmptyConfig INSTANCE = new EmptyConfig();
+    
+    private EmptyConfig() {
     }
-
+    
     @Override
     public boolean containsKey(String key) {
         return false;
@@ -40,7 +41,7 @@ public class EmptyConfig extends InterpolatingConfig {
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return null;
     }
 

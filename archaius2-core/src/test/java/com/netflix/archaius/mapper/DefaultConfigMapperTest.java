@@ -20,10 +20,12 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultAppConfig;
+import com.netflix.archaius.Config;
+import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.config.EmptyConfig;
+import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.property.PrefixedObservablePropertyFactory;
 
 public class DefaultConfigMapperTest {
@@ -79,14 +81,11 @@ public class DefaultConfigMapperTest {
         props.put("prefix.double",   1.1);
         props.put("prefix.double2",  2.1);
         
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withProperties(props)
-                .withApplicationConfigName("application")
-                .build();
+        Config config = MapConfig.from(props);
 
         Assert.assertEquals("loaded", config.getString("prefix.string"));
         DefaultConfigMapper mapper = new DefaultConfigMapper();
-        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", config));
+        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
 
         Assert.assertEquals(1, c.getInteger());
         Assert.assertEquals(2, (int)c.getInteger2());
@@ -105,12 +104,10 @@ public class DefaultConfigMapperTest {
     
     @Test
     public void testProxyWithDefaults() throws ConfigException{
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withApplicationConfigName("application")
-                .build();
-
         DefaultConfigMapper mapper = new DefaultConfigMapper();
-        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", config));
+        Config config = EmptyConfig.INSTANCE;
+        
+        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
         
         Assert.assertEquals(123, c.getInteger());
         Assert.assertNull(c.getInteger2());

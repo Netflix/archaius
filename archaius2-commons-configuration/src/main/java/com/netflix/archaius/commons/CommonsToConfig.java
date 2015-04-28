@@ -19,7 +19,7 @@ import java.util.Iterator;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
-import com.netflix.archaius.config.InterpolatingConfig;
+import com.netflix.archaius.config.AbstractConfig;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
@@ -28,12 +28,11 @@ import com.netflix.archaius.config.InterpolatingConfig;
  * @author elandau
  *
  */
-public class CommonsToConfig extends InterpolatingConfig {
+public class CommonsToConfig extends AbstractConfig {
 
     private final AbstractConfiguration config;
     
     public CommonsToConfig(AbstractConfiguration config) {
-        super("");
         this.config = config;
     }
 
@@ -48,7 +47,7 @@ public class CommonsToConfig extends InterpolatingConfig {
     }
 
     @Override
-    public String getRawString(String key) {
+    public Object getRawProperty(String key) {
         return config.getString(key);
     }
 

@@ -27,11 +27,11 @@ import com.netflix.archaius.StrInterpolator;
  * @author elandau
  *
  */
-public class SimpleCascadeStrategy implements CascadeStrategy {
+public class NoCascadeStrategy implements CascadeStrategy {
     @Override
-    public List<String> generate(String name, StrInterpolator interpolator) {
+    public List<String> generate(String name, StrInterpolator interpolator, StrInterpolator.Lookup config) {
         List<String> list = new ArrayList<String>();
-        list.add(interpolator.resolve(name).toString());
+        list.add(name);
         return list;
     }
 }

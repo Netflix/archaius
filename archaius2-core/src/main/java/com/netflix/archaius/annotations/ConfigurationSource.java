@@ -22,6 +22,7 @@ import java.lang.annotation.Target;
 import java.util.List;
 
 import com.netflix.archaius.CascadeStrategy;
+import com.netflix.archaius.Config;
 import com.netflix.archaius.StrInterpolator;
 
 /**
@@ -54,7 +55,7 @@ public @interface ConfigurationSource {
     
     static class NullCascadeStrategy implements CascadeStrategy {
         @Override
-        public List<String> generate(String resource, StrInterpolator interpolator) {
+        public List<String> generate(String resource, StrInterpolator interpolator, StrInterpolator.Lookup lookup) {
             return null;
         }
     }

@@ -18,31 +18,27 @@ package com.netflix.archaius.typesafe;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultAppConfig;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.typesafe.TypesafeConfigReader;
 
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
-        DefaultAppConfig config = DefaultAppConfig.builder()
-                .withApplicationConfigName("application")
-                .build();
-                
+        CompositeConfig config = new CompositeConfig();
+        config.addConfig("prop", MapConfig.builder()
+                .put("env",    "prod")
+                .put("region", "us-east")
+                .build());
+        
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withConfigReader(new TypesafeConfigReader())
-                .withStrInterpolator(config.getStrInterpolator())
+                .withStrLookup(config)
                 .build();
         
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(MapConfig.builder("test")
-                        .put("env",    "prod")
-                        .put("region", "us-east")
-                        .build());
-        
-        config.getCompositeLayer(DefaultAppConfig.LIBRARY_LAYER).addConfig(loader.newLoader()
+        config.addConfig("foo", loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
         

@@ -20,21 +20,56 @@ package com.netflix.archaius;
  * 
  * For example,
  * 
+ * <pre>
  * foo=abc
- * 
- * resolve("123-$foo") -> 123-abc
+ * {@code
+ *  interpolator.create(lookup).resolve("123-${foo}") -> 123-abc
+ * }
+ * </pre>
  * 
  * @author elandau
  *
  */
 public interface StrInterpolator {
     /**
-     * Resolve a string with replaceable variables using the provided map to lookup replacement
-     * values.  The implementation should deal with nested replacements and throw an exception
-     * for infinite recursion. 
+     * Lookup of a raw string for replacements.  The lookup should not do any replacements.
+     * If a string with replacements is returned the interpolator will extract the key and
+     * call back into the lookup to get the value for that key.
      * 
-     * @param key
-     * @return
+     * @author elandau
      */
-    String resolve(String key);
+    public interface Lookup {
+        String lookup(String key);
+    }
+
+    /**
+     * Top level context 
+     * @author elandau
+     *
+     */
+    public interface Context {
+        /**
+         * Resolve a string with replaceable variables using the provided map to lookup replacement
+         * values.  The implementation should deal with nested replacements and throw an exception
+         * for infinite recursion. 
+         * 
+         * @param value
+         * @return
+         */
+        String resolve(String value);
+    }
+    
+    /**
+     * Create a context though which a value may be resolved.  A different context should be created
+     * for each string being resolved since it tracks state to handle things like circular references.
+     * 
+     * <pre>
+     * {@code
+     *    interplator.create(lookup).resolve("prefix-${foo}");
+     * }
+     * </pre>
+     * @author elandau
+     *
+     */
+    Context create(Lookup lookup);
 }

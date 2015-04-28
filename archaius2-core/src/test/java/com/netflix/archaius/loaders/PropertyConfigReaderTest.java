@@ -26,7 +26,7 @@ public class PropertyConfigReaderTest {
     @Test
     public void readerTest() throws ConfigException{
         PropertiesConfigReader reader = new PropertiesConfigReader();
-        Config config = reader.load(null, "apps", "application");
+        Config config = reader.load(null, "application");
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();

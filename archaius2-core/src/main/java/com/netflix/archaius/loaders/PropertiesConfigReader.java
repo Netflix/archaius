@@ -29,18 +29,18 @@ import com.netflix.archaius.readers.URLConfigReader;
 public class PropertiesConfigReader implements ConfigReader {
 
     @Override
-    public Config load(ClassLoader loader, String name, String resourceName) throws ConfigException {
+    public Config load(ClassLoader loader, String resourceName) throws ConfigException {
         URL url = getResource(loader, resourceName + ".properties");
         if (url == null) {
             throw new ConfigException("Unable to resolve URL for resource " + resourceName);
         }
-        return load(loader, name, url);
+        return load(loader, url);
     }
 
     @Override
-    public Config load(ClassLoader loader, String name, URL url) throws ConfigException {
+    public Config load(ClassLoader loader, URL url) throws ConfigException {
         try {
-            return new MapConfig(name, new URLConfigReader(url).call().getToAdd());
+            return new MapConfig(new URLConfigReader(url).call().getToAdd());
         } catch (IOException e) {
             throw new ConfigException("Unable to load URL " + url.toString(), e);
         }
