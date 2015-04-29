@@ -29,7 +29,7 @@ AppConfig config = DefaultAppConfig.createDefault();
 config.getString("propertyname");
 
 // Load configuration into the libraries level
-config.addConfig(config.newLoader().load("library");
+config.addConfig(config.newLoader().load("library"));
 
 // Get a property
 Property<String> prop = config.createProperty("propertyname").asString();
