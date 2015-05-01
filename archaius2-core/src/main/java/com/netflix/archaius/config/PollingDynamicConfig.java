@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ public class PollingDynamicConfig extends AbstractConfig {
     private volatile Map<String, String> current = new HashMap<String, String>();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<PollingResponse> reader;
+    private final AtomicLong updateCounter = new AtomicLong();
+    private final AtomicLong errorCounter = new AtomicLong();
     
     public PollingDynamicConfig(Callable<PollingResponse> reader, PollingStrategy strategy) {
         this.reader = reader;
@@ -69,6 +72,7 @@ public class PollingDynamicConfig extends AbstractConfig {
     private void update() {
         // OK to ignore calls to update() if already busy updating 
         if (busy.compareAndSet(false, true)) {
+            updateCounter.incrementAndGet();
             try {
                 PollingResponse response = reader.call();
                 if (response.hasData()) {
@@ -77,6 +81,7 @@ public class PollingDynamicConfig extends AbstractConfig {
                 }
             }
             catch (Exception e) {
+                errorCounter.incrementAndGet();
                 try {
                     notifyError(e, this);
                 }
@@ -90,6 +95,14 @@ public class PollingDynamicConfig extends AbstractConfig {
         }
     }
 
+    public long getUpdateCounter() {
+        return updateCounter.get();
+    }
+    
+    public long getErrorCounter() {
+        return errorCounter.get();
+    }
+    
     @Override
     public Iterator<String> getKeys() {
         return current.keySet().iterator();

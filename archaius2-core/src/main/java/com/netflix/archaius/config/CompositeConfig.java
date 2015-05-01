@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
-import com.netflix.archaius.StrInterpolator;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -268,38 +266,6 @@ public class CompositeConfig extends AbstractConfig {
             for (Config child : children) {
                 child.accept(visitor);
             }
-        }
-    }
-
-    @Override
-    public synchronized void setDecoder(Decoder decoder) {
-        super.setDecoder(decoder);
-        for (Config config : children) {
-            postConfigAdded(config);
-        }
-    }
-
-    @Override
-    public synchronized void setStrInterpolator(StrInterpolator interpolator) {
-        super.setStrInterpolator(interpolator);
-        for (Config config : children) {
-            postConfigAdded(config);
-        }
-    }
-
-    @Override
-    public synchronized void addListener(ConfigListener listener) {
-        super.addListener(listener);
-        for (Config config : children) {
-            postConfigAdded(config);
-        }
-    }
-
-    @Override
-    public synchronized void removeListener(ConfigListener listener) {
-        super.removeListener(listener);
-        for (Config config : children) {
-            postConfigAdded(config);
         }
     }
 }

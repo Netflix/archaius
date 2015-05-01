@@ -1,15 +1,15 @@
-package com.netflix.archaius.annotations;
+package com.netflix.archaius.inject;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.google.inject.BindingAnnotation;
+import javax.inject.Qualifier;
 
-@BindingAnnotation
+@Qualifier
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SystemLayer {
+public @interface OverrideLayer {
 
 }

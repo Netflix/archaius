@@ -18,9 +18,9 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigLoader;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.annotations.LibrariesLayer;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.mapper.ConfigMapper;
 import com.netflix.archaius.mapper.IoCContainer;
 
