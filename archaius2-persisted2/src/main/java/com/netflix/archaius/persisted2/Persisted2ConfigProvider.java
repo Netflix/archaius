@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import com.google.inject.ProvisionException;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
@@ -110,7 +109,7 @@ public class Persisted2ConfigProvider implements Provider<Config> {
                 .withPredicate(ScopePredicates.fromMap(config.getScopes()))
                 .build();
         } catch (Exception e) {
-            throw new ProvisionException("Error setting up reader", e);
+            throw new RuntimeException("Error setting up reader", e);
         }
         
         return new PollingDynamicConfig(reader, new FixedPollingStrategy(config.getRefreshRate(), TimeUnit.SECONDS));
