@@ -18,7 +18,7 @@ import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class PlatformServiceTest {
     // TODO: Provide an embedded version of this service.  For now these tests are run
-    // manually againsts internal Netflix systems
+    // manually against internal Netflix systems
     @Test
     @Ignore
     public void test() {
@@ -26,11 +26,12 @@ public class PlatformServiceTest {
             .withServiceUrl("http://platformservice.us-east-1.dyntest.netflix.net:7001/platformservice/REST/v2/properties/jsonFilterprops")
             .withQueryScope("env",    "test")
             .withQueryScope("region", "us-east-1")
+            .withQueryScope("appId",  "NCCP")
             .withScope("env",    "test")
             .withScope("region", "us-east-1")
-            .withScope("asg",    "app-v0001")
+            .withScope("appId",    "NCCP")
             .withPrioritizedScopes("env", "region", "asg", "stack", "serverId")
-            .withSkipPropsWithExtraScopes(true)
+//            .withSkipPropsWithExtraScopes(true)
             ;
 
         Injector injector = Guice.createInjector(Modules.override(new ArchaiusModule()).with(new AbstractModule() {

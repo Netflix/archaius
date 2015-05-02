@@ -68,7 +68,10 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     public static String getFilterString(Map<String, List<String>> scopes) {
         StringBuilder sb = new StringBuilder();
         for (Entry<String, List<String>> scope : scopes.entrySet()) {
-            if (sb.length() > 0 && !scope.getValue().isEmpty()) {
+            if (scope.getValue().isEmpty()) 
+                continue;
+            
+            if (sb.length() > 0) {
                 sb.append(" and ");
             }
             
@@ -83,7 +86,7 @@ public class Persisted2ConfigProvider implements Provider<Config> {
                     first = false;
                 }
                 sb.append(scope.getKey());
-                if ("null".equals(value)) {
+                if (null == value) {
                     sb.append(" is null");
                 }
                 else if (value.isEmpty()) {
