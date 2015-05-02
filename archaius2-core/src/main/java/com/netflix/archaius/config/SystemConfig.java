@@ -22,31 +22,25 @@ public class SystemConfig extends AbstractConfig {
 
     public static final SystemConfig INSTANCE = new SystemConfig();
 
-    private final Properties props;
-    
-    public SystemConfig() {
-        props = System.getProperties();
-    }
-
     @Override
     public Object getRawProperty(String key) {
-        return props.getProperty(key);
+        return System.getProperty(key);
     }
 
     @Override
     public boolean containsKey(String key) {
-        return props.containsKey(key);
+        return System.getProperty(key) != null;
     }
 
     @Override
     public boolean isEmpty() {
-        return props.isEmpty();
+        return false;
     }
 
     @Override
     public Iterator<String> getKeys() {
         return new Iterator<String>() {
-            Iterator<Object> obj = props.keySet().iterator();
+            Iterator<Object> obj = System.getProperties().keySet().iterator();
             
             @Override
             public boolean hasNext() {
