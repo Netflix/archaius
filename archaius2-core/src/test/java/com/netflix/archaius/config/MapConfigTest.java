@@ -17,9 +17,12 @@ package com.netflix.archaius.config;
 
 import java.util.NoSuchElementException;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.netflix.archaius.Config;
+import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
 
 public class MapConfigTest {
@@ -134,4 +137,36 @@ public class MapConfigTest {
     public void invalidShort() {
         config.getShort("badnumber");
     }
+    
+    @Test
+    public void interpolationShouldWork() throws ConfigException {
+        Config config = MapConfig.builder()
+                .put("env",         "prod")
+                .put("replacement", "${env}")
+                .build();
+        
+        Assert.assertEquals("prod", config.getString("replacement"));
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
+        Config config = MapConfig.builder()
+                .put("env", "${env}")
+                .put("replacement.env", "${env}")
+                .build();
+        
+        Assert.assertEquals("prod", config.getString("replacement.env"));
+    }
+    
+    @Test
+    public void numericInterpolationShouldWork() throws ConfigException  {
+        Config config = MapConfig.builder()
+                .put("default",     "123")
+                .put("value",       "${default}")
+                .build();
+        
+        Assert.assertEquals((long)123L, (long)config.getLong("value"));
+    }
+    
+
 }
