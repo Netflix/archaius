@@ -19,8 +19,10 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicStampedReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +31,11 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.Property;
 import com.netflix.archaius.PropertyContainer;
 import com.netflix.archaius.PropertyListener;
+import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
 
 /**
  * Implementation of PropertyContainer which reuses the same object for each
- * type.  This implementation is assumes that each fast property is mostly accessed
+ * type.  This implementation assumes that each fast property is mostly accessed
  * as the same type but allows for additional types to be deserialized.  
  * Instead of incurring the overhead for caching in a hash map, the objects are 
  * stored in a CopyOnWriteArrayList and items are retrieved via a linear scan.
@@ -77,24 +80,40 @@ public class DefaultPropertyContainer implements PropertyContainer {
         }
     }
 
+    /**
+     * The property name
+     */
     private final String key;
+    
+    /**
+     * Config from which property values are resolved
+     */
     private final Config config;
+    
+    /**
+     * Cache for each type attached to this property.  
+     */
     private final CopyOnWriteArrayList<CachedProperty<?>> cache = new CopyOnWriteArrayList<CachedProperty<?>>();
+    
+    /**
+     * Listeners are tracked globally as an optimization so it is not necessary to iterate through all 
+     * property containers when the listeners need to be invoked since the expectation is to have far
+     * less listeners than property containers.
+     */
+    private final ListenerManager listeners;
+    
+    /**
+     * Reference to the externally managed master version used as the dirty flag
+     */
+    private final AtomicInteger masterVersion;
+    
     private volatile long lastUpdateTimeInMillis = 0;
     
-    public DefaultPropertyContainer(String key, Config config) {
+    public DefaultPropertyContainer(String key, Config config, AtomicInteger version, ListenerManager listeners) {
         this.key = key;
         this.config = config;
-    }
-
-    @Override
-    public synchronized void update() {
-        boolean didUpdate = false;
-        for (CachedProperty<?> property : cache) {
-            didUpdate |= property.update();
-        }
-        if (didUpdate)  
-            lastUpdateTimeInMillis = System.currentTimeMillis();
+        this.listeners = listeners;
+        this.masterVersion = version;
     }
 
     abstract class CachedProperty<T> {
@@ -113,67 +132,123 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 return false;
             @SuppressWarnings("rawtypes")
             CachedProperty other = (CachedProperty) obj;
-            if (!getOuterType().equals(other.getOuterType()))
+            if (!getOuter().equals(other.getOuter()))
                 return false;
             return (type == other.type);
         }
 
-        private volatile T existing = null;
-        private CopyOnWriteArraySet<PropertyListener<T>> listeners = new CopyOnWriteArraySet<PropertyListener<T>>();
+        private final AtomicStampedReference<T> cache = new AtomicStampedReference<>(null, -1);
         private final int type;
         
         CachedProperty(Type type) {
             this.type = type.ordinal();
         }
         
-        public void addListener(PropertyListener<T> listener) {
-            this.listeners.add(listener);
+        public void addListener(final PropertyListener<T> listener, final T defaultValue) {
+            listeners.add(listener, new ListenerUpdater() {
+                private AtomicReference<T> last = new AtomicReference<T>(null);
+                
+                @Override
+                public void update() {
+                    final T prev = last.get();
+                    final T value;
+                    
+                    try {
+                        value = get(defaultValue);
+                    }
+                    catch (Exception e) {
+                        listener.onParseError(e);
+                        return;
+                    }
+
+                    if (prev != value) {
+                        if (last.compareAndSet(prev, value)) {
+                            listener.onChange(value);
+                        }
+                    }
+                }
+            });
         }
         
         public void removeListener(PropertyListener<T> listener) {
-            this.listeners.remove(listener);
+            listeners.remove(listener);
         }
         
-        boolean update() {
+        /**
+         * Update to the latest value and return either the new value or previous value if not updated
+         * or failed to resolve.
+         * 
+         * @param latestVersion
+         * @return
+         */
+        T updateAndGet(int latestVersion) {
+            int[] cacheVersion = new int[1];
+            T existing = cache.get(cacheVersion);
             try {
-                T next = getCurrent();
-                if ((next == null || existing == null) && next == existing) {
-                    return false;
-                }
-                else if (next == null || existing == null || !existing.equals(next)) {
-                    existing = next;
-                    // TODO: We need a plugable concurrency model here
-                    for (PropertyListener<T> observer : listeners) {
-                        observer.onChange(existing);
+                T value = resolveCurrent();
+                if (value != existing && (value == null || existing == null || !existing.equals(value))) {
+                    if (cache.compareAndSet(existing, value, cacheVersion[0], latestVersion)) {
+                        // Slight race condition here but not important enough to warrent locking
+                        lastUpdateTimeInMillis = System.currentTimeMillis();
+                        return value;
                     }
-                    return true;
+                    else {
+                        cache.getReference();
+                    }
                 }
             }
             catch (Exception e) {
                 LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
-                // TODO: We need a plugable concurrency model here
-                for (PropertyListener<T> observer : listeners) {
-                    observer.onParseError(e);
-                }
             }
-            return false;
+            return existing;
         }
         
-        public T get() {
-            return existing;
+        /**
+         * Fetch the latest version of the property.  If not up to date then resolve to the latest
+         * value, inline.
+         * 
+         * TODO: Make resolving property value an offline task
+         * 
+         * @return
+         */
+        public T get(T defaultValue) {
+            int cacheVersion = cache.getStamp();
+            int latestVersion  = masterVersion.get();
+            
+            T value;
+            if (cacheVersion != latestVersion) {
+                value = updateAndGet(latestVersion);
+            }
+            else {
+                value = cache.getReference();
+            }
+            return value != null ? value : defaultValue;
         }
         
         public long getLastUpdateTime(TimeUnit units) {
             return units.convert(lastUpdateTimeInMillis, TimeUnit.MILLISECONDS);
         }
 
-        private DefaultPropertyContainer getOuterType() {
+        private DefaultPropertyContainer getOuter() {
             return DefaultPropertyContainer.this;
         }
         
-        protected abstract T getCurrent() throws Exception;
+        /**
+         * Resolve to the most recent value
+         * @return
+         * @throws Exception
+         */
+        protected abstract T resolveCurrent() throws Exception;
     }
 
+    /**
+     * One of these is created every time a Property object is created from 
+     * PropertyFactory in client code.  A common object tracks each property
+     * but each instance in client code may use a different defaultValue.
+     * @author elandau
+     *
+     * @param <T>
+     */
     class AbstractProperty<T> implements Property<T>  {
 
         private final CachedProperty<T> delegate;
@@ -186,8 +261,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         
         @Override
         public T get() {
-            T value = delegate.get();
-            return value == null ? defaultValue : value;
+            return delegate.get(defaultValue);
         }
 
         @Override
@@ -197,11 +271,12 @@ public class DefaultPropertyContainer implements PropertyContainer {
 
         @Override
         public void unsubscribe() {
+            // TODO:
         }
 
         @Override
         public Property<T> addListener(PropertyListener<T> listener) {
-            delegate.addListener(listener);
+            delegate.addListener(listener, defaultValue);
             return this;
         }
 
@@ -209,7 +284,6 @@ public class DefaultPropertyContainer implements PropertyContainer {
         public void removeListener(PropertyListener<T> listener) {
             delegate.removeListener(listener);
         }
-        
     }
     
     /**
@@ -228,7 +302,6 @@ public class DefaultPropertyContainer implements PropertyContainer {
             }
         }
         
-        newProperty.update();
         return newProperty;
     }
     
@@ -254,7 +327,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<String>(Type.STRING) {
                 @Override
-                protected String getCurrent() throws Exception {
+                protected String resolveCurrent() throws Exception {
                     return config.getString(key, null);
                 }
             });
@@ -268,7 +341,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Integer>(Type.INTEGER) {
                 @Override
-                protected Integer getCurrent() throws Exception {
+                protected Integer resolveCurrent() throws Exception {
                     return config.getInteger(key, null);
                 }
             });
@@ -282,7 +355,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Long>(Type.LONG) {
                 @Override
-                protected Long getCurrent() throws Exception {
+                protected Long resolveCurrent() throws Exception {
                     return config.getLong(key, null);
                 }
             });
@@ -296,7 +369,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Double>(Type.DOUBLE) {
                 @Override
-                protected Double getCurrent() throws Exception {
+                protected Double resolveCurrent() throws Exception {
                     return config.getDouble(key, null);
                 }
             });
@@ -310,7 +383,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Float>(Type.FLOAT) {
                 @Override
-                protected Float getCurrent() throws Exception {
+                protected Float resolveCurrent() throws Exception {
                     return config.getFloat(key, null);
                 }
             });
@@ -324,7 +397,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Short>(Type.SHORT) {
                 @Override
-                protected Short getCurrent() throws Exception {
+                protected Short resolveCurrent() throws Exception {
                     return config.getShort(key, null);
                 }
             });
@@ -338,7 +411,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Byte>(Type.BYTE) {
                 @Override
-                protected Byte getCurrent() throws Exception {
+                protected Byte resolveCurrent() throws Exception {
                     return config.getByte(key, null);
                 }
             });
@@ -352,7 +425,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<BigDecimal>(Type.BIG_DECIMAL) {
                 @Override
-                protected BigDecimal getCurrent() throws Exception {
+                protected BigDecimal resolveCurrent() throws Exception {
                     return config.getBigDecimal(key, null);
                 }
             });
@@ -366,7 +439,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<Boolean>(Type.BOOLEAN) {
                 @Override
-                protected Boolean getCurrent() throws Exception {
+                protected Boolean resolveCurrent() throws Exception {
                     return config.getBoolean(key, null);
                 }
             });
@@ -380,7 +453,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         if (prop == null) {
             prop = add(new CachedProperty<BigInteger>(Type.BIG_INTEGER) {
                 @Override
-                protected BigInteger getCurrent() throws Exception {
+                protected BigInteger resolveCurrent() throws Exception {
                     return config.getBigInteger(key, null);
                 }
             });
@@ -422,7 +495,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
                     if (constructor != null) {
                         CachedProperty<T> prop = add(new CachedProperty<T>(Type.CUSTOM) {
                             @Override
-                            protected T getCurrent() throws Exception {
+                            protected T resolveCurrent() throws Exception {
                                 String value = config.getString(key);
                                 if (value == null) {
                                     return null;

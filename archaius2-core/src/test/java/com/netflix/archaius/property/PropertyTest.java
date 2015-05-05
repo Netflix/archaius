@@ -15,12 +15,15 @@
  */
 package com.netflix.archaius.property;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.Property;
 import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.PropertyListener;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.exceptions.ConfigException;
@@ -94,4 +97,73 @@ public class PropertyTest {
         Assert.assertEquals((Integer)123, intProp2.get());
     }
 
+    @Test
+    public void testDefaultNull() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(null);
+        Assert.assertNull(prop.get());
+    }
+    
+    @Test
+    public void testDefault() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(123);
+        Assert.assertEquals(123, prop.get().intValue());
+    }
+    
+    @Test
+    public void testUpdateValue() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("goo", "456");
+        
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(123);
+        config.setProperty("foo", 1);
+        
+        Assert.assertEquals(1, prop.get().intValue());
+        
+        config.clearProperty("foo");
+        Assert.assertEquals(123, prop.get().intValue());
+        
+        config.setProperty("foo", "${goo}");
+        Assert.assertEquals(456, prop.get().intValue());
+
+    }
+    
+    @Test
+    public void testUpdateCallback() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("goo", "456");
+        
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(123);
+        final AtomicInteger current = new AtomicInteger();
+        prop.addListener(new PropertyListener<Integer>() {
+            @Override
+            public void onChange(Integer value) {
+                System.out.println("Value: " + value);
+                current.set(value);
+            }
+
+            @Override
+            public void onParseError(Throwable error) {
+            }
+        });
+        
+        Assert.assertEquals(123, current.intValue());
+        config.setProperty("foo", 1);
+        Assert.assertEquals(1, current.intValue());
+        config.setProperty("foo", 2);
+        Assert.assertEquals(2, current.intValue());
+        config.clearProperty("foo");
+        Assert.assertEquals(123, current.intValue());
+        config.setProperty("foo", "${goo}");
+        Assert.assertEquals(456, current.intValue());
+    }
 }

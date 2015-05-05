@@ -19,12 +19,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public interface PropertyContainer {
-    
-    /**
-     * Notify the container that it should fetch the latest property value
-     */
-    void update();
-    
     /**
      * Parse the property as a string 
      */

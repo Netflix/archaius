@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius;
+package com.netflix.archaius.config;
 
 import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
-public class DefaultAppConfigTest {
+public class CompositeConfigTest {
     @Test
-    public void testAppAndLibraryLoading() throws ConfigException {
+    public void basicTest() throws ConfigException {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
@@ -70,52 +69,5 @@ public class DefaultAppConfigTest {
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
         config.accept(new PrintStreamVisitor());
-    }
-    
-    @Test
-    public void interpolationShouldWork() throws ConfigException {
-        Config config = MapConfig.builder()
-                .put("env",         "prod")
-                .put("replacement", "${env}")
-                .build();
-        
-        Assert.assertEquals("prod", config.getString("replacement"));
-    }
-    
-    @Test(expected=IllegalStateException.class)
-    public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
-        Config config = MapConfig.builder()
-                .put("env", "${env}")
-                .put("replacement.env", "${env}")
-                .build();
-        
-        Assert.assertEquals("prod", config.getString("replacement.env"));
-    }
-    
-    @Test
-    public void numericInterpolationShouldWork() throws ConfigException  {
-        Config config = MapConfig.builder()
-                .put("default",     "123")
-                .put("value",       "${default}")
-                .build();
-        
-        Assert.assertEquals((long)123L, (long)config.getLong("value"));
-    }
-    
-    @Test(expected=ConfigException.class)
-    public void shouldFailWithNoApplicationConfig() throws ConfigException {
-        DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .build();
-        
-        loader.newLoader().load("non-existant");
-    }
-    
-    @Test
-    public void shouldNotFailWithNoApplicationConfig() throws ConfigException {
-        DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withFailOnFirst(false)
-                .build();
-        
-        loader.newLoader().load("non-existant");
     }
 }
