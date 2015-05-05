@@ -175,15 +175,15 @@ public class CompositeConfig extends AbstractConfig {
      * @param name
      * @return
      */
-    public synchronized boolean removeConfig(String name) {
+    public synchronized Config removeConfig(String name) {
         Config child = this.lookup.remove(name);
         if (child != null) {
             this.children.remove(child);
             child.removeListener(listener);
             this.notifyConfigRemoved(child);
-            return true;
+            return child;
         }
-        return false;
+        return null;
     }    
     
     /**
