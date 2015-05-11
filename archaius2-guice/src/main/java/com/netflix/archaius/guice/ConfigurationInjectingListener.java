@@ -16,13 +16,13 @@ import com.google.inject.spi.TypeListener;
 import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.ConfigMapper;
+import com.netflix.archaius.IoCContainer;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.mapper.ConfigMapper;
-import com.netflix.archaius.mapper.IoCContainer;
 
 public class ConfigurationInjectingListener implements TypeListener, IoCContainer {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);

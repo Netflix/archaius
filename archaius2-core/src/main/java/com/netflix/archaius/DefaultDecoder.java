@@ -23,6 +23,8 @@ import java.lang.reflect.Method;
  */
 public class DefaultDecoder implements Decoder {
 
+    public static DefaultDecoder INSTANCE = new DefaultDecoder();
+    
     @SuppressWarnings("unchecked")
     @Override
     public <T> T decode(Class<T> type, String encoded) {

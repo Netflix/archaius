@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius.mapper;
+package com.netflix.archaius;
 
 /**
  * Interface used by ConfigBinder to integrate with a DI framework that 
