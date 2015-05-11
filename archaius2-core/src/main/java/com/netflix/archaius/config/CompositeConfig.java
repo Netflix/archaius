@@ -36,11 +36,14 @@ import com.netflix.archaius.exceptions.ConfigException;
  * Config that is a composite of multiple configuration and as such doesn't track 
  * properties of its own.  The composite does not merge the configurations but instead
  * treats them as overrides so that a property existing in a configuration supersedes
- * the same property in configuration that was previously added.
+ * the same property in configuration that was added later.  It is however possible
+ * to set a flag that reverses the override order.
  * 
  * @author elandau
  *
  * TODO: Optional cache of queried properties
+ * TODO: Resolve method to collapse all the child configurations into a single config
+ * TODO: Combine children and lookup into a single LinkedHashMap
  */
 public class CompositeConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(CompositeConfig.class);
@@ -77,8 +80,14 @@ public class CompositeConfig extends AbstractConfig {
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
     private final Map<String, Config>           lookup    = new LinkedHashMap<String, Config>();
     private final ConfigListener                listener;
+    private final boolean                       reversed;
     
     public CompositeConfig() {
+        this(false);
+    }
+    
+    public CompositeConfig(boolean reversed) {
+        this.reversed = reversed;
         listener = new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
@@ -125,11 +134,16 @@ public class CompositeConfig extends AbstractConfig {
         }
         
         if (lookup.containsKey(name)) {
-            throw new ConfigException("Configuration with name " + name + " already exists");
+            throw new ConfigException(String.format("Configuration with name '%s' already exists", name));
         }
 
         lookup.put(name, child);
-        children.add(child);
+        if (reversed) {
+            children.add(0, child);
+        }
+        else {
+            children.add(child);
+        }
         child.addListener(listener);
         postConfigAdded(child);
     }
@@ -227,6 +241,13 @@ public class CompositeConfig extends AbstractConfig {
         return true;
     }
 
+    /**
+     * Return a set of all unique keys tracked by any child of this composite.
+     * This can be an expensive operations as it requires iterating through all of
+     * the children.
+     * 
+     * TODO: Cache keys
+     */
     @Override
     public Iterator<String> getKeys() {
         LinkedHashSet<String> result = new LinkedHashSet<String>();

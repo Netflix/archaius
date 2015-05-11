@@ -70,4 +70,49 @@ public class CompositeConfigTest {
         
         config.accept(new PrintStreamVisitor());
     }
+    
+    @Test
+    public void basicReversedTest() throws ConfigException {
+        Properties props = new Properties();
+        props.setProperty("env", "prod");
+        
+        CompositeConfig libraries = new CompositeConfig(true);
+        CompositeConfig application = new CompositeConfig();
+        
+        CompositeConfig config = CompositeConfig.builder()
+                .withConfig("lib", libraries)
+                .withConfig("app", application)
+                .withConfig("set", MapConfig.from(props))
+                .build();
+
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+            .withStrLookup(config)
+            .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}"))
+            .build();
+        
+        application.addConfig("app", loader.newLoader().load("application"));
+        
+        Assert.assertTrue(config.getBoolean("application.loaded"));
+        Assert.assertTrue(config.getBoolean("application-prod.loaded", false));
+        
+        Assert.assertFalse(config.getBoolean("libA.loaded", false));
+        
+        libraries.addConfig("libA", loader.newLoader().load("libA"));
+        libraries.accept(new PrintStreamVisitor());
+        
+        config.accept(new PrintStreamVisitor());
+        
+        Assert.assertTrue(config.getBoolean("libA.loaded"));
+        Assert.assertFalse(config.getBoolean("libB.loaded", false));
+        Assert.assertEquals("libA", config.getString("libA.overrideA"));
+        
+        libraries.addConfig("libB", loader.newLoader().load("libB"));
+        
+        System.out.println(config.toString());
+        Assert.assertTrue(config.getBoolean("libA.loaded"));
+        Assert.assertTrue(config.getBoolean("libB.loaded"));
+        Assert.assertEquals("libB", config.getString("libA.overrideA"));
+        
+        config.accept(new PrintStreamVisitor());
+    }
 }

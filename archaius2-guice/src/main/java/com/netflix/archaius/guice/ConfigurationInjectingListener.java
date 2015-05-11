@@ -43,6 +43,9 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
     @Inject
     private ConfigLoader loader;
     
+    @Inject
+    private CascadeStrategy defaultStrategy;
+    
     @Override
     public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
         Class<?> clazz = typeLiteral.getRawType();
@@ -58,7 +61,7 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? injector.getInstance(source.cascading()) 
-                                             : null;
+                                             : defaultStrategy;
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {

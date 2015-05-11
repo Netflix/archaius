@@ -33,3 +33,6 @@ eclipse {
     }
 }
 
+test {
+    forkEvery = 1
+}
