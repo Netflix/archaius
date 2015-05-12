@@ -16,7 +16,6 @@
 package com.netflix.archaius.config;
 
 import java.util.Iterator;
-import java.util.Properties;
 
 public class SystemConfig extends AbstractConfig {
 

@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius.mapper;
+package com.netflix.archaius;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.Decoder;
-import com.netflix.archaius.DefaultDecoder;
-import com.netflix.archaius.Property;
-import com.netflix.archaius.PropertyFactory;
 import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 
-public class DefaultConfigMapper implements ConfigMapper {
+public class ConfigMapper {
     private static final IoCContainer NULL_IOC_CONTAINER = new IoCContainer() {
         @Override
         public <T> T getInstance(String name, Class<T> type) {
@@ -44,22 +36,36 @@ public class DefaultConfigMapper implements ConfigMapper {
     };
     
     private final boolean allowPostConfigure;
-    private final Decoder decoder = new DefaultDecoder();
     
-    public DefaultConfigMapper() {
+    public ConfigMapper() {
         this(true);
     }
     
-    public DefaultConfigMapper(boolean allowPostConfigure) {
+    public ConfigMapper(boolean allowPostConfigure) {
         this.allowPostConfigure = allowPostConfigure;
     }
     
-    @Override
+    /**
+     * Map the configuration from the provided config object onto the injectee and use
+     * the provided IoCContainer to inject named bindings.
+     * 
+     * @param injectee
+     * @param config
+     * @param ioc
+     * @throws MappingException
+     */
     public <T> void mapConfig(T injectee, Config config) throws MappingException {
         mapConfig(injectee, config, NULL_IOC_CONTAINER);
     }
 
-    @Override
+    /**
+     * Map the configuration from the provided config object onto the injectee.
+     * 
+     * @param injectee
+     * @param config
+     * @param ioc
+     * @throws MappingException
+     */
     public <T> void mapConfig(T injectee, final Config config, IoCContainer ioc) throws MappingException {
         Configuration configAnnot = injectee.getClass().getAnnotation(Configuration.class);
         if (configAnnot == null) {
@@ -191,55 +197,5 @@ public class DefaultConfigMapper implements ConfigMapper {
                 throw new MappingException("Unable to invoke postConfigure method " + configAnnot.postConfigure(), e);
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> T newProxy(Class<T> type, PropertyFactory factory) {
-        Configuration annot = type.getAnnotation(Configuration.class);
-        
-        String prefix = annot == null 
-                      ? "" 
-                      : !annot.prefix().isEmpty() && !annot.prefix().endsWith(".")
-                          ? annot.prefix() + "."
-                          : annot.prefix();
-        
-        // Iterate through all declared methods of the class looking for setter methods.
-        // Each setter will be mapped to a Property<T> for the property name:
-        //      prefix + lowerCamelCaseDerivedPropertyName
-        final Map<Method, Property<?>> properties = new HashMap<Method, Property<?>>();
-        for (Method m : type.getDeclaredMethods()) {
-            if (!m.getName().startsWith("get")) {
-                continue;
-            }
-            
-            Object defaultValue = null;
-            DefaultValue annotDefaultValue = m.getAnnotation(DefaultValue.class);
-            Class<?> returnType = m.getReturnType();
-            if (annotDefaultValue != null) {
-                try {
-                    defaultValue = decoder.decode(returnType, annotDefaultValue.value());
-                } catch (Exception e) {
-                    throw new RuntimeException("No accessible valueOf(String) method to parse default value for type " + returnType.getName(), e);
-                }
-            }
-            
-            if (returnType.isPrimitive() && defaultValue == null) {
-                throw new RuntimeException("Method with primite return type must have a @DefaultValue.  method=" + m.getName());
-            }
-            
-            // TODO: default value
-            // TODO: sub proxy for non-primitive types
-            String propName = prefix + Character.toLowerCase(m.getName().charAt(3)) + m.getName().substring(4);
-            properties.put(m, factory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue));
-        }
-        
-        final InvocationHandler handler = new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return properties.get(method).get();
-            }
-        };
-        return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
     }
 }

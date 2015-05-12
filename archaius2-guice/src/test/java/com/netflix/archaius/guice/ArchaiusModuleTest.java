@@ -31,6 +31,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
+import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.Property;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
@@ -48,7 +49,6 @@ import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.OverrideLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.archaius.inject.SystemLayer;
-import com.netflix.archaius.mapper.DefaultConfigMapper;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class ArchaiusModuleTest {
@@ -227,7 +227,7 @@ public class ArchaiusModuleTest {
                 .put("prefix.foo.123.loaded", "loaded")
                 .build();
         
-        DefaultConfigMapper binder = new DefaultConfigMapper();
+        ConfigMapper binder = new ConfigMapper();
         
         ChildService service = new ChildService("foo", 123L);
         binder.mapConfig(service, config);

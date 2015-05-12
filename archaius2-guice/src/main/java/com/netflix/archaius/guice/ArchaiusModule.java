@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Providers;
@@ -32,9 +31,12 @@ import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigLoader;
 import com.netflix.archaius.ConfigReader;
+import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultConfigLoader;
+import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
@@ -51,8 +53,6 @@ import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.archaius.inject.SystemLayer;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.loaders.PropertiesConfigReader;
-import com.netflix.archaius.mapper.ConfigMapper;
-import com.netflix.archaius.mapper.DefaultConfigMapper;
 
 /**
  * Guice module with default bindings to enable Config injection and 
@@ -90,7 +90,7 @@ public final class ArchaiusModule extends AbstractModule {
         private Class<T> type;
         
         @Inject
-        ConfigMapper mapper;
+        ProxyFactory proxy;
         
         @Inject
         PropertyFactory factory;
@@ -101,7 +101,7 @@ public final class ArchaiusModule extends AbstractModule {
 
         @Override
         public T get() {
-            return mapper.newProxy(type, factory);
+            return proxy.newProxy(type, factory);
         }
     }
     
@@ -121,8 +121,6 @@ public final class ArchaiusModule extends AbstractModule {
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bindListener(Matchers.any(), listener);
-        
-        bind(ConfigMapper.class).to(DefaultConfigMapper.class).in(Scopes.SINGLETON);
         
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class);
@@ -258,6 +256,12 @@ public final class ArchaiusModule extends AbstractModule {
     @Singleton
     final CascadeStrategy getCascadeStrategy(@ApplicationLayer CascadeStrategy strategy) {
         return strategy;
+    }
+    
+    @Provides
+    @Singleton
+    final Decoder getDecoder() {
+        return DefaultDecoder.INSTANCE;
     }
 
     /**

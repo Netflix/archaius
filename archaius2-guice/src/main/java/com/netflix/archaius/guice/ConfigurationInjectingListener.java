@@ -16,13 +16,13 @@ import com.google.inject.spi.TypeListener;
 import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.ConfigMapper;
+import com.netflix.archaius.IoCContainer;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.mapper.ConfigMapper;
-import com.netflix.archaius.mapper.IoCContainer;
 
 public class ConfigurationInjectingListener implements TypeListener, IoCContainer {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
@@ -43,6 +43,9 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
     @Inject
     private ConfigLoader loader;
     
+    @Inject
+    private CascadeStrategy defaultStrategy;
+    
     @Override
     public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
         Class<?> clazz = typeLiteral.getRawType();
@@ -58,7 +61,7 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? injector.getInstance(source.cascading()) 
-                                             : null;
+                                             : defaultStrategy;
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {

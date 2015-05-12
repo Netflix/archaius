@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultPropertyFactory;
+import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
@@ -84,8 +85,8 @@ public class DefaultConfigMapperTest {
         Config config = MapConfig.from(props);
 
         Assert.assertEquals("loaded", config.getString("prefix.string"));
-        DefaultConfigMapper mapper = new DefaultConfigMapper();
-        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
+        ProxyFactory proxy = new ProxyFactory();
+        MyConfig c = proxy.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
 
         Assert.assertEquals(1, c.getInteger());
         Assert.assertEquals(2, (int)c.getInteger2());
@@ -104,10 +105,10 @@ public class DefaultConfigMapperTest {
     
     @Test
     public void testProxyWithDefaults() throws ConfigException{
-        DefaultConfigMapper mapper = new DefaultConfigMapper();
         Config config = EmptyConfig.INSTANCE;
         
-        MyConfig c = mapper.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
+        ProxyFactory proxy = new ProxyFactory();
+        MyConfig c = proxy.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
         
         Assert.assertEquals(123, c.getInteger());
         Assert.assertNull(c.getInteger2());

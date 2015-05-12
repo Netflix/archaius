@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius.mapper;
 
-/**
- * Interface used by ConfigBinder to integrate with a DI framework that 
- * allows for named injection.  This integration enables binding a string
- * value for a type to a DI bound instance.
- * 
- * @author elandau
- *
- */
-public interface IoCContainer {
-    /**
-     * @param name
-     * @param type
-     * @return Return the instance for type T bound to 'name'
-     */
-    public <T> T getInstance(String name, Class<T> type);
+apply plugin: 'java'
+
+dependencies {
+    compile  project(':archaius2-core')
+    compile  project(':archaius2-guice')
+    compile  project(':archaius2-commons-configuration')
+    compile  'com.netflix.archaius:archaius-core:0.6.5'
+
+    testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
+    testCompile 'junit:junit:4.11'
+}
+
+eclipse {
+    classpath {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+test {
+    forkEvery = 1
 }
