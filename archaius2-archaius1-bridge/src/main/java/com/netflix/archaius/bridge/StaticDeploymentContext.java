@@ -2,6 +2,7 @@ package com.netflix.archaius.bridge;
 
 import javax.inject.Inject;
 
+import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
 
 /**
@@ -15,6 +16,7 @@ public class StaticDeploymentContext implements DeploymentContext {
     @Inject
     public static void initialize(DeploymentContext context) {
         delegate = context;
+        ConfigurationManager.setDeploymentContext(context);
     }
     
     public static void reset() {

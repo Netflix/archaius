@@ -15,6 +15,7 @@ import org.junit.Test;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
@@ -27,8 +28,8 @@ import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
+import com.netflix.config.DeploymentContext;
 
-@Ignore
 public class AbstractConfigurationBridgeTest {
     @Singleton
     public static class SomeClient {
@@ -81,6 +82,7 @@ public class AbstractConfigurationBridgeTest {
     }
     
     @Test
+    @Ignore
     public void testBasicWiring() {
         final Properties props = new Properties();
         props.setProperty("foo", "bar");
@@ -108,6 +110,7 @@ public class AbstractConfigurationBridgeTest {
     }
     
     @Test
+    @Ignore
     public void confirmOverrideOrder() throws IOException {
         ConfigurationManager.getConfigInstance();
         Assert.assertFalse(ConfigurationManager.isConfigurationInstalled());
@@ -132,8 +135,11 @@ public class AbstractConfigurationBridgeTest {
     }
     
     @Test
-    public void confirmLegacyOverrideOrder2() throws IOException {
+    public void basicBridgeTest() throws IOException {
         ConfigurationManager.getConfigInstance();
+        DeploymentContext context1 = ConfigurationManager.getDeploymentContext();
+        Assert.assertNotNull(context1);
+        Assert.assertEquals(null, context1.getDeploymentEnvironment());
         
         Injector injector = Guice.createInjector(
                 new TestModule(),
@@ -145,12 +151,23 @@ public class AbstractConfigurationBridgeTest {
                 });
 
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
-        
+        DeploymentContext contextDi = injector.getInstance(DeploymentContext.class);
+        Assert.assertNotSame(contextDi, context1);
         ConfigurationManager.loadCascadedPropertiesFromResources("libA");
         Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config1.getString("lib.override", null));
         
         Config config2 = injector.getInstance(Config.class);
+        SettableConfig settable = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
+        settable.setProperty("@environment", "foo");
+        
+        DeploymentContext context2 = ConfigurationManager.getDeploymentContext();
+        
+        Assert.assertEquals("foo", ConfigurationManager.getDeploymentContext().getDeploymentEnvironment());
+        Assert.assertEquals("foo", context2.getDeploymentEnvironment());
+        Assert.assertNotSame(contextDi, context1);
+        Assert.assertEquals("foo", context1.getDeploymentEnvironment());
+        
         Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config2.getString("lib.override", null));
         
