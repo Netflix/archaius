@@ -33,10 +33,8 @@ import com.netflix.config.DeploymentContext;
 public class StaticArchaiusBridgeModule extends AbstractModule {
     @Override
     protected void configure() {
-        // Tell archaius to use these configuration classes.  These classes acts as proxies to the 
+        // Tell archaius to use these configuration classes.  These classes act as proxies to the 
         // Guice managed ConfigBasedDeploymentContext and AbstractConfigurationBridge.
-        System.setProperty("archaius.default.configuration.class",     StaticAbstractConfiguration.class.getName());
-        System.setProperty("archaius.default.deploymentContext.class", StaticDeploymentContext.class.getName());
         
         requestStaticInjection(StaticAbstractConfiguration.class);
         requestStaticInjection(StaticDeploymentContext.class);
