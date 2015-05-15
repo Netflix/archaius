@@ -33,7 +33,7 @@ public class TypesafeConfig extends AbstractConfig {
 
     @Override
     public boolean containsKey(String key) {
-        return config.hasPath(key);
+        return config.hasPath(quoteKey(key));
     }
 
     @Override
@@ -44,11 +44,16 @@ public class TypesafeConfig extends AbstractConfig {
     @Override
     public Object getRawProperty(String key) {
         // TODO: Handle lists
-        return config.getValue(key).unwrapped().toString();
+        return config.getValue(quoteKey(key)).unwrapped().toString();
     }
 
     public List getList(String key) {
         throw new UnsupportedOperationException("Not supported yet");
+    }
+
+    private String quoteKey(String key) {
+        final String escaped = key.replace("\\", "\\\\").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
     }
 
     @Override
