@@ -24,8 +24,6 @@ import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
-import java.util.Iterator;
-
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
