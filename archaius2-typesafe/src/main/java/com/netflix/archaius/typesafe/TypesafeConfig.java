@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import com.netflix.archaius.config.AbstractConfig;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigUtil;
 import com.typesafe.config.ConfigValue;
 
 public class TypesafeConfig extends AbstractConfig {
@@ -52,8 +53,18 @@ public class TypesafeConfig extends AbstractConfig {
     }
 
     private String quoteKey(String key) {
-        final String escaped = key.replace("\\", "\\\\").replace("\"", "\\\"");
-        return "\"" + escaped + "\"";
+        final String[] path = key.split("\\.");
+        return ConfigUtil.joinPath(path);
+    }
+
+    private String unquoteKey(String key) {
+        final List<String> path = ConfigUtil.splitPath(key);
+        StringBuilder buf = new StringBuilder();
+        buf.append(path.get(0));
+        for (String p : path.subList(1, path.size())) {
+            buf.append('.').append(p);
+        }
+        return buf.toString();
     }
 
     @Override
@@ -68,7 +79,7 @@ public class TypesafeConfig extends AbstractConfig {
 
             @Override
             public String next() {
-                return iter.next().getKey();
+                return unquoteKey(iter.next().getKey());
             }
 
             @Override

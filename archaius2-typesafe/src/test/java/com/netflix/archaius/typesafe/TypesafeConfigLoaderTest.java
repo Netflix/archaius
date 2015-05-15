@@ -24,6 +24,8 @@ import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
+import java.util.Iterator;
+
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
@@ -41,9 +43,10 @@ public class TypesafeConfigLoaderTest {
         config.addConfig("foo", loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
-        
-        
+
+        Assert.assertEquals("prod", config.getString("@environment"));
         Assert.assertEquals("foo-prod", config.getString("foo.prop1"));
         Assert.assertEquals("foo", config.getString("foo.prop2"));
-    }   
+    }
+
 }

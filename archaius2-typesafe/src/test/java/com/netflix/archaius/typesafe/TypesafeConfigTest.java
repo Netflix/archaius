@@ -20,34 +20,70 @@ import com.typesafe.config.ConfigFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
+
+import java.util.Iterator;
 
 public class TypesafeConfigTest {
     @Test
     public void simple() throws ConfigException {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a=b"));
         Assert.assertEquals("b", config.getString("a"));
+        Assert.assertTrue(config.containsKey("a"));
+    }
+
+    @Test
+    public void simplePath() throws ConfigException {
+        Config config = new TypesafeConfig(ConfigFactory.parseString("a.b.c=foo"));
+        Assert.assertEquals("foo", config.getString("a.b.c"));
+        Assert.assertTrue(config.containsKey("a.b.c"));
+    }
+
+    @Test
+    public void nested() throws ConfigException {
+        Config config = new TypesafeConfig(ConfigFactory.parseString("a { b { c=foo } }"));
+        Assert.assertEquals("foo", config.getString("a.b.c"));
+        Assert.assertTrue(config.containsKey("a.b.c"));
     }
 
     @Test
     public void keyWithAt() throws ConfigException {
         Config config = new TypesafeConfig(ConfigFactory.parseString("\"@a\"=b"));
         Assert.assertEquals("b", config.getString("@a"));
+        Assert.assertTrue(config.containsKey("@a"));
+    }
+
+    @Test
+    public void pathWithAt() throws ConfigException {
+        Config config = new TypesafeConfig(ConfigFactory.parseString("a.\"@b\".c=foo"));
+        Assert.assertEquals("foo", config.getString("a.@b.c"));
+        Assert.assertTrue(config.containsKey("a.@b.c"));
     }
 
     @Test
     public void specialChars() throws ConfigException {
         for (char c = '!'; c <= '~'; ++c) {
+            if (c == '.') continue;
             String k = c + "a";
             String escaped = k.replace("\\", "\\\\").replace("\"", "\\\"");
             Config mc = MapConfig.builder().put(k, "b").build();
             Config tc = new TypesafeConfig(ConfigFactory.parseString("\"" + escaped + "\"=b"));
             Assert.assertEquals(mc.getString(k), tc.getString(k));
             Assert.assertEquals(mc.containsKey(k), tc.containsKey(k));
+        }
+    }
+
+    @Test
+    public void iterate() throws Exception {
+        Config config = new TypesafeConfig(ConfigFactory.parseString("a { \"@env\"=prod }"));
+        Assert.assertEquals("prod", config.getString("a.@env"));
+
+        // Make sure we can get all keys we get back from the iterator
+        Iterator<String> ks = config.getKeys();
+        while (ks.hasNext()) {
+            String k = ks.next();
+            config.getString(k);
         }
     }
 }
