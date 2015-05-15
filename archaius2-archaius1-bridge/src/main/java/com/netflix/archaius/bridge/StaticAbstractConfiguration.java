@@ -10,6 +10,7 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 
 import com.netflix.config.AggregatedConfiguration;
+import com.netflix.config.ConfigurationManager;
 
 /**
  * @see StaticArchaiusBridgeModule
@@ -21,6 +22,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     @Inject
     public static void intialize(AbstractConfigurationBridge config) {
         delegate = config;
+        ConfigurationManager.install(config);
     }
 
     public static void reset() {
