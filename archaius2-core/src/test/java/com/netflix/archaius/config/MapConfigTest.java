@@ -148,6 +148,16 @@ public class MapConfigTest {
         Assert.assertEquals("prod", config.getString("replacement"));
     }
     
+    @Test
+    public void interpolationWithDefaultReplacement() throws ConfigException {
+        Config config = MapConfig.builder()
+                .put("env",         "prod")
+                .put("replacement", "${env}")
+                .build();
+        
+        Assert.assertEquals("prod", config.getString("nonexistent", "${env}"));
+    }
+    
     @Test(expected=IllegalStateException.class)
     public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
         Config config = MapConfig.builder()
