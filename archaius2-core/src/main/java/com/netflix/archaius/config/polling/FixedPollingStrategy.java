@@ -40,7 +40,7 @@ public class FixedPollingStrategy implements PollingStrategy {
     }
     
     public FixedPollingStrategy(long interval, TimeUnit units, boolean syncInit) {
-        this.executor = Executors.newSingleThreadScheduledExecutor(ThreadFactories.newNamedDaemonThreadFactory("poller-%d"));
+        this.executor = Executors.newSingleThreadScheduledExecutor(ThreadFactories.newNamedDaemonThreadFactory("Archaius-Poller-%d"));
         this.interval = interval;
         this.units    = units;
         this.syncInit = syncInit;

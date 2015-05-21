@@ -33,7 +33,7 @@ import com.netflix.archaius.util.ThreadFactories;
  *
  */
 public class ManualPollingStrategy implements PollingStrategy {
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(ThreadFactories.newNamedDaemonThreadFactory("poller-%d"));
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(ThreadFactories.newNamedDaemonThreadFactory("Archaius-Poller-%d"));
     private final LinkedBlockingQueue<Request> queue = new LinkedBlockingQueue<Request>();
     
     private static class Request {
