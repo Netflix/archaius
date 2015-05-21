@@ -35,6 +35,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.netflix.archaius.util.ThreadFactories;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -212,7 +213,7 @@ public class TestHttpServer implements TestRule {
     public void before(final Description description) throws Exception {
         this.service = Executors.newFixedThreadPool(
                 threadCount, 
-                new ThreadFactoryBuilder().setDaemon(true).setNameFormat("TestHttpServer-%d").build());
+                ThreadFactories.newNamedDaemonThreadFactory("TestHttpServer-%d"));
         
         InetSocketAddress inetSocketAddress = new InetSocketAddress("localhost", 0);
         server = HttpServer.create(inetSocketAddress, 0);

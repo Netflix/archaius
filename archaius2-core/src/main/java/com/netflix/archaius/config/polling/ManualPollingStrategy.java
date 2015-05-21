@@ -23,6 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.netflix.archaius.config.PollingStrategy;
+import com.netflix.archaius.util.ThreadFactories;
 
 /**
  * Polling strategy using external input to trigger a refresh.  This should only be used
@@ -32,7 +33,7 @@ import com.netflix.archaius.config.PollingStrategy;
  *
  */
 public class ManualPollingStrategy implements PollingStrategy {
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(ThreadFactories.newNamedDaemonThreadFactory("poller-%d"));
     private final LinkedBlockingQueue<Request> queue = new LinkedBlockingQueue<Request>();
     
     private static class Request {
@@ -79,6 +80,11 @@ public class ManualPollingStrategy implements PollingStrategy {
         if (request.error != null) {
             throw request.error;
         }
+    }
+
+    @Override
+    public void shutdown() {
+        executor.shutdown();
     }
 
 }

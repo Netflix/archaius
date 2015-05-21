@@ -43,9 +43,11 @@ public class PollingDynamicConfig extends AbstractConfig {
     private final Callable<PollingResponse> reader;
     private final AtomicLong updateCounter = new AtomicLong();
     private final AtomicLong errorCounter = new AtomicLong();
+    private final PollingStrategy strategy;
     
     public PollingDynamicConfig(Callable<PollingResponse> reader, PollingStrategy strategy) {
         this.reader = reader;
+        this.strategy = strategy;
         strategy.execute(new Runnable() {
             @Override
             public void run() {
@@ -95,6 +97,10 @@ public class PollingDynamicConfig extends AbstractConfig {
         }
     }
 
+    public void shutdown() {
+        strategy.shutdown();
+    }
+    
     public long getUpdateCounter() {
         return updateCounter.get();
     }
