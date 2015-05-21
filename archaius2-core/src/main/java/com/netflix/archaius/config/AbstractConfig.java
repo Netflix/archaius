@@ -109,7 +109,7 @@ public abstract class AbstractConfig implements Config {
     public String getString(String key, String defaultValue) {
         Object value = getRawProperty(key);
         if (value == null) {
-            return notFound(key, defaultValue);
+            return notFound(key, defaultValue != null ? interpolator.create(lookup).resolve(defaultValue) : null);
         }
 
         if (value instanceof String) {

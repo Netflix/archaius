@@ -146,8 +146,9 @@ public final class ArchaiusModule extends AbstractModule {
     @RuntimeLayer
     final SettableConfig getSettableConfig(RuntimeLayerOptional optional) {
         DefaultSettableConfig config = new DefaultSettableConfig();
-        if (optional.properties != null)
+        if (optional.properties != null) {
             config.setProperties(optional.properties);
+        }
         return config;
     }
     
