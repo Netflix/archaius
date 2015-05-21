@@ -24,4 +24,5 @@ import java.util.concurrent.Future;
  */
 public interface PollingStrategy {
     public Future<?> execute(Runnable run);
+    public void shutdown();
 }

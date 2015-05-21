@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -54,6 +55,7 @@ import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
 public class Persisted2ConfigProvider implements Provider<Config> {
     private final String              url;
     private final Persisted2ClientConfig config;
+    private volatile PollingDynamicConfig dynamicConfig;
     
     @Inject
     public Persisted2ConfigProvider(Persisted2ClientConfig config) throws Exception {
@@ -115,6 +117,13 @@ public class Persisted2ConfigProvider implements Provider<Config> {
             throw new RuntimeException("Error setting up reader", e);
         }
         
-        return new PollingDynamicConfig(reader, new FixedPollingStrategy(config.getRefreshRate(), TimeUnit.SECONDS));
+        return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(config.getRefreshRate(), TimeUnit.SECONDS));
+    }
+    
+    @PreDestroy
+    public void shutdown() {
+        if (dynamicConfig != null) {
+            dynamicConfig.shutdown();
+        }
     }
 }

@@ -25,11 +25,12 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.config.PollingStrategy;
 import com.netflix.archaius.util.Futures;
+import com.netflix.archaius.util.ThreadFactories;
 
 public class FixedPollingStrategy implements PollingStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(FixedPollingStrategy.class);
     
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor;
     private final long interval;
     private final TimeUnit units;
     private final boolean syncInit;
@@ -39,8 +40,9 @@ public class FixedPollingStrategy implements PollingStrategy {
     }
     
     public FixedPollingStrategy(long interval, TimeUnit units, boolean syncInit) {
+        this.executor = Executors.newSingleThreadScheduledExecutor(ThreadFactories.newNamedDaemonThreadFactory("Archaius-Poller-%d"));
         this.interval = interval;
-        this.units = units;
+        this.units    = units;
         this.syncInit = syncInit;
     }
     
@@ -71,6 +73,11 @@ public class FixedPollingStrategy implements PollingStrategy {
                 }
             }
         }, interval, interval, units);
+    }
+
+    @Override
+    public void shutdown() {
+        executor.shutdown();
     }
 
 }
