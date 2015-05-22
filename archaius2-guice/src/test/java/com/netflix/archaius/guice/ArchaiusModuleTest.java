@@ -28,6 +28,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
@@ -129,16 +130,18 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-            Modules.override(new ArchaiusModule())
-                   .with(new TestArchaiusOverrideModule() {
-                       @Provides
-                       @Singleton
-                       @RuntimeLayer
-                       public Properties getOverrideProperties() {
-                           return props;
-                       }
-                   })
-        );
+                new ArchaiusModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class).addBinding().toInstance(new ConfigSeeder() {
+                            @Override
+                            public Config get(Config rootConfig) throws Exception {
+                                return MapConfig.from(props);
+                            }
+                        });
+                    }
+                });
         
         Config config = injector.getInstance(Config.class);
         Assert.assertEquals("prod", config.getString("env"));
@@ -165,22 +168,20 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-            Modules.override(new ArchaiusModule())
-                   .with(new TestArchaiusOverrideModule() {
-                       @Provides
-                       @Singleton
-                       @RuntimeLayer
-                       public Properties getOverrideProperties() {
-                           return props;
-                       }
-                   })
-            ,
-            new AbstractModule() {
-                protected void configure() {
-                    bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
-                    bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
+                new ArchaiusModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class).addBinding().toInstance(new ConfigSeeder() {
+                            @Override
+                            public Config get(Config rootConfig) throws Exception {
+                                return MapConfig.from(props);
+                            }
+                        });
+                        bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
+                        bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
+                    }
                 }
-            }
             );
             
         MyService service = injector.getInstance(MyService.class);
