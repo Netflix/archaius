@@ -13,7 +13,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.inject.OverrideLayer;
+import com.netflix.archaius.inject.RemoteLayer;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class PlatformServiceTest {
@@ -38,12 +38,12 @@ public class PlatformServiceTest {
             @Override
             protected void configure() {
                 bind(Persisted2ClientConfig.class).toInstance(config);
-                bind(Config.class).annotatedWith(OverrideLayer.class).toProvider(Persisted2ConfigProvider.class).in(Scopes.SINGLETON);
+                bind(Config.class).annotatedWith(RemoteLayer.class).toProvider(Persisted2ConfigProvider.class).in(Scopes.SINGLETON);
             }
             
             @Provides
             @Singleton
-            Config getConfig(@OverrideLayer Config config) {
+            Config getConfig(@RemoteLayer Config config) {
                 return config;
             }
         }));
