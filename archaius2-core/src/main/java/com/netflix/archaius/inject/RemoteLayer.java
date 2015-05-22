@@ -10,6 +10,6 @@ import javax.inject.Qualifier;
 @Qualifier
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OverrideLayer {
+public @interface RemoteLayer {
 
 }

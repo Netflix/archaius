@@ -1,4 +1,4 @@
-package com.netflix.archaius.inject;
+package com.netflix.archaius.guice;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,6 +10,6 @@ import javax.inject.Qualifier;
 @Qualifier
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SystemLayer {
+public @interface RootLayer {
 
 }

@@ -27,6 +27,12 @@ import com.netflix.archaius.Config;
  */
 public interface SettableConfig extends Config {
     /**
+     * Copy all properties from the 'config' argument into this config.
+     * @param config
+     */
+    void setProperties(Config config);
+    
+    /**
      * Set a bunch of proeprties
      * @param properties
      */

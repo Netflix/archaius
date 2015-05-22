@@ -21,6 +21,8 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.netflix.archaius.Config;
+
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
     private ConcurrentMap<String, String> props = new ConcurrentHashMap<String, String>();
     
@@ -61,6 +63,17 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
         if (null != properties) {
             for (Entry<Object, Object> prop : properties.entrySet()) {
                 setProperty(prop.getKey().toString(), prop.getValue());
+            }
+        }
+    }
+
+    @Override
+    public void setProperties(Config config) {
+        if (null != config) {
+            Iterator<String> iter = config.getKeys();
+            while (iter.hasNext()) {
+                String key = iter.next();
+                setProperty(key, config.getString(key));
             }
         }
     }

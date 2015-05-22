@@ -38,17 +38,14 @@ import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.EnvironmentLayer;
 import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.OverrideLayer;
+import com.netflix.archaius.inject.RemoteLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
-import com.netflix.archaius.inject.SystemLayer;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class ArchaiusModuleTest {
@@ -63,21 +60,6 @@ public class ArchaiusModuleTest {
         @Override
         protected void configure() {
         }
-        
-        @Singleton
-        @Provides
-        @SystemLayer
-        public Config getSystem() {
-            return EmptyConfig.INSTANCE;
-        }
-       
-        @Singleton
-        @Provides
-        @EnvironmentLayer
-        public Config getEnvironment() {
-            return EmptyConfig.INSTANCE;
-        }
-       
     }
     
     @Singleton
@@ -268,10 +250,7 @@ public class ArchaiusModuleTest {
             );
         
         injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
-        injector.getInstance(Key.get(Config.class, OverrideLayer.class));
-        injector.getInstance(Key.get(Config.class, SystemLayer.class));
-        injector.getInstance(Key.get(Config.class, EnvironmentLayer.class));
-        
+        injector.getInstance(Key.get(Config.class, RemoteLayer.class));
         injector.getInstance(Key.get(Config.class, ApplicationLayer.class));
         injector.getInstance(Key.get(CompositeConfig.class, LibrariesLayer.class));
         injector.getInstance(Config.class);

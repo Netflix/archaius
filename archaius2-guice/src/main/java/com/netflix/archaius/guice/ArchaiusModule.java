@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.Properties;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -40,23 +39,44 @@ import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.EnvironmentLayer;
 import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.OverrideLayer;
+import com.netflix.archaius.inject.RemoteLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
-import com.netflix.archaius.inject.SystemLayer;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.loaders.PropertiesConfigReader;
 
 /**
  * Guice module with default bindings to enable Config injection and 
  * configuration mapping/binding in a Guice based application.
+ * 
+ * By default this module will create a top level Config that is a 
+ * CompositeConfig of the following layers,
+ * RUNTIME     - properties set from code
+ * OVERRIDE    - properties loaded from a remote source
+ * SYSTEM      - System properties
+ * ENVIRONMENT - Environment properties
+ * APPLICATION - Configuration loaded by the application
+ * LIBRARIES   - Configuration loaded by libraries used by the application
+ * 
+ * Runtime properties may be set by either injecting and calling one of the
+ * setters for,
+ *  @RuntimeLayer SettableConfig config
+ * or at startup by specifying a multibinding
+ *  Multibinder.newSetBinder(binder(), ConfigResolver.class, RuntimeLayer.class)...
+ *  
+ * Override properties may be set by either injecting 
+ *  @OverrideLayer CompositeConfig config
+ * or at startup by specifying a multibinding
+ *  Multibinder.newSetBinder(binder(), ConfigResolver.class, OverrideLayer.class)...
+ * 
+ * Application properties will be loaded automatically from resources with the base 
+ * name indicated by the binding to @ApplicationLayer String.  The default value
+ * is 'application' be can be changed via a binding override.
  * 
  * To override the binding use Guice's Modules.override()
  * 
@@ -80,7 +100,7 @@ public final class ArchaiusModule extends AbstractModule {
     
     private static final String DEFAULT_CONFIG_NAME    = "application";
     private static final String RUNTIME_LAYER_NAME     = "RUNTIME";
-    private static final String OVERRIDE_LAYER_NAME    = "OVERRIDE";
+    private static final String REMOTE_LAYER_NAME      = "REMOTE";
     private static final String SYSTEM_LAYER_NAME      = "SYSTEM";
     private static final String ENVIRONMENT_LAYER_NAME = "ENVIRONMENT";
     private static final String APPLICATION_LAYER_NAME = "APPLICATION";
@@ -125,31 +145,24 @@ public final class ArchaiusModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class);
         
+        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class);
+        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RemoteLayer.class);
+        
         binder().disableCircularProxies();
     }
     
     @Provides
     @Singleton
     @ApplicationLayer
-    final String getApplicationName() {
+    final String getConfigName() {
         return DEFAULT_CONFIG_NAME;
-    }
-    
-    public static class RuntimeLayerOptional {
-        @com.google.inject.Inject(optional=true)
-        @RuntimeLayer
-        Properties properties;
     }
     
     @Provides
     @Singleton
     @RuntimeLayer
-    final SettableConfig getSettableConfig(RuntimeLayerOptional optional) {
-        DefaultSettableConfig config = new DefaultSettableConfig();
-        if (optional.properties != null) {
-            config.setProperties(optional.properties);
-        }
-        return config;
+    final SettableConfig getSettableConfig() {
+        return new DefaultSettableConfig();
     }
     
     @Provides
@@ -173,28 +186,18 @@ public final class ArchaiusModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    @ApplicationLayer
-    final Config getApplicationLayer(
-            @SystemLayer      Config            systemConfig, 
-            @EnvironmentLayer Config            envConfig, 
-            Set<ConfigReader>                   readers, 
-            @ApplicationLayer CascadeStrategy   strategy,
-            @ApplicationLayer String            appName) throws ConfigException {
-        
-        CompositeConfig config = new CompositeConfig();
-        config.addConfig(SYSTEM_LAYER_NAME, systemConfig);
-        config.addConfig(ENVIRONMENT_LAYER_NAME, envConfig);
-        
-        DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withStrLookup(ConfigStrLookup.from(config))
-                .withConfigReader(readers)
-                .withDefaultCascadingStrategy(strategy)
-                .withFailOnFirst(false)
-                .build();
-
-        return loader.newLoader().load(appName);
+    @ApplicationLayer 
+    Config getApplicationLayer(CompositeConfig config) {
+        return config;
     }
-    
+
+    @Provides
+    @Singleton
+    @ApplicationLayer 
+    CompositeConfig getApplicationLayer() {
+        return new CompositeConfig();
+    }
+
     /**
      * This is the main config loader for the application.
      * 
@@ -206,7 +209,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     final ConfigLoader getLoader(
-            Config              config,
+            @RootLayer          Config config,
             CascadeStrategy     defaultStrategy,
             Set<ConfigReader>   readers
             ) {
@@ -227,30 +230,16 @@ public final class ArchaiusModule extends AbstractModule {
     
     @Provides
     @Singleton
-    @SystemLayer
-    final Config getSystemLayer() {
-        return new SystemConfig();
-    }
-    
-    @Provides
-    @Singleton
-    @OverrideLayer
+    @RemoteLayer
     final CompositeConfig getOverrideLayer() {
         return new CompositeConfig();
     }
     
     @Provides
     @Singleton
-    @OverrideLayer
-    final Config getOverrideLayer(@OverrideLayer CompositeConfig config) {
+    @RemoteLayer
+    final Config getOverrideLayer(@RemoteLayer CompositeConfig config) {
         return config;
-    }
-    
-    @Provides
-    @Singleton
-    @EnvironmentLayer
-    final Config getEnvironmentLayer() {
-        return new EnvironmentConfig();
     }
     
     @Provides
@@ -265,8 +254,31 @@ public final class ArchaiusModule extends AbstractModule {
         return DefaultDecoder.INSTANCE;
     }
 
+    @Provides
+    @Singleton
+    @RootLayer
+    final Config getInternalConfig(
+            @RuntimeLayer     SettableConfig     settableLayer,
+            @RemoteLayer    Config             overrideLayer,
+            @ApplicationLayer Config             applicationLayer, 
+            @LibrariesLayer   CompositeConfig    librariesLayer) throws ConfigException {
+        return CompositeConfig.builder()
+                .withConfig(RUNTIME_LAYER_NAME,     settableLayer)
+                .withConfig(REMOTE_LAYER_NAME,    overrideLayer)
+                .withConfig(SYSTEM_LAYER_NAME,      SystemConfig.INSTANCE)
+                .withConfig(ENVIRONMENT_LAYER_NAME, EnvironmentConfig.INSTANCE)
+                .withConfig(APPLICATION_LAYER_NAME, applicationLayer)
+                .withConfig(LIBRARIES_LAYER_NAME,   librariesLayer)
+                .build();
+    }
+    
     /**
-     * Override the binding to Config.class to specify a different override hierarchy
+     * All code will ultimately inject Config to gain access to the entire 
+     * configuration hierarchy.  The empty hierarchy is created by @RootLayer
+     * but here we do the actual Configuration initialization which include,
+     * 1.  Loading application properties
+     * 2.  Loading runtime overrides
+     * 3.  Loading override layer overrides 
      * 
      * @param librariesLayer
      * @param applicationLayer
@@ -278,38 +290,35 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     final Config getConfig(
-            @RuntimeLayer     SettableConfig     settableLayer,
-            @OverrideLayer    Config             overrideLayer,
-            @SystemLayer      Config             systemLayer,
-            @EnvironmentLayer Config             environmentLayer,
-            @ApplicationLayer Config             applicationLayer, 
-            @LibrariesLayer   CompositeConfig    librariesLayer
-            ) throws ConfigException {
+            @RootLayer        Config            config,
+            @ApplicationLayer CompositeConfig   applicationLayer,
+            @ApplicationLayer String            appName,
+            @RemoteLayer      CompositeConfig   overrideLayer,
+            @RuntimeLayer     SettableConfig    runtimeLayer,
+            ConfigLoader                        loader,
+            @RuntimeLayer     Set<ConfigSeeder>   runtimeConfigResolvers,
+            @RemoteLayer      Set<ConfigSeeder>   remoteConfigResolvers
+            ) throws Exception {
         
-        CompositeConfig root = new CompositeConfig();
-        root.addConfig(RUNTIME_LAYER_NAME, settableLayer);
-        
-        if (!(overrideLayer instanceof EmptyConfig)) {
-            root.addConfig(OVERRIDE_LAYER_NAME, overrideLayer);
+        // First load the application configuration 
+        Config appConfig = loader.newLoader().load(appName);
+        if (appConfig != null) {
+            applicationLayer.addConfig(appName, appConfig);
         }
         
-        if (!(systemLayer instanceof EmptyConfig)) {
-            root.addConfig(SYSTEM_LAYER_NAME, systemLayer);
+        // Next load any runtime overrides
+        for (ConfigSeeder provider : runtimeConfigResolvers) {
+            runtimeLayer.setProperties(provider.get(config));
+        }
+ 
+        // Finally, load the remote layer
+        for (ConfigSeeder provider : remoteConfigResolvers) {
+            overrideLayer.addConfig("remote", provider.get(config));
         }
         
-        if (!(environmentLayer instanceof EmptyConfig)) {
-            root.addConfig(ENVIRONMENT_LAYER_NAME, environmentLayer);
-        }
-        
-        if (!(applicationLayer instanceof EmptyConfig)) {
-            root.addConfig(APPLICATION_LAYER_NAME, applicationLayer);
-        }
-        
-        root.addConfig(LIBRARIES_LAYER_NAME, librariesLayer);
-        
-        return root;
+        return config;
     }
-    
+
     /**
      * Top level 'fast' property factory which is bound to the root configuration 
      * @param root
