@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.readers.PropertiesConfigReader;
 
 public class PropertyConfigReaderTest {
     @Test

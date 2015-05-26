@@ -17,6 +17,7 @@ package com.netflix.archaius;
 
 import java.io.File;
 import java.net.URL;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 import com.netflix.archaius.exceptions.ConfigException;
@@ -69,7 +70,7 @@ public interface ConfigLoader {
          * @param resourceName
          * @return
          */
-        Config load(String resourceName) throws ConfigException;
+        LinkedHashMap<String, Config> load(String resourceName) throws ConfigException;
         
         /**
          * Load configuration from a specific URL

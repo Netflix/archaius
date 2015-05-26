@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.archaius.loaders;
+package com.netflix.archaius.readers;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigReader;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.readers.URLConfigReader;
 
 public class PropertiesConfigReader implements ConfigReader {
+    private String              includeKey      = "@next";
 
     @Override
     public Config load(ClassLoader loader, String resourceName) throws ConfigException {
@@ -39,10 +42,26 @@ public class PropertiesConfigReader implements ConfigReader {
 
     @Override
     public Config load(ClassLoader loader, URL url) throws ConfigException {
+        Properties props = new Properties();
+        
+        URL urlToLoad = url;
         try {
-            return new MapConfig(new URLConfigReader(url).call().getToAdd());
-        } catch (IOException e) {
-            throw new ConfigException("Unable to load URL " + url.toString(), e);
+            do {
+                Map<String, String> p = new URLConfigReader(urlToLoad).call().getToAdd();
+                for (Entry<String, String> entry : p.entrySet()) {
+                    props.put(entry.getKey(), entry.getValue());
+                }
+                
+                String next = p.get(includeKey);
+                urlToLoad = next != null
+                    ? new URL(next)
+                    : null;
+            } while (urlToLoad != null);
+            
+            return new MapConfig(props);
+        }
+        catch (IOException e) {
+            throw new ConfigException("Unable to load configuration " + url, e);
         }
     }
 

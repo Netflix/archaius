@@ -19,25 +19,21 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.StrInterpolator.Lookup;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
-import com.netflix.archaius.loaders.PropertiesConfigReader;
+import com.netflix.archaius.readers.PropertiesConfigReader;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -47,7 +43,7 @@ import com.netflix.archaius.loaders.PropertiesConfigReader;
  */
 public class DefaultConfigLoader implements ConfigLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConfigLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultConfigLoader.class);
 
     private static final NoCascadeStrategy DEFAULT_CASCADE_STRATEGY = new NoCascadeStrategy();
     private static final Lookup DEFAULT_LOOKUP  = new Lookup() {
@@ -62,7 +58,6 @@ public class DefaultConfigLoader implements ConfigLoader {
         private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();
         private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
         private boolean             failOnFirst     = true;
-        private String              includeKey      = "@next";
         private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
         private Lookup              lookup          = DEFAULT_LOOKUP;
         
@@ -111,12 +106,6 @@ public class DefaultConfigLoader implements ConfigLoader {
             return this;
         }
         
-        public Builder withIncludeKey(String key) {
-            if (key != null)
-                this.includeKey = key;
-            return this;
-        }
-        
         public DefaultConfigLoader build() {
             if (loaders.isEmpty()) {
                 loaders.add(new PropertiesConfigReader());
@@ -131,18 +120,14 @@ public class DefaultConfigLoader implements ConfigLoader {
     
     private final List<ConfigReader> loaders;
     private final CascadeStrategy    defaultStrategy;
-    private final String             includeKey;
     private final StrInterpolator    interpolator;
-    private final Lookup lookup;
-    private final CopyOnWriteArraySet<String> alreadyLoaded;
+    private final Lookup             lookup;
     private final boolean            defaultFailOnFirst;
     
     public DefaultConfigLoader(Builder builder) {
-        this.includeKey         = builder.includeKey;
         this.loaders            = builder.loaders;
         this.defaultStrategy    = builder.defaultStrategy;
         this.interpolator       = builder.interpolator;
-        this.alreadyLoaded      = new CopyOnWriteArraySet<String>();
         this.defaultFailOnFirst = builder.failOnFirst;
         this.lookup             = builder.lookup;
     }
@@ -180,65 +165,32 @@ public class DefaultConfigLoader implements ConfigLoader {
             }
 
             @Override
-            public Config load(String resourceName) throws ConfigException {
+            public LinkedHashMap<String, Config> load(String resourceName) throws ConfigException {
                 LinkedHashMap<String, Config> configs = new LinkedHashMap<String, Config>();
                 boolean failIfNotLoaded = failOnFirst;
-                for (String permutationName : strategy.generate(resourceName, interpolator, lookup)) {
-                    LOGGER.info("Attempting to load {}", permutationName);
-                    for (ConfigReader loader : loaders) {
-                        if (loader.canLoad(classLoader, permutationName)) {
-                            Config config;
-                            String fileToLoad = permutationName;
-                            do {
-                                try {
-                                    config = loader.load(classLoader, permutationName);
-                                    try {
-                                        fileToLoad = config.getString(includeKey);
-                                    }
-                                    catch (Exception e) {
-                                        // TODO:
-                                        fileToLoad = null;
-                                    }
-                                    configs.put(permutationName, config);
-                                } catch (ConfigException e) {
-                                    LOGGER.debug("could not load config '{}'. '{}'", new Object[]{fileToLoad, e.getMessage()});
-                                    break;
-                                }
-                            } while (fileToLoad != null);
-                        }
-                    }
-                    
-                    if (failIfNotLoaded == true) {
-                        if (configs.isEmpty())
-                            throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
-                        failIfNotLoaded = false;
-                    }
-                }
-                
                 if (overrides != null && !overrides.isEmpty()) {
                     configs.put(resourceName, new MapConfig(overrides));
                 }
-                
-                // none
-                if (configs.isEmpty()) {
-                    return null;
-                }
-                // single
-                else if (configs.size() == 1) {
-                    return configs.values().iterator().next();
-                }
-                // multiple
-                else {
-                    CompositeConfig cConfig = new CompositeConfig();
-                    ArrayList<String> names = new ArrayList<String>();
-                    names.addAll(configs.keySet());
-                    Collections.reverse(names);
-                    
-                    for (String name : names) {
-                        cConfig.addConfig(name, configs.get(name));
+
+                for (String permutationName : strategy.generate(resourceName, interpolator, lookup)) {
+                    LOG.info("Attempting to load {}", permutationName);
+                    for (ConfigReader loader : loaders) {
+                        if (loader.canLoad(classLoader, permutationName)) {
+                            try {
+                                configs.put(permutationName, loader.load(classLoader, permutationName));
+                                failIfNotLoaded = false;
+                            }
+                            catch (ConfigException e) {
+                                if (failIfNotLoaded == true) {
+                                    throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
+                                }
+                            }
+                            break;
+                        }
                     }
-                    return cConfig;
                 }
+                
+                return configs;
             }
 
             @Override
@@ -248,8 +200,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                         try {
                             return loader.load(classLoader, url);
                         } catch (ConfigException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                            LOG.debug("Unable to load file '{}'", new Object[]{url, e.getMessage()});
                         }
                     }
                 }
