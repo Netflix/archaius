@@ -122,15 +122,19 @@ public class CompositeConfig extends AbstractConfig {
      * @throws ConfigException
      */
     public synchronized void addConfig(String name, Config child) throws ConfigException {
+        internalAddConfig(name, child);
+    }
+    
+    private synchronized void internalAddConfig(String name, Config child) throws ConfigException {
         LOG.trace("Adding config {} to {}", name, hashCode());
-        
-        if (name == null) {
-            throw new ConfigException("Child configuration must be named");
-        }
         
         if (child == null) {
             // TODO: Log a warning?
             return;
+        }
+        
+        if (name == null) {
+            throw new ConfigException("Child configuration must be named");
         }
         
         if (lookup.containsKey(name)) {
@@ -148,6 +152,18 @@ public class CompositeConfig extends AbstractConfig {
         postConfigAdded(child);
     }
     
+    public void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
+        for (Entry<String, Config> entry : configs.entrySet()) {
+            addConfig(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public void replaceConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
+        for (Entry<String, Config> entry : configs.entrySet()) {
+            replaceConfig(entry.getKey(), entry.getValue());
+        }
+    }
+
     public synchronized Collection<String> getConfigNames() {
         List<String> result = new ArrayList<String>();
         result.addAll(this.lookup.keySet());
@@ -171,14 +187,8 @@ public class CompositeConfig extends AbstractConfig {
      * @throws ConfigException
      */
     public synchronized void replaceConfig(String name, Config child) throws ConfigException {
-        if (lookup.containsKey(name)) {
-            lookup.put(name, child);
-            child.removeListener(listener);
-            postConfigAdded(child);
-        }
-        else {
-            addConfig(name, child);
-        }
+        internalRemoveConfig(name);
+        internalAddConfig(name, child);
     }
     
     /**
@@ -190,6 +200,10 @@ public class CompositeConfig extends AbstractConfig {
      * @return
      */
     public synchronized Config removeConfig(String name) {
+        return internalRemoveConfig(name);
+    }
+    
+    public synchronized Config internalRemoveConfig(String name) {
         Config child = this.lookup.remove(name);
         if (child != null) {
             this.children.remove(child);
@@ -288,5 +302,13 @@ public class CompositeConfig extends AbstractConfig {
                 child.accept(visitor);
             }
         }
+    }
+
+    public static CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
+        Builder builder = builder();
+        for (Entry<String, Config> config : load.entrySet()) {
+            builder().withConfig(config.getKey(), config.getValue());
+        }
+        return builder.build();
     }
 }

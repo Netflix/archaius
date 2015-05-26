@@ -45,14 +45,14 @@ public class CompositeConfigTest {
             .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}"))
             .build();
         
-        application.addConfig("app", loader.newLoader().load("application"));
+        application.replaceConfigs(loader.newLoader().load("application"));
         
         Assert.assertTrue(config.getBoolean("application.loaded"));
         Assert.assertTrue(config.getBoolean("application-prod.loaded", false));
         
         Assert.assertFalse(config.getBoolean("libA.loaded", false));
         
-        libraries.addConfig("libA", loader.newLoader().load("libA"));
+        libraries.replaceConfigs(loader.newLoader().load("libA"));
         libraries.accept(new PrintStreamVisitor());
         
         config.accept(new PrintStreamVisitor());
@@ -61,7 +61,7 @@ public class CompositeConfigTest {
         Assert.assertFalse(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
-        libraries.addConfig("libB", loader.newLoader().load("libB"));
+        libraries.replaceConfigs(loader.newLoader().load("libB"));
         
         System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));
@@ -90,14 +90,14 @@ public class CompositeConfigTest {
             .withDefaultCascadingStrategy(ConcatCascadeStrategy.from("${env}"))
             .build();
         
-        application.addConfig("app", loader.newLoader().load("application"));
+        application.replaceConfigs(loader.newLoader().load("application"));
         
         Assert.assertTrue(config.getBoolean("application.loaded"));
         Assert.assertTrue(config.getBoolean("application-prod.loaded", false));
         
         Assert.assertFalse(config.getBoolean("libA.loaded", false));
         
-        libraries.addConfig("libA", loader.newLoader().load("libA"));
+        libraries.replaceConfigs(loader.newLoader().load("libA"));
         libraries.accept(new PrintStreamVisitor());
         
         config.accept(new PrintStreamVisitor());
@@ -106,7 +106,7 @@ public class CompositeConfigTest {
         Assert.assertFalse(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("libA.overrideA"));
         
-        libraries.addConfig("libB", loader.newLoader().load("libB"));
+        libraries.replaceConfigs(loader.newLoader().load("libB"));
         
         System.out.println(config.toString());
         Assert.assertTrue(config.getBoolean("libA.loaded"));

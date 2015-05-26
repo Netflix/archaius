@@ -38,7 +38,7 @@ public class TypesafeConfigLoaderTest {
                 .withStrLookup(config)
                 .build();
         
-        config.addConfig("foo", loader.newLoader()
+        config.addConfigs(loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
         

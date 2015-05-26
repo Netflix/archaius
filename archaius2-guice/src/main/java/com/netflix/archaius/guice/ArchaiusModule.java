@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.guice;
 
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -48,7 +49,7 @@ import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.RemoteLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
-import com.netflix.archaius.loaders.PropertiesConfigReader;
+import com.netflix.archaius.readers.PropertiesConfigReader;
 
 /**
  * Guice module with default bindings to enable Config injection and 
@@ -165,13 +166,6 @@ public final class ArchaiusModule extends AbstractModule {
         return new DefaultSettableConfig();
     }
     
-    @Provides
-    @Singleton
-    @ApplicationLayer
-    final CascadeStrategy getApplicationCascadeStrategy() {
-        return new NoCascadeStrategy();
-    }
-    
     /**
      * Default loader for the application configuration using replacements from 
      * system and environment configuration
@@ -244,8 +238,8 @@ public final class ArchaiusModule extends AbstractModule {
     
     @Provides
     @Singleton
-    final CascadeStrategy getCascadeStrategy(@ApplicationLayer CascadeStrategy strategy) {
-        return strategy;
+    final CascadeStrategy getCascadeStrategy() {
+        return new NoCascadeStrategy();
     }
     
     @Provides
@@ -259,8 +253,8 @@ public final class ArchaiusModule extends AbstractModule {
     @RootLayer
     final Config getInternalConfig(
             @RuntimeLayer     SettableConfig     settableLayer,
-            @RemoteLayer    Config             overrideLayer,
-            @ApplicationLayer Config             applicationLayer, 
+            @RemoteLayer      Config             overrideLayer,
+            @ApplicationLayer CompositeConfig    applicationLayer, 
             @LibrariesLayer   CompositeConfig    librariesLayer) throws ConfigException {
         return CompositeConfig.builder()
                 .withConfig(RUNTIME_LAYER_NAME,     settableLayer)
@@ -275,7 +269,7 @@ public final class ArchaiusModule extends AbstractModule {
     /**
      * All code will ultimately inject Config to gain access to the entire 
      * configuration hierarchy.  The empty hierarchy is created by @RootLayer
-     * but here we do the actual Configuration initialization which include,
+     * but here we do the actual Configuration initialization which includes,
      * 1.  Loading application properties
      * 2.  Loading runtime overrides
      * 3.  Loading override layer overrides 
@@ -295,15 +289,16 @@ public final class ArchaiusModule extends AbstractModule {
             @ApplicationLayer String            appName,
             @RemoteLayer      CompositeConfig   overrideLayer,
             @RuntimeLayer     SettableConfig    runtimeLayer,
-            ConfigLoader                        loader,
-            @RuntimeLayer     Set<ConfigSeeder>   runtimeConfigResolvers,
-            @RemoteLayer      Set<ConfigSeeder>   remoteConfigResolvers
+                              ConfigLoader      loader,
+                              CascadeStrategy   cascadeStrategy,
+            @RuntimeLayer     Set<ConfigSeeder> runtimeConfigResolvers,
+            @RemoteLayer      Set<ConfigSeeder> remoteConfigResolvers
             ) throws Exception {
         
         // First load the application configuration 
-        Config appConfig = loader.newLoader().load(appName);
-        if (appConfig != null) {
-            applicationLayer.addConfig(appName, appConfig);
+        LinkedHashMap<String, Config> loadedConfigs = loader.newLoader().withCascadeStrategy(new NoCascadeStrategy()).load(appName);
+        if (loadedConfigs != null) {
+            applicationLayer.addConfigs(loadedConfigs);
         }
         
         // Next load any runtime overrides
@@ -316,6 +311,12 @@ public final class ArchaiusModule extends AbstractModule {
             overrideLayer.addConfig("remote", provider.get(config));
         }
         
+        // Finally, load any cascaded configuration files for the
+        // application
+        loadedConfigs = loader.newLoader().withCascadeStrategy(cascadeStrategy).load(appName);
+        if (loadedConfigs != null) { 
+            applicationLayer.replaceConfigs(loadedConfigs);
+        }
         return config;
     }
 

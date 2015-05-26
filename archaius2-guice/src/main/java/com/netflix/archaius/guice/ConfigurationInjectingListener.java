@@ -66,7 +66,7 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
                     if (source != null) {
                         for (String resourceName : source.value()) {
                             try {
-                                librariesConfig.addConfig(resourceName, loader.newLoader().withCascadeStrategy(strategy).load(resourceName));
+                                librariesConfig.replaceConfigs(loader.newLoader().withCascadeStrategy(strategy).load(resourceName));
                             } 
                             catch (ConfigException e) {
                                 throw new ProvisionException("Unable to load configuration for " + resourceName + " at source " + injectee.getClass(), e);
