@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
+import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -138,7 +139,7 @@ public class CompositeConfig extends AbstractConfig {
         }
         
         if (lookup.containsKey(name)) {
-            throw new ConfigException(String.format("Configuration with name '%s' already exists", name));
+            throw new ConfigAlreadyExistsException(String.format("Configuration with name '%s' already exists", name));
         }
 
         lookup.put(name, child);
@@ -152,9 +153,9 @@ public class CompositeConfig extends AbstractConfig {
         postConfigAdded(child);
     }
     
-    public void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
+    public synchronized void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
         for (Entry<String, Config> entry : configs.entrySet()) {
-            addConfig(entry.getKey(), entry.getValue());
+            internalAddConfig(entry.getKey(), entry.getValue());
         }
     }
 

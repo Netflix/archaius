@@ -16,14 +16,16 @@
 package com.netflix.archaius.guice;
 
 import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Providers;
@@ -43,6 +45,7 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.config.SystemConfig;
+import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.ApplicationLayer;
 import com.netflix.archaius.inject.LibrariesLayer;
@@ -138,13 +141,11 @@ public final class ArchaiusModule extends AbstractModule {
     }
     
     @Override
-    final protected void configure() {
-        ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
-        requestInjection(listener);
-        bindListener(Matchers.any(), listener);
+    protected void configure() {
+        bindListener(Matchers.any(), new ConfigurationInjectingListener());
         
         Multibinder.newSetBinder(binder(), ConfigReader.class)
-            .addBinding().to(PropertiesConfigReader.class);
+            .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
         
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class);
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RemoteLayer.class);
@@ -155,14 +156,14 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @ApplicationLayer
-    final String getConfigName() {
+    String getConfigName() {
         return DEFAULT_CONFIG_NAME;
     }
     
     @Provides
     @Singleton
     @RuntimeLayer
-    final SettableConfig getSettableConfig() {
+    SettableConfig getSettableConfig() {
         return new DefaultSettableConfig();
     }
     
@@ -202,7 +203,7 @@ public final class ArchaiusModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    final ConfigLoader getLoader(
+    ConfigLoader getLoader(
             @RootLayer          Config config,
             CascadeStrategy     defaultStrategy,
             Set<ConfigReader>   readers
@@ -218,40 +219,40 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @LibrariesLayer
-    final CompositeConfig getLibrariesLayer() {
+    CompositeConfig getLibrariesLayer() {
         return new CompositeConfig();
     }
     
     @Provides
     @Singleton
     @RemoteLayer
-    final CompositeConfig getOverrideLayer() {
+    CompositeConfig getOverrideLayer() {
         return new CompositeConfig();
     }
     
     @Provides
     @Singleton
     @RemoteLayer
-    final Config getOverrideLayer(@RemoteLayer CompositeConfig config) {
+    Config getOverrideLayer(@RemoteLayer CompositeConfig config) {
         return config;
     }
     
     @Provides
     @Singleton
-    final CascadeStrategy getCascadeStrategy() {
+    CascadeStrategy getCascadeStrategy() {
         return new NoCascadeStrategy();
     }
     
     @Provides
     @Singleton
-    final Decoder getDecoder() {
+    Decoder getDecoder() {
         return DefaultDecoder.INSTANCE;
     }
 
     @Provides
     @Singleton
     @RootLayer
-    final Config getInternalConfig(
+    Config getInternalConfig(
             @RuntimeLayer     SettableConfig     settableLayer,
             @RemoteLayer      Config             overrideLayer,
             @ApplicationLayer CompositeConfig    applicationLayer, 
@@ -283,10 +284,10 @@ public final class ArchaiusModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    final Config getConfig(
+    public Config getConfig(
             @RootLayer        Config            config,
             @ApplicationLayer CompositeConfig   applicationLayer,
-            @ApplicationLayer String            appName,
+            @ApplicationLayer String            configName,
             @RemoteLayer      CompositeConfig   overrideLayer,
             @RuntimeLayer     SettableConfig    runtimeLayer,
                               ConfigLoader      loader,
@@ -296,7 +297,7 @@ public final class ArchaiusModule extends AbstractModule {
             ) throws Exception {
         
         // First load the application configuration 
-        LinkedHashMap<String, Config> loadedConfigs = loader.newLoader().withCascadeStrategy(new NoCascadeStrategy()).load(appName);
+        LinkedHashMap<String, Config> loadedConfigs = loader.newLoader().withCascadeStrategy(new NoCascadeStrategy()).load(configName);
         if (loadedConfigs != null) {
             applicationLayer.addConfigs(loadedConfigs);
         }
@@ -313,9 +314,17 @@ public final class ArchaiusModule extends AbstractModule {
         
         // Finally, load any cascaded configuration files for the
         // application
-        loadedConfigs = loader.newLoader().withCascadeStrategy(cascadeStrategy).load(appName);
+        loadedConfigs = loader.newLoader().withCascadeStrategy(cascadeStrategy).load(configName);
         if (loadedConfigs != null) { 
-            applicationLayer.replaceConfigs(loadedConfigs);
+            applicationLayer.removeConfig(configName);
+            for (Entry<String, Config> entry : loadedConfigs.entrySet()) {
+                try {
+                    applicationLayer.addConfig(entry.getKey(), entry.getValue());
+                }
+                catch (ConfigAlreadyExistsException e) {
+                    // OK to ignore
+                }
+            }
         }
         return config;
     }
@@ -327,7 +336,7 @@ public final class ArchaiusModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    final PropertyFactory getPropertyFactory(final Config root) {
+    PropertyFactory getPropertyFactory(Config root) {
         return DefaultPropertyFactory.from(root);
     }
 }

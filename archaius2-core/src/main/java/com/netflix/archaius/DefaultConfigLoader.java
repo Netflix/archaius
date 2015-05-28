@@ -19,6 +19,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
@@ -172,15 +173,18 @@ public class DefaultConfigLoader implements ConfigLoader {
                     configs.put(resourceName, new MapConfig(overrides));
                 }
 
-                for (String permutationName : strategy.generate(resourceName, interpolator, lookup)) {
-                    LOG.info("Attempting to load {}", permutationName);
-                    for (ConfigReader loader : loaders) {
-                        if (loader.canLoad(classLoader, permutationName)) {
+                List<String> names = strategy.generate(resourceName, interpolator, lookup);
+                for (String name : names) {
+                    LOG.info("Attempting to load {}", name);
+                    for (ConfigReader reader : loaders) {
+                        if (reader.canLoad(classLoader, name)) {
                             try {
-                                configs.put(permutationName, loader.load(classLoader, permutationName));
+                                configs.put(name, reader.load(classLoader, name));
+                                LOG.info("Loaded {} ", name);
                                 failIfNotLoaded = false;
                             }
                             catch (ConfigException e) {
+                                LOG.info("Unable to load {}, {}", name, e.getMessage());
                                 if (failIfNotLoaded == true) {
                                     throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
                                 }
@@ -192,15 +196,19 @@ public class DefaultConfigLoader implements ConfigLoader {
                 
                 return configs;
             }
-
+ 
             @Override
             public Config load(URL url) {
                 for (ConfigReader loader : loaders) {
                     if (loader.canLoad(classLoader, url)) {
                         try {
-                            return loader.load(classLoader, url);
+                            Config config = loader.load(classLoader, url);
+                            LOG.info("Loaded " + url);
+                            return config;
                         } catch (ConfigException e) {
-                            LOG.debug("Unable to load file '{}'", new Object[]{url, e.getMessage()});
+                            LOG.info("Unable to load file '{}'", new Object[]{url, e.getMessage()});
+                        } catch (Exception e) {
+                            LOG.info("Unable to load file '{}'", new Object[]{url, e.getMessage()});
                         }
                     }
                 }

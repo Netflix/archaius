@@ -16,19 +16,23 @@ import com.google.common.collect.Sets;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.commons.CommonsToConfig;
 import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.DefaultConfigListener;
 import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.DeploymentContext;
+import com.netflix.config.DynamicPropertySupport;
+import com.netflix.config.PropertyListener;
 
 /**
  * @see StaticArchaiusBridgeModule
  * @author elandau
  */
 @Singleton
-class AbstractConfigurationBridge extends AbstractConfiguration implements AggregatedConfiguration {
+class AbstractConfigurationBridge extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
 
     private final Config config;
     private final SettableConfig settable;
@@ -37,7 +41,7 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     
     @Inject
     public AbstractConfigurationBridge(
-            Config config, 
+            final Config config, 
             @LibrariesLayer CompositeConfig libraries, 
             @RuntimeLayer SettableConfig settable, 
             DeploymentContext context) {
@@ -80,7 +84,11 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     public void addConfiguration(AbstractConfiguration config, String name) {
         try {
             libraries.addConfig(name, new CommonsToConfig(config));
-        } catch (ConfigException e) {
+        }
+        catch (ConfigAlreadyExistsException e) {
+            // OK To ignore
+        } 
+        catch (ConfigException e) {
             throw new RuntimeException("Unable to add configuration " + name, e);
         }
     }
@@ -129,5 +137,25 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     @Override
     public Configuration removeConfigurationAt(int index) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addConfigurationListener(final PropertyListener expandedPropertyListener) {
+        config.addListener(new DefaultConfigListener() {
+            @Override
+            public void onConfigAdded(Config config) {
+                expandedPropertyListener.configSourceLoaded(config);
+            }
+
+            @Override
+            public void onConfigRemoved(Config config) {
+                expandedPropertyListener.configSourceLoaded(config);
+            }
+
+            @Override
+            public void onConfigUpdated(Config config) {
+                expandedPropertyListener.configSourceLoaded(config);
+            }
+        });
     }
 }

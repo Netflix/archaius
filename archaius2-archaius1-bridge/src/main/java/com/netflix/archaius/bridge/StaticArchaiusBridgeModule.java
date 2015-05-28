@@ -35,8 +35,6 @@ public class StaticArchaiusBridgeModule extends AbstractModule {
     protected void configure() {
         requestStaticInjection(StaticAbstractConfiguration.class);
         requestStaticInjection(StaticDeploymentContext.class);
-        
         bind(DeploymentContext.class).to(ConfigBasedDeploymentContext.class);
-        bind(AbstractConfigurationBridge.class).asEagerSingleton();
     }
 }
