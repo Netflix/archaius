@@ -1,6 +1,9 @@
 package com.netflix.archaius.guice;
 
+import java.util.Map.Entry;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,33 +24,34 @@ import com.netflix.archaius.IoCContainer;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.LibrariesLayer;
 
-public class ConfigurationInjectingListener implements TypeListener, IoCContainer {
+public class ConfigurationInjectingListener implements TypeListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
     
-    @Inject
-    @LibrariesLayer
-    private CompositeConfig librariesConfig;
+    static class Holder {
+        @Inject
+        private Config            config;
+        
+        @Inject
+        private Injector          injector;
+        
+        @Inject
+        private ConfigLoader      loader;
+        
+        @Inject
+        private CascadeStrategy   defaultStrategy;
+        
+        @Inject
+        private @LibrariesLayer   CompositeConfig   libraries;
+    }
     
-    @Inject
-    private Config rootConfig;
-    
-    @Inject
-    private Injector injector;
-    
-    @Inject
-    private ConfigMapper mapper;
-    
-    @Inject
-    private ConfigLoader loader;
-    
-    @Inject
-    private CascadeStrategy defaultStrategy;
+    private ConfigMapper mapper = new ConfigMapper(true);
     
     @Override
-    public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> encounter) {
+    public <I> void hear(TypeLiteral<I> typeLiteral, final TypeEncounter<I> encounter) {
         Class<?> clazz = typeLiteral.getRawType();
         
         //
@@ -55,18 +59,28 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
         //
         ConfigurationSource source = clazz.getAnnotation(ConfigurationSource.class);
         if (source != null) {
+            final Provider<Holder> holder = encounter.getProvider(Holder.class);
+            
             encounter.register(new InjectionListener<I>() {
                 @Override
                 public void afterInjection(I injectee) {
+                    System.out.println("AfterInjection : " + injectee);
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
-                                             ? injector.getInstance(source.cascading()) 
-                                             : defaultStrategy;
+                                             ? holder.get().injector.getInstance(source.cascading()) 
+                                             : holder.get().defaultStrategy;
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {
                             try {
-                                librariesConfig.replaceConfigs(loader.newLoader().withCascadeStrategy(strategy).load(resourceName));
+                                for (Entry<String, Config> config : holder.get().loader.newLoader().withCascadeStrategy(strategy).load(resourceName).entrySet()) {
+                                    try {
+                                        holder.get().libraries.addConfig(config.getKey(), config.getValue());
+                                    }
+                                    catch (ConfigAlreadyExistsException e) {
+                                        // OK To ignore
+                                    }
+                                }
                             } 
                             catch (ConfigException e) {
                                 throw new ProvisionException("Unable to load configuration for " + resourceName + " at source " + injectee.getClass(), e);
@@ -82,11 +96,18 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
         //
         Configuration configAnnot = clazz.getAnnotation(Configuration.class);
         if (configAnnot != null) {
+            final Provider<Holder> holder = encounter.getProvider(Holder.class);
+            
             encounter.register(new InjectionListener<I>() {
                 @Override
                 public void afterInjection(I injectee) {
                     try {
-                        mapper.mapConfig(injectee, rootConfig, ConfigurationInjectingListener.this);
+                        mapper.mapConfig(injectee, holder.get().config, new IoCContainer() {
+                            @Override
+                            public <T> T getInstance(String name, Class<T> type) {
+                                return holder.get().injector.getInstance(Key.get(type, Names.named(name)));
+                            }
+                        });
                     }
                     catch (Exception e) {
                         throw new ProvisionException("Unable to bind configuration to " + injectee.getClass(), e);
@@ -94,10 +115,5 @@ public class ConfigurationInjectingListener implements TypeListener, IoCContaine
                 }
             });
         }        
-    }
-
-    @Override
-    public <T> T getInstance(String name, Class<T> type) {
-        return injector.getInstance(Key.get(type, Names.named(name)));
     }
 }

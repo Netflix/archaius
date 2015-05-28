@@ -11,12 +11,14 @@ import org.apache.commons.configuration.Configuration;
 
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
+import com.netflix.config.DynamicPropertySupport;
+import com.netflix.config.PropertyListener;
 
 /**
  * @see StaticArchaiusBridgeModule
  * @author elandau
  */
-public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration {
+public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
     private static volatile AbstractConfigurationBridge delegate;
 
     @Inject
@@ -109,4 +111,8 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         delegate.addPropertyDirect(key, value);
     }
 
+    @Override
+    public void addConfigurationListener(PropertyListener expandedPropertyListener) {
+        delegate.addConfigurationListener(expandedPropertyListener);
+    }
 }
