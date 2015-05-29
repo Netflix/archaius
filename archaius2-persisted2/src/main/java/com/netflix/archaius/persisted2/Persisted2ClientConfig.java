@@ -2,6 +2,7 @@ package com.netflix.archaius.persisted2;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.netflix.archaius.annotations.Configuration;
 
@@ -22,7 +23,7 @@ public interface Persisted2ClientConfig {
     /**
      * @return List of query scopes to 'and' and possible values to 'or'
      */
-    Map<String, List<String>> getQueryScopes();
+    Map<String, Set<String>> getQueryScopes();
     
     /**
      * When set to true the server will match only properties for which the list of 

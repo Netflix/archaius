@@ -2,9 +2,9 @@ package com.netflix.archaius.persisted2;
 
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -67,9 +67,9 @@ public class Persisted2ConfigProvider implements Provider<Config> {
         this.config = config;
     }
     
-    public static String getFilterString(Map<String, List<String>> scopes) {
+    public static String getFilterString(Map<String, Set<String>> scopes) {
         StringBuilder sb = new StringBuilder();
-        for (Entry<String, List<String>> scope : scopes.entrySet()) {
+        for (Entry<String, Set<String>> scope : scopes.entrySet()) {
             if (scope.getValue().isEmpty()) 
                 continue;
             
