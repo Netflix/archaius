@@ -3,14 +3,16 @@ package com.netflix.archaius.persisted2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
 
     private int refreshRate = 30;
     private List<String> prioritizedScopes = new ArrayList<>();
-    private Map<String, List<String>> queryScopes = new HashMap<>();
+    private Map<String, Set<String>> queryScopes = new HashMap<>();
     private String serviceUrl;
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
@@ -51,12 +53,14 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     }
 
     public DefaultPersisted2ClientConfig withQueryScope(String name, String ... values) {
-        queryScopes.put(name, Arrays.asList(values));
+        Set<String> unique = new HashSet<>();
+        unique.addAll(Arrays.asList(values));
+        queryScopes.put(name, unique);
         return this;
     }
     
     @Override
-    public Map<String, List<String>> getQueryScopes() {
+    public Map<String, Set<String>> getQueryScopes() {
         return queryScopes;
     }
 
