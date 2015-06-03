@@ -64,7 +64,6 @@ public class ConfigurationInjectingListener implements TypeListener {
             encounter.register(new InjectionListener<I>() {
                 @Override
                 public void afterInjection(I injectee) {
-                    System.out.println("AfterInjection : " + injectee);
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? holder.get().injector.getInstance(source.cascading()) 

@@ -149,8 +149,6 @@ public final class ArchaiusModule extends AbstractModule {
         
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class);
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RemoteLayer.class);
-        
-        binder().disableCircularProxies();
     }
     
     @Provides
@@ -259,7 +257,7 @@ public final class ArchaiusModule extends AbstractModule {
             @LibrariesLayer   CompositeConfig    librariesLayer) throws ConfigException {
         return CompositeConfig.builder()
                 .withConfig(RUNTIME_LAYER_NAME,     settableLayer)
-                .withConfig(REMOTE_LAYER_NAME,    overrideLayer)
+                .withConfig(REMOTE_LAYER_NAME,      overrideLayer)
                 .withConfig(SYSTEM_LAYER_NAME,      SystemConfig.INSTANCE)
                 .withConfig(ENVIRONMENT_LAYER_NAME, EnvironmentConfig.INSTANCE)
                 .withConfig(APPLICATION_LAYER_NAME, applicationLayer)

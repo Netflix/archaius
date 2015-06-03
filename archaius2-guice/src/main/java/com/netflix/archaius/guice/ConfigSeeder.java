@@ -9,7 +9,7 @@ import com.netflix.archaius.Config;
  * 
  * For example, the following code
  * <pre>
- * Multibinder.newSetBinder(binder(), ConfigSeeder, RuntimeLayer.class)
+ * Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class)
  *            .addBinding().toInstance(new ConfigSeeder() {
  *                public Config get(Config mainConfig) {
  *                    return MapConfig.from(props));
