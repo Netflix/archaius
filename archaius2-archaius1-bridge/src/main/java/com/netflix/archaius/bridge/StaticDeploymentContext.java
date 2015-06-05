@@ -2,7 +2,9 @@ package com.netflix.archaius.bridge;
 
 import javax.inject.Inject;
 
-import com.netflix.config.ConfigurationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.netflix.config.DeploymentContext;
 
 /**
@@ -10,13 +12,14 @@ import com.netflix.config.DeploymentContext;
  * @author elandau
  */
 public class StaticDeploymentContext implements DeploymentContext {
+    private static final Logger LOG = LoggerFactory.getLogger(StaticAbstractConfiguration.class);
 
     private static volatile DeploymentContext delegate;
     
     @Inject
     public static void initialize(DeploymentContext context) {
+        LOG.info("Initializing");
         delegate = context;
-        ConfigurationManager.setDeploymentContext(context);
     }
     
     public static void reset() {

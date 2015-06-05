@@ -3,6 +3,7 @@ package com.netflix.archaius.bridge;
 import java.io.IOException;
 import java.util.Properties;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -16,26 +17,26 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Provides;
-import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.inject.LibrariesLayer;
+import com.netflix.archaius.guice.ConfigSeeders;
 import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.visitor.PrintStreamVisitor;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
 
+@Ignore
 public class AbstractConfigurationBridgeTest {
     @Singleton
     public static class SomeClient {
         final String fooValue;
         
-        public SomeClient() {
+        @Inject
+        public SomeClient(Config config) {
+            config.accept(new PrintStreamVisitor());
             fooValue = ConfigurationManager.getConfigInstance().getString("foo", null);
         }
     }
@@ -52,26 +53,11 @@ public class AbstractConfigurationBridgeTest {
         
         @Override
         protected void configure() {
-            install(Modules
-                    .override(new ArchaiusModule())
-                    .with(new AbstractModule() {
-                        @Override
-                        protected void configure() {
-                            bind(SomeClient.class).asEagerSingleton();
-                            bind(Properties.class).annotatedWith(RuntimeLayer.class).toInstance(properties);
-                        }
-                        
-                        @Provides
-                        @Singleton
-                        Config getConfig(@LibrariesLayer CompositeConfig libraries, @RuntimeLayer SettableConfig settable) throws ConfigException {
-                            return CompositeConfig.builder()
-                                    .withConfig("runtime", settable)
-                                    .withConfig("lib", libraries)
-                                    .build()
-                                    ;
-                        }
-                    }));
             install(new StaticArchaiusBridgeModule());
+            install(new ArchaiusModule());
+            
+            bind(SomeClient.class).asEagerSingleton();
+            ConfigSeeders.bind(binder(), properties, RuntimeLayer.class);
         }
     }
     
@@ -82,7 +68,6 @@ public class AbstractConfigurationBridgeTest {
     }
     
     @Test
-    @Ignore
     public void testBasicWiring() {
         final Properties props = new Properties();
         props.setProperty("foo", "bar");
@@ -110,18 +95,10 @@ public class AbstractConfigurationBridgeTest {
     }
     
     @Test
-    @Ignore
     public void confirmOverrideOrder() throws IOException {
         ConfigurationManager.getConfigInstance();
         Assert.assertFalse(ConfigurationManager.isConfigurationInstalled());
-        Injector injector = Guice.createInjector(
-                new TestModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(SomeClient.class).asEagerSingleton();
-                    }
-                });
+        Injector injector = Guice.createInjector(new TestModule());
         
         Config config = injector.getInstance(Config.class);
         
@@ -141,14 +118,7 @@ public class AbstractConfigurationBridgeTest {
         Assert.assertNotNull(context1);
         Assert.assertEquals(null, context1.getDeploymentEnvironment());
         
-        Injector injector = Guice.createInjector(
-                new TestModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(SomeClient.class).asEagerSingleton();
-                    }
-                });
+        Injector injector = Guice.createInjector(new TestModule());
 
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
         DeploymentContext contextDi = injector.getInstance(DeploymentContext.class);
@@ -186,7 +156,6 @@ public class AbstractConfigurationBridgeTest {
      * @throws IOException
      */
     @Test
-    @Ignore
     public void testBridgePropertiesFromLegacyToNew() throws IOException {
         Injector injector = Guice.createInjector(new TestModule());
         
@@ -214,7 +183,6 @@ public class AbstractConfigurationBridgeTest {
      * @throws IOException
      */
     @Test
-    @Ignore
     public void confirmLegacyOverrideOrder() throws IOException {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         
@@ -238,7 +206,6 @@ public class AbstractConfigurationBridgeTest {
      * @throws IOException
      */
     @Test
-    @Ignore
     public void confirmLegacyOverrideOrderResources() throws IOException {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         
@@ -260,7 +227,6 @@ public class AbstractConfigurationBridgeTest {
      * @throws IOException
      */
     @Test
-    @Ignore
     public void confirmLegacyOverrideOrderAddConfig() throws IOException {
         AggregatedConfiguration config = (AggregatedConfiguration) ConfigurationManager.getConfigInstance();
         
