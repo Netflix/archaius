@@ -8,6 +8,8 @@ import javax.inject.Inject;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
@@ -19,12 +21,17 @@ import com.netflix.config.PropertyListener;
  * @author elandau
  */
 public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
+    private static final Logger LOG = LoggerFactory.getLogger(StaticAbstractConfiguration.class);
+    
     private static volatile AbstractConfigurationBridge delegate;
 
     @Inject
     public static void intialize(AbstractConfigurationBridge config) {
+        LOG.info("Initializing");
         delegate = config;
-        ConfigurationManager.install(config);
+        if (!ConfigurationManager.isConfigurationInstalled()) {
+            ConfigurationManager.install(config);
+        }
     }
 
     public static void reset() {
