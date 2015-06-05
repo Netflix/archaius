@@ -10,6 +10,7 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.MapConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
@@ -27,6 +28,7 @@ import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
 
+@Ignore
 public class AbstractConfigurationBridgeTest {
     @Singleton
     public static class SomeClient {
