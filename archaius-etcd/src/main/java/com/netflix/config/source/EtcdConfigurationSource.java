@@ -2,6 +2,7 @@ package com.netflix.config.source;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.netflix.config.WatchedConfigurationSource;
@@ -17,6 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.google.common.collect.Maps.newHashMap;
+import static com.netflix.config.WatchedUpdateResult.createIncremental;
 
 
 /**
@@ -44,51 +48,7 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
     private final Etcd etcd;
     private final String configPath;
 
-    private Handler<Response> updateHandler = new Handler<Response>() {
-        @Override
-        public void handle(Response updateResponse) {
-            if (updateResponse.wasError()) {
-                logger.error("Etcd failed with an error response: %s", updateResponse);
-            }
-
-            final Map<String, Object> create = Maps.newHashMap();
-            final Map<String, Object> set = Maps.newHashMap();
-            final Map<String, Object> delete = Maps.newHashMap();
-
-            final String action = updateResponse.action().toLowerCase();
-            final Node node = updateResponse.node();
-
-            if (node != null ) {
-                final String etcdKey = node.key();
-                final String sourceKey = Iterables.getLast(keySplitter.split(etcdKey));
-                final String value = node.getValue();
-                valueCache.put(sourceKey, value);
-
-                switch (action) {
-                    case "create":
-                        create.put(sourceKey, value);
-                        break;
-
-                    case "set":
-                        set.put(sourceKey, value);
-                        break;
-
-                    case "delete":
-                        delete.put(sourceKey, value);
-                        break;
-
-                    default:
-                        logger.warn("unrecognized action, response: %s", updateResponse);
-                        break;
-                }
-
-                final WatchedUpdateResult result = WatchedUpdateResult.createIncremental(create, set, delete);
-                updateConfiguration(result);
-            }
-
-            etcd.waitRecursive(updateHandler, configPath);
-        }
-    };
+    private Handler<Response> updateHandler = new UpdateHandler();
 
     /**
      * Initialize EtcdConfigurationSource with property values @ configPath
@@ -142,6 +102,58 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
             } catch (Throwable ex) {
                 logger.error("Error in invoking WatchedUpdateListener", ex);
             }
+        }
+    }
+
+    private class UpdateHandler implements Handler<Response> {
+        @Override
+        public void handle(Response updateResponse) {
+            if (updateResponse.wasError()) {
+                logger.error("Etcd failed with an error response: %s", updateResponse);
+                etcd.waitRecursive(updateHandler, configPath);
+                return;
+            }
+
+            logger.debug("Etcd updateResponse: ", updateResponse);
+            final Node node = updateResponse.node();
+
+            if (node != null ) {
+                final String etcdKey = node.key();
+                final String sourceKey = Iterables.getLast(keySplitter.split(etcdKey));
+                final String value = node.getValue();
+                final String action = getUpdateAction(node, updateResponse.action());
+
+                switch (action) {
+                    case "create":
+                        valueCache.put(sourceKey, value);
+                        updateConfiguration(createIncremental(null, ImmutableMap.<String, Object>of(sourceKey, value), null));
+                        break;
+
+                    case "set":
+                        valueCache.put(sourceKey, value);
+                        updateConfiguration(createIncremental(ImmutableMap.<String, Object>of(sourceKey, value), null, null));
+                        break;
+
+                    case "delete":
+                        valueCache.remove(sourceKey);
+                        updateConfiguration(createIncremental(null, null, ImmutableMap.<String, Object>of(sourceKey, "")));
+                        break;
+
+                    default:
+                        logger.warn("unrecognized action, response: %s", updateResponse);
+                        break;
+                }
+            }
+
+            etcd.waitRecursive(updateHandler, configPath);
+        }
+
+        private String getUpdateAction(Node updateNode, String responseAction) {
+            final String value = updateNode.getValue();
+            if (value == null) {
+                return "delete";
+            }
+            return responseAction.toLowerCase();
         }
     }
 }
