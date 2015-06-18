@@ -95,6 +95,19 @@ project(':archaius-zookeeper') {
     }
 }
 
+project(':archaius-etcd') {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    dependencies {
+        compile project(':archaius-core')
+        compile 'io.fastjson:etcd-client:0.33'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.mockito:mockito-all:1.9.5'
+        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+    }
+}
+
 project(':archaius-scala') {
     apply plugin: 'scala'
 
