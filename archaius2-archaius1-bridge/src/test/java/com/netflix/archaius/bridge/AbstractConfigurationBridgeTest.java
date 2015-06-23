@@ -28,7 +28,7 @@ import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
 
-//@Ignore
+@Ignore
 public class AbstractConfigurationBridgeTest {
     @Singleton
     public static class SomeClient {
