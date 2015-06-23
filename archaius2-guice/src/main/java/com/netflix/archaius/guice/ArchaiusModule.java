@@ -31,6 +31,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Providers;
 import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
+import com.netflix.archaius.ConfigListener;
 import com.netflix.archaius.ConfigLoader;
 import com.netflix.archaius.ConfigReader;
 import com.netflix.archaius.Decoder;
@@ -149,6 +150,8 @@ public final class ArchaiusModule extends AbstractModule {
         
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class);
         Multibinder.newSetBinder(binder(), ConfigSeeder.class, RemoteLayer.class);
+        
+        Multibinder.newSetBinder(binder(), ConfigListener.class, RootLayer.class);
     }
     
     @Provides
@@ -180,7 +183,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @ApplicationLayer 
-    Config getApplicationLayer(CompositeConfig config) {
+    Config getApplicationLayer(@ApplicationLayer CompositeConfig config) {
         return config;
     }
 
@@ -283,6 +286,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     public Config getConfig(
+            @RootLayer        Set<ConfigListener> listeners,
             @RootLayer        Config            config,
             @ApplicationLayer CompositeConfig   applicationLayer,
             @ApplicationLayer String            configName,
@@ -294,6 +298,10 @@ public final class ArchaiusModule extends AbstractModule {
             @RemoteLayer      Set<ConfigSeeder> remoteConfigResolvers
             ) throws Exception {
         
+        for (ConfigListener listener : listeners) {
+            config.addListener(listener);
+        }
+
         // First load the application configuration 
         LinkedHashMap<String, Config> loadedConfigs = loader.newLoader().withCascadeStrategy(new NoCascadeStrategy()).load(configName);
         if (loadedConfigs != null) {

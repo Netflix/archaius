@@ -28,7 +28,7 @@ public class StaticDeploymentContext implements DeploymentContext {
     
     @Override
     public String getDeploymentEnvironment() {
-        return delegate.getDeploymentEnvironment();
+        return getValue(ContextKey.environment);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class StaticDeploymentContext implements DeploymentContext {
 
     @Override
     public String getDeploymentDatacenter() {
-        return delegate.getDeploymentDatacenter();
+        return getValue(ContextKey.datacenter);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class StaticDeploymentContext implements DeploymentContext {
 
     @Override
     public String getApplicationId() {
-        return delegate.getApplicationId();
+        return getValue(ContextKey.appId);
     }
 
     @Override
@@ -57,28 +57,18 @@ public class StaticDeploymentContext implements DeploymentContext {
     }
 
     @Override
+    public String getDeploymentServerId() {
+        return getValue(ContextKey.serverId);
+    }
+
+    @Override
     public void setDeploymentServerId(String serverId) {
         delegate.setDeploymentServerId(serverId);
     }
 
     @Override
-    public String getDeploymentServerId() {
-        return delegate.getDeploymentServerId();
-    }
-
-    @Override
     public String getDeploymentStack() {
-        return delegate.getDeploymentStack();
-    }
-
-    @Override
-    public String getValue(ContextKey key) {
-        return delegate.getValue(key);
-    }
-
-    @Override
-    public void setValue(ContextKey key, String value) {
-        delegate.setValue(key, value);
+        return getValue(ContextKey.stack);
     }
 
     @Override
@@ -88,11 +78,27 @@ public class StaticDeploymentContext implements DeploymentContext {
 
     @Override
     public String getDeploymentRegion() {
-        return delegate.getDeploymentRegion();
+        return getValue(ContextKey.region);
     }
 
     @Override
     public void setDeploymentRegion(String region) {
         delegate.setDeploymentRegion(region);
     }
+
+    @Override
+    public String getValue(ContextKey key) {
+        if (delegate == null) {
+            LOG.warn("Configuration not yet initialized.  Returning 'null' for " + key);
+            return null;
+        }
+        
+        return delegate.getValue(key);
+    }
+
+    @Override
+    public void setValue(ContextKey key, String value) {
+        delegate.setValue(key, value);
+    }
+
 }
