@@ -220,6 +220,12 @@ public class ArchaiusModuleTest {
     public static interface TestProxyConfig {
         @DefaultValue("default")
         String getString();
+        
+        @DefaultValue("foo,bar")
+        String[] getStringArray();
+        
+        @DefaultValue("1,2")
+        Integer[] getIntArray();
     }
     
     @Test
@@ -234,11 +240,17 @@ public class ArchaiusModuleTest {
         
         TestProxyConfig object = injector.getInstance(TestProxyConfig.class);
         Assert.assertEquals("default", object.getString());
+        Assert.assertArrayEquals(new String[]{"foo", "bar"}, object.getStringArray());
+        Assert.assertArrayEquals(new Integer[]{1,2}, object.getIntArray());
         
         settableConfig.setProperty("string", "new");
+        settableConfig.setProperty("stringArray", "foonew,barnew");
+        settableConfig.setProperty("intArray", "3,4");
         config.accept(new PrintStreamVisitor());
         
         Assert.assertEquals("new", object.getString());
+        Assert.assertArrayEquals(new String[]{"foonew", "barnew"}, object.getStringArray());
+        Assert.assertArrayEquals(new Integer[]{3,4}, object.getIntArray());
         
         settableConfig.clearProperty("string");
         Assert.assertEquals("default", object.getString());

@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius.property;
 
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -466,7 +465,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
      */
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Property<T> asType(Class<T> type, T defaultValue) {
+    public <T> Property<T> asType(final Class<T> type, T defaultValue) {
         switch (Type.fromClass(type)) {
         case INTEGER:
             return (Property<T>) asInteger((Integer)defaultValue);
@@ -489,30 +488,13 @@ public class DefaultPropertyContainer implements PropertyContainer {
         case BIG_INTEGER:
             return (Property<T>) asBigInteger((BigInteger)defaultValue);
         default: {
-                final Constructor<T> constructor;
-                try {
-                    constructor = type.getConstructor(String.class);
-                    if (constructor != null) {
-                        CachedProperty<T> prop = add(new CachedProperty<T>(Type.CUSTOM) {
-                            @Override
-                            protected T resolveCurrent() throws Exception {
-                                String value = config.getString(key);
-                                if (value == null) {
-                                    return null;
-                                }
-                                else { 
-                                    return constructor.newInstance(value);
-                                }
-                            }
-                        });
-                        return new AbstractProperty<T>(prop, defaultValue);
+                CachedProperty<T> prop = add(new CachedProperty<T>(Type.CUSTOM) {
+                    @Override
+                    protected T resolveCurrent() throws Exception {
+                        return config.get(type, key);
                     }
-                } catch (NoSuchMethodException e) {
-                } catch (SecurityException e) {
-                    throw new UnsupportedOperationException("No parser for type " + type.getName(), e);
-                }
-              
-                throw new UnsupportedOperationException("No parser for type " + type.getName());
+                });
+                return new AbstractProperty<T>(prop, defaultValue);
             }
         }
     }

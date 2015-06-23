@@ -38,8 +38,8 @@ public class StaticArchaiusBridgeModule extends AbstractModule {
     
     @Override
     protected void configure() {
-        requestStaticInjection(StaticDeploymentContext.class);
         requestStaticInjection(StaticAbstractConfiguration.class);
+        requestStaticInjection(StaticDeploymentContext.class);
         bind(DeploymentContext.class).to(ConfigBasedDeploymentContext.class);
     }
 }
