@@ -181,7 +181,7 @@ public class ConfigurationManager {
     }
     
     private static void registerConfigBean() {
-        if (Boolean.getBoolean(DynamicPropertyFactory.ENABLE_JMX)) {
+        if (Boolean.getBoolean(System.getProperty(DynamicPropertyFactory.ENABLE_JMX))) {
             try {
                 configMBean = ConfigJMXManager.registerConfigMbean(instance);
             } catch (Exception e) {
