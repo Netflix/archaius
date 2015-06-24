@@ -59,4 +59,10 @@ public @interface Configuration
      * @return Method to call after configuration is bound
      */
     String      postConfigure() default "";
+    
+    /**
+     * @return If true then properties cannot change once set otherwise methods will be 
+     * bound to dynamic properties via PropertyFactory.
+     */
+    boolean     immutable() default false;
 }

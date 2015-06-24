@@ -76,5 +76,6 @@ public interface Property<T> {
      */
     void removeListener(PropertyListener<T> listener);
     
+    String getKey();
     
 }
