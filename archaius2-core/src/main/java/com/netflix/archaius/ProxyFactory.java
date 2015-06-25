@@ -12,7 +12,7 @@ import javax.inject.Inject;
 
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
-import com.netflix.archaius.annotations.PropertyInfo;
+import com.netflix.archaius.annotations.PropertyName;
 
 /**
  * Factory for creating a Proxy instance that is bound to configuration.
@@ -85,10 +85,10 @@ public class ProxyFactory {
                 throw new RuntimeException("Method with primite return type must have a @DefaultValue.  method=" + m.getName());
             }
             
-            PropertyInfo info = m.getAnnotation(PropertyInfo.class); 
+            PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
             // TODO: sub proxy for non-primitive types
-            String propName = info != null && info.name() != null
-                            ? prefix + info.name()
+            String propName = nameAnnot != null && nameAnnot.name() != null
+                            ? prefix + nameAnnot.name()
                             : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
                             
             Property prop = factory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);

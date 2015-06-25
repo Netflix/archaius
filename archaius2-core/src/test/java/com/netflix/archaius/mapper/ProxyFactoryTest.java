@@ -24,7 +24,7 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.annotations.DefaultValue;
-import com.netflix.archaius.annotations.PropertyInfo;
+import com.netflix.archaius.annotations.PropertyName;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
@@ -66,7 +66,7 @@ public class ProxyFactoryTest {
         Double getDouble2();
         
         @DefaultValue("default")
-        @PropertyInfo(name="renamed.string")
+        @PropertyName(name="renamed.string")
         String getRenamed();
         
         @DefaultValue("default")

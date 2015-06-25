@@ -23,6 +23,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
-public @interface PropertyInfo {
+public @interface PropertyName {
     String name();
 }
