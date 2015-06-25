@@ -283,6 +283,11 @@ public class DefaultPropertyContainer implements PropertyContainer {
         public void removeListener(PropertyListener<T> listener) {
             delegate.removeListener(listener);
         }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
     }
     
     /**

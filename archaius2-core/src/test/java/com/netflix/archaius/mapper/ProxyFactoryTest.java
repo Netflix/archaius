@@ -24,14 +24,15 @@ import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.annotations.PropertyName;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.property.PrefixedObservablePropertyFactory;
 
-public class DefaultConfigMapperTest {
+public class ProxyFactoryTest {
     public static interface MyConfig {
-        @DefaultValue("notoaded")
+        @DefaultValue("default")
         String getString();
         
         @DefaultValue("123")
@@ -63,6 +64,16 @@ public class DefaultConfigMapperTest {
         double getDouble();
         
         Double getDouble2();
+        
+        @DefaultValue("default")
+        @PropertyName(name="renamed.string")
+        String getRenamed();
+        
+        @DefaultValue("default")
+        String noVerb();
+        
+        @DefaultValue("false")
+        boolean isIs();
     }
     
     @Test
@@ -81,17 +92,22 @@ public class DefaultConfigMapperTest {
         props.put("prefix.float2",   2.1);
         props.put("prefix.double",   1.1);
         props.put("prefix.double2",  2.1);
-        
+        props.put("prefix.renamed.string", "loaded");
+        props.put("prefix.noVerb",   "loaded");
+        props.put("prefix.is",       "true");
         Config config = MapConfig.from(props);
 
-        Assert.assertEquals("loaded", config.getString("prefix.string"));
         ProxyFactory proxy = new ProxyFactory();
         MyConfig c = proxy.newProxy(MyConfig.class, new PrefixedObservablePropertyFactory("prefix", DefaultPropertyFactory.from(config)));
 
+        Assert.assertEquals("loaded", c.getString());
+        Assert.assertEquals("loaded", c.getRenamed());
+        Assert.assertEquals("loaded", c.noVerb());
         Assert.assertEquals(1, c.getInteger());
         Assert.assertEquals(2, (int)c.getInteger2());
         Assert.assertEquals(true, c.getBoolean());
         Assert.assertEquals(true, c.getBoolean2());
+        Assert.assertEquals(true, c.isIs());
         Assert.assertEquals(1, c.getShort());
         Assert.assertEquals(2, (short)c.getShort2());
         Assert.assertEquals(1, c.getLong());
@@ -101,6 +117,7 @@ public class DefaultConfigMapperTest {
         Assert.assertEquals(1.1, c.getDouble(), 0);
         Assert.assertEquals(2.1, (double)c.getDouble2(), 0);
         
+        System.out.println(c.toString());
     }
     
     @Test
