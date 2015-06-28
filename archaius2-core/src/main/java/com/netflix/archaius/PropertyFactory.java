@@ -17,9 +17,9 @@ package com.netflix.archaius;
 
 
 /**
- * SPI for a factory for binding to a Property for a property name.  
+ * Factory of PropertyContainer objects.
  * 
- * @see Property
+ * @see PropertyContainer
  * @author elandau
  */
 public interface PropertyFactory {

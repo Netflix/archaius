@@ -33,13 +33,13 @@ import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
 import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.ConfigReader;
 import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.PropertyFactory;
-import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
@@ -111,14 +111,24 @@ public final class ArchaiusModule extends AbstractModule {
     private static final String APPLICATION_LAYER_NAME = "APPLICATION";
     private static final String LIBRARIES_LAYER_NAME   = "LIBRARIES";
 
+    /**
+     * @deprecated Use @Provides instead
+     * 
+     * @Provides
+     * @Singleton
+     * public MyConfig getMyConfig(ConfigProxyFactory factory) {
+     *     return factory.newProxy(MyConfig.class);
+     * }
+     * 
+     * @param proxy
+     * @return
+     */
+    @Deprecated
     public static class ConfigProvider<T> implements Provider<T> {
         private Class<T> type;
         
         @Inject
-        ProxyFactory proxy;
-        
-        @Inject
-        PropertyFactory factory;
+        ConfigProxyFactory proxy;
         
         public ConfigProvider(Class<T> type) {
             this.type = type;
@@ -126,10 +136,23 @@ public final class ArchaiusModule extends AbstractModule {
 
         @Override
         public T get() {
-            return proxy.newProxy(type, factory);
+            return proxy.newProxy(type);
         }
     }
     
+    /**
+     * @deprecated Use @Provides instead
+     * 
+     * @Provides
+     * @Singleton
+     * public MyConfig getMyConfig(ConfigProxyFactory factory) {
+     *     return factory.newProxy(MyConfig.class);
+     * }
+     * 
+     * @param proxy
+     * @return
+     */
+    @Deprecated
     public static <T> AbstractModule forProxy(final Class<T> proxy) {
         return new AbstractModule() {
             @Override

@@ -19,9 +19,12 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+import javax.inject.Singleton;
+
 /**
  * @author Spencer Gibb
  */
+@Singleton
 public class DefaultDecoder implements Decoder {
 
     public static DefaultDecoder INSTANCE = new DefaultDecoder();
