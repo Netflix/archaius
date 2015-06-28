@@ -18,6 +18,17 @@ package com.netflix.archaius;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+/**
+ * Container for a single property that can be parse as any type.  
+ * A PropertyContainer is attached to the Config source from which it
+ * was created and receives notification of value changes.  Implementations
+ * of Property are non-blocking and optimize updating property values 
+ * in the background so as not to incur any overhead during hot call
+ * paths.
+ * 
+ * @author elandau
+ *
+ */
 public interface PropertyContainer {
     /**
      * Parse the property as a string 

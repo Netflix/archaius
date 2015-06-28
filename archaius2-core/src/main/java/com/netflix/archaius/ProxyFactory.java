@@ -9,32 +9,35 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.annotations.PropertyName;
 
 /**
- * Factory for creating a Proxy instance that is bound to configuration.
- * Getter methods on the interface are mapped by naming convention.
+ * Factory for binding a configuration interface to properties in a Config
+ * instance.  Getter methods on the interface are mapped by naming convention
+ * by the property name may be overridden using the @PropertyName annotation.
  * 
  * @author elandau
- *
+ * @deprecated Use {@link ConfigProxyFactory} instead
  */
+@Singleton
+@Deprecated
 public class ProxyFactory {
     
+    /**
+     * The decoder is used for the purpose of decoding any @DefaultValue annotation
+     */
     private final Decoder decoder;
+    private final PropertyFactory propertyFactory;
 
-    public ProxyFactory() {
-        this(DefaultDecoder.INSTANCE);
-    }
-    
     @Inject
-    public ProxyFactory(Decoder decoder) {
+    public ProxyFactory(Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
+        this.propertyFactory = factory;
     }
-    
-    // TODO: Add method nexProxy(Class<T> type, Config config);
     
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
@@ -45,14 +48,30 @@ public class ProxyFactory {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public <T> T newProxy(final Class<T> type, PropertyFactory factory) {
+    public <T> T newProxy(final Class<T> type) {
+        return newProxy(type, null);
+    }
+    
+    private String derivePrefix(Configuration annot, String prefix) {
+        if (prefix == null && annot != null) {
+            prefix = annot.prefix();
+            if (prefix == null) {
+                prefix = "";
+            }
+        }
+        if (prefix == null) 
+            return "";
+        
+        if (prefix.endsWith(".") || prefix.isEmpty())
+            return prefix;
+        
+        return prefix + ".";
+    }
+    
+    public <T> T newProxy(final Class<T> type, final String initialPrefix) {
         Configuration annot = type.getAnnotation(Configuration.class);
         
-        final String prefix = annot == null 
-                      ? "" 
-                      : !annot.prefix().isEmpty() && !annot.prefix().endsWith(".")
-                          ? annot.prefix() + "."
-                          : annot.prefix();
+        final String prefix = derivePrefix(annot, initialPrefix);
         
         // Iterate through all declared methods of the class looking for setter methods.
         // Each setter will be mapped to a Property<T> for the property name:
@@ -91,7 +110,7 @@ public class ProxyFactory {
                             ? prefix + nameAnnot.name()
                             : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
                             
-            Property prop = factory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);
+            Property prop = propertyFactory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);
             properties.put(m, annot != null && annot.immutable() ? new ImmutableProperty(propName, prop.get()) : prop);
         }
         
