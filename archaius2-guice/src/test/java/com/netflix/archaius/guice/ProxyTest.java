@@ -8,13 +8,14 @@ import org.junit.Test;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.ProxyFactory;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.inject.RuntimeLayer;
 
 public class ProxyTest {
@@ -23,6 +24,13 @@ public class ProxyTest {
         int getInteger();
         
         String getString();
+        
+        MySubConfig getSubConfig();
+    }
+    
+    public static interface MySubConfig {
+        @DefaultValue("0")
+        int getInteger();
     }
     
     @Configuration(prefix="foo")
@@ -44,6 +52,7 @@ public class ProxyTest {
                             MapConfig.builder()
                                 .put("integer", 1)
                                 .put("string", "bar")
+                                .put("subConfig.integer", 2)
                                 .build(), 
                             RuntimeLayer.class);
                 }
@@ -56,9 +65,15 @@ public class ProxyTest {
             })
         );
         
+        SettableConfig cfg = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
         MyConfig config = injector.getInstance(MyConfig.class);
         Assert.assertEquals("bar", config.getString());
         Assert.assertEquals(1, config.getInteger());
+        Assert.assertEquals(2, config.getSubConfig().getInteger());
+        
+        cfg.setProperty("subConfig.integer", 3);
+        
+        Assert.assertEquals(3, config.getSubConfig().getInteger());
     }
     
     @Test

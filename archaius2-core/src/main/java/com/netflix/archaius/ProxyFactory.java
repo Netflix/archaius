@@ -105,13 +105,17 @@ public class ProxyFactory {
             }
             
             PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
-            // TODO: sub proxy for non-primitive types
             String propName = nameAnnot != null && nameAnnot.name() != null
                             ? prefix + nameAnnot.name()
                             : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
-                            
-            Property prop = propertyFactory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);
-            properties.put(m, annot != null && annot.immutable() ? new ImmutableProperty(propName, prop.get()) : prop);
+
+            if (returnType.isInterface()) {
+                properties.put(m, new ImmutableProperty(propName, newProxy(returnType, propName)));
+            }
+            else {
+                Property prop = propertyFactory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);
+                properties.put(m, annot != null && annot.immutable() ? new ImmutableProperty(propName, prop.get()) : prop);
+            }
         }
         
         final InvocationHandler handler = new InvocationHandler() {
