@@ -3,8 +3,10 @@ package com.netflix.archaius;
 import org.junit.Test;
 
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.config.SettableConfig;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -17,8 +19,16 @@ public class ProxyFactoryTest {
         C
     }
     
-    public static interface RootConfig {
+    public static interface BaseConfig {
+        @DefaultValue("basedefault")
+        String getStr();
+        
+        Boolean getBaseBoolean();
+    }
+    
+    public static interface RootConfig extends BaseConfig {
         @DefaultValue("default")
+        @Override
         String getStr();
         
         @DefaultValue("0")
@@ -79,13 +89,13 @@ public class ProxyFactoryTest {
     
     @Test
     public void testAllPropertiesSet() {
-        Config config = MapConfig.builder()
-                .put("prefix.str", "str1")
-                .put("prefix.integer", 1)
-                .put("prefix.enum", TestEnum.A.name())
-                .put("prefix.subConfigFromString", "a:b")
-                .put("prefix.subConfig.str", "str2")
-                .build();
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("prefix.str", "str1");
+        config.setProperty("prefix.integer", 1);
+        config.setProperty("prefix.enum", TestEnum.A.name());
+        config.setProperty("prefix.subConfigFromString", "a:b");
+        config.setProperty("prefix.subConfig.str", "str2");
+        config.setProperty("prefix.baseBoolean", true);
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
@@ -98,6 +108,9 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),      equalTo("str2"));
         assertThat(a.getSubConfigFromString().part1(), equalTo("a"));
         assertThat(a.getSubConfigFromString().part2(), equalTo("b"));
+
+        config.setProperty("prefix.subConfig.str", "str3");
+        assertThat(a.getSubConfig().str(),      equalTo("str3"));
         
         System.out.println(a);
     }

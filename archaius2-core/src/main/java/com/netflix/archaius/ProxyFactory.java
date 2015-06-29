@@ -3,10 +3,13 @@ package com.netflix.archaius;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -47,7 +50,6 @@ public class ProxyFactory {
      * @param config
      * @return
      */
-    @SuppressWarnings("unchecked")
     public <T> T newProxy(final Class<T> type) {
         return newProxy(type, null);
     }
@@ -68,6 +70,24 @@ public class ProxyFactory {
         return prefix + ".";
     }
     
+    /**
+     * Populate a set of all interface and sub interface methods via recursion.
+     * Give top level overrides priority over methods defined in super-interfaces
+     * @param type
+     * @param methods
+     */
+    private void fillConfigMethods(Class<?> type, Set<Method> methods) {
+        for (Method m : type.getDeclaredMethods()) {
+            if (!methods.contains(m)) {
+                methods.add(m);
+            }
+        }
+        
+        for (Class<?> iface : type.getInterfaces()) {
+            fillConfigMethods(iface, methods);
+        }
+    }
+    
     public <T> T newProxy(final Class<T> type, final String initialPrefix) {
         Configuration annot = type.getAnnotation(Configuration.class);
         
@@ -77,7 +97,15 @@ public class ProxyFactory {
         // Each setter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, Property<?>> properties = new HashMap<Method, Property<?>>();
-        for (Method m : type.getDeclaredMethods()) {
+        Set<Method> methods = new TreeSet<>(new Comparator<Method>() {
+            @Override
+            public int compare(Method o1, Method o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        fillConfigMethods(type, methods);
+        
+        for (Method m : methods) {
             final String verb;
             if (m.getName().startsWith("get")) {
                 verb = "get";
