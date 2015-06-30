@@ -18,6 +18,8 @@ package com.netflix.archaius;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import javax.inject.Singleton;
 
@@ -53,6 +55,12 @@ public class DefaultDecoder implements Decoder {
         }
         else if (type.equals(float.class) || type.equals(Float.class)) {
             return (T) Float.valueOf(encoded);
+        }
+        else if (type.equals(BigInteger.class)) {
+            return (T) new BigInteger(encoded);
+        }
+        else if (type.equals(BigDecimal.class)) {
+            return (T) new BigDecimal(encoded);
         }
         else if (type.isArray()) {
             String[] elements = encoded.split(",");

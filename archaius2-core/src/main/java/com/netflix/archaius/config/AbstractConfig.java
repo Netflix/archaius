@@ -184,7 +184,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return Long.parseLong(value);
+            return decoder.decode(Long.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -197,7 +197,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return defaultValue;
         try {
-            return Long.parseLong(value);
+            return decoder.decode(Long.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -210,7 +210,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return Double.parseDouble(value);
+            return decoder.decode(Double.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -223,7 +223,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {   
-            return Double.parseDouble(value);
+            return decoder.decode(Double.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -237,7 +237,7 @@ public abstract class AbstractConfig implements Config {
             return notFound(key);
 
         try {   
-            return Integer.parseInt(value);
+            return decoder.decode(Integer.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -251,7 +251,7 @@ public abstract class AbstractConfig implements Config {
             return notFound(key, defaultValue);
         
         try {
-            return Integer.parseInt(value);
+            return decoder.decode(Integer.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -294,7 +294,7 @@ public abstract class AbstractConfig implements Config {
             return notFound(key);
         
         try {
-            return Short.parseShort(value);
+            return decoder.decode(Short.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -307,7 +307,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {
-            return Short.parseShort(value);
+            return decoder.decode(Short.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -320,7 +320,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return new BigInteger(value);
+            return decoder.decode(BigInteger.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -333,7 +333,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {
-            return new BigInteger(value);
+            return decoder.decode(BigInteger.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -346,7 +346,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return new BigDecimal(value);
+            return decoder.decode(BigDecimal.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -359,7 +359,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {
-            return new BigDecimal(value);
+            return decoder.decode(BigDecimal.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -372,7 +372,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return Float.parseFloat(value);
+            return decoder.decode(Float.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -385,7 +385,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {
-            return Float.parseFloat(value);
+            return decoder.decode(Float.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -398,7 +398,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key);
         try {
-            return Byte.parseByte(value);
+            return decoder.decode(Byte.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);
@@ -411,7 +411,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) 
             return notFound(key, defaultValue);
         try {
-            return Byte.parseByte(value);
+            return decoder.decode(Byte.class, value);
         }
         catch (NumberFormatException e) {
             return parseError(key, value, e);

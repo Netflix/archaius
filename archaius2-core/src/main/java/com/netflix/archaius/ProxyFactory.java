@@ -47,7 +47,6 @@ public class ProxyFactory {
      * @param config
      * @return
      */
-    @SuppressWarnings("unchecked")
     public <T> T newProxy(final Class<T> type) {
         return newProxy(type, null);
     }
@@ -77,7 +76,7 @@ public class ProxyFactory {
         // Each setter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, Property<?>> properties = new HashMap<Method, Property<?>>();
-        for (Method m : type.getDeclaredMethods()) {
+        for (Method m : type.getMethods()) {
             final String verb;
             if (m.getName().startsWith("get")) {
                 verb = "get";

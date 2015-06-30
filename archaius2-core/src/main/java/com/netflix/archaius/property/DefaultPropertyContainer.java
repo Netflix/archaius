@@ -470,7 +470,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
      */
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Property<T> asType(final Class<T> type, T defaultValue) {
+    public <T> Property<T> asType(final Class<T> type, final T defaultValue) {
         switch (Type.fromClass(type)) {
         case INTEGER:
             return (Property<T>) asInteger((Integer)defaultValue);
@@ -496,7 +496,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 CachedProperty<T> prop = add(new CachedProperty<T>(Type.CUSTOM) {
                     @Override
                     protected T resolveCurrent() throws Exception {
-                        return config.get(type, key);
+                        return config.get(type, key, defaultValue);
                     }
                 });
                 return new AbstractProperty<T>(prop, defaultValue);
