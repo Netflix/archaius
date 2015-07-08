@@ -239,10 +239,8 @@ public class ConfigurationManager {
         }
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
-            Properties props = new Properties();
             InputStream fin = url.openStream();
-            props.load(fin);
-            fin.close();
+            Properties props = ConfigurationUtils.loadPropertiesFromInputStream(fin);
             if (instance instanceof AggregatedConfiguration) {
                 String name = getConfigName(url);
                 ConcurrentMapConfiguration config = new ConcurrentMapConfiguration();

@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.config.PollResult;
 import com.netflix.config.PolledConfigurationSource;
+import com.netflix.config.util.ConfigurationUtils;
 
 /**
  * A polled configuration source based on a set of URLs. For each poll,
@@ -178,10 +179,8 @@ public class URLConfigurationSource implements PolledConfigurationSource {
         }
         Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
-            Properties props = new Properties();
             InputStream fin = url.openStream();
-            props.load(fin);
-            fin.close();
+            Properties props = ConfigurationUtils.loadPropertiesFromInputStream(fin);
             for (Entry<Object, Object> entry: props.entrySet()) {
                 map.put((String) entry.getKey(), entry.getValue());
             }

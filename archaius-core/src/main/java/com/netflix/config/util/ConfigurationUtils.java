@@ -17,6 +17,9 @@ package com.netflix.config.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -243,7 +246,29 @@ public class ConfigurationUtils {
         String nextLoad = sb.toString();
         propConfig.clearProperty(nextLoadKeyToUse);
         return nextLoad;
-    }    
+    }
+    
+    /**
+     * Load properties from InputStream with utf-8 encoding, and it will take care of closing the input stream.
+     * @param fin
+     * @return
+     * @throws IOException
+     */
+    public static Properties loadPropertiesFromInputStream(InputStream fin) throws IOException {
+        Properties props = new Properties();
+        InputStreamReader reader = new InputStreamReader(fin, "UTF-8");
+        try {
+            props.load(reader);
+            return props;
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+            if (fin != null) {
+                fin.close();
+            }
+        }
+    }
 }
 
 class OverridingPropertiesConfiguration extends PropertiesConfiguration {
