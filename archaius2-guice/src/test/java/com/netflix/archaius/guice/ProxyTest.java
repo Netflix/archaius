@@ -51,9 +51,9 @@ public class ProxyTest {
                     ConfigSeeders.bind(binder(), 
                             MapConfig.<String>builder()
 
-                                    .put("integer", 1)
+                                    .put("integer", "1")
                                 .put("string", "bar")
-                                .put("subConfig.integer", 2)
+                                .put("subConfig.integer", "2")
                                 .build(), 
                             RuntimeLayer.class);
                 }
@@ -86,7 +86,7 @@ public class ProxyTest {
                 protected void configure() {
                     ConfigSeeders.bind(binder(), 
                             MapConfig.<String>builder()
-                                .put("prefix.integer", 1)
+                                .put("prefix.integer", "1")
                                 .put("prefix.string", "bar")
                                 .build(), 
                             RuntimeLayer.class);

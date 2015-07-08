@@ -43,13 +43,13 @@ public class MapConfig<T> extends AbstractConfig {
     public static class Builder<T> {
         Map<String, T> map = new HashMap<>();
         
-        public Builder put(String key, T value) {
+        public Builder<T> put(String key, T value) {
             map.put(key, value);
             return this;
         }
         
         public MapConfig build() {
-            return new MapConfig(map);
+            return new MapConfig<>(map);
         }
     }
     
@@ -64,11 +64,11 @@ public class MapConfig<T> extends AbstractConfig {
             tempMap.put(entry.getKey().toString(), entry.getValue().toString());
         }
 
-        return new MapConfig<String>(Collections.unmodifiableMap(tempMap));
+        return new MapConfig<>(Collections.unmodifiableMap(tempMap));
     }
     
     public static <T> MapConfig from(Map<String, T> props) {
-        return new MapConfig<T>(props);
+        return new MapConfig<>(props);
     }
     
     private Map<String, T> props = new HashMap<>();
