@@ -63,6 +63,12 @@ public class ConfigurationManagerTest {
     }
     
     @Test
+    public void testLoadChineseProperties() throws Exception {
+        ConfigurationManager.loadPropertiesFromResources("test-chinese.properties");
+        assertEquals("中文测试", ConfigurationManager.getConfigInstance().getProperty("subject"));
+    }
+    
+    @Test
     public void testLoadCascadedProperties() throws Exception {
         SimpleDeploymentContext context = new SimpleDeploymentContext();
         context.setDeploymentEnvironment("test");
