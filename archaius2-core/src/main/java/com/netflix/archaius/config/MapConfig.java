@@ -25,7 +25,7 @@ import java.util.Properties;
 /**
  * Config backed by an immutable map.
  */
-public class MapConfig extends AbstractConfig {
+public class MapConfig<T> extends AbstractConfig {
 
     /**
      * The builder only provides convenience for fluent style adding of properties
@@ -40,11 +40,11 @@ public class MapConfig extends AbstractConfig {
      * }
      * @author elandau
      */
-    public static class Builder {
-        Map<String, String> map = new HashMap<String, String>();
+    public static class Builder<T> {
+        Map<String, T> map = new HashMap<>();
         
-        public <T> Builder put(String key, T value) {
-            map.put(key, value.toString());
+        public Builder put(String key, T value) {
+            map.put(key, value);
             return this;
         }
         
@@ -53,42 +53,35 @@ public class MapConfig extends AbstractConfig {
         }
     }
     
-    public static Builder builder() {
-        return new Builder();
+    public static <T> Builder builder() {
+        return new Builder<T>();
     }
     
-    public static MapConfig from(Properties props) {
-        return new MapConfig(props);
+    public static MapConfig<String> from(Properties props) {
+        Map<String, String> tempMap = new HashMap<>(props.size());
+
+        for (Entry<Object, Object> entry : props.entrySet()) {
+            tempMap.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+
+        return new MapConfig<String>(Collections.unmodifiableMap(tempMap));
     }
     
-    public static MapConfig from(Map<String, String> props) {
-        return new MapConfig(props);
+    public static <T> MapConfig from(Map<String, T> props) {
+        return new MapConfig<T>(props);
     }
     
-    private Map<String, String> props = new HashMap<String, String>();
+    private Map<String, T> props = new HashMap<>();
     
     /**
      * Construct a MapConfig as a copy of the provided Map
-     * @param name
      * @param props
      */
-    public MapConfig(Map<String, String> props) {
+    public MapConfig(Map<String, T> props) {
         this.props.putAll(props);
         this.props = Collections.unmodifiableMap(this.props);
     }
 
-    /**
-     * Construct a MapConfig as a copy of the provided properties
-     * @param name
-     * @param props
-     */
-    public MapConfig(Properties props) {
-        for (Entry<Object, Object> entry : props.entrySet()) {
-            this.props.put(entry.getKey().toString(), entry.getValue().toString());
-        }
-        this.props = Collections.unmodifiableMap(this.props);
-    }
-    
     @Override
     public Object getRawProperty(String key) {
         return props.get(key);

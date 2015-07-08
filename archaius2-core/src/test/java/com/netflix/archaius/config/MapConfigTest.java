@@ -26,7 +26,7 @@ import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
 
 public class MapConfigTest {
-    private MapConfig config = MapConfig.builder()
+    private MapConfig<String> config = MapConfig.builder()
             .put("str", "value")
             .put("badnumber", "badnumber")
             .build();
