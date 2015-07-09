@@ -17,6 +17,7 @@ package com.netflix.archaius.readers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -72,8 +73,17 @@ public class URLConfigReader implements Callable<PollingResponse> {
         for (URL url: configUrls) {
             Properties props = new Properties();
             InputStream fin = url.openStream();
+            InputStreamReader reader;
             try {
-                props.load(fin);
+                reader = new InputStreamReader(fin, "UTF-8");
+                try {
+                    props.load(fin);
+                }
+                finally {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                }
             }
             finally {
                 fin.close();

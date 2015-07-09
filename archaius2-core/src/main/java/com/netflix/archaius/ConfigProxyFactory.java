@@ -1,8 +1,5 @@
 package com.netflix.archaius;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * Factory for binding a configuration interface to properties in a PropertyFactory
  * instance.  Getter methods on the interface are mapped by naming convention
@@ -13,10 +10,8 @@ import javax.inject.Singleton;
  * 
  * @author elandau
  */
-@Singleton
 public class ConfigProxyFactory extends ProxyFactory {
 
-    @Inject
     public ConfigProxyFactory(Decoder decoder, PropertyFactory factory) {
         super(decoder, factory);
     }

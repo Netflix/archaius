@@ -138,7 +138,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             private CascadeStrategy strategy = defaultStrategy;
             private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             private boolean failOnFirst = defaultFailOnFirst;
-            private Properties overrides = null;
+            private Config overrides = null;
             
             @Override
             public Loader withCascadeStrategy(CascadeStrategy strategy) {
@@ -160,7 +160,13 @@ public class DefaultConfigLoader implements ConfigLoader {
 
             @Override
             public Loader withOverrides(Properties props) {
-                this.overrides = props;
+                this.overrides = MapConfig.from(props);
+                return this;
+            }
+
+            @Override
+            public Loader withOverrides(Config config) {
+                this.overrides = config;
                 return this;
             }
 
@@ -168,22 +174,22 @@ public class DefaultConfigLoader implements ConfigLoader {
             public LinkedHashMap<String, Config> load(String resourceName) throws ConfigException {
                 LinkedHashMap<String, Config> configs = new LinkedHashMap<String, Config>();
                 boolean failIfNotLoaded = failOnFirst;
-                if (overrides != null && !overrides.isEmpty()) {
-                    configs.put(resourceName, new MapConfig(overrides));
+                if (overrides != null) {
+                    LOG.debug("Loading overrides form {}", resourceName);
+                    configs.put(resourceName + "_overrides", overrides);
                 }
-
+                
                 List<String> names = strategy.generate(resourceName, interpolator, lookup);
                 for (String name : names) {
-                    LOG.info("Attempting to load {}", name);
                     for (ConfigReader reader : loaders) {
                         if (reader.canLoad(classLoader, name)) {
                             try {
                                 configs.put(name, reader.load(classLoader, name));
-                                LOG.info("Loaded {} ", name);
+                                LOG.debug("Loaded {} ", name);
                                 failIfNotLoaded = false;
                             }
                             catch (ConfigException e) {
-                                LOG.info("Unable to load {}, {}", name, e.getMessage());
+                                LOG.debug("Unable to load {}, {}", name, e.getMessage());
                                 if (failIfNotLoaded == true) {
                                     throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
                                 }

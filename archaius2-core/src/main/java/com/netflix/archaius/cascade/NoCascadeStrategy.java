@@ -28,6 +28,8 @@ import com.netflix.archaius.StrInterpolator;
  *
  */
 public class NoCascadeStrategy implements CascadeStrategy {
+    public static final CascadeStrategy INSTANCE = new NoCascadeStrategy();
+
     @Override
     public List<String> generate(String name, StrInterpolator interpolator, StrInterpolator.Lookup config) {
         List<String> list = new ArrayList<String>();

@@ -308,7 +308,7 @@ public class CompositeConfig extends AbstractConfig {
     public static CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
         Builder builder = builder();
         for (Entry<String, Config> config : load.entrySet()) {
-            builder().withConfig(config.getKey(), config.getValue());
+            builder.withConfig(config.getKey(), config.getValue());
         }
         return builder.build();
     }
