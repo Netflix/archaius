@@ -19,29 +19,23 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.util.Providers;
-import com.netflix.archaius.CascadeStrategy;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
 import com.netflix.archaius.ConfigLoader;
 import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.ConfigReader;
-import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.PropertyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.config.CompositeConfig.Builder;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SettableConfig;
@@ -103,85 +97,22 @@ import com.netflix.archaius.readers.PropertiesConfigReader;
  */
 public final class ArchaiusModule extends AbstractModule {
     
-    private static final String DEFAULT_CONFIG_NAME    = "application";
-    private static final String RUNTIME_LAYER_NAME     = "RUNTIME";
-    private static final String REMOTE_LAYER_NAME      = "REMOTE";
-    private static final String SYSTEM_LAYER_NAME      = "SYSTEM";
-    private static final String ENVIRONMENT_LAYER_NAME = "ENVIRONMENT";
-    private static final String APPLICATION_LAYER_NAME = "APPLICATION";
-    private static final String LIBRARIES_LAYER_NAME   = "LIBRARIES";
+    private static final String RUNTIME_LAYER_NAME              = "RUNTIME";
+    private static final String REMOTE_LAYER_NAME               = "REMOTE";
+    private static final String SYSTEM_LAYER_NAME               = "SYSTEM";
+    private static final String ENVIRONMENT_LAYER_NAME          = "ENVIRONMENT";
+    private static final String APPLICATION_OVERRIDE_LAYER_NAME = "APPLICATION_OVERRIDE";
+    private static final String APPLICATION_LAYER_NAME          = "APPLICATION";
+    private static final String LIBRARIES_LAYER_NAME            = "LIBRARIES";
 
-    /**
-     * @deprecated Use @Provides instead
-     * 
-     * @Provides
-     * @Singleton
-     * public MyConfig getMyConfig(ConfigProxyFactory factory) {
-     *     return factory.newProxy(MyConfig.class);
-     * }
-     * 
-     * @param proxy
-     * @return
-     */
-    @Deprecated
-    public static class ConfigProvider<T> implements Provider<T> {
-        private Class<T> type;
-        
-        @Inject
-        ConfigProxyFactory proxy;
-        
-        public ConfigProvider(Class<T> type) {
-            this.type = type;
-        }
-
-        @Override
-        public T get() {
-            return proxy.newProxy(type);
-        }
-    }
-    
-    /**
-     * @deprecated Use @Provides instead
-     * 
-     * @Provides
-     * @Singleton
-     * public MyConfig getMyConfig(ConfigProxyFactory factory) {
-     *     return factory.newProxy(MyConfig.class);
-     * }
-     * 
-     * @param proxy
-     * @return
-     */
-    @Deprecated
-    public static <T> AbstractModule forProxy(final Class<T> proxy) {
-        return new AbstractModule() {
-            @Override
-            protected void configure() {
-                Provider<T> provider = new ConfigProvider<T>(proxy);
-                requestInjection(provider);
-                bind(proxy).toProvider(Providers.guicify(provider));
-            }
-        };
-    }
-    
     @Override
     protected void configure() {
         bindListener(Matchers.any(), new ConfigurationInjectingListener());
-        
+
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
         
-        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class);
-        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RemoteLayer.class);
-        
-        Multibinder.newSetBinder(binder(), ConfigListener.class, RootLayer.class);
-    }
-    
-    @Provides
-    @Singleton
-    @ApplicationLayer
-    String getConfigName() {
-        return DEFAULT_CONFIG_NAME;
+        bind(ArchaiusConfiguration.class).to(OptionalArchaiusConfiguration.class);
     }
     
     @Provides
@@ -206,14 +137,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @ApplicationLayer 
-    Config getApplicationLayer(@ApplicationLayer CompositeConfig config) {
-        return config;
-    }
-
-    @Provides
-    @Singleton
-    @ApplicationLayer 
-    CompositeConfig getApplicationLayer() {
+    CompositeConfig getApplicationLayer() throws ConfigException {
         return new CompositeConfig();
     }
 
@@ -228,13 +152,13 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     ConfigLoader getLoader(
-            @RootLayer          Config config,
-            CascadeStrategy     defaultStrategy,
-            Set<ConfigReader>   readers
+            @RootLayer            Config config,
+            ArchaiusConfiguration archaiusConfiguration,
+            Set<ConfigReader>     readers
             ) {
         return DefaultConfigLoader.builder()
                 .withConfigReader(readers)
-                .withDefaultCascadingStrategy(defaultStrategy)
+                .withDefaultCascadingStrategy(archaiusConfiguration.getCascadeStrategy())
                 .withFailOnFirst(false)
                 .withStrLookup(ConfigStrLookup.from(config))
                 .build();
@@ -250,45 +174,39 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @RemoteLayer
-    CompositeConfig getOverrideLayer() {
+    CompositeConfig getRemoteLayer() {
         return new CompositeConfig();
     }
     
     @Provides
     @Singleton
     @RemoteLayer
-    Config getOverrideLayer(@RemoteLayer CompositeConfig config) {
+    Config getRemoteLayer(@RemoteLayer CompositeConfig config) {
         return config;
     }
     
     @Provides
     @Singleton
-    CascadeStrategy getCascadeStrategy() {
-        return new NoCascadeStrategy();
-    }
-    
-    @Provides
-    @Singleton
-    Decoder getDecoder() {
-        return DefaultDecoder.INSTANCE;
-    }
-
-    @Provides
-    @Singleton
     @RootLayer
     Config getInternalConfig(
-            @RuntimeLayer     SettableConfig     settableLayer,
-            @RemoteLayer      Config             overrideLayer,
-            @ApplicationLayer CompositeConfig    applicationLayer, 
-            @LibrariesLayer   CompositeConfig    librariesLayer) throws ConfigException {
-        return CompositeConfig.builder()
-                .withConfig(RUNTIME_LAYER_NAME,     settableLayer)
-                .withConfig(REMOTE_LAYER_NAME,      overrideLayer)
-                .withConfig(SYSTEM_LAYER_NAME,      SystemConfig.INSTANCE)
-                .withConfig(ENVIRONMENT_LAYER_NAME, EnvironmentConfig.INSTANCE)
-                .withConfig(APPLICATION_LAYER_NAME, applicationLayer)
-                .withConfig(LIBRARIES_LAYER_NAME,   librariesLayer)
-                .build();
+            ArchaiusConfiguration archaiusConfiguration,
+            @RuntimeLayer             SettableConfig    settableLayer,
+            @RemoteLayer              Config            overrideLayer,
+            @ApplicationLayer         CompositeConfig   applicationLayer, 
+            @LibrariesLayer           CompositeConfig   librariesLayer) throws ConfigException {
+        Builder builder = CompositeConfig.builder()
+                .withConfig(RUNTIME_LAYER_NAME,              settableLayer)
+                .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
+                .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
+                .withConfig(ENVIRONMENT_LAYER_NAME,          EnvironmentConfig.INSTANCE);
+        if (archaiusConfiguration.getApplicationOverride() != null) {
+            builder.withConfig(APPLICATION_OVERRIDE_LAYER_NAME, archaiusConfiguration.getApplicationOverride());
+        }
+        builder .withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
+                .withConfig(LIBRARIES_LAYER_NAME,            librariesLayer)
+                ;
+        
+        return builder.build();
     }
     
     /**
@@ -302,50 +220,45 @@ public final class ArchaiusModule extends AbstractModule {
      * @param librariesLayer
      * @param applicationLayer
      * @param settableLayer
-     * @param overrideLayer
+     * @param remoteLayer
      * @return
      * @throws ConfigException
      */
     @Provides
     @Singleton
     public Config getConfig(
-            @RootLayer        Set<ConfigListener> listeners,
+            ArchaiusConfiguration archaiusConfiguration,
             @RootLayer        Config            config,
             @ApplicationLayer CompositeConfig   applicationLayer,
-            @ApplicationLayer String            configName,
-            @RemoteLayer      CompositeConfig   overrideLayer,
+            @RemoteLayer      CompositeConfig   remoteLayer,
             @RuntimeLayer     SettableConfig    runtimeLayer,
-                              ConfigLoader      loader,
-                              CascadeStrategy   cascadeStrategy,
-            @RuntimeLayer     Set<ConfigSeeder> runtimeConfigResolvers,
-            @RemoteLayer      Set<ConfigSeeder> remoteConfigResolvers
+                              ConfigLoader      loader
             ) throws Exception {
         
-        for (ConfigListener listener : listeners) {
-            config.addListener(listener);
-        }
-
         // First load the application configuration 
-        LinkedHashMap<String, Config> loadedConfigs = loader.newLoader().withCascadeStrategy(new NoCascadeStrategy()).load(configName);
+        LinkedHashMap<String, Config> loadedConfigs = loader
+                .newLoader()
+                .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
+                .load(archaiusConfiguration.getConfigName());
         if (loadedConfigs != null) {
             applicationLayer.addConfigs(loadedConfigs);
         }
-        
+
         // Next load any runtime overrides
-        for (ConfigSeeder provider : runtimeConfigResolvers) {
+        for (ConfigSeeder provider : archaiusConfiguration.getRuntimeLayerSeeders()) {
             runtimeLayer.setProperties(provider.get(config));
         }
  
         // Finally, load the remote layer
-        for (ConfigSeeder provider : remoteConfigResolvers) {
-            overrideLayer.addConfig("remote", provider.get(config));
+        for (ConfigSeeder provider : archaiusConfiguration.getRemoteLayerSeeders()) {
+            remoteLayer.addConfig("remote", provider.get(config));
         }
         
         // Finally, load any cascaded configuration files for the
         // application
-        loadedConfigs = loader.newLoader().withCascadeStrategy(cascadeStrategy).load(configName);
+        loadedConfigs = loader.newLoader().withCascadeStrategy(archaiusConfiguration.getCascadeStrategy()).load(archaiusConfiguration.getConfigName());
         if (loadedConfigs != null) { 
-            applicationLayer.removeConfig(configName);
+            loadedConfigs.remove(archaiusConfiguration.getConfigName());
             for (Entry<String, Config> entry : loadedConfigs.entrySet()) {
                 try {
                     applicationLayer.addConfig(entry.getKey(), entry.getValue());
@@ -355,9 +268,14 @@ public final class ArchaiusModule extends AbstractModule {
                 }
             }
         }
+        
+        for (ConfigListener listener : archaiusConfiguration.getConfigListeners()) {
+            config.addListener(listener);
+        }
+
         return config;
     }
-
+    
     /**
      * Top level 'fast' property factory which is bound to the root configuration 
      * @param root
@@ -368,4 +286,11 @@ public final class ArchaiusModule extends AbstractModule {
     PropertyFactory getPropertyFactory(Config root) {
         return DefaultPropertyFactory.from(root);
     }
+
+    @Provides
+    @Singleton
+    ConfigProxyFactory getProxyFactory(ArchaiusConfiguration config, PropertyFactory factory) {
+        return new ConfigProxyFactory(config.getDecoder(), factory);
+    }
+    
 }

@@ -1,7 +1,5 @@
 package com.netflix.archaius.guice;
 
-import java.util.Map.Entry;
-
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -24,7 +22,6 @@ import com.netflix.archaius.IoCContainer;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.ConfigurationSource;
 import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.LibrariesLayer;
 
@@ -42,10 +39,10 @@ public class ConfigurationInjectingListener implements TypeListener {
         private ConfigLoader      loader;
         
         @Inject
-        private CascadeStrategy   defaultStrategy;
+        private @LibrariesLayer   CompositeConfig   libraries;
         
         @Inject
-        private @LibrariesLayer   CompositeConfig   libraries;
+        private ArchaiusConfiguration archaiusConfiguration;
     }
     
     private ConfigMapper mapper = new ConfigMapper(true);
@@ -67,19 +64,19 @@ public class ConfigurationInjectingListener implements TypeListener {
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? holder.get().injector.getInstance(source.cascading()) 
-                                             : holder.get().defaultStrategy;
+                                             : holder.get().archaiusConfiguration.getCascadeStrategy();
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {
+                            LOG.debug("Trying to loading configuration resource {}", resourceName);
                             try {
-                                for (Entry<String, Config> config : holder.get().loader.newLoader().withCascadeStrategy(strategy).load(resourceName).entrySet()) {
-                                    try {
-                                        holder.get().libraries.addConfig(config.getKey(), config.getValue());
-                                    }
-                                    catch (ConfigAlreadyExistsException e) {
-                                        // OK To ignore
-                                    }
-                                }
+                                Config override = holder.get().archaiusConfiguration.getLibraryOverrides().get(resourceName);
+                                CompositeConfig loadedConfig = CompositeConfig.from(
+                                        holder.get().loader.newLoader()
+                                            .withCascadeStrategy(strategy)
+                                            .withOverrides(override)
+                                            .load(resourceName));
+                                holder.get().libraries.addConfig(resourceName, loadedConfig);
                             } 
                             catch (ConfigException e) {
                                 throw new ProvisionException("Unable to load configuration for " + resourceName + " at source " + injectee.getClass(), e);

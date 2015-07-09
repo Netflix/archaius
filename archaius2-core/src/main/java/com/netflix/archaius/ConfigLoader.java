@@ -66,6 +66,14 @@ public interface ConfigLoader {
         Loader withOverrides(Properties props);
         
         /**
+         * Externally provided property overrides that are applied once 
+         * all cascaded files have been loaded
+         * 
+         * @param props
+         */
+        Loader withOverrides(Config config);
+        
+        /**
          * Load configuration by cascade resource name.
          * @param resourceName
          * @return
