@@ -30,6 +30,12 @@ public interface ArchaiusConfiguration {
      * @return Set of seeders or empty set if none specified
      */
     Set<ConfigSeeder> getRemoteLayerSeeders();
+    
+    /**
+     * Return seeders for the defaults layer.  
+     * @return
+     */
+    Set<ConfigSeeder> getDefaultsLayerSeeders();
 
     /**
      * Return the application configuration name.  Default value is 'application'

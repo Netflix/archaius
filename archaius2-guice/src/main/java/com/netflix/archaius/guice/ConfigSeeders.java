@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Properties;
 
 import com.google.inject.Binder;
+import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.config.MapConfig;
@@ -70,4 +71,10 @@ public abstract class ConfigSeeders {
                      });
         
     }
+
+    public static LinkedBindingBuilder<ConfigSeeder> bind(Binder binder, Class<? extends Annotation> annot) {
+        return Multibinder.newSetBinder(binder, ConfigSeeder.class, annot)
+            .addBinding();
+    }
+
 }
