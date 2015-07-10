@@ -15,6 +15,7 @@ import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.inject.ApplicationLayer;
 import com.netflix.archaius.inject.ApplicationOverrideLayer;
+import com.netflix.archaius.inject.DefaultsLayer;
 import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.RemoteLayer;
 import com.netflix.archaius.inject.RuntimeLayer;
@@ -29,6 +30,10 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
     @Inject(optional=true)
     @RemoteLayer
     Set<ConfigSeeder> remoteLayerSeeders;
+    
+    @Inject(optional=true)
+    @DefaultsLayer
+    Set<ConfigSeeder> defaultsLayerSeeders;
     
     @Inject(optional=true)
     Set<ConfigListener> configListeners;
@@ -59,6 +64,11 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
     @Override
     public Set<ConfigSeeder> getRemoteLayerSeeders() {
         return remoteLayerSeeders != null ? remoteLayerSeeders : Collections.<ConfigSeeder>emptySet();
+    }
+
+    @Override
+    public Set<ConfigSeeder> getDefaultsLayerSeeders() {
+        return defaultsLayerSeeders != null ? defaultsLayerSeeders : Collections.<ConfigSeeder>emptySet();
     }
 
     @Override
