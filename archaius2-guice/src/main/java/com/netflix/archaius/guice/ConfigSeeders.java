@@ -77,4 +77,16 @@ public abstract class ConfigSeeders {
             .addBinding();
     }
 
+    public static ConfigSeeder from(final Properties prop) {
+        return from(MapConfig.from(prop));
+    }
+    
+    public static ConfigSeeder from(final Config config) {
+        return new ConfigSeeder() {
+            @Override
+            public Config get(Config rootConfig) throws Exception {
+                return config;
+            }
+        };
+    }
 }
