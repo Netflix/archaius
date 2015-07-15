@@ -301,4 +301,14 @@ public final class ArchaiusModule extends AbstractModule {
         return new ConfigProxyFactory(config.getDecoder(), factory);
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        return ArchaiusModule.class.equals(obj.getClass());
+    }
+
+    @Override
+    public int hashCode() {
+        return ArchaiusModule.class.hashCode();
+    }
+
 }

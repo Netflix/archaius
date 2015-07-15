@@ -57,7 +57,7 @@ public class DefaultConfigLoader implements ConfigLoader {
     public static class Builder {
         private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();
         private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
-        private boolean             failOnFirst     = true;
+        private boolean             failOnFirst     = false;
         private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
         private Lookup              lookup          = DEFAULT_LOOKUP;
         
