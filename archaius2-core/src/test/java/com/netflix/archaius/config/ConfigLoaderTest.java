@@ -10,6 +10,7 @@ public class ConfigLoaderTest {
     @Test(expected=ConfigException.class)
     public void shouldFailWithNoApplicationConfig() throws ConfigException {
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .withFailOnFirst(true)
                 .build();
         
         loader.newLoader().load("non-existant");
