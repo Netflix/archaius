@@ -237,6 +237,15 @@ public final class ArchaiusModule extends AbstractModule {
                               ConfigLoader      loader
             ) throws Exception {
         
+        // First load the single application configuration 
+        LinkedHashMap<String, Config> loadedConfigs = loader
+                .newLoader()
+                .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
+                .load(archaiusConfiguration.getConfigName());
+        if (loadedConfigs != null) {
+            applicationLayer.addConfigs(loadedConfigs);
+        }
+
         // Load any defaults from code.  These defaults may be initialized as part of 
         // conditional module loading provided by Governator.  
         for (ConfigSeeder provider : archaiusConfiguration.getDefaultsLayerSeeders()) {
@@ -248,15 +257,6 @@ public final class ArchaiusModule extends AbstractModule {
             runtimeLayer.setProperties(provider.get(config));
         }
  
-        // First load the single application configuration 
-        LinkedHashMap<String, Config> loadedConfigs = loader
-                .newLoader()
-                .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
-                .load(archaiusConfiguration.getConfigName());
-        if (loadedConfigs != null) {
-            applicationLayer.addConfigs(loadedConfigs);
-        }
-
         // Finally, load any cascaded configuration files for the application
         loadedConfigs = loader.newLoader().withCascadeStrategy(archaiusConfiguration.getCascadeStrategy()).load(archaiusConfiguration.getConfigName());
         if (loadedConfigs != null) { 
