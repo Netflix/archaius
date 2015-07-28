@@ -34,6 +34,9 @@ public class DefaultDecoder implements Decoder {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T decode(Class<T> type, String encoded) {
+        if (encoded == null) {
+            return null;
+        }
         // Try primitives first
         if (type.equals(String.class)) {
             return (T) encoded;

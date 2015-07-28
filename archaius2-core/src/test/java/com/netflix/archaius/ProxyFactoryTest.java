@@ -1,15 +1,17 @@
 package com.netflix.archaius;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.config.SettableConfig;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -17,6 +19,16 @@ public class ProxyFactoryTest {
         A, 
         B,
         C
+    }
+    
+    @Configuration(immutable=true)
+    public static interface ImmutableConfig {
+        @DefaultValue("default")
+        String getValueWithDefault();
+        
+        String getValueWithoutDefault1();
+        
+        String getValueWithoutDefault2();
     }
     
     public static interface BaseConfig {
@@ -41,6 +53,8 @@ public class ProxyFactoryTest {
         
         @DefaultValue("default1:default2")
         SubConfigFromString getSubConfigFromString();
+        
+        int getRequiredValue();
     }
     
     public static interface SubConfig {
@@ -70,6 +84,31 @@ public class ProxyFactoryTest {
     }
     
     @Test
+    public void testImmutableDefaultValues() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("valueWithoutDefault2", "default2");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ImmutableConfig c = proxy.newProxy(ImmutableConfig.class);
+        
+        assertThat(c.getValueWithDefault(), equalTo("default"));
+        assertThat(c.getValueWithoutDefault2(), equalTo("default2"));
+        
+        try {
+            c.getValueWithoutDefault1();
+            Assert.fail("should have failed with no value for requiredValue");
+        }
+        catch (Exception e) {
+        }
+        
+        config.setProperty("valueWithDefault", "newValue");
+        assertThat(c.getValueWithDefault(), equalTo("default"));
+        
+        System.out.println(c.toString());
+    }
+    
+    @Test
     public void testDefaultValues() {
         Config config = EmptyConfig.INSTANCE;
 
@@ -84,7 +123,15 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),              equalTo("default"));
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
-        System.out.println(a);
+        
+        try {
+            a.getBaseBoolean();
+            Assert.fail("should have failed with no value for requiredValue");
+        }
+        catch (Exception e) {
+            
+        }
+        System.out.println(a.toString());
     }
     
     @Test
@@ -111,7 +158,13 @@ public class ProxyFactoryTest {
 
         config.setProperty("prefix.subConfig.str", "str3");
         assertThat(a.getSubConfig().str(),      equalTo("str3"));
-        
-        System.out.println(a);
+
+        try {
+            a.getRequiredValue();
+            Assert.fail("should have failed with no value for requiredValue");
+        }
+        catch (Exception e) {
+        }
+        System.out.println(a.toString());
     }
 }

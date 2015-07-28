@@ -27,4 +27,10 @@ public interface PropertyFactory {
      * Create a property for the property name.  
      */
     public PropertyContainer getProperty(String propName);
+    
+    /**
+     * Get the Config object backing this factory
+     * @return
+     */
+    public Config getConfig();
 }
