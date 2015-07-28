@@ -127,17 +127,54 @@ public class ProxyFactoryTest {
         MyConfig c = proxy.newProxy(MyConfig.class);
         
         Assert.assertEquals(123, c.getInteger());
-        Assert.assertNull(c.getInteger2());
+        try {
+            Assert.assertNull(c.getInteger2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         Assert.assertEquals(true, c.getBoolean());
-        Assert.assertNull(c.getBoolean2());
+        try {
+            Assert.assertNull(c.getBoolean2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         Assert.assertEquals(3, c.getShort());
-        Assert.assertNull(c.getShort2());
+        try {
+            Assert.assertNull(c.getShort2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         Assert.assertEquals(3, c.getLong());
-        Assert.assertNull(c.getLong2());
+        try {
+            Assert.assertNull(c.getLong2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         Assert.assertEquals(3.1f, c.getFloat(), 0);
-        Assert.assertNull(c.getFloat2());
+        try {
+            Assert.assertNull(c.getFloat2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         Assert.assertEquals(3.1, c.getDouble(), 0);
-        Assert.assertNull(c.getDouble2());
+        try {
+            Assert.assertNull(c.getDouble2());
+            Assert.fail("Should fail on property not found");
+        }
+        catch (Exception e) {
+            
+        }
         
+        System.out.println(c.toString());
     }
 }

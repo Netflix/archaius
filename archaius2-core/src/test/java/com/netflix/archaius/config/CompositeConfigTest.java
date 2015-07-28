@@ -15,11 +15,13 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Iterator;
 import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.exceptions.ConfigException;
@@ -114,5 +116,32 @@ public class CompositeConfigTest {
         Assert.assertEquals("libB", config.getString("libA.overrideA"));
         
         config.accept(new PrintStreamVisitor());
+    }
+    
+    @Test
+    public void getKeysTest() throws ConfigException {
+        CompositeConfig composite = new CompositeConfig();
+        composite.addConfig("a", EmptyConfig.INSTANCE);
+        
+        Iterator<String> iter = composite.getKeys();
+        Assert.assertFalse(iter.hasNext());
+        
+        composite.addConfig("b", MapConfig.builder().put("b1", "A").put("b2",  "B").build());
+        
+        iter = composite.getKeys();
+        Assert.assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
+        
+        composite.addConfig("c", EmptyConfig.INSTANCE);
+        
+        iter = composite.getKeys();
+        Assert.assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
+        
+        composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
+        composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
+        
+        iter = composite.getKeys();
+        Assert.assertEquals(Sets.newHashSet("b1", "b2", "d1", "d2", "e1", "e2"), Sets.newHashSet(iter));
+        
+        
     }
 }

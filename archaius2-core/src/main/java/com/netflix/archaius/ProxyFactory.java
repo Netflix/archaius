@@ -32,7 +32,7 @@ public class ProxyFactory {
      */
     private final Decoder decoder;
     private final PropertyFactory propertyFactory;
-
+    
     @Inject
     public ProxyFactory(Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
@@ -69,13 +69,19 @@ public class ProxyFactory {
     
     public <T> T newProxy(final Class<T> type, final String initialPrefix) {
         Configuration annot = type.getAnnotation(Configuration.class);
+        return newProxy(type, initialPrefix, annot == null ? false : annot.immutable());
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
+        Configuration annot = type.getAnnotation(Configuration.class);
         
         final String prefix = derivePrefix(annot, initialPrefix);
         
         // Iterate through all declared methods of the class looking for setter methods.
         // Each setter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
-        final Map<Method, Property<?>> properties = new HashMap<Method, Property<?>>();
+        final Map<Method, Property<?>> properties = new HashMap<>();
         for (Method m : type.getMethods()) {
             final String verb;
             if (m.getName().startsWith("get")) {
@@ -88,32 +94,37 @@ public class ProxyFactory {
                 verb = "";
             }
             
-            Object defaultValue = null;
             DefaultValue annotDefaultValue = m.getAnnotation(DefaultValue.class);
             Class<?> returnType = m.getReturnType();
-            if (annotDefaultValue != null) {
-                try {
-                    defaultValue = decoder.decode(returnType, annotDefaultValue.value());
-                } catch (Exception e) {
-                    throw new RuntimeException("No accessible valueOf(String) method to parse default value for type " + returnType.getName(), e);
-                }
-            }
-            
-            if (returnType.isPrimitive() && defaultValue == null) {
-                throw new RuntimeException("Method with primite return type must have a @DefaultValue.  method=" + m.getName());
-            }
             
             PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
             String propName = nameAnnot != null && nameAnnot.name() != null
                             ? prefix + nameAnnot.name()
                             : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
 
+            // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
+            // methods can still return dynamic values
             if (returnType.isInterface()) {
-                properties.put(m, new ImmutableProperty(propName, newProxy(returnType, propName)));
+                properties.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
             }
             else {
-                Property prop = propertyFactory.getProperty(propName).asType((Class)m.getReturnType(), defaultValue);
-                properties.put(m, annot != null && annot.immutable() ? new ImmutableProperty(propName, prop.get()) : prop);
+                
+                if (immutable) {
+                    if (annotDefaultValue == null) {
+                        properties.put(m, createImmutableProperty(propName, m.getReturnType()));
+                    }
+                    else {
+                        properties.put(m, createImmutablePropertyWithDefault(propName, m.getReturnType(), annotDefaultValue.value()));
+                    }
+                }
+                else {
+                    if (annotDefaultValue == null) {
+                        properties.put(m, new RequiredProperty(createDynamicProperty(propName, m.getReturnType(), null)));
+                    }
+                    else {
+                        properties.put(m, createDynamicProperty(propName, m.getReturnType(), annotDefaultValue.value()));
+                    }
+                }
             }
         }
         
@@ -130,7 +141,14 @@ public class ProxyFactory {
                     Iterator<Entry<Method, Property<?>>> iter = properties.entrySet().iterator();
                     while (iter.hasNext()) {
                         Property entry = iter.next().getValue();
-                        sb.append(entry.getKey().substring(prefix.length())).append("=").append(entry.get());
+                        sb.append(entry.getKey().substring(prefix.length())).append("='");
+                        try {
+                            sb.append(entry.get());
+                        }
+                        catch (Exception e) {
+                            sb.append(e.getMessage());
+                        }
+                        sb.append("'");
                         if (iter.hasNext()) {
                             sb.append(", ");
                         }
@@ -144,5 +162,60 @@ public class ProxyFactory {
             }
         };
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
+    }
+    
+    private <T> Property<T> createImmutablePropertyWithDefault(final String propName, final Class<T> type, final String defaultValue) {
+        return new AbstractProperty<T>(propName) {
+            private volatile T cached;
+            
+            @Override
+            public T get() {
+                if (cached == null) {
+                    cached = propertyFactory.getConfig().get(type, propName, decoder.decode(type, defaultValue));
+                }
+                return cached;
+            }
+        };
+    }
+    
+    private <T> Property<T> createImmutableProperty(final String propName, final Class<T> type) {
+        return new AbstractProperty<T>(propName) {
+            private volatile T cached;
+            @Override
+            public T get() {
+                if (cached == null) {
+                    cached = propertyFactory.getConfig().get(type, propName);
+                }
+                return cached;
+            }
+        };
+    }
+    
+    private <T> Property<T> createInterfaceProperty(String propName, final T proxy) {
+        return new AbstractProperty<T>(propName) {
+            @Override
+            public T get() {
+                return proxy;
+            }
+        };
+    }
+
+    private <T> Property<T> createDynamicProperty(final String propName, final Class<T> type, final String defaultValue) {
+        return propertyFactory.getProperty(propName).asType(type, defaultValue != null ? decoder.decode(type, defaultValue) : null);
+    }
+
+    public static class RequiredProperty<T> extends DelegatingProperty<T> {
+        public RequiredProperty(Property<T> prop) {
+            super(prop);
+        }
+
+        @Override
+        public T get() {
+            T value = delegate.get();
+            if (value == null) {
+                throw new RuntimeException("Missing value for property " + getKey());
+            }
+            return value;
+        }
     }
 }

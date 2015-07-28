@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -149,17 +148,46 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public Iterator<String> getKeys(String prefix) {
-        LinkedHashSet<String> result = new LinkedHashSet<String>();
-        Iterator<String> keys = getKeys();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            if (key.startsWith(prefix)) {
-                result.add(key);
+    public Iterator<String> getKeys(final String prefix) {
+        return new Iterator<String>() {
+            Iterator<String> iter = getKeys();
+            String next;
+            
+            {
+                if (iter.hasNext()) {
+                    next = iter.next();
+                }
             }
-        }
+            
+            @Override
+            public boolean hasNext() {
+                return next != null;
+            }
 
-        return result.iterator();
+            @Override
+            public String next() {
+                if (next == null) {
+                    throw new IllegalStateException();
+                }
+                
+                String prev = next;
+                while (iter.hasNext()) {
+                    next = iter.next();
+                    if (next.startsWith(prefix)) {
+                        break;
+                    }
+                    else {
+                        next = null;
+                    }
+                }
+                return prev;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     @Override

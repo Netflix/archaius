@@ -2,21 +2,14 @@ package com.netflix.archaius;
 
 import java.util.concurrent.TimeUnit;
 
-public class ImmutableProperty<T> implements Property<T> {
+public abstract class AbstractProperty<T> implements Property<T> {
 
-    private final T value;
-    private final String name;
+    private final String key;
     
-    public ImmutableProperty(String name, T value) {
-        this.value = value;
-        this.name = name;
+    public AbstractProperty(String key) {
+        this.key = key;
     }
     
-    @Override
-    public T get() {
-        return value;
-    }
-
     @Override
     public long getLastUpdateTime(TimeUnit units) {
         return 0;
@@ -24,19 +17,21 @@ public class ImmutableProperty<T> implements Property<T> {
 
     @Override
     public void unsubscribe() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Property<T> addListener(PropertyListener<T> listener) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void removeListener(PropertyListener<T> listener) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String getKey() {
-        return name;
+        return key;
     }
 }
