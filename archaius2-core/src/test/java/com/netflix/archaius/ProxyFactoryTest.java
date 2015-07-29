@@ -8,9 +8,9 @@ import org.junit.Test;
 
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.annotations.PropertyName;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.config.SettableConfig;
 
 public class ProxyFactoryTest {
@@ -166,5 +166,26 @@ public class ProxyFactoryTest {
         catch (Exception e) {
         }
         System.out.println(a.toString());
+    }
+    
+    static interface WithArguments {
+        @PropertyName(name="${0}.abc.${1}")
+        @DefaultValue("default")
+        String getProperty(String part0, int part1);
+    }
+    
+    @Test
+    public void testWithArguments() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("a.abc.1", "value1");
+        config.setProperty("b.abc.2", "value2");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        WithArguments withArgs = proxy.newProxy(WithArguments.class);
+        
+        Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
+        Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
+        Assert.assertEquals("default", withArgs.getProperty("a", 2));
     }
 }
