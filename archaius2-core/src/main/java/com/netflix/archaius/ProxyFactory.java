@@ -178,8 +178,8 @@ public class ProxyFactory {
                         public Object invoke(Object[] args) {
                             // Determine the actual property name by replacing with arguments using the argument index
                             // to the method.  For example,
-                            //      @PropertyName("foo.${arg2}.${arg1}
-                            //      String getFooValue(String arg1, Integer arg2) 
+                            //      @PropertyName(name="foo.${1}.${0}")
+                            //      String getFooValue(String arg0, Integer arg1) 
                             // 
                             // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
                             Map<String, Object> values = new HashMap<>();
