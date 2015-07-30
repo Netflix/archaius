@@ -2,6 +2,9 @@ package com.netflix.archaius;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
+
+import javax.annotation.Nullable;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,6 +39,9 @@ public class ProxyFactoryTest {
         String getStr();
         
         Boolean getBaseBoolean();
+        
+        @Nullable
+        Integer getNullable();
     }
     
     public static interface RootConfig extends BaseConfig {
@@ -123,6 +129,7 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),              equalTo("default"));
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
+        assertThat(a.getNullable(),                     nullValue());
         
         try {
             a.getBaseBoolean();
