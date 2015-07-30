@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -264,53 +265,15 @@ public class CompositeConfig extends AbstractConfig {
      */
     @Override
     public Iterator<String> getKeys() {
-        return new Iterator<String>() {
-            Iterator<Config> iter = children.iterator();
-            Iterator<String> keyIter;
-            
-            {
-                while (iter.hasNext()) {
-                    keyIter = iter.next().getKeys();
-                    if (keyIter.hasNext()) {
-                        break;
-                    }
-                    keyIter = null;
-                }
+        HashSet<String> result = new HashSet<>();
+        for (Config config : children) {
+            Iterator<String> iter = config.getKeys();
+            while (iter.hasNext()) {
+               String key = iter.next();
+                result.add(key);
             }
-            
-            @Override
-            public boolean hasNext() {
-                if (keyIter == null) {
-                    return false;
-                }
-                return true;
-            }
-
-            @Override
-            public String next() {
-                if (keyIter == null) {
-                    throw new IllegalStateException();
-                }
-
-                String next = keyIter.next();
-                if (!keyIter.hasNext()) {
-                    keyIter = null;
-                    while (iter.hasNext()) {
-                        keyIter = iter.next().getKeys();
-                        if (keyIter.hasNext()) {
-                            break;
-                        }
-                        keyIter = null;
-                    }
-                }
-                return next;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+        }
+        return result.iterator();
     }
     
     @Override
