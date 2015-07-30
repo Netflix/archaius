@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -16,7 +17,6 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
 import com.netflix.archaius.annotations.PropertyName;
-import com.sun.istack.internal.Nullable;
 
 /**
  * Factory for binding a configuration interface to properties in a Config
