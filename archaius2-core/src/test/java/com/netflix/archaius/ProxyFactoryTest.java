@@ -2,15 +2,18 @@ package com.netflix.archaius;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
+
+import javax.annotation.Nullable;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.annotations.Configuration;
 import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.annotations.PropertyName;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.config.SettableConfig;
 
 public class ProxyFactoryTest {
@@ -36,6 +39,9 @@ public class ProxyFactoryTest {
         String getStr();
         
         Boolean getBaseBoolean();
+        
+        @Nullable
+        Integer getNullable();
     }
     
     public static interface RootConfig extends BaseConfig {
@@ -123,6 +129,7 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),              equalTo("default"));
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
+        assertThat(a.getNullable(),                     nullValue());
         
         try {
             a.getBaseBoolean();
@@ -166,5 +173,26 @@ public class ProxyFactoryTest {
         catch (Exception e) {
         }
         System.out.println(a.toString());
+    }
+    
+    static interface WithArguments {
+        @PropertyName(name="${0}.abc.${1}")
+        @DefaultValue("default")
+        String getProperty(String part0, int part1);
+    }
+    
+    @Test
+    public void testWithArguments() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("a.abc.1", "value1");
+        config.setProperty("b.abc.2", "value2");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        WithArguments withArgs = proxy.newProxy(WithArguments.class);
+        
+        Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
+        Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
+        Assert.assertEquals("default", withArgs.getProperty("a", 2));
     }
 }
