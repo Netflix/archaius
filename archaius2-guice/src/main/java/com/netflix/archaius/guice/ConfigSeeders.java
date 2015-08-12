@@ -36,7 +36,12 @@ public abstract class ConfigSeeders {
      * @param props
      * @param annot
      */
+    @Deprecated
     public static void bind(Binder binder, Properties props, Class<? extends Annotation> annot) {
+        bind(binder, MapConfig.from(props), annot);
+    }
+    
+    public static void bind(Binder binder, Class<? extends Annotation> annot, Properties props) {
         bind(binder, MapConfig.from(props), annot);
     }
     
@@ -62,7 +67,12 @@ public abstract class ConfigSeeders {
      * @param props
      * @param annot
      */    
+    @Deprecated
     public static void bind(Binder binder, final Config config, Class<? extends Annotation> annot) {
+        bind(binder, annot, config);
+    }
+
+    public static void bind(Binder binder, Class<? extends Annotation> annot, final Config config) {
         Multibinder.newSetBinder(binder, ConfigSeeder.class, annot)
                     .addBinding().toInstance(new ConfigSeeder() {
                         public Config get(Config mainConfig) {
