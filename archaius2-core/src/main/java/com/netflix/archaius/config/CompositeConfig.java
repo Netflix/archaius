@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -121,16 +121,16 @@ public class CompositeConfig extends AbstractConfig {
      * @param child
      * @throws ConfigException
      */
-    public synchronized void addConfig(String name, Config child) throws ConfigException {
-        internalAddConfig(name, child);
+    public synchronized boolean addConfig(String name, Config child) throws ConfigException {
+        return internalAddConfig(name, child);
     }
     
-    private synchronized void internalAddConfig(String name, Config child) throws ConfigException {
+    private synchronized boolean internalAddConfig(String name, Config child) throws ConfigException {
         LOG.trace("Adding config {} to {}", name, hashCode());
         
         if (child == null) {
             // TODO: Log a warning?
-            return;
+            return false;
         }
         
         if (name == null) {
@@ -138,7 +138,8 @@ public class CompositeConfig extends AbstractConfig {
         }
         
         if (lookup.containsKey(name)) {
-            throw new ConfigAlreadyExistsException(String.format("Configuration with name '%s' already exists", name));
+            LOG.info("Configuration with name'{}' already exists", name);
+            return false;
         }
 
         lookup.put(name, child);
@@ -150,6 +151,7 @@ public class CompositeConfig extends AbstractConfig {
         }
         child.addListener(listener);
         postConfigAdded(child);
+        return true;
     }
     
     public synchronized void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
@@ -264,53 +266,15 @@ public class CompositeConfig extends AbstractConfig {
      */
     @Override
     public Iterator<String> getKeys() {
-        return new Iterator<String>() {
-            Iterator<Config> iter = children.iterator();
-            Iterator<String> keyIter;
-            
-            {
-                while (iter.hasNext()) {
-                    keyIter = iter.next().getKeys();
-                    if (keyIter.hasNext()) {
-                        break;
-                    }
-                    keyIter = null;
-                }
+        HashSet<String> result = new HashSet<>();
+        for (Config config : children) {
+            Iterator<String> iter = config.getKeys();
+            while (iter.hasNext()) {
+               String key = iter.next();
+                result.add(key);
             }
-            
-            @Override
-            public boolean hasNext() {
-                if (keyIter == null) {
-                    return false;
-                }
-                return true;
-            }
-
-            @Override
-            public String next() {
-                if (keyIter == null) {
-                    throw new IllegalStateException();
-                }
-
-                String next = keyIter.next();
-                if (!keyIter.hasNext()) {
-                    keyIter = null;
-                    while (iter.hasNext()) {
-                        keyIter = iter.next().getKeys();
-                        if (keyIter.hasNext()) {
-                            break;
-                        }
-                        keyIter = null;
-                    }
-                }
-                return next;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+        }
+        return result.iterator();
     }
     
     @Override
