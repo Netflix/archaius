@@ -39,6 +39,10 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     private final CompositeConfig libraries;
     private final AtomicInteger libNameCounter = new AtomicInteger();
     
+    {
+        AbstractConfiguration.setDefaultListDelimiter('\0');
+    }
+    
     @Inject
     public AbstractConfigurationBridge(
             final Config config, 

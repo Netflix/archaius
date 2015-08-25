@@ -15,7 +15,12 @@
  */
 package com.netflix.archaius.loaders;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -34,10 +39,12 @@ public class PropertyConfigReaderTest {
             System.out.println("Key : " + key + " " + config.getString(key));
         }
         
-        System.out.println(config.getList("application.list"));
-        System.out.println(config.getList("application.list2"));
-        System.out.println(config.getList("application.map"));
-        System.out.println(config.getList("application.set"));
+        assertThat(Arrays.asList("b"), is(config.getList("application.list", String.class)));
+        assertThat(Arrays.asList("a", "b"), equalTo(config.getList("application.list2", String.class)));
+//        assertThat(Arrays.asList("b"), config.getList("application.map"));
+        assertThat(Arrays.asList("a", "b"), is(config.getList("application.set", String.class)));
+        assertThat("a,b,c", is(config.getString("application.valuelist")));
+        assertThat(Arrays.asList("a","b","c"), is(config.getList("application.valuelist", String.class)));
         
 //        System.out.println(config.getBoolean("application.list"));
 //        System.out.println(config.getInteger("application.list"));

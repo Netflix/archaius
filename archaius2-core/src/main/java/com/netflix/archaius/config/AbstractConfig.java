@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +40,8 @@ public abstract class AbstractConfig implements Config {
     private final Lookup lookup;
     private Decoder decoder;
     private StrInterpolator interpolator;
-
+    private String listDelimiter = ",";
+    
     public AbstractConfig() {
         this.decoder = new DefaultDecoder();
         this.interpolator = CommonsStrInterpolator.INSTANCE;
@@ -50,6 +52,14 @@ public abstract class AbstractConfig implements Config {
         return listeners;
     }
 
+    protected String getListDelimiter() {
+        return listDelimiter;
+    }
+    
+    protected void setListDelimiter(String delimiter) {
+        this.listDelimiter = delimiter;
+    }
+    
     @Override
     final public Decoder getDecoder() {
         return this.decoder;
@@ -444,6 +454,20 @@ public abstract class AbstractConfig implements Config {
         catch (NumberFormatException e) {
             return parseError(key, value, e);
         }
+    }
+
+    @Override
+    public <T> List<T> getList(String key, Class<T> type) {
+        String value = getString(key);
+        if (value == null) {
+            return notFound(key);
+        }
+        String[] parts = value.split(getListDelimiter());
+        List<T> result = new ArrayList<T>();
+        for (String part : parts) {
+            result.add(decoder.decode(type, part));
+        }
+        return result;
     }
 
     @Override

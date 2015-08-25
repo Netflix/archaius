@@ -101,6 +101,8 @@ public interface Config {
      */
     List<?> getList(String key);
     
+    <T> List<T> getList(String key, Class<T> type);
+    
     List<?> getList(String key, List<?> defaultValue);
 
     /**
