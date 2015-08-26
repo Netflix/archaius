@@ -20,7 +20,7 @@ import java.io.PrintStream;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.config.CompositeConfig;
 
-public class PrintStreamVisitor implements Config.Visitor, CompositeConfig.CompositeVisitor {
+public class PrintStreamVisitor implements CompositeConfig.CompositeVisitor<Void> {
     private final PrintStream stream;
     private String prefix = "";
     
@@ -35,15 +35,17 @@ public class PrintStreamVisitor implements Config.Visitor, CompositeConfig.Compo
     }
     
     @Override
-    public void visit(Config config, String key) {
+    public Void visit(Config config, String key) {
         stream.println(prefix + key + " = " + config.getString(key));
+        return null;
     }
 
     @Override
-    public void visit(String name, Config child) {
+    public Void visit(String name, Config child) {
         stream.println(prefix + "Config: " + name);
         prefix += "  ";
         child.accept(this);
         prefix = prefix.substring(0, prefix.length()-2);
+        return null;
     }
 }

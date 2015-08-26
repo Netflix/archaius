@@ -66,8 +66,8 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public void accept(Visitor visitor) {
-        config.accept(visitor);
+    public <T> T accept(Visitor<T> visitor) {
+        return config.accept(visitor);
     }
 
     @Override

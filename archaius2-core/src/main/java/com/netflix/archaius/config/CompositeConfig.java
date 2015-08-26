@@ -48,8 +48,8 @@ import com.netflix.archaius.exceptions.ConfigException;
 public class CompositeConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(CompositeConfig.class);
     
-    public static interface CompositeVisitor {
-        void visit(String name, Config child);
+    public static interface CompositeVisitor<T> extends Visitor<T> {
+        T visit(String name, Config child);
     }
     
     /**
@@ -75,6 +75,10 @@ public class CompositeConfig extends AbstractConfig {
     
     public static Builder builder() {
         return new Builder();
+    }
+    
+    public static CompositeConfig create() throws ConfigException {
+        return CompositeConfig.builder().build();
     }
     
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
@@ -290,20 +294,22 @@ public class CompositeConfig extends AbstractConfig {
     }
     
     @Override
-    public synchronized void accept(Visitor visitor) {
+    public synchronized <T> T accept(Visitor<T> visitor) {
+        T result = null;
         if (visitor instanceof CompositeVisitor) {
             synchronized (this) {
-                CompositeVisitor cv = (CompositeVisitor)visitor;
+                CompositeVisitor<T> cv = (CompositeVisitor<T>)visitor;
                 for (Entry<String, Config> entry : lookup.entrySet()) {
-                    cv.visit(entry.getKey(), entry.getValue());
+                    result = cv.visit(entry.getKey(), entry.getValue());
                 }
             }
         }
         else {
             for (Config child : children) {
-                child.accept(visitor);
+                result = child.accept(visitor);
             }
         }
+        return result;
     }
 
     public static CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
