@@ -1,9 +1,10 @@
 package com.netflix.archaius.visitor;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Stack;
 
-import com.google.common.base.Joiner;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.config.CompositeConfig;
 
@@ -32,10 +33,22 @@ public class PropertyOverrideVisitor implements CompositeConfig.CompositeVisitor
         else {
             Object value = child.getRawProperty(key);
             if (value != null) {
-                hierarchy.put(Joiner.on(":").join(stack), value.toString());
+                hierarchy.put(join(stack, ":"), value.toString());
             }
         }
         stack.pop();
         return hierarchy;
+    }
+    
+    private static String join(Collection<String> values, String sep) {
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> iter = values.iterator();
+        while (iter.hasNext()) {
+            sb.append(iter.next());
+            if (iter.hasNext()) {
+                sb.append(sep);
+            }
+        }
+        return sb.toString();
     }
 }
