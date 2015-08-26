@@ -26,8 +26,8 @@ import java.util.List;
  * @author elandau
  */
 public interface Config {
-    public interface Visitor {
-        void visit(Config config, String key);
+    public interface Visitor<T> {
+        T visit(Config config, String key);
     }
     
     /**
@@ -163,5 +163,5 @@ public interface Config {
      * Visitor pattern
      * @param visitor
      */
-    void accept(Visitor visitor);
+    <T> T accept(Visitor<T> visitor);
 }

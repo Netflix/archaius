@@ -209,11 +209,13 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public void accept(Visitor visitor) {
+    public <T> T accept(Visitor<T> visitor) {
+        T result = null;
         Iterator<String> iter = getKeys();
         while (iter.hasNext()) {
-            visitor.visit(this, iter.next());
+            result = visitor.visit(this, iter.next());
         }
+        return result;
     }
 
     @Override
