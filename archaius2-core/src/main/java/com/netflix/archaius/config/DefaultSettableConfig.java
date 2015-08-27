@@ -73,7 +73,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
             Iterator<String> iter = config.getKeys();
             while (iter.hasNext()) {
                 String key = iter.next();
-                setProperty(key, config.getString(key));
+                setProperty(key, config.getRawProperty(key));
             }
         }
     }
