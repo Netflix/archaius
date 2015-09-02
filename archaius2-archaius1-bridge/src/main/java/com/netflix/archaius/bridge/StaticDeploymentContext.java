@@ -12,7 +12,7 @@ import com.netflix.config.DeploymentContext;
  * @author elandau
  */
 public class StaticDeploymentContext implements DeploymentContext {
-    private static final Logger LOG = LoggerFactory.getLogger(StaticAbstractConfiguration.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StaticDeploymentContext.class);
 
     private static volatile DeploymentContext delegate;
     
