@@ -238,12 +238,12 @@ public final class ArchaiusModule extends AbstractModule {
             ) throws Exception {
         
         // First load the single application configuration 
-        LinkedHashMap<String, Config> loadedConfigs = loader
+        CompositeConfig compositeConfig = loader
                 .newLoader()
                 .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
                 .load(archaiusConfiguration.getConfigName());
-        if (loadedConfigs != null) {
-            applicationLayer.addConfigs(loadedConfigs);
+        if (compositeConfig != null) {
+            applicationLayer.replaceConfig(APPLICATION_LAYER_NAME, compositeConfig);
         }
 
         // Load any defaults from code.  These defaults may be initialized as part of 
@@ -258,17 +258,9 @@ public final class ArchaiusModule extends AbstractModule {
         }
  
         // Finally, load any cascaded configuration files for the application
-        loadedConfigs = loader.newLoader().withCascadeStrategy(archaiusConfiguration.getCascadeStrategy()).load(archaiusConfiguration.getConfigName());
-        if (loadedConfigs != null) { 
-            loadedConfigs.remove(archaiusConfiguration.getConfigName());
-            for (Entry<String, Config> entry : loadedConfigs.entrySet()) {
-                try {
-                    applicationLayer.addConfig(entry.getKey(), entry.getValue());
-                }
-                catch (ConfigAlreadyExistsException e) {
-                    // OK to ignore
-                }
-            }
+        compositeConfig = loader.newLoader().withCascadeStrategy(archaiusConfiguration.getCascadeStrategy()).load(archaiusConfiguration.getConfigName());
+        if (compositeConfig != null) {
+            applicationLayer.replaceConfig(APPLICATION_LAYER_NAME, compositeConfig);
         }
         
         // Remote layers most likely need some configuration so we load them after application

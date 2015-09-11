@@ -327,6 +327,7 @@ public class ArchaiusModuleTest {
         
         Config config = injector.getInstance(Config.class);
         injector.getInstance(MyServiceConfig.class);
+        config.accept(new PrintStreamVisitor());
         Assert.assertEquals("fromOverride", config.getString("moduleTest.prop1"));
     }
 }

@@ -42,7 +42,7 @@ public interface ConfigReader {
      * @param resourceName
      * @return
      */
-    Config load(ClassLoader loader, String resourceName) throws ConfigException ;
+    Config load(ClassLoader loader, String resourceName, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException ;
     
     /**
      * Load a specific URL.  The URL is assumed to be fully formed.  The concrete ConfigLoader will
@@ -51,7 +51,7 @@ public interface ConfigReader {
      * @param name
      * @return
      */
-    Config load(ClassLoader loader, URL url) throws ConfigException;
+    Config load(ClassLoader loader, URL url, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException;
     
     /**
      * Determine if this reader can load the provided resource name

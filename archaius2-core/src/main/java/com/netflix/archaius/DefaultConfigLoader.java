@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import com.netflix.archaius.config.CompositeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,20 +172,16 @@ public class DefaultConfigLoader implements ConfigLoader {
             }
 
             @Override
-            public LinkedHashMap<String, Config> load(String resourceName) throws ConfigException {
-                LinkedHashMap<String, Config> configs = new LinkedHashMap<String, Config>();
+            public CompositeConfig load(String resourceName) throws ConfigException {
+                CompositeConfig compositeConfig = new CompositeConfig(true);
                 boolean failIfNotLoaded = failOnFirst;
-                if (overrides != null) {
-                    LOG.debug("Loading overrides form {}", resourceName);
-                    configs.put(resourceName + "_overrides", overrides);
-                }
-                
+
                 List<String> names = strategy.generate(resourceName, interpolator, lookup);
                 for (String name : names) {
                     for (ConfigReader reader : loaders) {
                         if (reader.canLoad(classLoader, name)) {
                             try {
-                                configs.put(name, reader.load(classLoader, name));
+                                compositeConfig.addConfig(name, reader.load(classLoader, name, interpolator, lookup));
                                 LOG.debug("Loaded {} ", name);
                                 failIfNotLoaded = false;
                             }
@@ -198,8 +195,11 @@ public class DefaultConfigLoader implements ConfigLoader {
                         }
                     }
                 }
-                
-                return configs;
+                if (overrides != null) {
+                    LOG.debug("Loading overrides form {}", resourceName);
+                    compositeConfig.addConfig(resourceName + "_overrides", overrides);
+                }
+                return compositeConfig;
             }
  
             @Override
@@ -207,7 +207,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                 for (ConfigReader loader : loaders) {
                     if (loader.canLoad(classLoader, url)) {
                         try {
-                            Config config = loader.load(classLoader, url);
+                            Config config = loader.load(classLoader, url, interpolator, lookup);
                             LOG.info("Loaded " + url);
                             return config;
                         } catch (ConfigException e) {
