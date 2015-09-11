@@ -30,7 +30,7 @@ import com.netflix.config.DeploymentContext;
  * @author elandau
  *
  */
-public class StaticArchaiusBridgeModule extends AbstractModule {
+public final class StaticArchaiusBridgeModule extends AbstractModule {
     static {
         System.setProperty("archaius.default.configuration.class",      StaticAbstractConfiguration.class.getName());
         System.setProperty("archaius.default.deploymentContext.class",  StaticDeploymentContext.class.getName());
@@ -41,5 +41,15 @@ public class StaticArchaiusBridgeModule extends AbstractModule {
         requestStaticInjection(StaticAbstractConfiguration.class);
         requestStaticInjection(StaticDeploymentContext.class);
         bind(DeploymentContext.class).to(ConfigBasedDeploymentContext.class);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return StaticArchaiusBridgeModule.class.equals(obj.getClass());
+    }
+
+    @Override
+    public int hashCode() {
+        return StaticArchaiusBridgeModule.class.hashCode();
     }
 }

@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.config.AggregatedConfiguration;
-import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
 
@@ -27,11 +26,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
 
     @Inject
     public static void intialize(AbstractConfigurationBridge config) {
-        LOG.info("Initializing");
         delegate = config;
-        if (!ConfigurationManager.isConfigurationInstalled()) {
-            ConfigurationManager.install(config);
-        }
     }
 
     public static void reset() {
