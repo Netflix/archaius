@@ -19,11 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigReader;
@@ -49,6 +46,7 @@ public class PropertiesConfigReader implements ConfigReader {
         
         URL urlToLoad = url;
         LinkedList<String> nextUrls = new LinkedList<>();
+        Set<String> existingUrls = new HashSet<>();
         boolean loaded = false;
         do {
             try {
@@ -60,7 +58,17 @@ public class PropertiesConfigReader implements ConfigReader {
 
                 String next = p.get(includeKey);
                 if (next != null) {
-                    nextUrls.addAll(new LinkedList<>(Arrays.asList(next.split(","))));
+                    String[] listOfAtNext = next.split(",");
+                    LinkedList<String> listToAdd = new LinkedList<>();
+                    for (String urlString : listOfAtNext) {
+                        String extrapolatedForm = strInterpolator.create(lookup).resolve(urlString);
+                        if (!existingUrls.contains(extrapolatedForm)) {
+                            existingUrls.add(extrapolatedForm);
+                            listToAdd.add(extrapolatedForm);
+                        }
+                    }
+                    listToAdd.addAll(nextUrls);
+                    nextUrls = listToAdd;
                 }
             } catch (IOException e) {
                 if ( !loaded && nextUrls.isEmpty() ) {
@@ -69,7 +77,7 @@ public class PropertiesConfigReader implements ConfigReader {
             } finally {
                 urlToLoad = nextUrls.isEmpty()
                     ? null
-                    : getResource(loader, strInterpolator.create(lookup).resolve(nextUrls.remove()));
+                    : getResource(loader, nextUrls.remove());
             }
         } while (urlToLoad != null);
 
