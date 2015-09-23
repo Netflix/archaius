@@ -14,6 +14,7 @@ import com.netflix.archaius.Decoder;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.inject.ApplicationLayer;
+import com.netflix.archaius.inject.ApplicationOverrideLayer;
 import com.netflix.archaius.inject.DefaultsLayer;
 import com.netflix.archaius.inject.LibrariesLayer;
 import com.netflix.archaius.inject.RemoteLayer;
@@ -50,6 +51,10 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
     @Inject(optional=true)
     @LibrariesLayer
     Map<String, Config> libraryOverrides;
+    
+    @Inject(optional=true)
+    @ApplicationOverrideLayer
+    Config applicationOverrides;
     
     @Override
     public Set<ConfigSeeder> getRuntimeLayerSeeders() {
@@ -89,5 +94,10 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
     @Override
     public Map<String, Config> getLibraryOverrides() {
         return libraryOverrides != null ? libraryOverrides : Collections.<String, Config>emptyMap();
+    }
+
+    @Override
+    public Config getApplicationOverride() {
+        return applicationOverrides;
     }
 }
