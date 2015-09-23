@@ -1,6 +1,5 @@
 package com.netflix.archaius.bridge;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -32,18 +31,16 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     }
     
     @Inject
-    public static void intialize(AbstractConfigurationBridge config) {
+    public static void initialize(AbstractConfigurationBridge config) {
         delegate = config;
 
         if (staticConfig == null) {
-            System.err.println("Trying to use bridge but but hasn't been configured yet!!!");
-            return;
+            throw new RuntimeException("Trying to use bridge but hasn't been configured yet!!!");
         }
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
         if (!actualConfig.equals(staticConfig)) {
-            System.err.println("Not using expected bridge!!!");
-            return;
+            throw new RuntimeException("Not using expected bridge!!!");
         }
         
         DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
@@ -78,7 +75,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     @Override
     public Object getProperty(String key) {
         if (delegate == null) {
-            System.err.println("[getProperty(" + key + ")] StaticAbstractConfiguration not initialized yet.");
+            System.out.println("[getProperty(" + key + ")] StaticAbstractConfiguration not initialized yet.");
             return null;
         }
         return delegate.getProperty(key);
@@ -87,8 +84,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     @Override
     public Iterator<String> getKeys() {
         if (delegate == null) {
-            System.err.println("[getKeys()] StaticAbstractConfiguration not initialized yet.");
-            return Collections.emptyIterator();
+            throw new RuntimeException("[getKeys()] StaticAbstractConfiguration not initialized yet.");
         }
         return delegate.getKeys();
     }
