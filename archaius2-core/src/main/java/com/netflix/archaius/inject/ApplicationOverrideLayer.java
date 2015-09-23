@@ -10,6 +10,7 @@ import javax.inject.Qualifier;
 @Qualifier
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface ApplicationOverrideLayer {
 
 }

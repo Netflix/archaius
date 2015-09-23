@@ -76,13 +76,4 @@ public interface ArchaiusConfiguration {
      * if no overrides specified
      */
     Map<String, Config> getLibraryOverrides();
-    
-    /**
-     * Return override values for the application layer.  This override takes
-     * precedence over the main library configuration as well asll the cascade
-     * override values.
-     * 
-     * @return Config to use as override or null if no override
-     */
-    Config getApplicationOverride();
 }

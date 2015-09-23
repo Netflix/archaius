@@ -89,7 +89,7 @@ public class StaticDeploymentContext implements DeploymentContext {
     @Override
     public String getValue(ContextKey key) {
         if (delegate == null) {
-            LOG.warn("Configuration not yet initialized.  Returning 'null' for " + key);
+            LOG.debug("Configuration not yet initialized.  Returning 'null' for " + key);
             return null;
         }
         

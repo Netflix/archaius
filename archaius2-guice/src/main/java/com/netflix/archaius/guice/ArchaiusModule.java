@@ -88,7 +88,6 @@ public final class ArchaiusModule extends AbstractModule {
     private static final String REMOTE_LAYER_NAME               = "REMOTE";
     private static final String SYSTEM_LAYER_NAME               = "SYSTEM";
     private static final String ENVIRONMENT_LAYER_NAME          = "ENVIRONMENT";
-    private static final String APPLICATION_OVERRIDE_LAYER_NAME = "APPLICATION_OVERRIDE";
     private static final String APPLICATION_LAYER_NAME          = "APPLICATION";
     private static final String LIBRARIES_LAYER_NAME            = "LIBRARIES";
     private static final String DEFAULTS_LAYER_NAME             = "DEFAULTS";
@@ -198,11 +197,8 @@ public final class ArchaiusModule extends AbstractModule {
                 .withConfig(RUNTIME_LAYER_NAME,              settableLayer)
                 .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
                 .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
-                .withConfig(ENVIRONMENT_LAYER_NAME,          EnvironmentConfig.INSTANCE);
-        if (archaiusConfiguration.getApplicationOverride() != null) {
-            builder.withConfig(APPLICATION_OVERRIDE_LAYER_NAME, archaiusConfiguration.getApplicationOverride());
-        }
-        builder .withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
+                .withConfig(ENVIRONMENT_LAYER_NAME,          EnvironmentConfig.INSTANCE)
+                .withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
                 .withConfig(LIBRARIES_LAYER_NAME,            librariesLayer)
                 .withConfig(DEFAULTS_LAYER_NAME,             defaultsLayer)
                 ;
@@ -280,7 +276,7 @@ public final class ArchaiusModule extends AbstractModule {
         for (ConfigListener listener : archaiusConfiguration.getConfigListeners()) {
             config.addListener(listener);
         }
-
+        
         return config;
     }
     
@@ -299,6 +295,11 @@ public final class ArchaiusModule extends AbstractModule {
     @Singleton
     ConfigProxyFactory getProxyFactory(ArchaiusConfiguration config, PropertyFactory factory) {
         return new ConfigProxyFactory(config.getDecoder(), factory);
+    }
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
     
     @Override
