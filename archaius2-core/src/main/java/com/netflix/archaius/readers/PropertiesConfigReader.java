@@ -19,8 +19,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigReader;
@@ -29,11 +34,14 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
 public class PropertiesConfigReader implements ConfigReader {
-    private String              includeKey      = "@next";
-
+    private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);
+    
+    private static final String INCLUDE_KEY = "@next";
+    private static final String SUFFIX = ".properties";
+    
     @Override
     public Config load(ClassLoader loader, String resourceName, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException {
-        URL url = getResource(loader, resourceName + ".properties");
+        URL url = getResource(loader, resourceName);
         if (url == null) {
             throw new ConfigException("Unable to resolve URL for resource " + resourceName);
         }
@@ -43,59 +51,59 @@ public class PropertiesConfigReader implements ConfigReader {
     @Override
     public Config load(ClassLoader loader, URL url, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException {
         Properties props = new Properties();
-        
-        URL urlToLoad = url;
-        LinkedList<String> nextUrls = new LinkedList<>();
-        Set<String> existingUrls = new HashSet<>();
-        boolean loaded = false;
-        do {
+        internalLoad(props, new HashSet<String>(), loader, url, strInterpolator, lookup);
+        return MapConfig.from(props);
+    }
+    
+    private void internalLoad(Properties props, Set<String> seenUrls, ClassLoader loader, URL url, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) {
+        LOG.debug("Attempting to load : {}", url.toExternalForm());
+        // Guard against circular dependencies 
+        if (!seenUrls.contains(url.toExternalForm())) {
+            seenUrls.add(url.toExternalForm());
+            
             try {
-                Map<String, String> p = new URLConfigReader(urlToLoad).call().getToAdd();
-                loaded = true;
-                for (Entry<String, String> entry : p.entrySet()) {
-                    props.put(entry.getKey(), entry.getValue());
-                }
-
-                String next = p.get(includeKey);
+                // Load properties into the single Properties object overriding any property
+                // that may already exist
+                Map<String, String> p = new URLConfigReader(url).call().getToAdd();
+                LOG.debug("Loaded : {}", url.toExternalForm());
+                props.putAll(p);
+    
+                // Recursively load any files referenced by an @next property in the file
+                // Only one @next property is expected and the value may be a list of files
+                String next = p.get(INCLUDE_KEY);
                 if (next != null) {
-                    String[] listOfAtNext = next.split(",");
-                    LinkedList<String> listToAdd = new LinkedList<>();
-                    for (String urlString : listOfAtNext) {
-                        String extrapolatedForm = strInterpolator.create(lookup).resolve(urlString);
-                        if (!existingUrls.contains(extrapolatedForm)) {
-                            existingUrls.add(extrapolatedForm);
-                            listToAdd.add(extrapolatedForm);
+                    p.remove(INCLUDE_KEY);
+                    for (String urlString : next.split(",")) {
+                        URL nextUrl = getResource(loader, strInterpolator.create(lookup).resolve(urlString));
+                        if (nextUrl != null) {
+                            internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
                         }
                     }
-                    listToAdd.addAll(nextUrls);
-                    nextUrls = listToAdd;
                 }
             } catch (IOException e) {
-                if ( !loaded && nextUrls.isEmpty() ) {
-                    throw new ConfigException("Unable to load configuration " + url, e);
-                }
-            } finally {
-                urlToLoad = nextUrls.isEmpty()
-                    ? null
-                    : getResource(loader, nextUrls.remove());
+                LOG.debug("Unable to load configuration file {}. {}", url, e.getMessage());
             }
-        } while (urlToLoad != null);
-
-        return new MapConfig(props);
         }
+        else {
+            LOG.debug("Circular dependency trying to load url : {}", url.toExternalForm());
+        }
+    }
 
     @Override
     public boolean canLoad(ClassLoader loader, String name) {
-        return getResource(loader, name + ".properties") != null;
+        return getResource(loader, name) != null;
     }
 
     @Override
     public boolean canLoad(ClassLoader loader, URL uri) {
-        return uri.getPath().endsWith(".properties");
+        return uri.getPath().endsWith(SUFFIX);
     }
 
-    private static URL getResource(ClassLoader loader, String resourceName)
-    {
+    private static URL getResource(ClassLoader loader, String resourceName) {
+        if (!resourceName.endsWith(SUFFIX)) {
+            resourceName += SUFFIX;
+        }
+        
         URL url = null;
         // attempt to load from the context classpath
         if (loader == null) {

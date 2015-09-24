@@ -16,19 +16,22 @@
 package com.netflix.archaius.loaders;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
-import com.netflix.archaius.StrInterpolator;
-import com.netflix.archaius.interpolate.CommonsStrInterpolator;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.Config;
+import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.interpolate.CommonsStrInterpolator;
+import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
+import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class PropertyConfigReaderTest {
     @Test
@@ -40,11 +43,8 @@ public class PropertyConfigReaderTest {
                 return null;
             }
         });
-        Iterator<String> iter = config.getKeys();
-        while (iter.hasNext()) {
-            String key = iter.next();
-            System.out.println("Key : " + key + " " + config.getString(key));
-        }
+        
+        config.accept(new PrintStreamVisitor());
         
         assertThat(Arrays.asList("b"), is(config.getList("application.list", String.class)));
         assertThat(Arrays.asList("a", "b"), equalTo(config.getList("application.list2", String.class)));
@@ -55,5 +55,16 @@ public class PropertyConfigReaderTest {
         
 //        System.out.println(config.getBoolean("application.list"));
 //        System.out.println(config.getInteger("application.list"));
+    }
+    
+    @Test
+    public void loadAtNext() throws ConfigException {
+        PropertiesConfigReader reader = new PropertiesConfigReader();
+        Config mainConfig = MapConfig.builder().put("@region",  "us-east-1").build();
+        
+        Config config = reader.load(null, "test", CommonsStrInterpolator.INSTANCE, ConfigStrLookup.from(mainConfig));
+        config.accept(new PrintStreamVisitor());
+
+        Assert.assertEquals("test-us-east-1.properties", config.getString("cascaded.property"));
     }
 }
