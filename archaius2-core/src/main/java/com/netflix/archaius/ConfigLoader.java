@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Properties;
 
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -75,10 +76,11 @@ public interface ConfigLoader {
         
         /**
          * Load configuration by cascade resource name.
+         *
          * @param resourceName
-         * @return
+         * @return CompositeConfig contains a full hierarchy of cascaded files
          */
-        LinkedHashMap<String, Config> load(String resourceName) throws ConfigException;
+        CompositeConfig load(String resourceName) throws ConfigException;
         
         /**
          * Load configuration from a specific URL

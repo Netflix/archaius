@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import org.junit.Test;
 
 import com.netflix.archaius.Config;
@@ -32,7 +34,12 @@ public class PropertyConfigReaderTest {
     @Test
     public void readerTest() throws ConfigException{
         PropertiesConfigReader reader = new PropertiesConfigReader();
-        Config config = reader.load(null, "application");
+        Config config = reader.load(null, "application", CommonsStrInterpolator.INSTANCE, new StrInterpolator.Lookup() {
+            @Override
+            public String lookup(String key) {
+                return null;
+            }
+        });
         Iterator<String> iter = config.getKeys();
         while (iter.hasNext()) {
             String key = iter.next();
