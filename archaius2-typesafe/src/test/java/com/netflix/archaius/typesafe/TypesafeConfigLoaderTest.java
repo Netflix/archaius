@@ -41,9 +41,10 @@ public class TypesafeConfigLoaderTest {
         config.addConfigs(loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
-        
-        
+
+        Assert.assertEquals("prod", config.getString("@environment"));
         Assert.assertEquals("foo-prod", config.getString("foo.prop1"));
         Assert.assertEquals("foo", config.getString("foo.prop2"));
-    }   
+    }
+
 }
