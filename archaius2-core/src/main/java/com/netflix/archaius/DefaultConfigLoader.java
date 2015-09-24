@@ -19,17 +19,16 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import com.netflix.archaius.config.CompositeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.StrInterpolator.Lookup;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
@@ -58,7 +57,6 @@ public class DefaultConfigLoader implements ConfigLoader {
     public static class Builder {
         private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();
         private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
-        private boolean             failOnFirst     = false;
         private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
         private Lookup              lookup          = DEFAULT_LOOKUP;
         
@@ -74,8 +72,8 @@ public class DefaultConfigLoader implements ConfigLoader {
             return this;
         }
 
+        @Deprecated
         public Builder withFailOnFirst(boolean flag) {
-            this.failOnFirst = flag;
             return this;
         }
         
@@ -123,13 +121,11 @@ public class DefaultConfigLoader implements ConfigLoader {
     private final CascadeStrategy    defaultStrategy;
     private final StrInterpolator    interpolator;
     private final Lookup             lookup;
-    private final boolean            defaultFailOnFirst;
     
     public DefaultConfigLoader(Builder builder) {
         this.loaders            = builder.loaders;
         this.defaultStrategy    = builder.defaultStrategy;
         this.interpolator       = builder.interpolator;
-        this.defaultFailOnFirst = builder.failOnFirst;
         this.lookup             = builder.lookup;
     }
     
@@ -138,7 +134,6 @@ public class DefaultConfigLoader implements ConfigLoader {
         return new Loader() {
             private CascadeStrategy strategy = defaultStrategy;
             private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            private boolean failOnFirst = defaultFailOnFirst;
             private Config overrides = null;
             
             @Override
@@ -155,7 +150,6 @@ public class DefaultConfigLoader implements ConfigLoader {
             
             @Override
             public Loader withFailOnFirst(boolean flag) {
-                this.failOnFirst = flag;
                 return this;
             }
 
@@ -174,7 +168,6 @@ public class DefaultConfigLoader implements ConfigLoader {
             @Override
             public CompositeConfig load(String resourceName) throws ConfigException {
                 CompositeConfig compositeConfig = new CompositeConfig(true);
-                boolean failIfNotLoaded = failOnFirst;
 
                 List<String> names = strategy.generate(resourceName, interpolator, lookup);
                 for (String name : names) {
@@ -183,13 +176,9 @@ public class DefaultConfigLoader implements ConfigLoader {
                             try {
                                 compositeConfig.addConfig(name, reader.load(classLoader, name, interpolator, lookup));
                                 LOG.debug("Loaded {} ", name);
-                                failIfNotLoaded = false;
                             }
                             catch (ConfigException e) {
                                 LOG.debug("Unable to load {}, {}", name, e.getMessage());
-                                if (failIfNotLoaded == true) {
-                                    throw new ConfigException("Failed to load configuration resource '" + resourceName + "'");
-                                }
                             }
                             break;
                         }

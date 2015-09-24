@@ -1,28 +1,20 @@
 package com.netflix.archaius.config;
 
+import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.archaius.Config;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.exceptions.ConfigException;
 
 public class ConfigLoaderTest {
     
-    @Test(expected=ConfigException.class)
-    public void shouldFailWithNoApplicationConfig() throws ConfigException {
-        DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withFailOnFirst(true)
-                .build();
-        
-        loader.newLoader().load("non-existant");
-    }
-    
     @Test
-    public void shouldNotFailWithNoApplicationConfig() throws ConfigException {
+    public void testLoadingOfNonExistantFile() throws ConfigException {
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
-                .withFailOnFirst(false)
                 .build();
         
-        loader.newLoader().load("non-existant");
+        Config config = loader.newLoader().load("non-existant");
+        Assert.assertTrue(config.isEmpty());
     }
-
 }

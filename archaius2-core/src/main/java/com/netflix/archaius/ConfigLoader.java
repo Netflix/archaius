@@ -17,9 +17,9 @@ package com.netflix.archaius;
 
 import java.io.File;
 import java.net.URL;
-import java.util.LinkedHashMap;
 import java.util.Properties;
 
+import com.netflix.archaius.ConfigLoader.Loader;
 import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
@@ -51,11 +51,9 @@ public interface ConfigLoader {
         Loader withClassLoader(ClassLoader loader);
         
         /**
-         * When true, fail the entire load operation if the first resource name
-         * can't be loaded.  By definition all cascaded variations are treated 
-         * as overrides
-         * @param flag
+         * @deprecated Requiring the existence of a configuration file seems excessive
          */
+        @Deprecated
         Loader withFailOnFirst(boolean flag);
         
         /**
