@@ -34,16 +34,12 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     public static void initialize(AbstractConfigurationBridge config) {
         delegate = config;
 
+        // Force archaius1 to initialize, if not already done, which will trigger the above constructor.
+        ConfigurationManager.getConfigInstance();
+        
+        // Additional check to make sure archaius actually created the bridge.
         if (staticConfig == null) {
-            // initialize is called from Guice but static archaius1 hasn't been created yet
-            // (meaning nothing called the static archaius1 API yet).  Force archaius1 to initialize
-            // which will trigger the above constructor.
-            ConfigurationManager.getConfigInstance();
-            
-            // Additional check to make sure archaius actually created the bridge.
-            if (staticConfig == null) {
-                throw new RuntimeException("Trying to use bridge but hasn't been configured yet!!!");
-            }
+            throw new RuntimeException("Trying to use bridge but hasn't been configured yet!!!");
         }
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
