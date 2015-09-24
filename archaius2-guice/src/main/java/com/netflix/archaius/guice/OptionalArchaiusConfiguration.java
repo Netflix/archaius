@@ -54,7 +54,7 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
     
     @Inject(optional=true)
     @ApplicationOverrideLayer
-    Config applicationOverrideLayer;
+    Config applicationOverrides;
     
     @Override
     public Set<ConfigSeeder> getRuntimeLayerSeeders() {
@@ -98,6 +98,6 @@ public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {
 
     @Override
     public Config getApplicationOverride() {
-        return applicationOverrideLayer;
+        return applicationOverrides;
     }
 }

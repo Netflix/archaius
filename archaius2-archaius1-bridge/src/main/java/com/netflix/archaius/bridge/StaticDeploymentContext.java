@@ -2,9 +2,6 @@ package com.netflix.archaius.bridge;
 
 import javax.inject.Inject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.netflix.config.DeploymentContext;
 
 /**
@@ -12,13 +9,10 @@ import com.netflix.config.DeploymentContext;
  * @author elandau
  */
 public class StaticDeploymentContext implements DeploymentContext {
-    private static final Logger LOG = LoggerFactory.getLogger(StaticDeploymentContext.class);
-
     private static volatile DeploymentContext delegate;
     
     @Inject
     public static void initialize(DeploymentContext context) {
-        LOG.info("Initializing");
         delegate = context;
     }
     
@@ -89,7 +83,7 @@ public class StaticDeploymentContext implements DeploymentContext {
     @Override
     public String getValue(ContextKey key) {
         if (delegate == null) {
-            LOG.warn("Configuration not yet initialized.  Returning 'null' for " + key);
+            System.out.println("Configuration not yet initialized.  Returning 'null' for " + key);
             return null;
         }
         

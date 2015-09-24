@@ -122,7 +122,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     @ApplicationLayer 
-    CompositeConfig getApplicationLayer() throws ConfigException {
+    CompositeConfig getApplicationLayer() {
         return new CompositeConfig();
     }
 
@@ -199,10 +199,11 @@ public final class ArchaiusModule extends AbstractModule {
                 .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
                 .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
                 .withConfig(ENVIRONMENT_LAYER_NAME,          EnvironmentConfig.INSTANCE);
+        
         if (archaiusConfiguration.getApplicationOverride() != null) {
             builder.withConfig(APPLICATION_OVERRIDE_LAYER_NAME, archaiusConfiguration.getApplicationOverride());
         }
-        builder .withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
+        builder.withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
                 .withConfig(LIBRARIES_LAYER_NAME,            librariesLayer)
                 .withConfig(DEFAULTS_LAYER_NAME,             defaultsLayer)
                 ;
@@ -280,7 +281,7 @@ public final class ArchaiusModule extends AbstractModule {
         for (ConfigListener listener : archaiusConfiguration.getConfigListeners()) {
             config.addListener(listener);
         }
-
+        
         return config;
     }
     
@@ -299,6 +300,11 @@ public final class ArchaiusModule extends AbstractModule {
     @Singleton
     ConfigProxyFactory getProxyFactory(ArchaiusConfiguration config, PropertyFactory factory) {
         return new ConfigProxyFactory(config.getDecoder(), factory);
+    }
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
     
     @Override
