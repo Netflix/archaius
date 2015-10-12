@@ -49,14 +49,7 @@ public interface Property<T> {
      * @return  Most recent value for the property
      */
     T get();
-    
-    /**
-     * Get the last time the property was updated
-     * @param units
-     * @return
-     */
-    long getLastUpdateTime(TimeUnit units);
-    
+
     /**
      * Unsubscribe from property value update notifications.  The property object cannot be resubscribed.
      */
