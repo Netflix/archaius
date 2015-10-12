@@ -162,10 +162,17 @@ public abstract class AbstractConfig implements Config {
         return new Iterator<String>() {
             Iterator<String> iter = getKeys();
             String next;
+            String prev;
             
             {
-                if (iter.hasNext()) {
+                while (iter.hasNext()) {
                     next = iter.next();
+                    if (next.startsWith(prefix)) {
+                        break;
+                    }
+                    else {
+                        next = null;
+                    }
                 }
             }
             
@@ -180,7 +187,7 @@ public abstract class AbstractConfig implements Config {
                     throw new IllegalStateException();
                 }
                 
-                String prev = next;
+                prev = next;
                 while (iter.hasNext()) {
                     next = iter.next();
                     if (next.startsWith(prefix)) {
@@ -189,6 +196,9 @@ public abstract class AbstractConfig implements Config {
                     else {
                         next = null;
                     }
+                }
+                if (next != null && next.equals(prev)) {
+                    next = null;
                 }
                 return prev;
             }
