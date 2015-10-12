@@ -11,11 +11,6 @@ public abstract class AbstractProperty<T> implements Property<T> {
     }
     
     @Override
-    public long getLastUpdateTime(TimeUnit units) {
-        return 0;
-    }
-
-    @Override
     public void unsubscribe() {
         throw new UnsupportedOperationException();
     }

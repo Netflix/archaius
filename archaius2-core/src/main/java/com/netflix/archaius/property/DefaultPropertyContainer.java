@@ -264,11 +264,6 @@ public class DefaultPropertyContainer implements PropertyContainer {
         }
 
         @Override
-        public long getLastUpdateTime(TimeUnit units) {
-            return delegate.getLastUpdateTime(units);
-        }
-
-        @Override
         public void unsubscribe() {
             // TODO:
         }
