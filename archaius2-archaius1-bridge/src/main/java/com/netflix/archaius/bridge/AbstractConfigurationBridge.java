@@ -109,7 +109,7 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
 
     @Override
     public Configuration getConfiguration(String name) {
-        throw new UnsupportedOperationException();
+        return new ConfigToCommonsAdapter(libraries.getConfig(name));
     }
 
     @Override
