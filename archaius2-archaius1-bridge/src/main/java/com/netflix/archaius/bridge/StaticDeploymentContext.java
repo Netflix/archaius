@@ -1,6 +1,7 @@
 package com.netflix.archaius.bridge;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.netflix.config.DeploymentContext;
 
@@ -8,6 +9,7 @@ import com.netflix.config.DeploymentContext;
  * @see StaticArchaiusBridgeModule
  * @author elandau
  */
+@Singleton
 public class StaticDeploymentContext implements DeploymentContext {
     private static volatile DeploymentContext delegate;
     
