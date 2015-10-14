@@ -230,6 +230,14 @@ public class CompositeConfig extends AbstractConfig {
     }
 
     @Override
+    public void setListDelimiter(String newDelimiter) {
+        super.setListDelimiter(newDelimiter);
+        for (Config child : children) {
+            child.setListDelimiter(newDelimiter);
+        }
+    }
+
+    @Override
     public Object getRawProperty(String key) {
         for (Config child : children) {
             if (child.containsKey(key)) {

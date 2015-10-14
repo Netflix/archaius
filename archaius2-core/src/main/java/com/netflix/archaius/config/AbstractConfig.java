@@ -52,14 +52,16 @@ public abstract class AbstractConfig implements Config {
         return listeners;
     }
 
-    protected String getListDelimiter() {
+
+    public String getListDelimiter() {
         return listDelimiter;
     }
-    
-    protected void setListDelimiter(String delimiter) {
-        this.listDelimiter = delimiter;
+
+    @Override
+    public void setListDelimiter(String delimiter) {
+        listDelimiter = delimiter;
     }
-    
+
     @Override
     final public Decoder getDecoder() {
         return this.decoder;
@@ -225,243 +227,158 @@ public abstract class AbstractConfig implements Config {
         return result;
     }
 
-    @Override
-    public Long getLong(String key) {
-        String value = getString(key);
-        if (value == null) 
+    protected <T> T getValue(Class<T> type, String key) {
+        Object rawProp = getRawProperty(key);
+        if (rawProp == null) {
             return notFound(key);
-        try {
-            return decoder.decode(Long.class, value);
         }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+        if (rawProp instanceof String) {
+            try {
+                String value = interpolator.create(lookup).resolve(rawProp.toString());
+                if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
+                        return (T) Boolean.TRUE;
+                    }
+                    else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
+                        return (T) Boolean.FALSE;
+                    }
+                    return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
+                }
+                return decoder.decode(type, value);
+            } catch (NumberFormatException e) {
+                return parseError(key, rawProp.toString(), e);
+            }
+        } else if (type.isInstance(rawProp)) {
+            return (T)rawProp;
+        } else {
+            return parseError(key, rawProp.toString(),
+                    new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getCanonicalName()));
         }
     }
 
     @Override
+    public Long getLong(String key) {
+        return getValue(Long.class, key);
+    }
+
+    @Override
     public Long getLong(String key, Long defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return defaultValue;
         try {
-            return decoder.decode(Long.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(Long.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public Double getDouble(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        try {
-            return decoder.decode(Double.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(Double.class, key);
     }
 
     @Override
     public Double getDouble(String key, Double defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
-        try {   
-            return decoder.decode(Double.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+        try {
+            return getValue(Double.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public Integer getInteger(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-
-        try {   
-            return decoder.decode(Integer.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(Integer.class, key);
     }
 
     @Override
     public Integer getInteger(String key, Integer defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
-        
         try {
-            return decoder.decode(Integer.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(Integer.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public Boolean getBoolean(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        
-        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
-            return Boolean.TRUE;
-        } 
-        else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
-            return Boolean.FALSE;
-        }
-        return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
+        return getValue(Boolean.class, key);
     }
 
     @Override
     public Boolean getBoolean(String key, Boolean defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
-        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
-            return Boolean.TRUE;
-        } 
-        else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
-            return Boolean.FALSE;
+        try {
+            return getValue(Boolean.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
-        return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
     }
 
     @Override
     public Short getShort(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        
-        try {
-            return decoder.decode(Short.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(Short.class, key);
     }
 
     @Override
     public Short getShort(String key, Short defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
         try {
-            return decoder.decode(Short.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(Short.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public BigInteger getBigInteger(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        try {
-            return decoder.decode(BigInteger.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(BigInteger.class, key);
     }
 
     @Override
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
         try {
-            return decoder.decode(BigInteger.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(BigInteger.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public BigDecimal getBigDecimal(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        try {
-            return decoder.decode(BigDecimal.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(BigDecimal.class, key);
     }
 
     @Override
     public BigDecimal getBigDecimal(String key, BigDecimal defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
         try {
-            return decoder.decode(BigDecimal.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(BigDecimal.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public Float getFloat(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        try {
-            return decoder.decode(Float.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(Float.class, key);
     }
 
     @Override
     public Float getFloat(String key, Float defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
         try {
-            return decoder.decode(Float.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(Float.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
     @Override
     public Byte getByte(String key) {
-        String value = getString(key);
-        if (value == null) 
-            return notFound(key);
-        try {
-            return decoder.decode(Byte.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
-        }
+        return getValue(Byte.class, key);
     }
 
     @Override
     public Byte getByte(String key, Byte defaultValue) {
-        String value = getString(key, null);
-        if (value == null) 
-            return notFound(key, defaultValue);
         try {
-            return decoder.decode(Byte.class, value);
-        }
-        catch (NumberFormatException e) {
-            return parseError(key, value, e);
+            return getValue(Byte.class, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
     }
 
@@ -485,7 +402,7 @@ public abstract class AbstractConfig implements Config {
         if (value == null) {
             return notFound(key);
         }
-        String[] parts = value.split(",");
+        String[] parts = value.split(getListDelimiter());
         return Arrays.asList(parts);
     }
 
@@ -501,20 +418,16 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        String value = getString(key);
-        if (value == null) {
-            return notFound(key);
-        }
-        return getDecoder().decode(type, value);
+        return getValue(type, key);
     }
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        String value = getString(key, null);
-        if (value == null) {
-            return notFound(key, defaultValue);
+        try {
+            return getValue(type, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
         }
-        return getDecoder().decode(type, value);
     }
 
     private <T> T parseError(String key, String value, Exception e) {
