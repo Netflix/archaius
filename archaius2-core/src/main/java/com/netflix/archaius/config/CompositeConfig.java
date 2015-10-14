@@ -49,7 +49,13 @@ public class CompositeConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(CompositeConfig.class);
     
     public static interface CompositeVisitor<T> extends Visitor<T> {
-        T visit(String name, Config child);
+        /**
+         * Visit a child of the configuration
+         * @param name
+         * @param child
+         * @return
+         */
+        T visitChild(String name, Config child);
     }
     
     /**
@@ -282,25 +288,13 @@ public class CompositeConfig extends AbstractConfig {
     }
     
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        
-        for (Config child : children) {
-            sb.append(child.toString()).append(" ");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-    
-    @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
         T result = null;
         if (visitor instanceof CompositeVisitor) {
             synchronized (this) {
                 CompositeVisitor<T> cv = (CompositeVisitor<T>)visitor;
                 for (Entry<String, Config> entry : lookup.entrySet()) {
-                    result = cv.visit(entry.getKey(), entry.getValue());
+                    result = cv.visitChild(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -318,5 +312,17 @@ public class CompositeConfig extends AbstractConfig {
             builder.withConfig(config.getKey(), config.getValue());
         }
         return builder.build();
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        
+        for (Config child : children) {
+            sb.append(child.toString()).append(" ");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

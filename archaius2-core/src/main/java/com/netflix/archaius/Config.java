@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface Config {
     public interface Visitor<T> {
-        T visit(Config config, String key);
+        T visitKey(Config config, String key);
     }
     
     /**
