@@ -235,15 +235,6 @@ public abstract class AbstractConfig implements Config {
         if (rawProp instanceof String) {
             try {
                 String value = interpolator.create(lookup).resolve(rawProp.toString());
-                if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("on")) {
-                        return (T) Boolean.TRUE;
-                    }
-                    else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
-                        return (T) Boolean.FALSE;
-                    }
-                    return parseError(key, value, new Exception("Expected one of [true, yes, on, false, no, off]"));
-                }
                 return decoder.decode(type, value);
             } catch (NumberFormatException e) {
                 return parseError(key, rawProp.toString(), e);
@@ -256,6 +247,14 @@ public abstract class AbstractConfig implements Config {
         }
     }
 
+    protected <T> T getValueWithDefault(Class<T> type, String key, T defaultValue) {
+        try {
+            return getValue(type, key);
+        } catch (NoSuchElementException e) {
+            return defaultValue;
+        }
+    }
+
     @Override
     public Long getLong(String key) {
         return getValue(Long.class, key);
@@ -263,11 +262,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Long getLong(String key, Long defaultValue) {
-        try {
-            return getValue(Long.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Long.class, key, defaultValue);
     }
 
     @Override
@@ -277,11 +272,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Double getDouble(String key, Double defaultValue) {
-        try {
-            return getValue(Double.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Double.class, key, defaultValue);
     }
 
     @Override
@@ -291,11 +282,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Integer getInteger(String key, Integer defaultValue) {
-        try {
-            return getValue(Integer.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Integer.class, key, defaultValue);
     }
 
     @Override
@@ -305,11 +292,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Boolean getBoolean(String key, Boolean defaultValue) {
-        try {
-            return getValue(Boolean.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Boolean.class, key, defaultValue);
     }
 
     @Override
@@ -319,11 +302,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Short getShort(String key, Short defaultValue) {
-        try {
-            return getValue(Short.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Short.class, key, defaultValue);
     }
 
     @Override
@@ -333,11 +312,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigInteger getBigInteger(String key, BigInteger defaultValue) {
-        try {
-            return getValue(BigInteger.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(BigInteger.class, key, defaultValue);
     }
 
     @Override
@@ -347,11 +322,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public BigDecimal getBigDecimal(String key, BigDecimal defaultValue) {
-        try {
-            return getValue(BigDecimal.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(BigDecimal.class, key, defaultValue);
     }
 
     @Override
@@ -361,11 +332,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Float getFloat(String key, Float defaultValue) {
-        try {
-            return getValue(Float.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Float.class, key, defaultValue);
     }
 
     @Override
@@ -375,11 +342,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public Byte getByte(String key, Byte defaultValue) {
-        try {
-            return getValue(Byte.class, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(Byte.class, key, defaultValue);
     }
 
     @Override
@@ -423,11 +386,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        try {
-            return getValue(type, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
-        }
+        return getValueWithDefault(type, key, defaultValue);
     }
 
     private <T> T parseError(String key, String value, Exception e) {
