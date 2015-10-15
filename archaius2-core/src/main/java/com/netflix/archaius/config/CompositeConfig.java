@@ -181,6 +181,7 @@ public class CompositeConfig extends AbstractConfig {
         child.setDecoder(getDecoder());
         notifyConfigAdded(child);
         child.addListener(listener);
+        child.setListDelimiter(getListDelimiter());
     }
     
     /**
