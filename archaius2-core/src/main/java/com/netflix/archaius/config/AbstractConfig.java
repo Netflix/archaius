@@ -52,12 +52,9 @@ public abstract class AbstractConfig implements Config {
         return listeners;
     }
 
-
     public String getListDelimiter() {
         return listDelimiter;
     }
-
-    @Override
     public void setListDelimiter(String delimiter) {
         listDelimiter = delimiter;
     }

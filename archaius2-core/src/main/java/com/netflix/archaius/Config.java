@@ -164,10 +164,4 @@ public interface Config {
      * @param visitor
      */
     <T> T accept(Visitor<T> visitor);
-
-    /**
-     * Set the delimiter to split property value
-     * @param newDelimiter
-     */
-    void setListDelimiter(String newDelimiter);
 }

@@ -181,7 +181,6 @@ public class CompositeConfig extends AbstractConfig {
         child.setDecoder(getDecoder());
         notifyConfigAdded(child);
         child.addListener(listener);
-        child.setListDelimiter(getListDelimiter());
     }
     
     /**
@@ -230,19 +229,32 @@ public class CompositeConfig extends AbstractConfig {
         return lookup.get(name);
     }
 
-    @Override
-    public void setListDelimiter(String newDelimiter) {
-        super.setListDelimiter(newDelimiter);
-        for (Config child : children) {
-            child.setListDelimiter(newDelimiter);
-        }
-    }
 
     @Override
     public Object getRawProperty(String key) {
         for (Config child : children) {
             if (child.containsKey(key)) {
                 return child.getRawProperty(key);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public <T> List<T> getList(String key, Class<T> type) {
+        for (Config child : children) {
+            if (child.containsKey(key)) {
+                return child.getList(key, type);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List getList(String key) {
+        for (Config child : children) {
+            if (child.containsKey(key)) {
+                return child.getList(key);
             }
         }
         return null;
