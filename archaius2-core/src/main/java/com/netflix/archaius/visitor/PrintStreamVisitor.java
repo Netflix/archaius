@@ -35,13 +35,13 @@ public class PrintStreamVisitor implements CompositeConfig.CompositeVisitor<Void
     }
     
     @Override
-    public Void visit(Config config, String key) {
+    public Void visitKey(Config config, String key) {
         stream.println(prefix + key + " = " + config.getString(key));
         return null;
     }
 
     @Override
-    public Void visit(String name, Config child) {
+    public Void visitChild(String name, Config child) {
         stream.println(prefix + "Config: " + name);
         prefix += "  ";
         child.accept(this);

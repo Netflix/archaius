@@ -35,14 +35,12 @@ public class ConfigMapper {
         }
     };
     
-    private final boolean allowPostConfigure;
-    
     public ConfigMapper() {
         this(true);
     }
     
+    @Deprecated
     public ConfigMapper(boolean allowPostConfigure) {
-        this.allowPostConfigure = allowPostConfigure;
     }
     
     /**

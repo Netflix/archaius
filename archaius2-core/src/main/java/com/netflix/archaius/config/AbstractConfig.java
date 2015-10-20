@@ -220,7 +220,7 @@ public abstract class AbstractConfig implements Config {
         T result = null;
         Iterator<String> iter = getKeys();
         while (iter.hasNext()) {
-            result = visitor.visit(this, iter.next());
+            result = visitor.visitKey(this, iter.next());
         }
         return result;
     }

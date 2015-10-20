@@ -15,8 +15,6 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,7 +39,6 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.config.SystemConfig;
-import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.archaius.exceptions.ConfigException;
 import com.netflix.archaius.inject.ApplicationLayer;
 import com.netflix.archaius.inject.DefaultsLayer;

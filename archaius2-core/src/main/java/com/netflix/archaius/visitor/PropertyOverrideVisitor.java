@@ -8,8 +8,16 @@ import java.util.Stack;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.config.CompositeConfig;
 
+/**
+ * Produce an ordered LinkedHashMap with all instances of a property in the configuration 
+ * hierarchy with the key being the 'path' to the property.
+ * @author elandau
+ *
+ */
 public class PropertyOverrideVisitor implements CompositeConfig.CompositeVisitor<LinkedHashMap<String, String>> {
     public static PrintStreamVisitor OUT = new PrintStreamVisitor(System.out);
+    
+    private static final String SEPARATOR = "/";
     
     private final Stack<String> stack = new Stack<>();
     private final String key;
@@ -20,12 +28,12 @@ public class PropertyOverrideVisitor implements CompositeConfig.CompositeVisitor
     }
     
     @Override
-    public LinkedHashMap<String, String> visit(Config config, String key) {
+    public LinkedHashMap<String, String> visitKey(Config config, String key) {
         return hierarchy;
     }
 
     @Override
-    public LinkedHashMap<String, String> visit(String name, Config child) {
+    public LinkedHashMap<String, String> visitChild(String name, Config child) {
         stack.push(name);
         if (child instanceof CompositeConfig) {
             child.accept(this);
@@ -33,7 +41,7 @@ public class PropertyOverrideVisitor implements CompositeConfig.CompositeVisitor
         else {
             Object value = child.getRawProperty(key);
             if (value != null) {
-                hierarchy.put(join(stack, ":"), value.toString());
+                hierarchy.put(join(stack, SEPARATOR), value.toString());
             }
         }
         stack.pop();
