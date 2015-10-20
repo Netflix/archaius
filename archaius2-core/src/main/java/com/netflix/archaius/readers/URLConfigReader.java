@@ -77,7 +77,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
             try {
                 reader = new InputStreamReader(fin, "UTF-8");
                 try {
-                    props.load(fin);
+                    props.load(reader);
                 }
                 finally {
                     if (reader != null) {

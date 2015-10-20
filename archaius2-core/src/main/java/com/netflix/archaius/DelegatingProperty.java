@@ -11,11 +11,6 @@ public abstract class DelegatingProperty<T> implements Property<T> {
     }
     
     @Override
-    public long getLastUpdateTime(TimeUnit units) {
-        return delegate.getLastUpdateTime(units);
-    }
-
-    @Override
     public void unsubscribe() {
         delegate.unsubscribe();
     }
