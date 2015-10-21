@@ -15,7 +15,10 @@
  */
 package com.netflix.archaius.commons;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
@@ -55,4 +58,64 @@ public class CommonsToConfig extends AbstractConfig {
     public Iterator<String> getKeys() {
         return config.getKeys();
     }
+
+    @Override
+    public <T> List<T> getList(String key, Class<T> type) {
+        List value = config.getList(key);
+        if (value == null) {
+            return notFound(key);
+        }
+;
+        List<T> result = new ArrayList<T>();
+        for (Object part : value) {
+            result.add(getDecoder().decode(type, part.toString()));
+        }
+        return result;
+    }
+
+    @Override
+    public List getList(String key) {
+        List value = config.getList(key);
+        if (value == null) {
+            return notFound(key);
+        }
+        return value;
+    }
+
+    @Override
+    public String getString(String key, String defaultValue) {
+        List value = config.getList(key);
+        if (value == null) {
+            return notFound(key, defaultValue != null ? getStrInterpolator().create(getLookup()).resolve(defaultValue) : null);
+        }
+        List<String> interpolatedResult = new ArrayList<>();
+        for (Object part : value) {
+            if (part instanceof String) {
+                interpolatedResult.add(getStrInterpolator().create(getLookup()).resolve(part.toString()));
+            } else {
+                throw new UnsupportedOperationException(
+                        "Property values other than String not supported");
+            }
+        }
+        return String.join(getListDelimiter(), interpolatedResult);
+    }
+
+    @Override
+    public String getString(String key) {
+        List value = config.getList(key);
+        if (value == null) {
+            return notFound(key);
+        }
+        List<String> interpolatedResult = new ArrayList<>();
+        for (Object part : value) {
+            if (part instanceof String) {
+                interpolatedResult.add(getStrInterpolator().create(getLookup()).resolve(part.toString()));
+            } else {
+                throw new UnsupportedOperationException(
+                        "Property values other than String not supported");
+            }
+        }
+        return String.join(getListDelimiter(), interpolatedResult);
+    }
+
 }
