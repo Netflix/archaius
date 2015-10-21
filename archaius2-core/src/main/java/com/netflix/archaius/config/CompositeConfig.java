@@ -235,6 +235,7 @@ public class CompositeConfig extends AbstractConfig {
         return lookup.get(name);
     }
 
+
     @Override
     public Object getRawProperty(String key) {
         for (Config child : children) {
@@ -243,6 +244,26 @@ public class CompositeConfig extends AbstractConfig {
             }
         }
         return null;
+    }
+
+    @Override
+    public <T> List<T> getList(String key, Class<T> type) {
+        for (Config child : children) {
+            if (child.containsKey(key)) {
+                return child.getList(key, type);
+            }
+        }
+        return notFound(key);
+    }
+
+    @Override
+    public List getList(String key) {
+        for (Config child : children) {
+            if (child.containsKey(key)) {
+                return child.getList(key);
+            }
+        }
+        return notFound(key);
     }
 
     @Override
