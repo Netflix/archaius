@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.commons.configuration.AbstractConfiguration;
 
 import com.netflix.archaius.config.AbstractConfig;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
@@ -97,7 +98,7 @@ public class CommonsToConfig extends AbstractConfig {
                         "Property values other than String not supported");
             }
         }
-        return String.join(getListDelimiter(), interpolatedResult);
+        return StringUtils.join(interpolatedResult, getListDelimiter());
     }
 
     @Override
@@ -115,7 +116,7 @@ public class CommonsToConfig extends AbstractConfig {
                         "Property values other than String not supported");
             }
         }
-        return String.join(getListDelimiter(), interpolatedResult);
+        return StringUtils.join(interpolatedResult, getListDelimiter());
     }
 
 }
