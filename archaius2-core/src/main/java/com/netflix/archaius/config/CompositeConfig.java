@@ -247,7 +247,7 @@ public class CompositeConfig extends AbstractConfig {
                 return child.getList(key, type);
             }
         }
-        return null;
+        return notFound(key);
     }
 
     @Override
@@ -257,7 +257,7 @@ public class CompositeConfig extends AbstractConfig {
                 return child.getList(key);
             }
         }
-        return null;
+        return notFound(key);
     }
 
     @Override

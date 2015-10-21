@@ -69,7 +69,14 @@ public class CommonsToConfig extends AbstractConfig {
 ;
         List<T> result = new ArrayList<T>();
         for (Object part : value) {
-            result.add(getDecoder().decode(type, part.toString()));
+            if (type.isInstance(part)) {
+                result.add((T)part);
+            } else if (part instanceof String) {
+                result.add(getDecoder().decode(type, (String) part));
+            } else {
+                throw new UnsupportedOperationException(
+                        "Property values other than " + type.getCanonicalName() +" or String not supported");
+            }
         }
         return result;
     }
