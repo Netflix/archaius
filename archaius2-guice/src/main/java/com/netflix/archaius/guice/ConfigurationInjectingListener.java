@@ -45,7 +45,7 @@ public class ConfigurationInjectingListener implements TypeListener {
         private ArchaiusConfiguration archaiusConfiguration;
     }
     
-    private ConfigMapper mapper = new ConfigMapper(true);
+    private ConfigMapper mapper = new ConfigMapper();
     
     @Override
     public <I> void hear(TypeLiteral<I> typeLiteral, final TypeEncounter<I> encounter) {

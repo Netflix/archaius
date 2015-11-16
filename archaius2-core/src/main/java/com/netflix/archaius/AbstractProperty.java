@@ -1,6 +1,5 @@
 package com.netflix.archaius;
 
-import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractProperty<T> implements Property<T> {
 

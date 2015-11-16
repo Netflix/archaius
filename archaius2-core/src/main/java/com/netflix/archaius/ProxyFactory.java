@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -113,28 +112,6 @@ public class ProxyFactory {
         }
     }
     
-    private static class RequiredMethodInvoker<T> implements MethodInvoker<T> {
-        private final MethodInvoker<T> delegate;
-
-        public RequiredMethodInvoker(MethodInvoker<T> delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public T invoke(Object[] args) {
-            T value = delegate.invoke(args);
-            if (value == null) {
-                throw new RuntimeException("Missing value for property " + getKey());
-            }
-            return value;
-        }
-
-        @Override
-        public String getKey() {
-            return delegate.getKey();
-        }
-    }
-    
     @SuppressWarnings({ "rawtypes", "unchecked" })
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
         Configuration annot = type.getAnnotation(Configuration.class);
@@ -159,7 +136,6 @@ public class ProxyFactory {
             }
             
             final DefaultValue defaultValue = m.getAnnotation(DefaultValue.class);
-            final Nullable nullable = m.getAnnotation(Nullable.class);
             final Class<?> returnType = m.getReturnType();
             final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
             final String propName = nameAnnot != null && nameAnnot.name() != null
@@ -190,14 +166,11 @@ public class ProxyFactory {
                             
                             // Read the actual value now that the proeprty name is known.  Note that we can't create
                             // 
-                            if (nullable != null) {
-                                return propertyFactory.getConfig().get(returnType, propName, null);
-                            }
-                            else if (defaultValue != null) {
+                            if (defaultValue != null) {
                                 return getPropertyWithDefault(returnType, propName, defaultValue.value());
                             }
                             else {
-                                return propertyFactory.getConfig().get(returnType, propName);
+                                return propertyFactory.getConfig().get(returnType, propName, null);
                             }
                         }
 
@@ -215,22 +188,16 @@ public class ProxyFactory {
                     if (defaultValue != null) {
                         invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, defaultValue.value()));
                     }
-                    else if (nullable != null) {
-                        invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, null));
-                    }
                     else {
-                        invokers.put(m, createImmutableProperty(m.getReturnType(), propName));
+                        invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, null));
                     }
                 }
                 else {
                     if (defaultValue != null) {
                         invokers.put(m, createDynamicProperty(m.getReturnType(), propName, defaultValue.value()));
-                    }
-                    else if (nullable != null) {
-                        invokers.put(m, createDynamicProperty(m.getReturnType(), propName, null));
-                    }
+                    } 
                     else {
-                        invokers.put(m, new RequiredMethodInvoker(createDynamicProperty(m.getReturnType(), propName, null)));
+                        invokers.put(m, createDynamicProperty(m.getReturnType(), propName, null));
                     }
                 }
             }
