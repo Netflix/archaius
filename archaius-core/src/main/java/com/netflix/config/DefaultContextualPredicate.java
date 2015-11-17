@@ -36,7 +36,6 @@ public class DefaultContextualPredicate implements Predicate<Map<String, Collect
     
     public static final DefaultContextualPredicate PROPERTY_BASED = new DefaultContextualPredicate(new Function<String, String>() {
         @Override
-        @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE")
         public String apply(@Nullable String input) {
             return DynamicProperty.getInstance(input).getString(); 
         }
@@ -55,7 +54,6 @@ public class DefaultContextualPredicate implements Predicate<Map<String, Collect
      * 
      */
     @Override
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE")    
     public boolean apply(@Nullable Map<String, Collection<String>> input) {
         if (null == input) {
             throw new NullPointerException();
