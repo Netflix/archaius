@@ -236,7 +236,7 @@ public final class ArchaiusModule extends AbstractModule {
             ) throws Exception {
         
         // First load the single application configuration 
-        CompositeConfig compositeConfig = loader
+        Config compositeConfig = loader
                 .newLoader()
                 .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
                 .load(archaiusConfiguration.getConfigName());

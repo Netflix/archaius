@@ -16,7 +16,6 @@
 package com.netflix.archaius.guice;
 
 import java.util.Properties;
-import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -32,7 +31,6 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import com.netflix.archaius.Config;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.ConfigProxyFactory;

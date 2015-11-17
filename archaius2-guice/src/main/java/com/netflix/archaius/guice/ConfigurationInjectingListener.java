@@ -71,7 +71,7 @@ public class ConfigurationInjectingListener implements TypeListener {
                             LOG.debug("Trying to loading configuration resource {}", resourceName);
                             try {
                                 Config override = holder.get().archaiusConfiguration.getLibraryOverrides().get(resourceName);
-                                CompositeConfig loadedConfig = holder.get().loader.newLoader()
+                                Config loadedConfig = holder.get().loader.newLoader()
                                             .withCascadeStrategy(strategy)
                                             .withOverrides(override)
                                             .load(resourceName);
