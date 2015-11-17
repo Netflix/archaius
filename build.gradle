@@ -23,7 +23,7 @@ subprojects {
 
     tasks.withType(Test) { forkEvery = 1 }
     test {
-        jvmArgs += [ "-XX:MaxPermSize=512m" ]
+        jvmArgs += [ "-XX:MaxPermSize=512m" ] // for archaius-scala
         maxHeapSize = '2g' // or however much memory the tests need
         testLogging {
             events 'started', 'failed', 'passed', 'skipped'
