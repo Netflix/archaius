@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,7 +168,7 @@ public class DefaultConfigLoader implements ConfigLoader {
 
             @Override
             public CompositeConfig load(String resourceName) throws ConfigException {
-                CompositeConfig compositeConfig = new CompositeConfig(true);
+                CompositeConfig compositeConfig = new DefaultCompositeConfig(true);
 
                 List<String> names = strategy.generate(resourceName, interpolator, lookup);
                 for (String name : names) {

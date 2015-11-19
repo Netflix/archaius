@@ -33,10 +33,10 @@ public class CompositeConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        CompositeConfig libraries = new CompositeConfig();
-        CompositeConfig application = new CompositeConfig();
+        CompositeConfig libraries = new DefaultCompositeConfig();
+        CompositeConfig application = new DefaultCompositeConfig();
         
-        CompositeConfig config = CompositeConfig.builder()
+        CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("lib", libraries)
                 .withConfig("app", application)
                 .withConfig("set", MapConfig.from(props))
@@ -78,10 +78,10 @@ public class CompositeConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        CompositeConfig libraries = new CompositeConfig(true);
-        CompositeConfig application = new CompositeConfig();
+        CompositeConfig libraries = new DefaultCompositeConfig(true);
+        CompositeConfig application = new DefaultCompositeConfig();
         
-        CompositeConfig config = CompositeConfig.builder()
+        CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("lib", libraries)
                 .withConfig("app", application)
                 .withConfig("set", MapConfig.from(props))
@@ -120,7 +120,7 @@ public class CompositeConfigTest {
     
     @Test
     public void getKeysTest() throws ConfigException {
-        CompositeConfig composite = new CompositeConfig();
+        CompositeConfig composite = new DefaultCompositeConfig();
         composite.addConfig("a", EmptyConfig.INSTANCE);
         
         Iterator<String> iter = composite.getKeys();

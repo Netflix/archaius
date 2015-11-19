@@ -45,18 +45,8 @@ import com.netflix.archaius.exceptions.ConfigException;
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
-public class CompositeConfig extends AbstractConfig {
+public class DefaultCompositeConfig extends AbstractConfig implements CompositeConfig {
     private static final Logger LOG = LoggerFactory.getLogger(CompositeConfig.class);
-    
-    public static interface CompositeVisitor<T> extends Visitor<T> {
-        /**
-         * Visit a child of the configuration
-         * @param name
-         * @param child
-         * @return
-         */
-        T visitChild(String name, Config child);
-    }
     
     /**
      * The builder provides a fluent style API to create a CompositeConfig
@@ -71,7 +61,7 @@ public class CompositeConfig extends AbstractConfig {
         }
         
         public CompositeConfig build() throws ConfigException {
-            CompositeConfig config = new CompositeConfig();
+            CompositeConfig config = new DefaultCompositeConfig();
             for (Entry<String, Config> entry : configs.entrySet()) {
                 config.addConfig(entry.getKey(), entry.getValue());
             }
@@ -84,7 +74,7 @@ public class CompositeConfig extends AbstractConfig {
     }
     
     public static CompositeConfig create() throws ConfigException {
-        return CompositeConfig.builder().build();
+        return DefaultCompositeConfig.builder().build();
     }
     
     private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
@@ -92,45 +82,36 @@ public class CompositeConfig extends AbstractConfig {
     private final ConfigListener                listener;
     private final boolean                       reversed;
     
-    public CompositeConfig() {
+    public DefaultCompositeConfig() {
         this(false);
     }
     
-    public CompositeConfig(boolean reversed) {
+    public DefaultCompositeConfig(boolean reversed) {
         this.reversed = reversed;
         listener = new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
-                notifyConfigAdded(CompositeConfig.this);
+                notifyConfigAdded(DefaultCompositeConfig.this);
             }
 
             @Override
             public void onConfigRemoved(Config config) {
-                notifyConfigRemoved(CompositeConfig.this);
+                notifyConfigRemoved(DefaultCompositeConfig.this);
             }
 
             @Override
             public void onConfigUpdated(Config config) {
-                notifyConfigUpdated(CompositeConfig.this);
+                notifyConfigUpdated(DefaultCompositeConfig.this);
             }
 
             @Override
             public void onError(Throwable error, Config config) {
-                notifyError(error, CompositeConfig.this);
+                notifyError(error, DefaultCompositeConfig.this);
             }
         };
     }
-    
-    /**
-     * Add a named configuration.  The newly added configuration takes precedence over all
-     * previously added configurations.  Duplicate configurations are not allowed
-     * 
-     * This will trigger an onConfigAdded event.
-     * 
-     * @param name
-     * @param child
-     * @throws ConfigException
-     */
+
+    @Override
     public synchronized boolean addConfig(String name, Config child) throws ConfigException {
         return internalAddConfig(name, child);
     }
@@ -163,19 +144,22 @@ public class CompositeConfig extends AbstractConfig {
         postConfigAdded(child);
         return true;
     }
-    
+
+    @Override
     public synchronized void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
         for (Entry<String, Config> entry : configs.entrySet()) {
             internalAddConfig(entry.getKey(), entry.getValue());
         }
     }
 
+    @Override
     public void replaceConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
         for (Entry<String, Config> entry : configs.entrySet()) {
             replaceConfig(entry.getKey(), entry.getValue());
         }
     }
 
+    @Override
     public synchronized Collection<String> getConfigNames() {
         List<String> result = new ArrayList<String>();
         result.addAll(this.lookup.keySet());
@@ -188,29 +172,14 @@ public class CompositeConfig extends AbstractConfig {
         notifyConfigAdded(child);
         child.addListener(listener);
     }
-    
-    /**
-     * Replace the configuration with the specified name
-     *
-     * This will trigger an onConfigUpdated event.
-     * 
-     * @param name
-     * @param child
-     * @throws ConfigException
-     */
+
+    @Override
     public synchronized void replaceConfig(String name, Config child) throws ConfigException {
         internalRemoveConfig(name);
         internalAddConfig(name, child);
     }
-    
-    /**
-     * Remove a named configuration.  
-     * 
-     * This will trigger an onConfigRemoved event.
-     * 
-     * @param name
-     * @return
-     */
+
+    @Override
     public synchronized Config removeConfig(String name) {
         return internalRemoveConfig(name);
     }
@@ -225,12 +194,8 @@ public class CompositeConfig extends AbstractConfig {
         }
         return null;
     }    
-    
-    /**
-     * Look up a configuration by name
-     * @param name
-     * @return
-     */
+
+    @Override
     public Config getConfig(String name) {
         return lookup.get(name);
     }

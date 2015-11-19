@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius;
 
+import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Test;
 
 import com.netflix.archaius.config.MapConfig;
@@ -28,7 +29,7 @@ public class ConfigManagerTest {
     public void testBasicReplacement() throws ConfigException {
         DefaultSettableConfig dyn = new DefaultSettableConfig();
 
-        CompositeConfig config = new CompositeConfig();
+        CompositeConfig config = new DefaultCompositeConfig();
         
         config.addConfig("dyn", dyn);
         config.addConfig("map", (MapConfig.builder()

@@ -19,6 +19,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Properties;
 
+import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.exceptions.ConfigException;
 
 /**
@@ -76,7 +77,7 @@ public interface ConfigLoader {
          * @param resourceName
          * @return CompositeConfig contains a full hierarchy of cascaded files
          */
-        Config load(String resourceName) throws ConfigException;
+        CompositeConfig load(String resourceName) throws ConfigException;
         
         /**
          * Load configuration from a specific URL

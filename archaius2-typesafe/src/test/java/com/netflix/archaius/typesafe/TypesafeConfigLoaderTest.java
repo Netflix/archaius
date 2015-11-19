@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.typesafe;
 
+import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,7 +28,7 @@ import com.netflix.archaius.exceptions.ConfigException;
 public class TypesafeConfigLoaderTest {
     @Test
     public void test() throws ConfigException {
-        CompositeConfig config = new CompositeConfig();
+        CompositeConfig config = new DefaultCompositeConfig();
         config.addConfig("prop", MapConfig.builder()
                 .put("env",    "prod")
                 .put("region", "us-east")

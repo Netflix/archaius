@@ -34,7 +34,8 @@ import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.PropertyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.config.CompositeConfig.Builder;
+import com.netflix.archaius.config.DefaultCompositeConfig;
+import com.netflix.archaius.config.DefaultCompositeConfig.Builder;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SettableConfig;
@@ -120,21 +121,21 @@ public final class ArchaiusModule extends AbstractModule {
     @Singleton
     @ApplicationLayer 
     CompositeConfig getApplicationLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
 
     @Provides
     @Singleton
     @LibrariesLayer
     CompositeConfig getLibrariesLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
     
     @Provides
     @Singleton
     @RemoteLayer
     CompositeConfig getRemoteLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
     
     @Provides
@@ -147,8 +148,8 @@ public final class ArchaiusModule extends AbstractModule {
     /**
      * This is the main config loader for the application.
      * 
-     * @param rootConfig
-     * @param defaultStrategy
+     * @param config
+     * @param archaiusConfiguration
      * @param readers
      * @return
      */
@@ -191,7 +192,7 @@ public final class ArchaiusModule extends AbstractModule {
             @ApplicationLayer         CompositeConfig   applicationLayer, 
             @LibrariesLayer           CompositeConfig   librariesLayer,
             @DefaultsLayer            SettableConfig    defaultsLayer) throws ConfigException {
-        Builder builder = CompositeConfig.builder()
+        Builder builder = DefaultCompositeConfig.builder()
                 .withConfig(RUNTIME_LAYER_NAME,              settableLayer)
                 .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
                 .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
@@ -216,12 +217,15 @@ public final class ArchaiusModule extends AbstractModule {
      * 2.  Loading runtime overrides
      * 3.  Loading override layer overrides 
      * 
-     * @param librariesLayer
+     * @param archaiusConfiguration
+     * @param config
      * @param applicationLayer
-     * @param settableLayer
      * @param remoteLayer
+     * @param runtimeLayer
+     * @param defaultsLayer
+     * @param loader
      * @return
-     * @throws ConfigException
+     * @throws Exception
      */
     @Provides
     @Singleton
@@ -236,7 +240,7 @@ public final class ArchaiusModule extends AbstractModule {
             ) throws Exception {
         
         // First load the single application configuration 
-        Config compositeConfig = loader
+        CompositeConfig compositeConfig = loader
                 .newLoader()
                 .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
                 .load(archaiusConfiguration.getConfigName());
