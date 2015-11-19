@@ -11,7 +11,7 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
 import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;

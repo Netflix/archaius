@@ -3,9 +3,9 @@ package com.netflix.archaius.bridge;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.config.DeploymentContext;
 
 /**

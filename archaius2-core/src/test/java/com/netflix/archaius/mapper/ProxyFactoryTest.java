@@ -20,14 +20,14 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.annotations.DefaultValue;
-import com.netflix.archaius.annotations.PropertyName;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class ProxyFactoryTest {
     public static interface MyConfig {

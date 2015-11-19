@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.config.PollingStrategy;
+import com.netflix.archaius.api.config.PollingStrategy;
 import com.netflix.archaius.util.Futures;
 import com.netflix.archaius.util.ThreadFactories;
 

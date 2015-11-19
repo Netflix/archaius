@@ -18,8 +18,8 @@ package com.netflix.archaius.cascade;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.StrInterpolator;
 
 /**
  * Default 'noop' cascade strategy returns only the original resource name

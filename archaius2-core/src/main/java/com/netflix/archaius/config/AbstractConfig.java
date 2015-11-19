@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.DefaultDecoder;
-import com.netflix.archaius.StrInterpolator;
-import com.netflix.archaius.StrInterpolator.Lookup;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.exceptions.ParseException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;

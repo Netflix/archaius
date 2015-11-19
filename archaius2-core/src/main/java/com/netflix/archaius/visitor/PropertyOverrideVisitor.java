@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Stack;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.CompositeConfig;
 
 /**
  * Produce an ordered LinkedHashMap with all instances of a property in the configuration 

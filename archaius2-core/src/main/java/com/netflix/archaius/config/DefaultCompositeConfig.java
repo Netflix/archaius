@@ -28,9 +28,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 
@@ -45,8 +45,8 @@ import com.netflix.archaius.exceptions.ConfigException;
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
-public class DefaultCompositeConfig extends AbstractConfig implements CompositeConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(CompositeConfig.class);
+public class DefaultCompositeConfig extends AbstractConfig implements com.netflix.archaius.api.config.CompositeConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultCompositeConfig.class);
     
     /**
      * The builder provides a fluent style API to create a CompositeConfig
@@ -60,8 +60,8 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
             return this;
         }
         
-        public CompositeConfig build() throws ConfigException {
-            CompositeConfig config = new DefaultCompositeConfig();
+        public com.netflix.archaius.api.config.CompositeConfig build() throws ConfigException {
+            com.netflix.archaius.api.config.CompositeConfig config = new DefaultCompositeConfig();
             for (Entry<String, Config> entry : configs.entrySet()) {
                 config.addConfig(entry.getKey(), entry.getValue());
             }
@@ -73,7 +73,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
         return new Builder();
     }
     
-    public static CompositeConfig create() throws ConfigException {
+    public static com.netflix.archaius.api.config.CompositeConfig create() throws ConfigException {
         return DefaultCompositeConfig.builder().build();
     }
     
@@ -292,7 +292,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
         return result;
     }
 
-    public static CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
+    public static com.netflix.archaius.api.config.CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
         Builder builder = builder();
         for (Entry<String, Config> config : load.entrySet()) {
             builder.withConfig(config.getKey(), config.getValue());

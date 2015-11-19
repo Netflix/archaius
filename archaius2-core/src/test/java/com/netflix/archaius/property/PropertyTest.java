@@ -21,12 +21,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.Property;
-import com.netflix.archaius.PropertyFactory;
-import com.netflix.archaius.PropertyListener;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyListener;
 import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class PropertyTest {
     public static class MyService {

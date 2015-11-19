@@ -15,13 +15,15 @@
  */
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Test;
 
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.property.DefaultPropertyListener;
 
 public class ConfigManagerTest {

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 
 /**
  * Utility class for creating common ScopePredicates

@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.netflix.archaius.api.config.PollingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

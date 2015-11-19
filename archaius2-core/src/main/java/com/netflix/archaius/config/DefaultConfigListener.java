@@ -1,7 +1,7 @@
 package com.netflix.archaius.config;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
 
 /**
  * Default implementation with noops for all ConfigListener events

@@ -21,9 +21,9 @@ import org.junit.Test;
 
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class TypesafeConfigLoaderTest {
     @Test

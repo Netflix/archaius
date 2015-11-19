@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.Property;
-import com.netflix.archaius.PropertyContainer;
-import com.netflix.archaius.PropertyListener;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyListener;
 import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
 
 /**

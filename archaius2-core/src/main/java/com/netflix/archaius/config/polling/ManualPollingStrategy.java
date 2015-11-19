@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.netflix.archaius.config.PollingStrategy;
+import com.netflix.archaius.api.config.PollingStrategy;
 import com.netflix.archaius.util.ThreadFactories;
 
 /**

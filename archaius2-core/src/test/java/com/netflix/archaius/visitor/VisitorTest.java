@@ -8,9 +8,9 @@ import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class VisitorTest {
     @Test
