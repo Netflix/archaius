@@ -15,6 +15,9 @@
  */
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.exceptions.ParseException;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -42,7 +45,13 @@ public class DefaultDecoder implements Decoder {
             return (T) encoded;
         }
         else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-            return (T) Boolean.valueOf(encoded);
+                if (encoded.equalsIgnoreCase("true") || encoded.equalsIgnoreCase("yes") || encoded.equalsIgnoreCase("on")) {
+                    return (T) Boolean.TRUE;
+                }
+                else if (encoded.equalsIgnoreCase("false") || encoded.equalsIgnoreCase("no") || encoded.equalsIgnoreCase("off")) {
+                    return (T) Boolean.FALSE;
+                }
+                throw new ParseException("Error parsing value '" + encoded, new Exception("Expected one of [true, yes, on, false, no, off]"));
         }
         else if (type.equals(int.class) || type.equals(Integer.class)) {
             return (T) Integer.valueOf(encoded);

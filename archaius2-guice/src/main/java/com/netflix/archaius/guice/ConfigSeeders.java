@@ -6,7 +6,7 @@ import java.util.Properties;
 import com.google.inject.Binder;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.MapConfig;
 
 /**

@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.netflix.archaius.PropertyListener;
+import com.netflix.archaius.api.PropertyListener;
 
 /**
  * Globally managed list of listeners.  Listeners are tracked globally as 

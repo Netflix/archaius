@@ -4,7 +4,7 @@ import java.util.Iterator;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 
 /**
  * Adapter from an Archaius2 configuration to an Apache Commons Configuration.

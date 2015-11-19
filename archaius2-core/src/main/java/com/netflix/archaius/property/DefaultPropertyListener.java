@@ -15,7 +15,7 @@
  */
 package com.netflix.archaius.property;
 
-import com.netflix.archaius.PropertyListener;
+import com.netflix.archaius.api.PropertyListener;
 
 public class DefaultPropertyListener<T> implements PropertyListener<T> {
     @Override

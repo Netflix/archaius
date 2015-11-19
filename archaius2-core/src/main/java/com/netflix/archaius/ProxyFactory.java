@@ -11,11 +11,14 @@ import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.DefaultValue;
-import com.netflix.archaius.annotations.PropertyName;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
  * Factory for binding a configuration interface to properties in a Config

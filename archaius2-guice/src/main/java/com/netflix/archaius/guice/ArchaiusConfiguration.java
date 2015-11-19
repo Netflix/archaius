@@ -3,10 +3,10 @@ package com.netflix.archaius.guice;
 import java.util.Map;
 import java.util.Set;
 
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
 
 /**
  * Configuration interface for archaius

@@ -23,7 +23,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.junit.TestHttpServer;
 import com.netflix.archaius.property.PropertiesServerHandler;

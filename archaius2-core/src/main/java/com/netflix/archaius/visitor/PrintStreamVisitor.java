@@ -17,8 +17,8 @@ package com.netflix.archaius.visitor;
 
 import java.io.PrintStream;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.CompositeConfig;
 
 public class PrintStreamVisitor implements CompositeConfig.CompositeVisitor<Void> {
     private final PrintStream stream;

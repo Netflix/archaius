@@ -15,13 +15,13 @@
  */
 package com.netflix.archaius.typesafe;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 import java.util.Iterator;
 

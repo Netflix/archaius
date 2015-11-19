@@ -1,6 +1,6 @@
 package com.netflix.archaius.guice;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 
 /**
  * API used to seed a Config into a specific layer of the root CompositeConfig.

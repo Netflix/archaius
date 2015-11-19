@@ -23,14 +23,20 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigLoader;
+import com.netflix.archaius.api.ConfigReader;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.StrInterpolator.Lookup;
+import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
@@ -56,7 +62,7 @@ public class DefaultConfigLoader implements ConfigLoader {
                                                     
     public static class Builder {
         private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();
-        private CascadeStrategy     defaultStrategy = DEFAULT_CASCADE_STRATEGY;
+        private CascadeStrategy defaultStrategy = DEFAULT_CASCADE_STRATEGY;
         private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
         private Lookup              lookup          = DEFAULT_LOOKUP;
         
@@ -167,7 +173,7 @@ public class DefaultConfigLoader implements ConfigLoader {
 
             @Override
             public CompositeConfig load(String resourceName) throws ConfigException {
-                CompositeConfig compositeConfig = new CompositeConfig(true);
+                CompositeConfig compositeConfig = new DefaultCompositeConfig(true);
 
                 List<String> names = strategy.generate(resourceName, interpolator, lookup);
                 for (String name : names) {

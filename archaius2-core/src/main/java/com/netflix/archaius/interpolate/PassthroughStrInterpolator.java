@@ -15,7 +15,7 @@
  */
 package com.netflix.archaius.interpolate;
 
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.StrInterpolator;
 
 public class PassthroughStrInterpolator implements StrInterpolator {
     @Override

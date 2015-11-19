@@ -21,14 +21,15 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.SettableConfig;
 
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
-    private ConcurrentMap<String, String> props = new ConcurrentHashMap<String, String>();
+    private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
     
     @Override
     public <T> void setProperty(String propName, T propValue) {
-        props.put(propName, propValue.toString());
+        props.put(propName, propValue);
         notifyConfigUpdated(this);
     }
     

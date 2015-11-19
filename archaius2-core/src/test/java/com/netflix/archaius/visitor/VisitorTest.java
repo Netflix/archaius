@@ -4,17 +4,18 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class VisitorTest {
     @Test
     public void testNotFound() throws ConfigException {
-        CompositeConfig config = CompositeConfig.create();
+        CompositeConfig config = DefaultCompositeConfig.create();
         
         LinkedHashMap<String, String> sources = config.accept(new PropertyOverrideVisitor("foo"));
         
@@ -59,14 +60,14 @@ public class VisitorTest {
      *          - foo : d_foo
      */
     CompositeConfig createComposite() throws ConfigException {
-        CompositeConfig config = CompositeConfig.create();
+        CompositeConfig config = DefaultCompositeConfig.create();
         
         config.addConfig("a", MapConfig.builder().put("foo", "a_foo").build());
         config.addConfig("b", MapConfig.builder().put("foo", "b_foo").build());
         
         config.addConfig("gap", MapConfig.builder().put("bar", "b_bar").build());
 
-        config.addConfig("c", CompositeConfig.builder().withConfig("d", MapConfig.builder().put("foo", "d_foo").build()).build());
+        config.addConfig("c", DefaultCompositeConfig.builder().withConfig("d", MapConfig.builder().put("foo", "d_foo").build()).build());
         
         LinkedHashMap<String, String> sources = config.accept(new PropertyOverrideVisitor("foo"));
         

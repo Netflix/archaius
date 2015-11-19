@@ -4,15 +4,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
+import javax.annotation.Nullable;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.PropertyFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.DefaultValue;
-import com.netflix.archaius.annotations.PropertyName;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.api.config.SettableConfig;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -38,6 +42,7 @@ public class ProxyFactoryTest {
         
         Boolean getBaseBoolean();
         
+        @Nullable
         Integer getNullable();
     }
     
@@ -97,7 +102,13 @@ public class ProxyFactoryTest {
         
         assertThat(c.getValueWithDefault(), equalTo("default"));
         assertThat(c.getValueWithoutDefault2(), equalTo("default2"));
-        assertThat(c.getValueWithoutDefault1(), nullValue());
+        
+        try {
+            c.getValueWithoutDefault1();
+            Assert.fail("should have failed with no value for requiredValue");
+        }
+        catch (Exception e) {
+        }
         
         config.setProperty("valueWithDefault", "newValue");
         assertThat(c.getValueWithDefault(), equalTo("default"));
@@ -121,8 +132,14 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
         assertThat(a.getNullable(),                     nullValue());
-        assertThat(a.getBaseBoolean(),                  nullValue());
         
+        try {
+            a.getBaseBoolean();
+            Assert.fail("should have failed with no value for requiredValue");
+        }
+        catch (Exception e) {
+            
+        }
         System.out.println(a.toString());
     }
     

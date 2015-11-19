@@ -11,9 +11,9 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.inject.RemoteLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class PlatformServiceTest {

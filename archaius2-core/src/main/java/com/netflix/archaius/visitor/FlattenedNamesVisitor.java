@@ -3,8 +3,8 @@ package com.netflix.archaius.visitor;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.CompositeConfig;
 
 /**
  * Produce a flattened list of the configuration hierarchy in the order in which properties
