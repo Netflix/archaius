@@ -7,18 +7,18 @@ import java.util.Set;
 import javax.inject.Singleton;
 
 import com.google.inject.Inject;
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
-import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.ApplicationOverrideLayer;
-import com.netflix.archaius.inject.DefaultsLayer;
-import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.RemoteLayer;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.inject.ApplicationLayer;
+import com.netflix.archaius.api.inject.ApplicationOverrideLayer;
+import com.netflix.archaius.api.inject.DefaultsLayer;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 
 @Singleton
 public class OptionalArchaiusConfiguration implements ArchaiusConfiguration {

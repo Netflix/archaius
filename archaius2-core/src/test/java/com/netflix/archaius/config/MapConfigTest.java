@@ -21,8 +21,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
 
 public class MapConfigTest {

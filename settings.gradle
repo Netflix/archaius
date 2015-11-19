@@ -1,4 +1,5 @@
 rootProject.name='archaius'
+include 'archaius2-api'
 include 'archaius2-core'
 include 'archaius2-typesafe'
 include 'archaius2-commons-configuration'

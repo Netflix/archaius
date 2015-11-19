@@ -24,27 +24,28 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.ConfigReader;
+import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.PropertyFactory;
+import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.config.CompositeConfig.Builder;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.config.DefaultCompositeConfig;
+import com.netflix.archaius.config.DefaultCompositeConfig.Builder;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
-import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.SystemConfig;
-import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.DefaultsLayer;
-import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.RemoteLayer;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.inject.ApplicationLayer;
+import com.netflix.archaius.api.inject.DefaultsLayer;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
@@ -120,21 +121,21 @@ public final class ArchaiusModule extends AbstractModule {
     @Singleton
     @ApplicationLayer 
     CompositeConfig getApplicationLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
 
     @Provides
     @Singleton
     @LibrariesLayer
     CompositeConfig getLibrariesLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
     
     @Provides
     @Singleton
     @RemoteLayer
     CompositeConfig getRemoteLayer() {
-        return new CompositeConfig();
+        return new DefaultCompositeConfig();
     }
     
     @Provides
@@ -147,8 +148,8 @@ public final class ArchaiusModule extends AbstractModule {
     /**
      * This is the main config loader for the application.
      * 
-     * @param rootConfig
-     * @param defaultStrategy
+     * @param config
+     * @param archaiusConfiguration
      * @param readers
      * @return
      */
@@ -191,7 +192,7 @@ public final class ArchaiusModule extends AbstractModule {
             @ApplicationLayer         CompositeConfig   applicationLayer, 
             @LibrariesLayer           CompositeConfig   librariesLayer,
             @DefaultsLayer            SettableConfig    defaultsLayer) throws ConfigException {
-        Builder builder = CompositeConfig.builder()
+        Builder builder = DefaultCompositeConfig.builder()
                 .withConfig(RUNTIME_LAYER_NAME,              settableLayer)
                 .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
                 .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
@@ -216,12 +217,15 @@ public final class ArchaiusModule extends AbstractModule {
      * 2.  Loading runtime overrides
      * 3.  Loading override layer overrides 
      * 
-     * @param librariesLayer
+     * @param archaiusConfiguration
+     * @param config
      * @param applicationLayer
-     * @param settableLayer
      * @param remoteLayer
+     * @param runtimeLayer
+     * @param defaultsLayer
+     * @param loader
      * @return
-     * @throws ConfigException
+     * @throws Exception
      */
     @Provides
     @Singleton

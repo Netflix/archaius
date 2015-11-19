@@ -24,7 +24,7 @@ import org.junit.Test;
 import com.google.common.collect.Sets;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class CompositeConfigTest {
@@ -33,10 +33,10 @@ public class CompositeConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        CompositeConfig libraries = new CompositeConfig();
-        CompositeConfig application = new CompositeConfig();
+        com.netflix.archaius.api.config.CompositeConfig libraries = new DefaultCompositeConfig();
+        com.netflix.archaius.api.config.CompositeConfig application = new DefaultCompositeConfig();
         
-        CompositeConfig config = CompositeConfig.builder()
+        com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("lib", libraries)
                 .withConfig("app", application)
                 .withConfig("set", MapConfig.from(props))
@@ -78,10 +78,10 @@ public class CompositeConfigTest {
         Properties props = new Properties();
         props.setProperty("env", "prod");
         
-        CompositeConfig libraries = new CompositeConfig(true);
-        CompositeConfig application = new CompositeConfig();
+        com.netflix.archaius.api.config.CompositeConfig libraries = new DefaultCompositeConfig(true);
+        com.netflix.archaius.api.config.CompositeConfig application = new DefaultCompositeConfig();
         
-        CompositeConfig config = CompositeConfig.builder()
+        com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("lib", libraries)
                 .withConfig("app", application)
                 .withConfig("set", MapConfig.from(props))
@@ -120,7 +120,7 @@ public class CompositeConfigTest {
     
     @Test
     public void getKeysTest() throws ConfigException {
-        CompositeConfig composite = new CompositeConfig();
+        com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
         composite.addConfig("a", EmptyConfig.INSTANCE);
         
         Iterator<String> iter = composite.getKeys();

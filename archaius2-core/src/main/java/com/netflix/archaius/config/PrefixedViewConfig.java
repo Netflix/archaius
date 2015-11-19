@@ -18,10 +18,10 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.StrInterpolator;
 
 /**
  * View into another Config for properties starting with a specified prefix.

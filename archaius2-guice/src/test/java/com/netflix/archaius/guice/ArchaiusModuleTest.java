@@ -16,7 +16,6 @@
 package com.netflix.archaius.guice;
 
 import java.util.Properties;
-import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -32,25 +31,24 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.Property;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
+import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.exceptions.ConfigException;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.MappingException;
-import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.ApplicationOverrideLayer;
-import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.RemoteLayer;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.inject.ApplicationLayer;
+import com.netflix.archaius.api.inject.ApplicationOverrideLayer;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class ArchaiusModuleTest {

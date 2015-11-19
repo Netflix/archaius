@@ -1,6 +1,7 @@
 package com.netflix.archaius;
 
-import java.util.concurrent.TimeUnit;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyListener;
 
 public abstract class AbstractProperty<T> implements Property<T> {
 

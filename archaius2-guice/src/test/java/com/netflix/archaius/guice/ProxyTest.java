@@ -12,11 +12,11 @@ import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.util.Modules;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 
 public class ProxyTest {
     public static interface MyConfig {

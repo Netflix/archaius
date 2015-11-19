@@ -6,11 +6,11 @@ import org.junit.Test;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.netflix.archaius.Property;
-import com.netflix.archaius.PropertyFactory;
-import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.inject.RuntimeLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 

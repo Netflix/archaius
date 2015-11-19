@@ -18,7 +18,7 @@ package com.netflix.archaius.interpolate;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.StrInterpolator;
 
 public final class CommonsStrInterpolator implements StrInterpolator {
     public static final CommonsStrInterpolator INSTANCE = new CommonsStrInterpolator();

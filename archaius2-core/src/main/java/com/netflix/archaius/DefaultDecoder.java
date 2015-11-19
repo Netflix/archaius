@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.exceptions.ParseException;
 
 import java.lang.reflect.Array;

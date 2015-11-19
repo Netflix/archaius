@@ -14,16 +14,16 @@ import com.google.inject.name.Names;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigLoader;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.ConfigMapper;
-import com.netflix.archaius.IoCContainer;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.inject.LibrariesLayer;
+import com.netflix.archaius.api.IoCContainer;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.inject.LibrariesLayer;
 
 public class ConfigurationInjectingListener implements TypeListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.netflix.archaius.annotations.Configuration;
+import com.netflix.archaius.api.annotations.Configuration;
 
 @Configuration(prefix="archaius.persisted")
 public interface Persisted2ClientConfig {
