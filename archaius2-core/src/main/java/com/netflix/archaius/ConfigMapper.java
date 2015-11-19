@@ -37,14 +37,6 @@ public class ConfigMapper {
         }
     };
     
-    public ConfigMapper() {
-        this(true);
-    }
-    
-    @Deprecated
-    public ConfigMapper(boolean allowPostConfigure) {
-    }
-    
     /**
      * Map the configuration from the provided config object onto the injectee and use
      * the provided IoCContainer to inject named bindings.

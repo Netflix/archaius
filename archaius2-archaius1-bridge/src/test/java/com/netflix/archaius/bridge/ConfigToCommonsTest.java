@@ -2,6 +2,7 @@ package com.netflix.archaius.bridge;
 
 import java.util.NoSuchElementException;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,5 +44,12 @@ public class ConfigToCommonsTest {
     @Test(expected=UnsupportedOperationException.class)
     public void configIsImmutable() {
         config.setProperty("foo", "bar");
+    }
+    
+    @Test
+    public void test() {
+        PropertiesConfiguration config = new PropertiesConfiguration();
+        config.setDelimiterParsingDisabled(true);
+        config.setProperty("foo", "bar,bar1");
     }
 }

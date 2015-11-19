@@ -15,9 +15,12 @@
  */
 package com.netflix.archaius.mapper;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
+
 import java.util.Properties;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
@@ -99,22 +102,23 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfig c = proxy.newProxy(MyConfig.class);
 
-        Assert.assertEquals("loaded", c.getString());
-        Assert.assertEquals("loaded", c.getRenamed());
-        Assert.assertEquals("loaded", c.noVerb());
-        Assert.assertEquals(1, c.getInteger());
-        Assert.assertEquals(2, (int)c.getInteger2());
-        Assert.assertEquals(true, c.getBoolean());
-        Assert.assertEquals(true, c.getBoolean2());
-        Assert.assertEquals(true, c.isIs());
-        Assert.assertEquals(1, c.getShort());
-        Assert.assertEquals(2, (short)c.getShort2());
-        Assert.assertEquals(1, c.getLong());
-        Assert.assertEquals(2, (long)c.getLong2());
-        Assert.assertEquals(1.1f, c.getFloat(), 0);
-        Assert.assertEquals(2.1f, (float)c.getFloat2(), 0);
-        Assert.assertEquals(1.1, c.getDouble(), 0);
-        Assert.assertEquals(2.1, (double)c.getDouble2(), 0);
+        assertThat(c.getString(),        equalTo("loaded"));
+        assertThat(c.getString(),        equalTo("loaded"));
+        assertThat(c.getRenamed(),       equalTo("loaded"));
+        assertThat(c.noVerb(),           equalTo("loaded"));
+        assertThat(c.getInteger(),       equalTo(1));
+        assertThat(c.getInteger2(),      equalTo(2));
+        assertThat(c.getBoolean(),       equalTo(true));
+        assertThat(c.getBoolean2(),      equalTo(true));
+        assertThat(c.isIs(),             equalTo(true));
+        assertThat((int)c.getShort(),    equalTo(1));
+        assertThat((int)c.getShort2(),   equalTo(2));
+        assertThat((long)c.getLong(),    equalTo(1L));
+        assertThat(c.getLong2(),         equalTo(2L));
+        assertThat(c.getFloat(),         equalTo(1.1f));
+        assertThat(c.getFloat2(),        equalTo(2.1f));
+        assertThat(c.getDouble(),        equalTo(1.1));
+        assertThat(c.getDouble2(),       equalTo(2.1));
         
         System.out.println(c.toString());
     }
@@ -126,54 +130,23 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfig c = proxy.newProxy(MyConfig.class);
         
-        Assert.assertEquals(123, c.getInteger());
-        try {
-            Assert.assertNull(c.getInteger2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
-        Assert.assertEquals(true, c.getBoolean());
-        try {
-            Assert.assertNull(c.getBoolean2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
-        Assert.assertEquals(3, c.getShort());
-        try {
-            Assert.assertNull(c.getShort2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
-        Assert.assertEquals(3, c.getLong());
-        try {
-            Assert.assertNull(c.getLong2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
-        Assert.assertEquals(3.1f, c.getFloat(), 0);
-        try {
-            Assert.assertNull(c.getFloat2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
-        Assert.assertEquals(3.1, c.getDouble(), 0);
-        try {
-            Assert.assertNull(c.getDouble2());
-            Assert.fail("Should fail on property not found");
-        }
-        catch (Exception e) {
-            
-        }
+        assertThat(c.getInteger(),      equalTo(123));
+        assertThat(c.getInteger2(),     nullValue());
+        
+        assertThat(c.getBoolean(),      equalTo(true));
+        assertThat(c.getBoolean2(),     nullValue());
+        
+        assertThat((int)c.getShort(),   equalTo(3));
+        assertThat(c.getShort2(),       nullValue());
+        
+        assertThat(c.getLong(),         equalTo(3L));
+        assertThat(c.getLong2(),        nullValue());
+        
+        assertThat(c.getFloat(),        equalTo(3.1f));
+        assertThat(c.getFloat2(),       nullValue());
+        
+        assertThat(c.getDouble(),       equalTo(3.1));
+        assertThat(c.getDouble2(),      nullValue());
         
         System.out.println(c.toString());
     }
