@@ -102,13 +102,7 @@ public class ProxyFactoryTest {
         
         assertThat(c.getValueWithDefault(), equalTo("default"));
         assertThat(c.getValueWithoutDefault2(), equalTo("default2"));
-        
-        try {
-            c.getValueWithoutDefault1();
-            Assert.fail("should have failed with no value for requiredValue");
-        }
-        catch (Exception e) {
-        }
+        assertThat(c.getValueWithoutDefault1(), nullValue());
         
         config.setProperty("valueWithDefault", "newValue");
         assertThat(c.getValueWithDefault(), equalTo("default"));
@@ -132,14 +126,8 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
         assertThat(a.getNullable(),                     nullValue());
-        
-        try {
-            a.getBaseBoolean();
-            Assert.fail("should have failed with no value for requiredValue");
-        }
-        catch (Exception e) {
+        assertThat(a.getBaseBoolean(), nullValue());
             
-        }
         System.out.println(a.toString());
     }
     
