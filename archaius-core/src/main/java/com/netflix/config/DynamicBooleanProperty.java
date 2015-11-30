@@ -23,14 +23,36 @@ package com.netflix.config;
  *
  */
 public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
+
+    protected volatile boolean primitiveValue;
+
     public DynamicBooleanProperty(String propName, boolean defaultValue) {
         super(propName, Boolean.valueOf(defaultValue));
+
+        // Set the initial value of the cached primitive value.
+        this.primitiveValue = chooseValue();
+
+        // Add a callback to update the cached primitive value when the property is changed.
+        this.prop.addCallback(() -> primitiveValue = chooseValue() );
     }
+
     /**
      * Get the current value from the underlying DynamicProperty
+     *
+     * @return
+     */
+    private boolean chooseValue() {
+        Boolean propValue = this.prop == null ? null : this.prop.getBoolean();
+        return propValue == null ? defaultValue : propValue.booleanValue();
+    }
+
+    /**
+     * Get the current cached value.
+     *
+     * @return
      */
     public boolean get() {
-        return prop.getBoolean(defaultValue).booleanValue();
+        return primitiveValue;
     }
     @Override
     public Boolean getValue() {

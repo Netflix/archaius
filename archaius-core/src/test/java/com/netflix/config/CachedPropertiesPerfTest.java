@@ -1,6 +1,9 @@
 package com.netflix.config;
 
 /**
+ * Simple benchmark impl to compare the caching of primitive boolean value in DynamicBooleanProperty with
+ * the original implementation.
+ *
  * @author Mike Smith
  * Date: 11/25/15
  */
@@ -22,26 +25,22 @@ public class CachedPropertiesPerfTest
 
     private static void runTest(long loopCount)
     {
-        // First warmup.
-        runCachedBooleanPropertyTest(10000);
-        runDynamicBooleanPropertyTest(10000);
-        runDynamicPrimitiveBooleanPropertyTest(10000);
+        // Warmup and then run benchmark.
+        runNewDynamicBooleanPropertyTest(10000);
+        long durationPrimitive = runNewDynamicBooleanPropertyTest(loopCount);
 
-        // Now run benchmark.
-        long durationExperiment = runCachedBooleanPropertyTest(loopCount);
-        long durationOriginal = runDynamicBooleanPropertyTest(loopCount);
-        long durationPrimitive = runDynamicPrimitiveBooleanPropertyTest(loopCount);
+        // Warmup and then run benchmark.
+        runOldDynamicBooleanPropertyTest(10000);
+        long durationOriginal = runOldDynamicBooleanPropertyTest(loopCount);
 
         System.out.println("#####################");
-        System.out.println("CachedProperties totalled " + durationExperiment + " ms.");
-        System.out.println("DynamicProperty totalled " + durationOriginal + " ms.");
-        System.out.println("DynamicPrimitiveBooleanProperty totalled " + durationPrimitive + " ms.");
+        System.out.println("Original DynamiceBooleanProperty totalled " + durationOriginal + " ms.");
+        System.out.println("New DynamicBooleanProperty totalled " + durationPrimitive + " ms.");
     }
 
-    private static long runDynamicBooleanPropertyTest(long loopCount)
+    private static long runOldDynamicBooleanPropertyTest(long loopCount)
     {
-        DynamicBooleanProperty prop = DynamicPropertyFactory.getInstance()
-                .getBooleanProperty("zuul.test.cachedprops.original", true);
+        OriginalDynamicBooleanProperty prop = new OriginalDynamicBooleanProperty("zuul.test.cachedprops.original", true);
 
         long startTime = System.currentTimeMillis();
 
@@ -52,10 +51,10 @@ public class CachedPropertiesPerfTest
         return System.currentTimeMillis() - startTime;
     }
 
-    private static long runCachedBooleanPropertyTest(long loopCount)
+    private static long runNewDynamicBooleanPropertyTest(long loopCount)
     {
-        CachedProperties.Boolean prop =
-                new CachedProperties.Boolean("zuul.test.cachedprops.original", true);
+        DynamicBooleanProperty prop =
+                new DynamicBooleanProperty("zuul.test.cachedprops.new", true);
 
         long startTime = System.currentTimeMillis();
 
@@ -66,18 +65,23 @@ public class CachedPropertiesPerfTest
         return System.currentTimeMillis() - startTime;
     }
 
+    /**
+     * This is a copy of the DynamicBooleanProperty class from before I made the performance optimization to it.
+     * It's here so I can still do a back-to-back comparison of performance.
+     */
+    static class OriginalDynamicBooleanProperty extends PropertyWrapper<Boolean> {
 
-    private static long runDynamicPrimitiveBooleanPropertyTest(long loopCount)
-    {
-        DynamicPrimitiveBooleanProperty prop =
-                new DynamicPrimitiveBooleanProperty("zuul.test.cachedprops.original", true);
-
-        long startTime = System.currentTimeMillis();
-
-        for (long i=0; i<loopCount; i++) {
-            prop.get();
+        public OriginalDynamicBooleanProperty(String propName, boolean defaultValue) {
+            super(propName, Boolean.valueOf(defaultValue));
         }
 
-        return System.currentTimeMillis() - startTime;
+        public boolean get() {
+            return prop.getBoolean(defaultValue).booleanValue();
+        }
+
+        @Override
+        public Boolean getValue() {
+            return get();
+        }
     }
 }

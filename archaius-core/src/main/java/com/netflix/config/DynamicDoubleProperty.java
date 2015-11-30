@@ -24,15 +24,36 @@ package com.netflix.config;
  *
  */
 public class DynamicDoubleProperty extends PropertyWrapper<Double> {
+
+    protected volatile double primitiveValue;
+
     public DynamicDoubleProperty(String propName, double defaultValue) {
         super(propName, Double.valueOf(defaultValue));
+
+        // Set the initial value of the cached primitive value.
+        this.primitiveValue = chooseValue();
+
+        // Add a callback to update the cached primitive value when the property is changed.
+        this.prop.addCallback(() -> primitiveValue = chooseValue() );
     }
-        
+
     /**
      * Get the current value from the underlying DynamicProperty
+     *
+     * @return
+     */
+    private double chooseValue() {
+        Double propValue = this.prop == null ? null : this.prop.getDouble(defaultValue);
+        return propValue == null ? defaultValue : propValue.doubleValue();
+    }
+
+    /**
+     * Get the current cached value.
+     *
+     * @return
      */
     public double get() {
-        return prop.getDouble(defaultValue).doubleValue();
+        return primitiveValue;
     }
 
     @Override

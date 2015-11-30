@@ -23,20 +23,40 @@ package com.netflix.config;
  *
  */
 public class DynamicLongProperty extends PropertyWrapper<Long> {
+
+    protected volatile long primitiveValue;
+
     public DynamicLongProperty(String propName, long defaultValue) {
         super(propName, Long.valueOf(defaultValue));
+
+        // Set the initial value of the cached primitive value.
+        this.primitiveValue = chooseValue();
+
+        // Add a callback to update the cached primitive value when the property is changed.
+        this.prop.addCallback(() -> primitiveValue = chooseValue() );
     }
-        
+
     /**
      * Get the current value from the underlying DynamicProperty
+     *
+     * @return
+     */
+    private long chooseValue() {
+        Long propValue = this.prop == null ? null : this.prop.getLong(defaultValue);
+        return propValue == null ? defaultValue : propValue.longValue();
+    }
+
+    /**
+     * Get the current cached value.
+     *
+     * @return
      */
     public long get() {
-        return prop.getLong(defaultValue).longValue();
+        return primitiveValue;
     }
 
     @Override
     public Long getValue() {
-        // TODO Auto-generated method stub
         return get();
     }
 }

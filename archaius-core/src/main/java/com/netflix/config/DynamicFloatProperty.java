@@ -23,18 +23,40 @@ package com.netflix.config;
  *
  */
 public class DynamicFloatProperty extends PropertyWrapper<Float> {
+
+    protected volatile float primitiveValue;
+
     public DynamicFloatProperty(String propName, float defaultValue) {
         super(propName, Float.valueOf(defaultValue));
+
+        // Set the initial value of the cached primitive value.
+        this.primitiveValue = chooseValue();
+
+        // Add a callback to update the cached primitive value when the property is changed.
+        this.prop.addCallback(() -> primitiveValue = chooseValue() );
     }
+
     /**
      * Get the current value from the underlying DynamicProperty
+     *
+     * @return
+     */
+    private float chooseValue() {
+        Float propValue = this.prop == null ? null : this.prop.getFloat(defaultValue);
+        return propValue == null ? defaultValue : propValue.floatValue();
+    }
+
+    /**
+     * Get the current cached value.
+     *
+     * @return
      */
     public float get() {
-        return prop.getFloat(defaultValue).floatValue();
+        return primitiveValue;
     }
+
     @Override
     public Float getValue() {
-        // TODO Auto-generated method stub
         return get();
     }
 }
