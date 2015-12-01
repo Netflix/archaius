@@ -273,7 +273,7 @@ public class DynamicPropertyTest {
         DynamicBooleanProperty prop = new DynamicBooleanProperty(
                 "com.netflix.testing.mybool", false);
         assertFalse(prop.get());
-        assertTrue(prop.prop.getCallbacks().isEmpty());
+        assertEquals(1, prop.prop.getCallbacks().size());
         for (int i = 0; i < 10; i++) {
            
             config.setProperty(
