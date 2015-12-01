@@ -33,7 +33,12 @@ public class DynamicLongProperty extends PropertyWrapper<Long> {
         this.primitiveValue = chooseValue();
 
         // Add a callback to update the cached primitive value when the property is changed.
-        this.prop.addCallback(() -> primitiveValue = chooseValue() );
+        this.prop.addCallback(new Runnable() {
+            @Override
+            public void run() {
+                primitiveValue = chooseValue();
+            }
+        });
     }
 
     /**
