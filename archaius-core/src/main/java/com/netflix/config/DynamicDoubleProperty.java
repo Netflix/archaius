@@ -32,14 +32,14 @@ public class DynamicDoubleProperty extends PropertyWrapper<Double> {
 
         // Set the initial value of the cached primitive value.
         this.primitiveValue = chooseValue();
+    }
 
-        // Add a callback to update the cached primitive value when the property is changed.
-        this.prop.addCallback(new Runnable() {
-            @Override
-            public void run() {
-                primitiveValue = chooseValue();
-            }
-        });
+    @Override
+    protected void propertyChanged() {
+        super.propertyChanged();
+
+        // Update the cached primitive value when the property is changed.
+        this.primitiveValue = chooseValue();
     }
 
     /**
@@ -48,7 +48,7 @@ public class DynamicDoubleProperty extends PropertyWrapper<Double> {
      * @return
      */
     private double chooseValue() {
-        Double propValue = this.prop == null ? null : this.prop.getDouble(defaultValue);
+        Double propValue = this.prop.getDouble(defaultValue);
         return propValue == null ? defaultValue : propValue.doubleValue();
     }
 

@@ -39,7 +39,7 @@ public class DynamicPropertyCachedPrimitiveTest
         assertTrue(prop.get());
         assertTrue(prop.getValue().booleanValue());
 
-        // Remove the prop value, should change to default of false.
+        // Remove the prop value, should change to default value.
         ConfigurationManager.getConfigInstance().clearProperty(propName);
         assertFalse(prop.get());
         assertFalse(prop.getValue().booleanValue());
@@ -60,7 +60,7 @@ public class DynamicPropertyCachedPrimitiveTest
         assertEquals(2, prop.get());
         assertEquals(2, prop.getValue().intValue());
 
-        // Remove the prop value, should change to default of false.
+        // Remove the prop value, should change to default value.
         ConfigurationManager.getConfigInstance().clearProperty(propName);
         assertEquals(0, prop.get());
         assertEquals(0, prop.getValue().intValue());
@@ -81,7 +81,7 @@ public class DynamicPropertyCachedPrimitiveTest
         assertEquals(2, prop.get());
         assertEquals(2, prop.getValue().longValue());
 
-        // Remove the prop value, should change to default of false.
+        // Remove the prop value, should change to default value.
         ConfigurationManager.getConfigInstance().clearProperty(propName);
         assertEquals(0, prop.get());
         assertEquals(0, prop.getValue().longValue());
@@ -102,7 +102,7 @@ public class DynamicPropertyCachedPrimitiveTest
         assertEquals(2.2d, prop.get());
         assertEquals(2.2d, prop.getValue().doubleValue());
 
-        // Remove the prop value, should change to default of false.
+        // Remove the prop value, should change to default value.
         ConfigurationManager.getConfigInstance().clearProperty(propName);
         assertEquals(0.5d, prop.get());
         assertEquals(0.5d, prop.getValue().doubleValue());
@@ -123,7 +123,7 @@ public class DynamicPropertyCachedPrimitiveTest
         assertEquals(2.2f, prop.get());
         assertEquals(2.2f, prop.getValue().floatValue());
 
-        // Remove the prop value, should change to default of false.
+        // Remove the prop value, should change to default value.
         ConfigurationManager.getConfigInstance().clearProperty(propName);
         assertEquals(0.5f, prop.get());
         assertEquals(0.5f, prop.getValue().floatValue());

@@ -31,14 +31,14 @@ public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
 
         // Set the initial value of the cached primitive value.
         this.primitiveValue = chooseValue();
+    }
 
-        // Add a callback to update the cached primitive value when the property is changed.
-        this.prop.addCallback(new Runnable() {
-            @Override
-            public void run() {
-                primitiveValue = chooseValue();
-            }
-        });
+    @Override
+    protected void propertyChanged() {
+        super.propertyChanged();
+
+        // Update the cached primitive value when the property is changed.
+        this.primitiveValue = chooseValue();
     }
 
     /**
@@ -47,7 +47,7 @@ public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
      * @return
      */
     private boolean chooseValue() {
-        Boolean propValue = this.prop == null ? null : this.prop.getBoolean();
+        Boolean propValue = this.prop.getBoolean();
         return propValue == null ? defaultValue : propValue.booleanValue();
     }
 
@@ -59,6 +59,7 @@ public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
     public boolean get() {
         return primitiveValue;
     }
+
     @Override
     public Boolean getValue() {
         return get();

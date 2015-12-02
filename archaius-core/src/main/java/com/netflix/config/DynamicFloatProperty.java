@@ -31,14 +31,14 @@ public class DynamicFloatProperty extends PropertyWrapper<Float> {
 
         // Set the initial value of the cached primitive value.
         this.primitiveValue = chooseValue();
+    }
 
-        // Add a callback to update the cached primitive value when the property is changed.
-        this.prop.addCallback(new Runnable() {
-            @Override
-            public void run() {
-                primitiveValue = chooseValue();
-            }
-        });
+    @Override
+    protected void propertyChanged() {
+        super.propertyChanged();
+
+        // Update the cached primitive value when the property is changed.
+        this.primitiveValue = chooseValue();
     }
 
     /**
@@ -47,7 +47,7 @@ public class DynamicFloatProperty extends PropertyWrapper<Float> {
      * @return
      */
     private float chooseValue() {
-        Float propValue = this.prop == null ? null : this.prop.getFloat(defaultValue);
+        Float propValue = this.prop.getFloat(defaultValue);
         return propValue == null ? defaultValue : propValue.floatValue();
     }
 

@@ -31,14 +31,14 @@ public class DynamicIntProperty extends PropertyWrapper<Integer> {
 
         // Set the initial value of the cached primitive value.
         this.primitiveValue = chooseValue();
+    }
 
-        // Add a callback to update the cached primitive value when the property is changed.
-        this.prop.addCallback(new Runnable() {
-            @Override
-            public void run() {
-                primitiveValue = chooseValue();
-            }
-        });
+    @Override
+    protected void propertyChanged() {
+        super.propertyChanged();
+
+        // Update the cached primitive value when the property is changed.
+        this.primitiveValue = chooseValue();
     }
 
     /**
@@ -47,7 +47,7 @@ public class DynamicIntProperty extends PropertyWrapper<Integer> {
      * @return
      */
     private int chooseValue() {
-        Integer propValue = this.prop == null ? null : this.prop.getInteger(defaultValue);
+        Integer propValue = this.prop.getInteger(defaultValue);
         return propValue == null ? defaultValue : propValue.intValue();
     }
 

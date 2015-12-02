@@ -41,12 +41,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     private final List<Runnable> callbackList = Lists.newArrayList();
 
     static {
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicBooleanProperty.class);
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicFloatProperty.class);
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicLongProperty.class);
-        PropertyWrapper.registerSubClassWithNoCallback(DynamicDoubleProperty.class);
     }
 
 

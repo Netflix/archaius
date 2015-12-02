@@ -30,12 +30,17 @@ public class CachedPropertiesPerfTest
         long durationPrimitive = runNewDynamicBooleanPropertyTest(loopCount);
 
         // Warmup and then run benchmark.
+        runNewDynamicBooleanPropertyTest(10000);
+        long durationPrimitiveWithOldGet = runNewDynamicBooleanPropertyWithOldGetTest(loopCount);
+
+        // Warmup and then run benchmark.
         runOldDynamicBooleanPropertyTest(10000);
         long durationOriginal = runOldDynamicBooleanPropertyTest(loopCount);
 
         System.out.println("#####################");
         System.out.println("Original DynamiceBooleanProperty totalled " + durationOriginal + " ms.");
         System.out.println("New DynamicBooleanProperty totalled " + durationPrimitive + " ms.");
+        System.out.println("New DynamicBooleanProperty with old get() totalled " + durationPrimitiveWithOldGet + " ms.");
     }
 
     private static long runOldDynamicBooleanPropertyTest(long loopCount)
@@ -44,8 +49,9 @@ public class CachedPropertiesPerfTest
 
         long startTime = System.currentTimeMillis();
 
+        boolean value;
         for (long i=0; i<loopCount; i++) {
-            prop.get();
+            value = prop.get();
         }
 
         return System.currentTimeMillis() - startTime;
@@ -58,8 +64,24 @@ public class CachedPropertiesPerfTest
 
         long startTime = System.currentTimeMillis();
 
+        boolean value;
         for (long i=0; i<loopCount; i++) {
-            prop.get();
+            value = prop.get();
+        }
+
+        return System.currentTimeMillis() - startTime;
+    }
+
+    private static long runNewDynamicBooleanPropertyWithOldGetTest(long loopCount)
+    {
+        DynamicBooleanProperty prop =
+                new DynamicBooleanProperty("zuul.test.cachedprops.new", true);
+
+        long startTime = System.currentTimeMillis();
+
+        boolean value;
+        for (long i=0; i<loopCount; i++) {
+            value = prop.prop.getBoolean(prop.defaultValue);
         }
 
         return System.currentTimeMillis() - startTime;
