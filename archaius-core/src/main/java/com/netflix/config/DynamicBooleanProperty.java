@@ -47,8 +47,7 @@ public class DynamicBooleanProperty extends PropertyWrapper<Boolean> {
      * @return
      */
     private boolean chooseValue() {
-        Boolean propValue = this.prop.getBoolean();
-        return propValue == null ? defaultValue : propValue.booleanValue();
+        return prop.getBoolean(defaultValue).booleanValue();
     }
 
     /**

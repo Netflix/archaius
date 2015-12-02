@@ -48,8 +48,7 @@ public class DynamicDoubleProperty extends PropertyWrapper<Double> {
      * @return
      */
     private double chooseValue() {
-        Double propValue = this.prop.getDouble(defaultValue);
-        return propValue == null ? defaultValue : propValue.doubleValue();
+        return prop.getDouble(defaultValue).doubleValue();
     }
 
     /**

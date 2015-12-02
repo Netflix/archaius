@@ -47,8 +47,7 @@ public class DynamicLongProperty extends PropertyWrapper<Long> {
      * @return
      */
     private long chooseValue() {
-        Long propValue = this.prop.getLong(defaultValue);
-        return propValue == null ? defaultValue : propValue.longValue();
+        return prop.getLong(defaultValue).longValue();
     }
 
     /**

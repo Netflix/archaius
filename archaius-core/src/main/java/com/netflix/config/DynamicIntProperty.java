@@ -47,8 +47,7 @@ public class DynamicIntProperty extends PropertyWrapper<Integer> {
      * @return
      */
     private int chooseValue() {
-        Integer propValue = this.prop.getInteger(defaultValue);
-        return propValue == null ? defaultValue : propValue.intValue();
+        return prop.getInteger(defaultValue).intValue();
     }
 
     /**

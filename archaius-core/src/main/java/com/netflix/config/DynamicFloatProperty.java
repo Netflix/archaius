@@ -47,8 +47,7 @@ public class DynamicFloatProperty extends PropertyWrapper<Float> {
      * @return
      */
     private float chooseValue() {
-        Float propValue = this.prop.getFloat(defaultValue);
-        return propValue == null ? defaultValue : propValue.floatValue();
+        return prop.getFloat(defaultValue).floatValue();
     }
 
     /**
