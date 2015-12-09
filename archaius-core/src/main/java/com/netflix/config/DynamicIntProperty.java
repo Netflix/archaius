@@ -35,8 +35,6 @@ public class DynamicIntProperty extends PropertyWrapper<Integer> {
 
     @Override
     protected void propertyChanged() {
-        super.propertyChanged();
-
         // Update the cached primitive value when the property is changed.
         this.primitiveValue = chooseValue();
     }

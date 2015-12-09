@@ -36,8 +36,6 @@ public class DynamicDoubleProperty extends PropertyWrapper<Double> {
 
     @Override
     protected void propertyChanged() {
-        super.propertyChanged();
-
         // Update the cached primitive value when the property is changed.
         this.primitiveValue = chooseValue();
     }
