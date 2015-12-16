@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -39,7 +40,6 @@ import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
@@ -113,7 +113,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void test() throws ConfigException {
+    public void test()  {
         final Properties props = new Properties();
         props.setProperty("prefix-prod.str_value", "str_value");
         props.setProperty("prefix-prod.int_value", "123");
@@ -143,7 +143,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testNamedInjection() throws ConfigException {
+    public void testNamedInjection()  {
         final Properties props = new Properties();
         props.setProperty("prefix-prod.named", "name1");
         props.setProperty("env", "prod");
@@ -205,7 +205,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testProxy() throws ConfigException {
+    public void testProxy()  {
         Injector injector = Guice.createInjector(
                 new ArchaiusModule(),
                 new AbstractModule() {
@@ -243,7 +243,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testDefaultBindings() throws ConfigException {
+    public void testDefaultBindings() {
         Injector injector = Guice.createInjector(
                 new ArchaiusModule()
             );
@@ -254,7 +254,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testApplicationOverrideLayer() throws ConfigException {
+    public void testApplicationOverrideLayer() {
         final Properties props = new Properties();
         props.setProperty("a", "override");
         
@@ -268,7 +268,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testBasicLibraryOverride() throws ConfigException {
+    public void testBasicLibraryOverride() {
         final Properties props = new Properties();
         props.setProperty("moduleTest.prop1", "fromOverride");
         
@@ -280,7 +280,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testLibraryOverride() throws ConfigException {
+    public void testLibraryOverride() {
         final Properties props = new Properties();
         props.setProperty("moduleTest.prop1", "fromOverride");
         
@@ -301,5 +301,12 @@ public class ArchaiusModuleTest {
         injector.getInstance(MyServiceConfig.class);
         config.accept(new PrintStreamVisitor());
         Assert.assertEquals("fromOverride", config.getString("moduleTest.prop1"));
+    }
+    
+    @Test(expected=CreationException.class)
+    public void failOnDuplicateInstall() {
+        Guice.createInjector(
+                new ArchaiusModule(), 
+                new ArchaiusModule());
     }
 }

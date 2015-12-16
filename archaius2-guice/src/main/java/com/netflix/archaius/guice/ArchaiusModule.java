@@ -54,7 +54,7 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
 /**
- * Guice Module for setting up archaius and making it's components injectable and provides the following
+ * Guice Module for setting up archaius and making its components injectable and provides the following
  * functionality
  * 
  * <ul>
@@ -64,8 +64,8 @@ import com.netflix.archaius.readers.PropertiesConfigReader;
  * </uL>
  * 
  * Note that this module has state and should therefore only be installed once.  It should only
- * be installed by applications and not by libraries depending on archaius that.  Such libraries 
- * should only specify a bindger.requriesBinding(Config.class).  
+ * be installed by applications and not by libraries depending on archaius.  Such libraries 
+ * should only specify a bindger.requiresBinding(Config.class).  
  * 
  * Archaius runs with the following override structure
  *  RUNTIME     - properties set from code
@@ -147,11 +147,11 @@ public final class ArchaiusModule extends AbstractModule {
         return this;
     }
     
-    public ArchaiusModule withApplicationOverrides(Properties prop) throws ConfigException {
+    public ArchaiusModule withApplicationOverrides(Properties prop) {
         return withApplicationOverrides(MapConfig.from(prop));
     }
     
-    public ArchaiusModule withApplicationOverrides(Config config) throws ConfigException {
+    public ArchaiusModule withApplicationOverrides(Config config) {
         this.applicationOverrides = config;
         return this;
     }
@@ -253,23 +253,13 @@ public final class ArchaiusModule extends AbstractModule {
     }
 
     /**
-     * equals() on Module's is used by Guice to dedup bindings in the event that the 
-     * same module is installed more than once as modules are assumed to not be 
-     * stateful.  ArchaiusModule however is stateful in that much of its configuration
-     * is supplied externally to the Guice injector.  Also, initializing the configuration
-     * subsystem is an application concern and as such ArchaiusModule would only 
-     * be installed once by the application itself.
+     * equals() on a Module is used by Guice to dedup modules that are installed more than 
+     * once as modules are assumed to be stateless.  ArchaiusModule however is stateful in
+     * that it is initially set up outside of Guice.  The following equals() will
+     * result in duplicate binding errors if more than one ArchaiusModule is installed().
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-
-        throw new ProvisionException("Only one ArchaiusModule may be installed");
+        return this == obj;
     }
-
 }
