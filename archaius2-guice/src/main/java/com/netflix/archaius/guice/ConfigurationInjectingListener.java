@@ -14,10 +14,10 @@ import com.google.inject.name.Names;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
+import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
-import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.api.IoCContainer;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
@@ -42,7 +42,7 @@ public class ConfigurationInjectingListener implements TypeListener {
         private @LibrariesLayer   CompositeConfig   libraries;
         
         @Inject
-        private ArchaiusConfiguration archaiusConfiguration;
+        private CascadeStrategy   cascadeStrategy;
     }
     
     private ConfigMapper mapper = new ConfigMapper();
@@ -64,16 +64,14 @@ public class ConfigurationInjectingListener implements TypeListener {
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? holder.get().injector.getInstance(source.cascading()) 
-                                             : holder.get().archaiusConfiguration.getCascadeStrategy();
+                                             : holder.get().cascadeStrategy;
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {
                             LOG.debug("Trying to loading configuration resource {}", resourceName);
                             try {
-                                Config override = holder.get().archaiusConfiguration.getLibraryOverrides().get(resourceName);
                                 CompositeConfig loadedConfig = holder.get().loader.newLoader()
                                             .withCascadeStrategy(strategy)
-                                            .withOverrides(override)
                                             .load(resourceName);
                                 holder.get().libraries.addConfig(resourceName, loadedConfig);
                             } 

@@ -29,26 +29,22 @@ import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import com.netflix.archaius.api.Config;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.ConfigProxyFactory;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.config.CompositeConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.exceptions.MappingException;
-import com.netflix.archaius.api.inject.ApplicationLayer;
-import com.netflix.archaius.api.inject.ApplicationOverrideLayer;
 import com.netflix.archaius.api.inject.LibrariesLayer;
-import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.api.inject.RuntimeLayer;
+import com.netflix.archaius.cascade.ConcatCascadeStrategy;
+import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class ArchaiusModuleTest {
@@ -126,18 +122,7 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class).addBinding().toInstance(new ConfigSeeder() {
-                            @Override
-                            public Config get(Config rootConfig) throws Exception {
-                                return MapConfig.from(props);
-                            }
-                        });
-                    }
-                });
+                new ArchaiusModule().withApplicationOverrides(props));
         
         Config config = injector.getInstance(Config.class);
         Assert.assertEquals("prod", config.getString("env"));
@@ -164,16 +149,11 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule(),
+                new ArchaiusModule()
+                    .withApplicationOverrides(props),
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        Multibinder.newSetBinder(binder(), ConfigSeeder.class, RuntimeLayer.class).addBinding().toInstance(new ConfigSeeder() {
-                            @Override
-                            public Config get(Config rootConfig) throws Exception {
-                                return MapConfig.from(props);
-                            }
-                        });
                         bind(Named.class).annotatedWith(Names.named("name1")).to(Named1.class);
                         bind(Named.class).annotatedWith(Names.named("name2")).to(Named2.class);
                     }
@@ -225,7 +205,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testProxy() {
+    public void testProxy() throws ConfigException {
         Injector injector = Guice.createInjector(
                 new ArchaiusModule(),
                 new AbstractModule() {
@@ -263,31 +243,24 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testDefaultBindings() {
+    public void testDefaultBindings() throws ConfigException {
         Injector injector = Guice.createInjector(
                 new ArchaiusModule()
             );
         
         injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
-        injector.getInstance(Key.get(Config.class, RemoteLayer.class));
-        injector.getInstance(Key.get(CompositeConfig.class, ApplicationLayer.class));
         injector.getInstance(Key.get(CompositeConfig.class, LibrariesLayer.class));
         injector.getInstance(Config.class);
     }
     
     @Test
-    public void testApplicationOverrideLayer() {
+    public void testApplicationOverrideLayer() throws ConfigException {
         final Properties props = new Properties();
         props.setProperty("a", "override");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(Config.class).annotatedWith(ApplicationOverrideLayer.class).toInstance(MapConfig.from(props));
-                    }
-                }
+                new ArchaiusModule()
+                    .withApplicationOverrides(props)
                 );
         
         Config config = injector.getInstance(Config.class);
@@ -295,7 +268,7 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testBasicLibraryOverride() {
+    public void testBasicLibraryOverride() throws ConfigException {
         final Properties props = new Properties();
         props.setProperty("moduleTest.prop1", "fromOverride");
         
@@ -307,12 +280,13 @@ public class ArchaiusModuleTest {
     }
     
     @Test
-    public void testLibraryOverride() {
+    public void testLibraryOverride() throws ConfigException {
         final Properties props = new Properties();
         props.setProperty("moduleTest.prop1", "fromOverride");
         
         Injector injector = Guice.createInjector(
-              new ArchaiusModule(),
+              new ArchaiusModule()
+                  .withApplicationOverrides(props),
               new AbstractModule() {
                     @Override
                     protected void configure() {
