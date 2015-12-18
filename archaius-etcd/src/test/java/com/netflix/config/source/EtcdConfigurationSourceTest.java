@@ -145,7 +145,7 @@ public class EtcdConfigurationSourceTest {
         final String setValue = "test.value6-etcd-override-set";
 
         final String updateProperty = "test.key6";
-        final String updateKey = CONFIG_PATH + "/" + setProperty;
+        final String updateKey = CONFIG_PATH + "/" + updateProperty;
         final String updateValue = "test.value6-etcd-override-update";
 
         final String initialValue = "test.value6-etcd";
