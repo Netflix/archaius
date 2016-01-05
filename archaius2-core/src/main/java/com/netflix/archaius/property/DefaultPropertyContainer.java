@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ListenerSubscription;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyContainer;
 import com.netflix.archaius.api.PropertyListener;
@@ -264,19 +265,14 @@ public class DefaultPropertyContainer implements PropertyContainer {
         }
 
         @Override
-        public void unsubscribe() {
-            // TODO:
-        }
-
-        @Override
-        public Property<T> addListener(PropertyListener<T> listener) {
+        public ListenerSubscription addListener(final PropertyListener<T> listener) {
             delegate.addListener(listener, defaultValue);
-            return this;
-        }
-
-        @Override
-        public void removeListener(PropertyListener<T> listener) {
-            delegate.removeListener(listener);
+            return new ListenerSubscription() {
+                @Override
+                public void unsubscribe() {
+                    delegate.removeListener(listener);
+                }
+            };
         }
 
         @Override

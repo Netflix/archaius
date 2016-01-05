@@ -163,19 +163,11 @@ public class ConfigProxyFactory {
                                 values.put("" + i, args[i]);
                             }
                             String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot.name());
-                            
-                            // Read the actual value now that the proeprty name is known.  Note that we can't create
-                            // 
-                            if (defaultValue != null) {
-                                return getPropertyWithDefault(returnType, propName, defaultValue.value());
-                            }
-                            else {
-                                return propertyFactory.getConfig().get(returnType, propName, null);
-                            }
+                            return getPropertyWithDefault(returnType, propName, (defaultValue != null) ? defaultValue.value() : null);
                         }
 
                         <R> R getPropertyWithDefault(Class<R> type, String propName, String defaultValue) {
-                            return propertyFactory.getConfig().get(type, propName, decoder.decode(type, defaultValue));
+                            return propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
                         }
 
                         @Override
@@ -247,20 +239,7 @@ public class ConfigProxyFactory {
             @Override
             public T get() {
                 if (cached == null) {
-                    cached = propertyFactory.getConfig().get(type, propName, decoder.decode(type, defaultValue));
-                }
-                return cached;
-            }
-        };
-    }
-    
-    private <T> MethodInvoker<T> createImmutableProperty(final Class<T> type, final String propName) {
-        return new PropertyMethodInvoker<T>(propName) {
-            private volatile T cached;
-            @Override
-            public T get() {
-                if (cached == null) {
-                    cached = propertyFactory.getConfig().get(type, propName);
+                    cached = propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
                 }
                 return cached;
             }

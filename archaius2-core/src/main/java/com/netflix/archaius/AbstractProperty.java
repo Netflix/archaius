@@ -1,5 +1,6 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.ListenerSubscription;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyListener;
 
@@ -12,17 +13,7 @@ public abstract class AbstractProperty<T> implements Property<T> {
     }
     
     @Override
-    public void unsubscribe() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Property<T> addListener(PropertyListener<T> listener) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void removeListener(PropertyListener<T> listener) {
+    public ListenerSubscription addListener(PropertyListener<T> listener) {
         throw new UnsupportedOperationException();
     }
 
