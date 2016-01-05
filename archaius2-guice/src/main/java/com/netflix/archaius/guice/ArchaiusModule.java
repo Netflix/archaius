@@ -19,9 +19,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Binding;
-import com.google.inject.Injector;
-import com.google.inject.Key;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.ProvisionException;
 import com.google.inject.Scopes;
@@ -54,12 +52,12 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
 /**
- * Guice Module for setting up archaius and making its components injectable and provides the following
- * functionality
+ * Guice Module for setting up archaius and making its components injectable.  Installing this
+ * module also enables the following functionality.
  * 
  * <ul>
- * <li>Configuration Proxy</li>
  * <li>Injectable Config</li>
+ * <li>Configuration Proxy</li>
  * <li>Configuration mapping</li>
  * </uL>
  * 
@@ -67,7 +65,9 @@ import com.netflix.archaius.readers.PropertiesConfigReader;
  * be installed by applications and not by libraries depending on archaius.  Such libraries 
  * should only specify a bindger.requiresBinding(Config.class).  
  * 
- * Archaius runs with the following override structure
+ * This module creates an injectable Config instances that has the following override structure in
+ * order of precedence. 
+ * 
  *  RUNTIME     - properties set from code
  *  REMOTE      - properties loaded from a remote source
  *  SYSTEM      - System properties
@@ -75,13 +75,12 @@ import com.netflix.archaius.readers.PropertiesConfigReader;
  *  APPLICATION - Configuration loaded by the application
  *  LIBRARIES   - Configuration loaded by libraries used by the application
  * 
- * Runtime properties may be set in code by injecting and calling one of the
- * setters for,
+ * Runtime properties may be set in code by injecting and calling one of the setXXX methods of,
  *  {@literal @}RuntimeLayer SettableConfig config
  *  
  * A remote configuration may be specified by binding to {@literal @}RemoteLayer Config
- * When setting up a remote configuration that need access to archaius's Config
- * make sure to inject the qualifier {@literal @}Raw otherwise the injector will fail
+ * When setting up a remote configuration that needs access to Archaius's Config
+ * make sure to inject the qualified {@literal @}Raw Config otherwise the injector will fail
  * with a circular dependency error.  Note that the injected config will have 
  * system, environment and application properties loaded into it.
  * 
@@ -108,13 +107,14 @@ public final class ArchaiusModule extends AbstractModule {
     private static final String APPLICATION_LAYER_NAME  = "APPLICATION";
     private static final String LIBRARIES_LAYER_NAME    = "LIBRARIES";
     
+    // These are here to force using the backwards compatibility bridge for 
+    // Archaius1's static API
     static {
         System.setProperty("archaius.default.configuration.class",      "com.netflix.archaius.bridge.StaticAbstractConfiguration");
         System.setProperty("archaius.default.deploymentContext.class",  "com.netflix.archaius.bridge.StaticDeploymentContext");
     }
     
-    private String                  configName           = DEFAULT_CONFIG_NAME;
-    private Config                  applicationOverrides = null;
+    private String configName = DEFAULT_CONFIG_NAME;
     private Class<? extends CascadeStrategy> cascadeStrategy = NoCascadeStrategy.class;
 
     private final SettableConfig  runtimeLayer;
@@ -122,6 +122,7 @@ public final class ArchaiusModule extends AbstractModule {
     private final CompositeConfig applicationLayer;
     private final CompositeConfig librariesLayer;
     private final CompositeConfig rawConfig;
+    private int uniqueNameCounter = 0;
 
     public ArchaiusModule() {
         this.runtimeLayer     = new DefaultSettableConfig();
@@ -129,7 +130,7 @@ public final class ArchaiusModule extends AbstractModule {
         this.librariesLayer   = new DefaultCompositeConfig();
         this.remoteLayer      = new DefaultCompositeConfig();
         try {
-            this.rawConfig       = DefaultCompositeConfig.builder()
+            this.rawConfig    = DefaultCompositeConfig.builder()
                     .withConfig(RUNTIME_LAYER_NAME,      runtimeLayer)
                     .withConfig(REMOTE_LAYER_NAME,       remoteLayer)
                     .withConfig(SYSTEM_LAYER_NAME,       SystemConfig.INSTANCE)
@@ -137,7 +138,8 @@ public final class ArchaiusModule extends AbstractModule {
                     .withConfig(APPLICATION_LAYER_NAME,  applicationLayer)
                     .withConfig(LIBRARIES_LAYER_NAME,    librariesLayer)
                     .build();
-        } catch (ConfigException e) {
+        } 
+        catch (ConfigException e) {
             throw new ProvisionException("Error creating raw configuration", e);
         }
     }
@@ -152,7 +154,13 @@ public final class ArchaiusModule extends AbstractModule {
     }
     
     public ArchaiusModule withApplicationOverrides(Config config) {
-        this.applicationOverrides = config;
+        try {
+            uniqueNameCounter++;
+            applicationLayer.addConfig("override-" + uniqueNameCounter, config);
+        } 
+        catch (ConfigException e) {
+            throw new ProvisionException("Failed to add application overrides" , e);
+        }
         return this;
     }
     
@@ -192,23 +200,25 @@ public final class ArchaiusModule extends AbstractModule {
         return rawConfig;
     }
     
+    @Singleton
+    private static class OptionalRemoteLayer {
+        @Inject(optional=true)
+        @RemoteLayer
+        Config remoteLayer;
+    }
+    
     @Provides
     @Singleton
-    Config getConfig(ConfigLoader loader, Injector injector) throws Exception {
-        if (applicationOverrides != null) {
-            applicationLayer.addConfig("overrides", applicationOverrides);
-        }
-        
-        this.applicationLayer.addConfig("loaded",  loader
+    Config getConfig(ConfigLoader loader, OptionalRemoteLayer optionalRemoteLayer) throws Exception {
+        this.applicationLayer.addConfig(configName,  loader
             .newLoader()
             .load(configName));
 
         // load any runtime overrides
-        Binding<Config> binding = injector.getExistingBinding(Key.get(Config.class, RemoteLayer.class));
-        if (binding != null) {
+        if (null != optionalRemoteLayer.remoteLayer) {
             // TODO: Ideally this should replace the remoteLayer in config but there is a bug in archaius
             //       where the replaced layer moves to the end of the hierarchy
-            remoteLayer.addConfig("remote", binding.getProvider().get());
+            remoteLayer.addConfig("remote", optionalRemoteLayer.remoteLayer);
         }
         
         return rawConfig;
