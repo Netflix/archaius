@@ -233,7 +233,7 @@ public final class ArchaiusModule extends AbstractModule {
             ) throws ConfigException {
         
         return DefaultConfigLoader.builder()
-            .withConfigReader(readers)
+            .withConfigReaders(readers)
             .withDefaultCascadingStrategy(cascadingStrategy)
             .withStrLookup(ConfigStrLookup.from(rawConfig))
             .build();

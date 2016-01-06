@@ -70,7 +70,13 @@ public class DefaultConfigLoader implements ConfigLoader {
             this.loaders.add(loader);
             return this;
         }
-        
+
+        public Builder withConfigReaders(Set<ConfigReader> loaders) {
+            if (loaders != null)
+                this.loaders.addAll(loaders);
+            return this;
+        }
+
         public Builder withDefaultCascadingStrategy(CascadeStrategy strategy) {
             if (strategy != null) {
                 this.defaultStrategy = strategy;
@@ -98,19 +104,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             this.lookup = ConfigStrLookup.from(config);
             return this;
         }
-        
-        public Builder withConfigReader(Set<ConfigReader> loaders) {
-            if (loaders != null)
-                this.loaders.addAll(loaders);
-            return this;
-        }
-        
-        public Builder withConfigReader(List<ConfigReader> loaders) {
-            if (loaders != null)
-                this.loaders.addAll(loaders);
-            return this;
-        }
-        
+
         public DefaultConfigLoader build() {
             if (loaders.isEmpty()) {
                 loaders.add(new PropertiesConfigReader());

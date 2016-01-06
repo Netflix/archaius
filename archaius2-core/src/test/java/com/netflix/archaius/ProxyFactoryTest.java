@@ -106,8 +106,6 @@ public class ProxyFactoryTest {
         
         config.setProperty("valueWithDefault", "newValue");
         assertThat(c.getValueWithDefault(), equalTo("default"));
-        
-        System.out.println(c.toString());
     }
     
     @Test
@@ -127,8 +125,6 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
         assertThat(a.getNullable(),                     nullValue());
         assertThat(a.getBaseBoolean(), nullValue());
-            
-        System.out.println(a.toString());
     }
     
     @Test
@@ -162,7 +158,6 @@ public class ProxyFactoryTest {
         }
         catch (Exception e) {
         }
-        System.out.println(a.toString());
     }
     
     static interface WithArguments {

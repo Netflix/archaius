@@ -293,6 +293,8 @@ public class DefaultPropertyContainer implements PropertyContainer {
      */
     @SuppressWarnings("unchecked")
     private <T> CachedProperty<T> add(CachedProperty<T> newProperty) {
+        // TODO(nikos): This while() looks like it's redundant
+        // since we are only calling add() after a get().
         while (!cache.addIfAbsent(newProperty)) {
             for (CachedProperty<?> property : cache) {
                 if (property.type == newProperty.type) {
