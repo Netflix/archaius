@@ -1,16 +1,17 @@
 Archaius is a configuration library for accessing a mixture of static as well
 as dynamic configurations as a single configuration unit. 
 
-There are two key concepts:
-1. Properties can be read by your code.
-2. Configurations organize properties into objects you can bootstrap your application with.
+There are two key concepts to note:
+
+* **Properties** that can be read by your code.
+* **Configurations** that organize properties into objects you can bootstrap your application with.
 
 ## Features
 * Lock-free property reads.
 * Dependency Injection (i.e., Guice) friendly so you don't have to rely on static code execution.
 
 ## 2.x Changes
-* **Not backwards compatible**
+* **Not backwards compatible with 1.x.**
 * Clean separation of API and backing configurations (i.e. commons-configuration, 
 typesafe-configuration, etc).
 * Minimal external dependencies.
