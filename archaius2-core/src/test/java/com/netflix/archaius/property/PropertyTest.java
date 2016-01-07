@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.property;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
@@ -29,70 +31,111 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.DefaultSettableConfig;
 
 public class PropertyTest {
-    public static class MyService {
+    static class MyService {
         private Property<Integer> value;
         private Property<Integer> value2;
         
-        public MyService(PropertyFactory config) {
+        AtomicInteger setValueCallsCounter;
+
+        MyService(PropertyFactory config) {
+            setValueCallsCounter = new AtomicInteger(0);
             value  = config.getProperty("foo").asInteger(1);
             value.addListener(new MethodInvoker<Integer>(this, "setValue"));
             value2 = config.getProperty("foo").asInteger(2);
         }
-        
+
+        // Called by the config listener.
         public void setValue(Integer value) {
-            System.out.println("Updating " + value);
+            setValueCallsCounter.incrementAndGet();
         }
     }
-    
+
+    static class CustomType {
+
+        static CustomType DEFAULT = new CustomType(1,1);
+        static CustomType ONE_TWO = new CustomType(1,2);
+
+        private int x;
+        private int y;
+
+        CustomType(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        @Override
+        public String toString() {
+            return "CustomType [x=" + x + ", y=" + y + "]";
+        }
+    }
+
     @Test
     public void test() throws ConfigException {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         MyService service = new MyService(factory);
 
         Assert.assertEquals(1, (int)service.value.get());
         Assert.assertEquals(2, (int)service.value2.get());
-        
+
         config.setProperty("foo", "123");
-        
+
         Assert.assertEquals(123, (int)service.value.get());
         Assert.assertEquals(123, (int)service.value2.get());
+        // setValue() is called once when we init to 1 and twice when we set foo to 123.
+        Assert.assertEquals(2, service.setValueCallsCounter.get());
     }
-    
+
     @Test
-    public void testPropertyIsCached() throws ConfigException {
+    public void testAllTypes() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
-        Property<Integer> intProp1 = factory.getProperty("foo").asInteger(1);
-        Property<Integer> intProp2 = factory.getProperty("foo").asInteger(2);
-        Property<String>  strProp  = factory.getProperty("foo").asString("3");
+        config.setProperty("foo", "10");
+        config.setProperty("shmoo", "true");
+        config.setProperty("loo", CustomType.ONE_TWO);
 
-        Assert.assertEquals(1, (int)intProp1.get());
-        Assert.assertEquals(2, (int)intProp2.get());
-        
-        config.setProperty("foo", "123");
-        
-        Assert.assertEquals("123", strProp.get());
-        Assert.assertEquals((Integer)123, intProp1.get());
-        Assert.assertEquals((Integer)123, intProp2.get());
+        Property<BigDecimal> bigDecimalProp = factory.getProperty("foo").asType(BigDecimal.class,
+                                                                                BigDecimal.ONE);
+        Property<BigInteger> bigIntegerProp = factory.getProperty("foo").asType(BigInteger.class,
+                                                                                BigInteger.ONE);
+        Property<Boolean> booleanProp = factory.getProperty("shmoo").asType(Boolean.class, false);
+        Property<Byte> byteProp = factory.getProperty("foo").asType(Byte.class, (byte) 0x1);
+        Property<Double> doubleProp = factory.getProperty("foo").asType(Double.class, 1.0);
+        Property<Float> floatProp = factory.getProperty("foo").asType(Float.class, 1.0f);
+        Property<Integer> intProp = factory.getProperty("foo").asType(Integer.class, 1);
+        Property<Long> longProp = factory.getProperty("foo").asType(Long.class, 1L);
+        Property<Short> shortProp = factory.getProperty("foo").asType(Short.class, (short) 1);
+        Property<String> stringProp = factory.getProperty("foo").asType(String.class, "1");
+        Property<CustomType> customTypeProp = factory.getProperty("loo").asType(CustomType.class,
+                                                                                CustomType.DEFAULT);
+        Assert.assertEquals(BigDecimal.TEN, bigDecimalProp.get());
+        Assert.assertEquals(BigInteger.TEN, bigIntegerProp.get());
+        Assert.assertEquals(true, booleanProp.get());
+        Assert.assertEquals(10, byteProp.get().byteValue());
+        Assert.assertEquals(10.0, doubleProp.get().doubleValue(), 0.0001);
+        Assert.assertEquals(10.0f, floatProp.get().floatValue(), 0.0001f);
+        Assert.assertEquals(10, intProp.get().intValue());
+        Assert.assertEquals(10L, longProp.get().longValue());
+        Assert.assertEquals((short) 10, shortProp.get().shortValue());
+        Assert.assertEquals("10", stringProp.get());
+        Assert.assertEquals(CustomType.ONE_TWO, customTypeProp.get());
     }
-
+    
     @Test
     public void testUpdateDynamicChild() throws ConfigException {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         Property<Integer> intProp1 = factory.getProperty("foo").asInteger(1);
         Property<Integer> intProp2 = factory.getProperty("foo").asInteger(2);
         Property<String>  strProp  = factory.getProperty("foo").asString("3");
 
         Assert.assertEquals(1, (int)intProp1.get());
         Assert.assertEquals(2, (int)intProp2.get());
-        
+
         config.setProperty("foo", "123");
-        
+
         Assert.assertEquals("123", strProp.get());
         Assert.assertEquals((Integer)123, intProp1.get());
         Assert.assertEquals((Integer)123, intProp2.get());
@@ -102,53 +145,52 @@ public class PropertyTest {
     public void testDefaultNull() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         Property<Integer> prop = factory.getProperty("foo").asInteger(null);
         Assert.assertNull(prop.get());
     }
-    
+
     @Test
     public void testDefault() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         Property<Integer> prop = factory.getProperty("foo").asInteger(123);
         Assert.assertEquals(123, prop.get().intValue());
     }
-    
+
     @Test
     public void testUpdateValue() {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("goo", "456");
-        
+
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         Property<Integer> prop = factory.getProperty("foo").asInteger(123);
         config.setProperty("foo", 1);
-        
+
         Assert.assertEquals(1, prop.get().intValue());
-        
+
         config.clearProperty("foo");
         Assert.assertEquals(123, prop.get().intValue());
-        
+
         config.setProperty("foo", "${goo}");
         Assert.assertEquals(456, prop.get().intValue());
 
     }
-    
+
     @Test
     public void testUpdateCallback() {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("goo", "456");
-        
+
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
         Property<Integer> prop = factory.getProperty("foo").asInteger(123);
         final AtomicInteger current = new AtomicInteger();
         prop.addListener(new PropertyListener<Integer>() {
             @Override
             public void onChange(Integer value) {
-                System.out.println("Value: " + value);
                 current.set(value);
             }
 
@@ -156,7 +198,7 @@ public class PropertyTest {
             public void onParseError(Throwable error) {
             }
         });
-        
+
         Assert.assertEquals(123, current.intValue());
         config.setProperty("foo", 1);
         Assert.assertEquals(1, current.intValue());

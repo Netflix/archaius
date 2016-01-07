@@ -63,7 +63,7 @@ public class FixedPollingStrategy implements PollingStrategy {
                 }
             }
         }
-        return executor.scheduleAtFixedRate(new Runnable() {
+        return executor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 try {
