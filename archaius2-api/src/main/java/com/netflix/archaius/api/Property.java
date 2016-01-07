@@ -51,10 +51,15 @@ public interface Property<T> {
     /**
      * Add a listener that will be called whenever the property value changes
      * @param listener
-     * @return
      */
-    ListenerSubscription addListener(PropertyListener<T> listener);
+    void addListener(PropertyListener<T> listener);
 
+    /**
+     * Remove a listener previously registered by calling addListener
+     * @param listener
+     */
+    void removeListener(PropertyListener<T> listener);
+    
     /**
      * @return Key or path to the property 
      */
