@@ -12,12 +12,7 @@ public abstract class AbstractProperty<T> implements Property<T> {
     }
     
     @Override
-    public void unsubscribe() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Property<T> addListener(PropertyListener<T> listener) {
+    public void addListener(PropertyListener<T> listener) {
         throw new UnsupportedOperationException();
     }
 

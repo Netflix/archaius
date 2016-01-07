@@ -26,19 +26,21 @@ import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.PropertyListener;
-import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.DefaultSettableConfig;
 
 public class PropertyTest {
     static class MyService {
         private Property<Integer> value;
         private Property<Integer> value2;
+        
         AtomicInteger setValueCallsCounter;
 
         MyService(PropertyFactory config) {
             setValueCallsCounter = new AtomicInteger(0);
-            value  = config.getProperty("foo").asInteger(1).addListener(new MethodInvoker<Integer>(this, "setValue"));
+            value  = config.getProperty("foo").asInteger(1);
+            value.addListener(new MethodInvoker<Integer>(this, "setValue"));
             value2 = config.getProperty("foo").asInteger(2);
         }
 
@@ -59,6 +61,11 @@ public class PropertyTest {
         CustomType(int x, int y) {
             this.x = x;
             this.y = y;
+        }
+        
+        @Override
+        public String toString() {
+            return "CustomType [x=" + x + ", y=" + y + "]";
         }
     }
 
@@ -114,7 +121,7 @@ public class PropertyTest {
         Assert.assertEquals("10", stringProp.get());
         Assert.assertEquals(CustomType.ONE_TWO, customTypeProp.get());
     }
-
+    
     @Test
     public void testUpdateDynamicChild() throws ConfigException {
         SettableConfig config = new DefaultSettableConfig();

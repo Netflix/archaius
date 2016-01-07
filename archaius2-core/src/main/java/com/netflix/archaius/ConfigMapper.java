@@ -21,10 +21,10 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.IoCContainer;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.IoCContainer;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.interpolate.ConfigStrLookup;

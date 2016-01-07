@@ -264,18 +264,12 @@ public class DefaultPropertyContainer implements PropertyContainer {
         }
 
         @Override
-        public void unsubscribe() {
-            // TODO:
-        }
-
-        @Override
-        public Property<T> addListener(PropertyListener<T> listener) {
+        public void addListener(final PropertyListener<T> listener) {
             delegate.addListener(listener, defaultValue);
-            return this;
         }
-
+        
         @Override
-        public void removeListener(PropertyListener<T> listener) {
+        public void removeListener(final PropertyListener<T> listener) {
             delegate.removeListener(listener);
         }
 

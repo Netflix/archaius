@@ -118,8 +118,8 @@ public class ConfigProxyFactory {
         
         final String prefix = derivePrefix(annot, initialPrefix);
         
-        // Iterate through all declared methods of the class looking for getter methods.
-        // Each getter will be mapped to a Property<T> for the property name:
+        // Iterate through all declared methods of the class looking for setter methods.
+        // Each setter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
         
@@ -163,18 +163,11 @@ public class ConfigProxyFactory {
                                 values.put("" + i, args[i]);
                             }
                             String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot.name());
-                            
-                            // Read the actual value now that the property name is known.
-                            if (defaultValue != null) {
-                                return getPropertyWithDefault(returnType, propName, defaultValue.value());
-                            }
-                            else {
-                                return propertyFactory.getConfig().get(returnType, propName, null);
-                            }
+                            return getPropertyWithDefault(returnType, propName, (defaultValue != null) ? defaultValue.value() : null);
                         }
 
                         <R> R getPropertyWithDefault(Class<R> type, String propName, String defaultValue) {
-                            return propertyFactory.getConfig().get(type, propName, decoder.decode(type, defaultValue));
+                            return propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
                         }
 
                         @Override
@@ -246,13 +239,13 @@ public class ConfigProxyFactory {
             @Override
             public T get() {
                 if (cached == null) {
-                    cached = propertyFactory.getConfig().get(type, propName, decoder.decode(type, defaultValue));
+                    cached = propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
                 }
                 return cached;
             }
         };
     }
-
+    
     private <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
         return new PropertyMethodInvoker<T>(propName) {
             @Override

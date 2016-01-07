@@ -17,20 +17,18 @@ package com.netflix.archaius.api;
 
 /**
  * API to access latest cached value for a Property.  A Property is created from a PropertyFactory
- * that is normally bound to a top level configuration object such ask {@link AppConfig}.  Through
- * a Property its also possible to receive a stream of property update notifications.
+ * that is normally bound to a top level configuration.  
  * 
  * {@code 
  * class MyService {
  *     private final Property<String> prop;
  *     
- *     MyService(PropertyFactory config) {
- *        prop = config.connectProperty("foo.prop").asString("defaultValue");
+ *     MyService(PropertyFactory factory) {
+ *        prop = factory.getProperty("foo.prop").asString("defaultValue");
  *     }
  *     
- *     void doSomething() {
- *         // Will print out the most up to date value for the property
- *         System.out.println(prop.get());
+ *     public void doSomething() {
+ *         String currentValue = prop.get();
  *     }
  * }
  * }
@@ -44,29 +42,26 @@ package com.netflix.archaius.api;
  */
 public interface Property<T> {
     /**
+     * Return the most recent value of the property.  
+     * 
      * @return  Most recent value for the property
      */
     T get();
 
     /**
-     * Unsubscribe from property value update notifications.  The property object cannot be resubscribed.
-     */
-    void unsubscribe();
-
-    /**
      * Add a listener that will be called whenever the property value changes
      * @param listener
-     * @return
      */
-    Property<T> addListener(PropertyListener<T> listener);
+    void addListener(PropertyListener<T> listener);
 
     /**
-     * Remove a listener
-     * 
+     * Remove a listener previously registered by calling addListener
      * @param listener
      */
     void removeListener(PropertyListener<T> listener);
     
+    /**
+     * @return Key or path to the property 
+     */
     String getKey();
-    
 }
