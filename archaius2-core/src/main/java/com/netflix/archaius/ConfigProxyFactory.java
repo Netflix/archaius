@@ -118,8 +118,8 @@ public class ConfigProxyFactory {
         
         final String prefix = derivePrefix(annot, initialPrefix);
         
-        // Iterate through all declared methods of the class looking for setter methods.
-        // Each setter will be mapped to a Property<T> for the property name:
+        // Iterate through all declared methods of the class looking for getter methods.
+        // Each getter will be mapped to a Property<T> for the property name:
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
         
@@ -164,8 +164,7 @@ public class ConfigProxyFactory {
                             }
                             String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot.name());
                             
-                            // Read the actual value now that the proeprty name is known.  Note that we can't create
-                            // 
+                            // Read the actual value now that the property name is known.
                             if (defaultValue != null) {
                                 return getPropertyWithDefault(returnType, propName, defaultValue.value());
                             }
@@ -253,20 +252,7 @@ public class ConfigProxyFactory {
             }
         };
     }
-    
-    private <T> MethodInvoker<T> createImmutableProperty(final Class<T> type, final String propName) {
-        return new PropertyMethodInvoker<T>(propName) {
-            private volatile T cached;
-            @Override
-            public T get() {
-                if (cached == null) {
-                    cached = propertyFactory.getConfig().get(type, propName);
-                }
-                return cached;
-            }
-        };
-    }
-    
+
     private <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
         return new PropertyMethodInvoker<T>(propName) {
             @Override

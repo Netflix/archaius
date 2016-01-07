@@ -18,10 +18,7 @@ package com.netflix.archaius;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
@@ -61,7 +58,7 @@ public class DefaultConfigLoader implements ConfigLoader {
     private static final StrInterpolator DEFAULT_INTERPOLATOR = CommonsStrInterpolator.INSTANCE;
                                                     
     public static class Builder {
-        private List<ConfigReader>  loaders         = new ArrayList<ConfigReader>();
+        private Set<ConfigReader>  loaders         = new HashSet<ConfigReader>();
         private CascadeStrategy defaultStrategy = DEFAULT_CASCADE_STRATEGY;
         private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
         private Lookup              lookup          = DEFAULT_LOOKUP;
@@ -70,7 +67,13 @@ public class DefaultConfigLoader implements ConfigLoader {
             this.loaders.add(loader);
             return this;
         }
-        
+
+        public Builder withConfigReaders(Set<ConfigReader> loaders) {
+            if (loaders != null)
+                this.loaders.addAll(loaders);
+            return this;
+        }
+
         public Builder withDefaultCascadingStrategy(CascadeStrategy strategy) {
             if (strategy != null) {
                 this.defaultStrategy = strategy;
@@ -98,19 +101,7 @@ public class DefaultConfigLoader implements ConfigLoader {
             this.lookup = ConfigStrLookup.from(config);
             return this;
         }
-        
-        public Builder withConfigReader(Set<ConfigReader> loaders) {
-            if (loaders != null)
-                this.loaders.addAll(loaders);
-            return this;
-        }
-        
-        public Builder withConfigReader(List<ConfigReader> loaders) {
-            if (loaders != null)
-                this.loaders.addAll(loaders);
-            return this;
-        }
-        
+
         public DefaultConfigLoader build() {
             if (loaders.isEmpty()) {
                 loaders.add(new PropertiesConfigReader());
@@ -123,7 +114,7 @@ public class DefaultConfigLoader implements ConfigLoader {
         return new Builder();
     }
     
-    private final List<ConfigReader> loaders;
+    private final Set<ConfigReader> loaders;
     private final CascadeStrategy    defaultStrategy;
     private final StrInterpolator    interpolator;
     private final Lookup             lookup;

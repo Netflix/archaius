@@ -65,7 +65,7 @@ public interface StrInterpolator {
      * 
      * <pre>
      * {@code
-     *    interplator.create(lookup).resolve("prefix-${foo}");
+     *    interpolator.create(lookup).resolve("prefix-${foo}");
      * }
      * </pre>
      * @author elandau
