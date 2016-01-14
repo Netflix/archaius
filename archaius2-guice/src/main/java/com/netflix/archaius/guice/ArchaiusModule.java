@@ -118,6 +118,7 @@ public final class ArchaiusModule extends AbstractModule {
     }
     
     private String configName = DEFAULT_CONFIG_NAME;
+    private Class<? extends CascadeStrategy> cascadeStrategy = null;
 
     private final SettableConfig  runtimeLayer;
     private final CompositeConfig remoteLayer;
@@ -132,7 +133,7 @@ public final class ArchaiusModule extends AbstractModule {
         this.applicationLayer = new DefaultCompositeConfig();
         this.librariesLayer   = new DefaultCompositeConfig();
         this.remoteLayer      = new DefaultCompositeConfig();
-        this.defaultConfig      = new DefaultCompositeConfig();
+        this.defaultConfig    = new DefaultCompositeConfig();
     }
     
     public ArchaiusModule withConfigName(String value) {
@@ -153,6 +154,15 @@ public final class ArchaiusModule extends AbstractModule {
         }
         return this;
     }
+  
+    /**
+     * @deprecated  Customize by binding CascadeStrategy in a guice module
+     */
+    @Deprecated
+    public ArchaiusModule withCascadeStrategy(Class<? extends CascadeStrategy> cascadeStrategy) {
+        this.cascadeStrategy = cascadeStrategy;
+        return this;
+    }
     
     private String getUniqueName(String prefix) {
         uniqueNameCounter++;
@@ -165,6 +175,11 @@ public final class ArchaiusModule extends AbstractModule {
         
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
+        
+        if (cascadeStrategy != null) {
+            bind(CascadeStrategy.class).to(cascadeStrategy);
+        }
+            
     }
 
     @Provides
