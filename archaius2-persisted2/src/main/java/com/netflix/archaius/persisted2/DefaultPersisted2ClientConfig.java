@@ -79,11 +79,17 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
         this.skipPropsWithExtraScopes = value;
         return this;
     }
+    
     @Override
     public boolean getSkipPropsWithExtraScopes() {
         return skipPropsWithExtraScopes;
     }
 
+    public DefaultPersisted2ClientConfig setEnabled(boolean value) {
+        this.isEnabled = value;
+        return this;
+    }
+    
     @Override
     public boolean isEnabled() {
         return isEnabled;

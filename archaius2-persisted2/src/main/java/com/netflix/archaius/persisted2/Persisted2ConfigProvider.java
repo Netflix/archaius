@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
 import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
@@ -106,6 +107,10 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     
     @Override
     public Config get() {
+        if (!config.isEnabled()) {
+            return EmptyConfig.INSTANCE;
+        }
+        
         JsonPersistedV2Reader reader;
         try {
             reader = JsonPersistedV2Reader.builder(new HTTPStreamLoader(new URL(url)))

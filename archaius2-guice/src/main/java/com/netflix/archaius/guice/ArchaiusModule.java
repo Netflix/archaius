@@ -162,7 +162,7 @@ public final class ArchaiusModule extends AbstractModule {
     
     public ArchaiusModule withApplicationOverrides(Config config) {
         try {
-            applicationLayer.addConfig(getUniqueName("override-"), config);
+            applicationLayer.addConfig(getUniqueName("override"), config);
         } 
         catch (ConfigException e) {
             throw new ProvisionException("Failed to add application overrides" , e);
@@ -172,7 +172,7 @@ public final class ArchaiusModule extends AbstractModule {
     
     private String getUniqueName(String prefix) {
         uniqueNameCounter++;
-        return prefix + uniqueNameCounter;
+        return prefix +"-" + uniqueNameCounter;
     }
     
     @Override
@@ -220,7 +220,7 @@ public final class ArchaiusModule extends AbstractModule {
     Config getConfig(ConfigLoader loader, OptionalConfigConfiguration optional) throws Exception {
         if (optional.defaultConfig != null) {
             for (Config config : optional.defaultConfig) {
-                this.defaultConfig.addConfig(getUniqueName("default-"), config);
+                this.defaultConfig.addConfig(getUniqueName("default"), config);
             }
         }
         
