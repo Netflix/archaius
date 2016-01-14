@@ -173,7 +173,13 @@ public class PollingDynamicConfigTest {
         prop1.setProperty("a", "ANew");
         prop1.setResponseCode(500);
 
-        strategy.fire();
+        try {
+            strategy.fire();
+            Assert.fail("Should have thrown an exception");
+        }
+        catch (Exception e) {
+            
+        }
         
         Assert.assertEquals(1, errorCount.get());
         Assert.assertEquals(1, updateCount.get());
