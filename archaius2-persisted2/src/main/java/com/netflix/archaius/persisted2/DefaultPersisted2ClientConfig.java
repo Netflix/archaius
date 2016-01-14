@@ -16,6 +16,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     private String serviceUrl;
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
+    private boolean isEnabled = true;
     
     public DefaultPersisted2ClientConfig withRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;
@@ -81,6 +82,11 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     @Override
     public boolean getSkipPropsWithExtraScopes() {
         return skipPropsWithExtraScopes;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
     }
 
 }
