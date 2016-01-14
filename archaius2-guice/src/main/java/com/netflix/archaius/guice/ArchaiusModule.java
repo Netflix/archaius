@@ -123,7 +123,6 @@ public final class ArchaiusModule extends AbstractModule {
     private final CompositeConfig remoteLayer;
     private final CompositeConfig applicationLayer;
     private final CompositeConfig librariesLayer;
-    private final CompositeConfig rawConfig;
     private final CompositeConfig defaultConfig;
     
     private int uniqueNameCounter = 0;
@@ -134,21 +133,6 @@ public final class ArchaiusModule extends AbstractModule {
         this.librariesLayer   = new DefaultCompositeConfig();
         this.remoteLayer      = new DefaultCompositeConfig();
         this.defaultConfig      = new DefaultCompositeConfig();
-        
-        try {
-            this.rawConfig    = DefaultCompositeConfig.builder()
-                    .withConfig(RUNTIME_LAYER_NAME,      runtimeLayer)
-                    .withConfig(REMOTE_LAYER_NAME,       remoteLayer)
-                    .withConfig(SYSTEM_LAYER_NAME,       SystemConfig.INSTANCE)
-                    .withConfig(ENVIRONMENT_LAYER_NAME,  EnvironmentConfig.INSTANCE)
-                    .withConfig(APPLICATION_LAYER_NAME,  applicationLayer)
-                    .withConfig(LIBRARIES_LAYER_NAME,    librariesLayer)
-                    .withConfig(DEFAULT_LAYER_NAME,        defaultConfig)
-                    .build();
-        } 
-        catch (ConfigException e) {
-            throw new ProvisionException("Error creating raw configuration", e);
-        }
     }
     
     public ArchaiusModule withConfigName(String value) {
@@ -197,11 +181,32 @@ public final class ArchaiusModule extends AbstractModule {
         return librariesLayer;
     }
     
+    @Singleton
+    private static class OptionalDefaultConfigs {
+        @Inject(optional=true)
+        @DefaultLayer
+        Set<Config> configs;
+    }
+    
     @Provides
     @Singleton
     @Raw
-    Config getRawConfig() {
-        return rawConfig;
+    Config getRawConfig(OptionalDefaultConfigs defaults) throws Exception {
+        if (defaults.configs != null) {
+            for (Config config : defaults.configs) {
+                this.defaultConfig.addConfig(getUniqueName("default"), config);
+            }
+        }
+        
+        return DefaultCompositeConfig.builder()
+                .withConfig(RUNTIME_LAYER_NAME,      runtimeLayer)
+                .withConfig(REMOTE_LAYER_NAME,       remoteLayer)
+                .withConfig(SYSTEM_LAYER_NAME,       SystemConfig.INSTANCE)
+                .withConfig(ENVIRONMENT_LAYER_NAME,  EnvironmentConfig.INSTANCE)
+                .withConfig(APPLICATION_LAYER_NAME,  applicationLayer)
+                .withConfig(LIBRARIES_LAYER_NAME,    librariesLayer)
+                .withConfig(DEFAULT_LAYER_NAME,      defaultConfig)
+                .build();
     }
     
     @Singleton
@@ -209,21 +214,11 @@ public final class ArchaiusModule extends AbstractModule {
         @Inject(optional=true)
         @RemoteLayer
         Config remoteLayer;
-        
-        @Inject(optional=true)
-        @DefaultLayer
-        Set<Config> defaultConfig;
     }
     
     @Provides
     @Singleton
-    Config getConfig(ConfigLoader loader, OptionalConfigConfiguration optional) throws Exception {
-        if (optional.defaultConfig != null) {
-            for (Config config : optional.defaultConfig) {
-                this.defaultConfig.addConfig(getUniqueName("default"), config);
-            }
-        }
-        
+    Config getConfig(@Raw Config rawConfig, ConfigLoader loader, OptionalConfigConfiguration optional) throws Exception {
         this.applicationLayer.addConfig(configName,  loader
             .newLoader()
             .load(configName));
@@ -247,6 +242,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     ConfigLoader getLoader(
+            @Raw                  Config rawConfig,
             @LibrariesLayer       CompositeConfig libraries,
             Set<ConfigReader>     readers,
             OptionalLoaderConfig  optional

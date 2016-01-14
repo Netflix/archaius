@@ -95,4 +95,16 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
         return isEnabled;
     }
 
+    @Override
+    public String toString() {
+        return new StringBuilder()
+          .append("DefaultPersisted2ClientConfig[")
+          .append("url=" + serviceUrl)
+          .append(" scopes=" + scopes)
+          .append(" priority=" + prioritizedScopes)
+          .append(" queryScopes=" + queryScopes)
+          .append(" enabled=" + isEnabled)
+          .append("]")
+          .toString();
+    }
 }

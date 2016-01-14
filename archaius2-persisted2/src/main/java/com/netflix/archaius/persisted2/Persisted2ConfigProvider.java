@@ -11,6 +11,9 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.PollingDynamicConfig;
@@ -54,6 +57,8 @@ import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
  *
  */
 public class Persisted2ConfigProvider implements Provider<Config> {
+    private final Logger LOG = LoggerFactory.getLogger(Persisted2ConfigProvider.class);
+    
     private final String              url;
     private final Persisted2ClientConfig config;
     private volatile PollingDynamicConfig dynamicConfig;
@@ -107,6 +112,8 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     
     @Override
     public Config get() {
+        LOG.info("Remote config : " + config.toString());
+        
         if (!config.isEnabled()) {
             return EmptyConfig.INSTANCE;
         }
