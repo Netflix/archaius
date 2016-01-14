@@ -16,6 +16,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     private String serviceUrl;
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
+    private boolean isEnabled = true;
     
     public DefaultPersisted2ClientConfig withRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;
@@ -78,9 +79,32 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
         this.skipPropsWithExtraScopes = value;
         return this;
     }
+    
     @Override
     public boolean getSkipPropsWithExtraScopes() {
         return skipPropsWithExtraScopes;
     }
 
+    public DefaultPersisted2ClientConfig setEnabled(boolean value) {
+        this.isEnabled = value;
+        return this;
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+          .append("DefaultPersisted2ClientConfig[")
+          .append("url=" + serviceUrl)
+          .append(" scopes=" + scopes)
+          .append(" priority=" + prioritizedScopes)
+          .append(" queryScopes=" + queryScopes)
+          .append(" enabled=" + isEnabled)
+          .append("]")
+          .toString();
+    }
 }

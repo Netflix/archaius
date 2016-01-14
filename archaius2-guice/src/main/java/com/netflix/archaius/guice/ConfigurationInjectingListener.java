@@ -24,6 +24,7 @@ import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.cascade.NoCascadeStrategy;
 
 public class ConfigurationInjectingListener implements TypeListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
@@ -41,8 +42,12 @@ public class ConfigurationInjectingListener implements TypeListener {
         @Inject
         private @LibrariesLayer   CompositeConfig   libraries;
         
-        @Inject
+        @com.google.inject.Inject(optional = true)
         private CascadeStrategy   cascadeStrategy;
+        
+        CascadeStrategy getCascadeStrategy() {
+            return cascadeStrategy != null ? cascadeStrategy : NoCascadeStrategy.INSTANCE;
+        }
     }
     
     private ConfigMapper mapper = new ConfigMapper();
@@ -64,7 +69,7 @@ public class ConfigurationInjectingListener implements TypeListener {
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? holder.get().injector.getInstance(source.cascading()) 
-                                             : holder.get().cascadeStrategy;
+                                             : holder.get().getCascadeStrategy();
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {
