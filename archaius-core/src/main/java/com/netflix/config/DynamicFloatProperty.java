@@ -18,47 +18,23 @@ package com.netflix.config;
 /**
  * A dynamic property whose value is a float.
  * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
- * 
+ *
  * @author awang
  *
  */
 public class DynamicFloatProperty extends PropertyWrapper<Float> {
-
-    protected volatile float primitiveValue;
-
     public DynamicFloatProperty(String propName, float defaultValue) {
         super(propName, Float.valueOf(defaultValue));
-
-        // Set the initial value of the cached primitive value.
-        this.primitiveValue = chooseValue();
     }
-
-    @Override
-    protected void propertyChanged() {
-        // Update the cached primitive value when the property is changed.
-        this.primitiveValue = chooseValue();
-    }
-
     /**
      * Get the current value from the underlying DynamicProperty
-     *
-     * @return
-     */
-    private float chooseValue() {
-        return prop.getFloat(defaultValue).floatValue();
-    }
-
-    /**
-     * Get the current cached value.
-     *
-     * @return
      */
     public float get() {
-        return primitiveValue;
+        return prop.getFloat(defaultValue).floatValue();
     }
-
     @Override
     public Float getValue() {
+        // TODO Auto-generated method stub
         return get();
     }
 }

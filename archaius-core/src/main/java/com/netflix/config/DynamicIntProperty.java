@@ -15,46 +15,25 @@
  */
 package com.netflix.config;
 
+import com.netflix.config.PropertyWrapper;
+
 /**
  * A dynamic property whose value is an integer
  * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
- * 
+ *
  * @author awang
  *
  */
 public class DynamicIntProperty extends PropertyWrapper<Integer> {
-
-    protected volatile int primitiveValue;
-
     public DynamicIntProperty(String propName, int defaultValue) {
         super(propName, Integer.valueOf(defaultValue));
-
-        // Set the initial value of the cached primitive value.
-        this.primitiveValue = chooseValue();
-    }
-
-    @Override
-    protected void propertyChanged() {
-        // Update the cached primitive value when the property is changed.
-        this.primitiveValue = chooseValue();
     }
 
     /**
      * Get the current value from the underlying DynamicProperty
-     *
-     * @return
-     */
-    private int chooseValue() {
-        return prop.getInteger(defaultValue).intValue();
-    }
-
-    /**
-     * Get the current cached value.
-     *
-     * @return
      */
     public int get() {
-        return primitiveValue;
+        return prop.getInteger(defaultValue).intValue();
     }
 
     @Override
