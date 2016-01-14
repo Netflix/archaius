@@ -41,7 +41,12 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     private final List<Runnable> callbackList = Lists.newArrayList();
 
     static {
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
         PropertyWrapper.registerSubClassWithNoCallback(DynamicStringProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicBooleanProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicFloatProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicLongProperty.class);
+        PropertyWrapper.registerSubClassWithNoCallback(DynamicDoubleProperty.class);
     }
 
 
@@ -57,16 +62,16 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     public static final void registerSubClassWithNoCallback(@SuppressWarnings("rawtypes") Class<? extends PropertyWrapper> c) {
         SUBCLASSES_WITH_NO_CALLBACK.put(c, DUMMY_VALUE);
     }
-    
+
     protected PropertyWrapper(String propName, V defaultValue) {
         this.prop = DynamicProperty.getInstance(propName);
         this.defaultValue = defaultValue;
         Class<?> c = getClass();
         // this checks whether this constructor is called by a class that
-        // extends the immediate sub classes (IntProperty, etc.) of PropertyWrapper. 
+        // extends the immediate sub classes (IntProperty, etc.) of PropertyWrapper.
         // If yes, it is very likely that propertyChanged()  is overriden
         // in the sub class and we need to register the callback.
-        // Otherwise, we know that propertyChanged() does nothing in 
+        // Otherwise, we know that propertyChanged() does nothing in
         // immediate subclasses and we can avoid registering the callback, which
         // has the cost of modifying the CopyOnWriteArraySet
         if (!SUBCLASSES_WITH_NO_CALLBACK.containsKey(c)) {
@@ -77,7 +82,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
             };
             this.prop.addCallback(callback);
             callbackList.add(callback);
-            this.prop.addValidator(new PropertyChangeValidator() {                
+            this.prop.addValidator(new PropertyChangeValidator() {
                 @Override
                 public void validate(String newValue) {
                     PropertyWrapper.this.validate(newValue);
@@ -104,7 +109,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
             prop.addValidator(v);
         }
     }
-    
+
     /**
      * Called when the property value is updated.
      * The default does nothing.
@@ -125,7 +130,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
 
     protected void validate(String newValue) {
     }
-    
+
     /**
      * Gets the time (in milliseconds past the epoch) when the property
      * was last set/changed.
@@ -163,12 +168,12 @@ public abstract class PropertyWrapper<V> implements Property<V> {
      */
     @Override
     public abstract V getValue();
-    
+
     @Override
     public V getDefaultValue() {
         return defaultValue;
     }
-    
+
     public DynamicProperty getDynamicProperty() {
         return prop;
     }
