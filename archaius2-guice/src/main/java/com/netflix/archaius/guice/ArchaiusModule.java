@@ -18,10 +18,14 @@ package com.netflix.archaius.guice;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.inject.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
-import com.google.inject.ProvisionException;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
@@ -118,24 +122,11 @@ public final class ArchaiusModule extends AbstractModule {
     }
     
     private String configName = DEFAULT_CONFIG_NAME;
-    private Class<? extends CascadeStrategy> cascadeStrategy = null;
-
-    private final SettableConfig  runtimeLayer;
-    private final CompositeConfig remoteLayer;
-    private final CompositeConfig applicationLayer;
-    private final CompositeConfig librariesLayer;
-    private final CompositeConfig defaultConfig;
     
+    private Class<? extends CascadeStrategy> cascadeStrategy = null;
+    private Config applicationOverride;
     private int uniqueNameCounter = 0;
 
-    public ArchaiusModule() {
-        this.runtimeLayer     = new DefaultSettableConfig();
-        this.applicationLayer = new DefaultCompositeConfig();
-        this.librariesLayer   = new DefaultCompositeConfig();
-        this.remoteLayer      = new DefaultCompositeConfig();
-        this.defaultConfig    = new DefaultCompositeConfig();
-    }
-    
     public ArchaiusModule withConfigName(String value) {
         this.configName = value;
         return this;
@@ -146,12 +137,7 @@ public final class ArchaiusModule extends AbstractModule {
     }
     
     public ArchaiusModule withApplicationOverrides(Config config) {
-        try {
-            applicationLayer.addConfig(getUniqueName("override"), config);
-        } 
-        catch (ConfigException e) {
-            throw new ProvisionException("Failed to add application overrides" , e);
-        }
+        applicationOverride = config;
         return this;
     }
   
@@ -179,73 +165,100 @@ public final class ArchaiusModule extends AbstractModule {
         if (cascadeStrategy != null) {
             bind(CascadeStrategy.class).to(cascadeStrategy);
         }
-            
+
+        if (applicationOverride != null) {
+            bind(Config.class).annotatedWith(ApplicationOverride.class).toInstance(applicationOverride);
+        }
     }
 
     @Provides
     @Singleton
     @RuntimeLayer
     SettableConfig getSettableConfig() {
-        return runtimeLayer;
+        return new DefaultSettableConfig();
     }
     
     @Provides
     @Singleton
     @LibrariesLayer
     CompositeConfig getLibrariesLayer() {
-        return librariesLayer;
+        return new DefaultCompositeConfig();
     }
     
     @Singleton
-    private static class OptionalDefaultConfigs {
+    private static class ConfigParameters {
+        @Inject
+        @RuntimeLayer
+        SettableConfig  runtimeLayer;
+        
+        @Inject
+        @LibrariesLayer
+        CompositeConfig librariesLayer;
+        
         @Inject(optional=true)
-        @DefaultLayer
-        Set<Config> configs;
+        @RemoteLayer 
+        Provider<Config> remoteLayerProvider;
+        
+        @Inject(optional=true)
+        @DefaultLayer 
+        Set<Config> defaultConfigs;
+        
+        @Inject(optional=true)
+        @ApplicationOverride
+        Config applicationOverride;
     }
-    
+
     @Provides
     @Singleton
     @Raw
-    Config getRawConfig(OptionalDefaultConfigs defaults) throws Exception {
-        if (defaults.configs != null) {
-            for (Config config : defaults.configs) {
-                this.defaultConfig.addConfig(getUniqueName("default"), config);
+    CompositeConfig getRawCompositeConfig() throws Exception {
+        return new DefaultCompositeConfig();
+    }
+
+    @Provides
+    @Singleton
+    @Raw
+    Config getRawConfig(@Raw CompositeConfig config) throws Exception {
+        return config;
+    }
+
+    @Provides
+    @Singleton
+    Config getConfig(ConfigParameters params, @Raw CompositeConfig config, ConfigLoader loader) throws Exception {
+        CompositeConfig applicationLayer = new DefaultCompositeConfig();
+        CompositeConfig remoteLayer = new DefaultCompositeConfig();
+        
+        config.addConfig(RUNTIME_LAYER_NAME,      params.runtimeLayer);
+        config.addConfig(REMOTE_LAYER_NAME,       remoteLayer);
+        config.addConfig(SYSTEM_LAYER_NAME,       SystemConfig.INSTANCE);
+        config.addConfig(ENVIRONMENT_LAYER_NAME,  EnvironmentConfig.INSTANCE);
+        config.addConfig(APPLICATION_LAYER_NAME,  applicationLayer);
+        config.addConfig(LIBRARIES_LAYER_NAME,    params.librariesLayer);
+        
+        // Load defaults layer
+        if (params.defaultConfigs != null) {
+            CompositeConfig defaultLayer = new DefaultCompositeConfig();
+            config.addConfig(DEFAULT_LAYER_NAME,      defaultLayer);
+            for (Config c : params.defaultConfigs) {
+                defaultLayer.addConfig(getUniqueName("default"), c);
             }
         }
         
-        return DefaultCompositeConfig.builder()
-                .withConfig(RUNTIME_LAYER_NAME,      runtimeLayer)
-                .withConfig(REMOTE_LAYER_NAME,       remoteLayer)
-                .withConfig(SYSTEM_LAYER_NAME,       SystemConfig.INSTANCE)
-                .withConfig(ENVIRONMENT_LAYER_NAME,  EnvironmentConfig.INSTANCE)
-                .withConfig(APPLICATION_LAYER_NAME,  applicationLayer)
-                .withConfig(LIBRARIES_LAYER_NAME,    librariesLayer)
-                .withConfig(DEFAULT_LAYER_NAME,      defaultConfig)
-                .build();
-    }
-    
-    @Singleton
-    private static class OptionalConfigConfiguration {
-        @Inject(optional=true)
-        @RemoteLayer
-        Config remoteLayer;
-    }
-    
-    @Provides
-    @Singleton
-    Config getConfig(@Raw Config rawConfig, ConfigLoader loader, OptionalConfigConfiguration optional) throws Exception {
-        this.applicationLayer.addConfig(configName,  loader
-            .newLoader()
-            .load(configName));
-
-        // load any runtime overrides
-        if (null != optional.remoteLayer) {
-            // TODO: Ideally this should replace the remoteLayer in config but there is a bug in archaius
-            //       where the replaced layer moves to the end of the hierarchy
-            remoteLayer.addConfig("remote", optional.remoteLayer);
+        // Load application properties
+        if (applicationOverride != null) {
+            applicationLayer.addConfig(getUniqueName("override"), applicationOverride);
         }
         
-        return rawConfig;
+        applicationLayer.addConfig(configName, loader
+                .newLoader()
+                .load(configName));
+
+        // Load remote properties
+        if (params.remoteLayerProvider != null) {
+            remoteLayer.addConfig(getUniqueName("remote"), params.remoteLayerProvider.get());
+        }
+        
+        return config;
     }
         
     @Singleton
@@ -257,8 +270,7 @@ public final class ArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     ConfigLoader getLoader(
-            @Raw                  Config rawConfig,
-            @LibrariesLayer       CompositeConfig libraries,
+            @Raw                  CompositeConfig rawConfig,
             Set<ConfigReader>     readers,
             OptionalLoaderConfig  optional
             ) throws ConfigException {
