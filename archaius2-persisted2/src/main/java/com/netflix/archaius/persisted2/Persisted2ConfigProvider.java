@@ -107,9 +107,8 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     @Override
     public Config get() {
         try {
-            LOG.info("Remote config : " + config.toString());
-        
             Persisted2ClientConfig clientConfig = config.get();
+            LOG.info("Remote config : " + clientConfig);
             String url = new StringBuilder()
                 .append(clientConfig.getServiceUrl())
                 .append("?skipPropsWithExtraScopes=").append(clientConfig.getSkipPropsWithExtraScopes())
