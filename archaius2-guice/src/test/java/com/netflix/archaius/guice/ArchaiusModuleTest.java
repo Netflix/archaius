@@ -122,7 +122,12 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule().withApplicationOverrides(props));
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                        bindApplicationConfigurationOverride().toInstance(MapConfig.from(props));
+                    }
+                });
         
         Config config = injector.getInstance(Config.class);
         Assert.assertEquals("prod", config.getString("env"));
@@ -149,8 +154,12 @@ public class ArchaiusModuleTest {
         props.setProperty("env", "prod");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule()
-                    .withApplicationOverrides(props),
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                        bindApplicationConfigurationOverride().toInstance(MapConfig.from(props));
+                    }
+                },
                 new AbstractModule() {
                     @Override
                     protected void configure() {
@@ -207,12 +216,7 @@ public class ArchaiusModuleTest {
     @Test
     public void testProxy()  {
         Injector injector = Guice.createInjector(
-                new ArchaiusModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                    }
-                    
+                new ArchaiusModule() {
                     @Provides
                     @Singleton
                     public TestProxyConfig getProxyConfig(ConfigProxyFactory factory) {
@@ -259,9 +263,12 @@ public class ArchaiusModuleTest {
         props.setProperty("a", "override");
         
         Injector injector = Guice.createInjector(
-                new ArchaiusModule()
-                    .withApplicationOverrides(props)
-                );
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                        bindApplicationConfigurationOverride().toInstance(MapConfig.from(props));
+                    }
+                });
         
         Config config = injector.getInstance(Config.class);
         Assert.assertEquals("override", config.getString("a"));
@@ -285,8 +292,12 @@ public class ArchaiusModuleTest {
         props.setProperty("moduleTest.prop1", "fromOverride");
         
         Injector injector = Guice.createInjector(
-              new ArchaiusModule()
-                  .withApplicationOverrides(props),
+              new ArchaiusModule() {
+                  @Override
+                  protected void configureArchaius() {
+                      bindApplicationConfigurationOverride().toInstance(MapConfig.from(props));
+                  }
+              },
               new AbstractModule() {
                     @Override
                     protected void configure() {
