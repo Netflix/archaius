@@ -5,7 +5,6 @@ import javax.inject.Singleton;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -44,15 +43,14 @@ public class ProxyTest {
     @Test
     public void testConfigWithNoPrefix() throws ConfigException {
         Injector injector = Guice.createInjector(
-            new ArchaiusModule()
-                    .withApplicationOverrides(MapConfig.builder()
+            new ArchaiusModule() {
+                @Override
+                protected void configureArchaius() {
+                    this.bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
                             .put("integer", 1)
                             .put("string", "bar")
                             .put("subConfig.integer", 2)
-                            .build()),
-            new AbstractModule() {
-                @Override
-                protected void configure() {
+                            .build());
                 }
                 
                 @Provides
@@ -77,20 +75,19 @@ public class ProxyTest {
     @Test
     public void testConfigWithProvidedPrefix() throws ConfigException {
         Injector injector = Guice.createInjector(
-            new ArchaiusModule()
-                .withApplicationOverrides(MapConfig.builder()
+            new ArchaiusModule() {
+                @Override
+                protected void configureArchaius() {
+                    this.bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
                     .put("prefix.integer", 1)
                     .put("prefix.string", "bar")
-                    .build()),
-            new AbstractModule() {
+                    .build());
+                }
+                
                 @Provides
                 @Singleton
                 public MyConfig getMyConfig(ConfigProxyFactory factory) {
                     return factory.newProxy(MyConfig.class, "prefix");
-                }
-
-                @Override
-                protected void configure() {
                 }
             });
         
