@@ -313,11 +313,12 @@ public class ArchaiusModuleTest {
         config.accept(new PrintStreamVisitor());
         Assert.assertEquals("fromOverride", config.getString("moduleTest.prop1"));
     }
-    
-    @Test(expected=CreationException.class)
-    public void failOnDuplicateInstall() {
+
+    @Test
+    public void succeedOnDuplicateInstall() {
         Guice.createInjector(
-                new ArchaiusModule(), 
+                new ArchaiusModule(),
                 new ArchaiusModule());
     }
+    
 }
