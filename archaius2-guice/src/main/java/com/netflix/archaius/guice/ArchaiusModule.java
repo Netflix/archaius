@@ -251,4 +251,14 @@ public class ArchaiusModule extends AbstractModule {
             this.bindApplicationConfigurationOverride().toInstance(applicationOverride);
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return ArchaiusModule.class.equals(obj.getClass());
+    }
+
+    @Override
+    public int hashCode() {
+        return ArchaiusModule.class.hashCode();
+    }
 }
