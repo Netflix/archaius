@@ -16,10 +16,8 @@
 package com.netflix.archaius.guice;
 
 import java.util.Properties;
-import java.util.Set;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
@@ -250,15 +248,5 @@ public class ArchaiusModule extends AbstractModule {
         if (applicationOverride != null) {
             this.bindApplicationConfigurationOverride().toInstance(applicationOverride);
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return ArchaiusModule.class.equals(obj.getClass());
-    }
-
-    @Override
-    public int hashCode() {
-        return ArchaiusModule.class.hashCode();
     }
 }

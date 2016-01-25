@@ -229,14 +229,8 @@ final class InternalArchaiusModule extends AbstractModule {
         return getClass().hashCode();
     }
 
-    /**
-     * equals() on a Module is used by Guice to dedup modules that are installed more than 
-     * once as modules are assumed to be stateless.  ArchaiusModule however is stateful in
-     * that it is initially set up outside of Guice.  The following equals() will
-     * result in duplicate binding errors if more than one ArchaiusModule is installed().
-     */
     @Override
     public boolean equals(Object obj) {
-        return this == obj;
+        return InternalArchaiusModule.class.equals(obj.getClass());
     }
 }

@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -315,10 +314,32 @@ public class ArchaiusModuleTest {
     }
 
     @Test
-    public void succeedOnDuplicateInstall() {
-        Guice.createInjector(
-                new ArchaiusModule(),
-                new ArchaiusModule());
+    public void testMultipleConfigurations() {
+        final Properties props = new Properties();
+        props.setProperty("a", "override");
+
+        Injector injector = Guice.createInjector(
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                        bindApplicationConfigurationOverride().toInstance(MapConfig.from(props));
+                    }
+                },
+                new ArchaiusModule() {
+                    @Provides
+                    @Singleton
+                    public TestProxyConfig getProxyConfig(ConfigProxyFactory factory) {
+                        return factory.newProxy(TestProxyConfig.class);
+                    }
+                }
+        );
+
+        Config config = injector.getInstance(Config.class);
+        Assert.assertEquals("override", config.getString("a"));
+
+        TestProxyConfig configProxy = injector.getInstance(TestProxyConfig.class);
+        Assert.assertEquals("default", configProxy.getString());
+        Assert.assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
+        Assert.assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
     }
-    
 }
