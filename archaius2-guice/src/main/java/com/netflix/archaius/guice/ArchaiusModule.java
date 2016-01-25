@@ -16,10 +16,8 @@
 package com.netflix.archaius.guice;
 
 import java.util.Properties;
-import java.util.Set;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
