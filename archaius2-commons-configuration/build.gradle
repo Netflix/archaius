@@ -19,9 +19,6 @@ apply plugin: 'java'
 dependencies {
     compile  project(':archaius2-core')
     compile  'commons-configuration:commons-configuration:1.8'
-
-    testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
-    testCompile 'junit:junit:4.11'
 }
 
 eclipse {

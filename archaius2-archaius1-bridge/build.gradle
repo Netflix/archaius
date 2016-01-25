@@ -20,10 +20,7 @@ dependencies {
     compile  project(':archaius2-core')
     compile  project(':archaius2-guice')
     compile  project(':archaius2-commons-configuration')
-    compile  'com.netflix.archaius:archaius-core:0.6.5'
-
-    testCompile 'org.slf4j:slf4j-log4j12:1.6.1'
-    testCompile 'junit:junit:4.11'
+    compile  'com.netflix.archaius:archaius-core:0.7.3'
 }
 
 eclipse {
