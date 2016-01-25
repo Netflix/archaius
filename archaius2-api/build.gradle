@@ -17,9 +17,7 @@
 apply plugin: 'java'
 
 dependencies {
-    compile     'org.slf4j:slf4j-api:1.6.3'
     compile     'javax.inject:javax.inject:1'
-    compile     'com.google.code.findbugs:jsr305:3.0.1'
 }
 
 eclipse {
