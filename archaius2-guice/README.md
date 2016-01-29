@@ -70,7 +70,7 @@ The override layer is normally used to provide configuration overrides that are 
 from an external source (see archaius2-persisted2).  By default this layer is bound to the EmptyConfig and as such is actually ignored when setting up the top level Config.  
 
 The following binding in an ArchaiusModule override may be specified to enable the Persisted2 client (Persisted2 service is internal to Netflix and not yet open source).
-```java 
+```java
 bind(Persisted2ClientConfig.class).toInstance(clientConfig);
 bind(Config.class).annotatedWith(OverrideLayer.class).toProvider(Persisted2ConfigProvider.class).in(Scopes.SINGLETON);
 ```
@@ -96,16 +96,18 @@ Layer consisting of all application properties.  Application properties are load
 bind(String.class).annotatedWith(ApplicationLayer.class).to("alternative-name-to-application");
 ```
 
-The entire application layer may be customized using the following override bindgin
-```
+The entire application layer may be customized using the following override binding
+
+```java
 @Provides
 @Singleton
-@ApplicationLayer
+@ApplicationOverride
 Config getMyCustomApplicationConfig() {
     CompositeConfig config = new CompositeConfig();
     // ... add child configurations to config
     return config;
 }
+```
 
 ### ConfigLoader loader
 
@@ -137,7 +139,7 @@ configuration to be available in the constructor.  To address this limitation it
 code inject a @ConfigurationSource annotated configuration class instead of mixing configuration with functional
 code.
 
-For example,
+For example:
 
 ```java
 // Class where configuration is loaded
