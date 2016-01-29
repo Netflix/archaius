@@ -95,7 +95,7 @@ Property<Integer> timeout = factory.getProperty("server.timeout").asInteger(DEFA
 
 To access the cached property value
 ```java
-Thread.sleep(timeout.get(DEFAULT_TIMEOUT_VALUE));
+Thread.sleep(timeout.get());
 ```
 
 To react to property change notification
