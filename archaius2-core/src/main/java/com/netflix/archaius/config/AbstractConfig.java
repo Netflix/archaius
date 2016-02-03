@@ -51,10 +51,15 @@ public abstract class AbstractConfig implements Config {
     protected CopyOnWriteArrayList<ConfigListener> getListeners() {
         return listeners;
     }
-    protected Lookup getLookup() { return lookup; }
+    
+    protected Lookup getLookup() { 
+        return lookup; 
+    }
+    
     public String getListDelimiter() {
         return listDelimiter;
     }
+    
     public void setListDelimiter(String delimiter) {
         listDelimiter = delimiter;
     }
@@ -117,11 +122,11 @@ public abstract class AbstractConfig implements Config {
     public String getString(String key, String defaultValue) {
         Object value = getRawProperty(key);
         if (value == null) {
-            return notFound(key, defaultValue != null ? interpolator.create(lookup).resolve(defaultValue) : null);
+            return notFound(key, defaultValue != null ? interpolator.create(getLookup()).resolve(defaultValue) : null);
         }
 
         if (value instanceof String) {
-            return interpolator.create(lookup).resolve(value.toString());
+            return interpolator.create(getLookup()).resolve(value.toString());
         } else {
             throw new UnsupportedOperationException(
                     "Property values other than String not supported");
@@ -136,7 +141,7 @@ public abstract class AbstractConfig implements Config {
         }
 
         if (value instanceof String) {
-            return interpolator.create(lookup).resolve(value.toString());
+            return interpolator.create(getLookup()).resolve(value.toString());
         } else {
             throw new UnsupportedOperationException(
                     "Property values other than String not supported");
@@ -231,7 +236,7 @@ public abstract class AbstractConfig implements Config {
         }
         if (rawProp instanceof String) {
             try {
-                String value = interpolator.create(lookup).resolve(rawProp.toString());
+                String value = interpolator.create(getLookup()).resolve(rawProp.toString());
                 return decoder.decode(type, value);
             } catch (NumberFormatException e) {
                 return parseError(key, rawProp.toString(), e);
