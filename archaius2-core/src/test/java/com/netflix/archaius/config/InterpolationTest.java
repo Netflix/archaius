@@ -46,4 +46,22 @@ public class InterpolationTest {
         Assert.assertEquals("not_found", child1.getString("foo", "not_found"));
         Assert.assertEquals("not_found", child2.getString("${parent}", "not_found"));
     }
+    
+    @Test
+    public void stringInterpolationWithDefault() {
+        MapConfig config = MapConfig.builder()
+                .put("bar", "${foo:default}")
+                .build();
+            
+        Assert.assertEquals("default", config.getString("bar"));
+    }
+    
+    @Test
+    public void numericInterpolationWithDefault() {
+        MapConfig config = MapConfig.builder()
+                .put("bar", "${foo:-123}")
+                .build();
+            
+        Assert.assertEquals(-123, config.getInteger("bar").intValue());
+    }
 }
