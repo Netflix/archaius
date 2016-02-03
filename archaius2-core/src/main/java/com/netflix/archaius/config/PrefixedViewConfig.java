@@ -54,22 +54,9 @@ public class PrefixedViewConfig extends AbstractConfig {
         return result.iterator();
     }
 
-    protected <T> T getValue(Class<T> type, String key) {
-        return super.getValue(type, prefix + key);
-    }
-
-    public String getString(String key, String defaultValue) {
-        return super.getString(prefix + key, defaultValue);
-    }
-
-    @Override
-    public String getString(String key) {
-        return super.getString(prefix + key);
-    }
-    
     @Override
     public boolean containsKey(String key) {
-        return config.containsKey(key);
+        return config.containsKey(prefix + key);
     }
 
     @Override
@@ -85,8 +72,8 @@ public class PrefixedViewConfig extends AbstractConfig {
 
     @Override
     public Object getRawProperty(String key) {
-        if (config.containsKey(key)) {
-            return config.getRawProperty(key);
+        if (config.containsKey(prefix + key)) {
+            return config.getRawProperty(prefix + key);
         }
         return null;
     }

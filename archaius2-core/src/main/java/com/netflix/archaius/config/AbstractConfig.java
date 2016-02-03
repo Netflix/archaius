@@ -51,15 +51,10 @@ public abstract class AbstractConfig implements Config {
     protected CopyOnWriteArrayList<ConfigListener> getListeners() {
         return listeners;
     }
-    
-    protected Lookup getLookup() { 
-        return lookup; 
-    }
-    
+    protected Lookup getLookup() { return lookup; }
     public String getListDelimiter() {
         return listDelimiter;
     }
-    
     public void setListDelimiter(String delimiter) {
         listDelimiter = delimiter;
     }
