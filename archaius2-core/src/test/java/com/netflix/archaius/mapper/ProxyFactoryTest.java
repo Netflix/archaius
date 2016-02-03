@@ -79,7 +79,7 @@ public class ProxyFactoryTest {
     }
     
     @Test
-    public void testProxy() throws ConfigException {
+    public void proxyWithPrefix() throws ConfigException {
         Properties props = new Properties();
         props.put("prefix.string",   "loaded");
         props.put("prefix.integer",  1);
@@ -101,7 +101,7 @@ public class ProxyFactoryTest {
 
         ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfig c = proxy.newProxy(MyConfig.class);
-
+        
         assertThat(c.getString(),        equalTo("loaded"));
         assertThat(c.getString(),        equalTo("loaded"));
         assertThat(c.getRenamed(),       equalTo("loaded"));
@@ -124,7 +124,7 @@ public class ProxyFactoryTest {
     }
     
     @Test
-    public void testProxyWithDefaults() throws ConfigException{
+    public void proxyWithPrefixAndAllDefaults() throws ConfigException{
         Config config = EmptyConfig.INSTANCE;
         
         ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
