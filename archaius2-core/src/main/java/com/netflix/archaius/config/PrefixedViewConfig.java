@@ -37,12 +37,12 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
 public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;
-    private final Lookup prefixedLookup;
+    private final Lookup nonPrefixedLookup;
     
     public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
-        this.prefixedLookup = ConfigStrLookup.from(config);
+        this.nonPrefixedLookup = ConfigStrLookup.from(config);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class PrefixedViewConfig extends AbstractConfig {
     
     @Override
     protected Lookup getLookup() { 
-        return prefixedLookup; 
+        return nonPrefixedLookup; 
     }
 
     @Override
