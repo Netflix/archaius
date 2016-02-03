@@ -3,6 +3,7 @@ package com.netflix.archaius.config;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
@@ -64,4 +65,34 @@ public class InterpolationTest {
             
         Assert.assertEquals(-123, config.getInteger("bar").intValue());
     }
+    
+    
+    @Test
+    public void interpolatePrefixedView() {
+        Config config = MapConfig.builder()
+            .put("prefix.key1",    "${nonprefixed.key2}")
+            .put("nonprefixed.key2", "key2_value")
+            .build();
+        
+        Assert.assertEquals("key2_value", config.getString("prefix.key1"));
+        
+        Config prefixedConfig = config.getPrefixedView("prefix");
+        
+        Assert.assertEquals("key2_value", prefixedConfig.getString("key1"));
+    }
+    
+    @Test
+    public void interpolateNumericPrefixedView() {
+        Config config = MapConfig.builder()
+            .put("prefix.key1",    "${nonprefixed.key2}")
+            .put("nonprefixed.key2", "123")
+            .build();
+        
+        Assert.assertEquals(123, config.getInteger("prefix.key1").intValue());
+        
+        Config prefixedConfig = config.getPrefixedView("prefix");
+        
+        Assert.assertEquals(123, prefixedConfig.getInteger("key1").intValue());
+    }
+
 }
