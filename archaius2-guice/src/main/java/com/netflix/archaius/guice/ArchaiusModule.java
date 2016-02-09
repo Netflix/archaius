@@ -15,11 +15,10 @@
  */
 package com.netflix.archaius.guice;
 
+import java.io.IOException;
 import java.util.Properties;
-import java.util.Set;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
@@ -28,6 +27,7 @@ import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.config.PropertiesConfig;
 
 /**
  * Guice Module for enabling archaius and making its components injectable.  Installing this
@@ -155,6 +155,16 @@ public class ArchaiusModule extends AbstractModule {
         return bind(Config.class).annotatedWith(ApplicationOverride.class);
     }
     
+    protected void setApplicationConfigurationOverrideFile(String filename) {
+        try {
+            bind(Config.class).annotatedWith(ApplicationOverride.class).toInstance(PropertiesConfig.fromFile(filename));
+        }
+        catch (IOException e) {
+            this.addError(e);
+        }
+    }
+
+
     /**
      * Specify the Config to use for the remote layer. 
      * 
@@ -193,6 +203,15 @@ public class ArchaiusModule extends AbstractModule {
     }
     
     /**
+     * @deprecated 2016-02-08  call addDefaultConfigBinding()
+     * @return
+     */
+    @Deprecated
+    protected LinkedBindingBuilder<Config> bindDefaultConfig() {
+        return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
+    }
+
+    /**
      * Add a config to the bottom of the Config hierarchy.  Use this when configuration is added
      * through code.  Can be called multiple times as ConfigReader is added to a multibinding.
      * 
@@ -207,10 +226,27 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
-    protected LinkedBindingBuilder<Config> bindDefaultConfig() {
+    protected LinkedBindingBuilder<Config> addDefaultConfigBinding() {
         return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
 
+    protected void addDefaultConfigFile(String filename) {
+        try {
+            Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding().toInstance(PropertiesConfig.fromFile(filename));
+        }
+        catch (IOException e) {
+            this.addError(e);
+        }
+    }
+
+    /**
+     * @deprecated 2016-02-08  call addConfigReaderBinding()
+     */
+    @Deprecated
+    protected LinkedBindingBuilder<Config> bindConfigReader() {
+        return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
+    }
+    
     /**
      * Add support for a new configuration format.  Can be called multiple times to add support for
      * multiple file format.
@@ -226,7 +262,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
-    protected LinkedBindingBuilder<Config> bindConfigReader() {
+    protected LinkedBindingBuilder<Config> addConfigReaderBinding() {
         return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
     

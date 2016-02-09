@@ -41,9 +41,9 @@ public class MapConfig extends AbstractConfig {
      * @author elandau
      */
     public static class Builder {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, Object> map = new HashMap<String, Object>();
         
-        public <T> Builder put(String key, T value) {
+        public Builder put(String key, Object value) {
             map.put(key, value.toString());
             return this;
         }
@@ -61,18 +61,18 @@ public class MapConfig extends AbstractConfig {
         return new MapConfig(props);
     }
     
-    public static MapConfig from(Map<String, String> props) {
+    public static MapConfig from(Map<String, Object> props) {
         return new MapConfig(props);
     }
     
-    private Map<String, String> props = new HashMap<String, String>();
+    private Map<String, Object> props = new HashMap<String, Object>();
     
     /**
      * Construct a MapConfig as a copy of the provided Map
      * @param name
      * @param props
      */
-    public MapConfig(Map<String, String> props) {
+    public MapConfig(Map<String, Object> props) {
         this.props.putAll(props);
         this.props = Collections.unmodifiableMap(this.props);
     }

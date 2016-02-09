@@ -320,4 +320,27 @@ public class ArchaiusModuleTest {
                 new ArchaiusModule(), 
                 new ArchaiusModule());
     }
+    
+    @Test
+    public void overrideApplicationFromFile() {
+        Injector injector = Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+                this.setApplicationConfigurationOverrideFile("overrides.properties");
+            }
+        });
+        
+        Config config = injector.getInstance(Config.class);
+        Assert.assertEquals("override_value", config.getString("a"));
+    }
+    
+    @Test(expected=CreationException.class)
+    public void failToLoadApplicationOverrideFromFile() {
+        Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+                this.setApplicationConfigurationOverrideFile("overrides_not_exists.properties");
+            }
+        });
+    }
 }
