@@ -152,6 +152,9 @@ public class ProxyFactoryTest {
         config.setProperty("prefix.subConfig.str", "str3");
         assertThat(a.getSubConfig().str(),      equalTo("str3"));
 
+        config.setProperty("prefix.str", "str2");
+        assertThat(a.getStr(),      equalTo("str2"));
+        
         try {
             a.getRequiredValue();
             Assert.fail("should have failed with no value for requiredValue");
