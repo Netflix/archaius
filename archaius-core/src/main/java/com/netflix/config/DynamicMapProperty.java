@@ -16,7 +16,7 @@
 package com.netflix.config;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +46,7 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
         this(propName, (String) null, mapEntryDelimiterRegex);
         // Make a defensive copy of the default value. Would prefer to use an ImmutableMap, but that
         // does not allow for null values in the Map.
-        defaultValuesMap = (defaultValue == null ? null : Collections.unmodifiableMap(Maps.newHashMap(defaultValue)));
+        defaultValuesMap = (defaultValue == null ? null : Collections.unmodifiableMap(Maps.newLinkedHashMap(defaultValue)));
         
         // The values will be initialized as an empty map in the super constructor
         if (defaultValuesMap != null && values.isEmpty()) {
@@ -76,7 +76,7 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
             return Collections.emptyMap();
         }
         
-        Map<TKEY,TVAL> map = new HashMap<TKEY,TVAL>(strings.size());
+        Map<TKEY,TVAL> map = new LinkedHashMap<TKEY,TVAL>(strings.size());
         for (String s : strings) {
             String kv[] = getKeyValue(s);
             if (kv.length == 2) {

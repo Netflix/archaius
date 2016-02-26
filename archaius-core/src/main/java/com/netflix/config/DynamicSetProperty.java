@@ -16,7 +16,7 @@
 package com.netflix.config;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -89,7 +89,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
         // Make a defensive copy of the default value. Would prefer to use an ImmutableSet, but that
         // does not allow for null values in the Set.
         this.defaultValues = (defaultValue == null ? null : 
-            Collections.unmodifiableSet(new HashSet<T>(defaultValue)));
+            Collections.unmodifiableSet(new LinkedHashSet<T>(defaultValue)));
         
         this.splitter = splitter;
         delegate = DynamicPropertyFactory.getInstance().getStringProperty(propName, null);
@@ -136,11 +136,11 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     }
 
     private Set<String> split(String value) {                
-        return Sets.newHashSet(splitter.split(Strings.nullToEmpty(value)));
+        return Sets.newLinkedHashSet(splitter.split(Strings.nullToEmpty(value)));
     }
     
     protected Set<T> transform(Set<String> stringValues) {
-        Set<T> set = new HashSet<T>(stringValues.size());
+        Set<T> set = new LinkedHashSet<T>(stringValues.size());
         for (String s : stringValues) {
             set.add(from(s));
         }
