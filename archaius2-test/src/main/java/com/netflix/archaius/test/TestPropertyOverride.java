@@ -7,8 +7,6 @@ import java.lang.annotation.Target;
 
 import com.netflix.archaius.api.Config;
 
-import jdk.internal.org.objectweb.asm.tree.analysis.Value;
-
 /***
  * Annotation used in conjunction with {@link Archaius2TestConfig} to create an 
  * Archaius2 {@link Config} instance for testing.
