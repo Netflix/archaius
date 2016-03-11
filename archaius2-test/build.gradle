@@ -1,0 +1,14 @@
+
+apply plugin: 'java'
+
+dependencies {
+    compile  project(':archaius2-core')
+    compile  'junit:junit:4.11'
+}
+
+eclipse {
+    classpath {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
