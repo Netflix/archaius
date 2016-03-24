@@ -174,35 +174,6 @@ public class DefaultPropertyContainer implements PropertyContainer {
         }
         
         /**
-         * Update to the latest value and return either the new value or previous value if not updated
-         * or failed to resolve.
-         * 
-         * @param latestVersion
-         * @return
-         */
-        T updateAndGet(int latestVersion) {
-            int[] cacheVersion = new int[1];
-            T existing = cache.get(cacheVersion);
-            try {
-                T value = resolveCurrent();
-                if (value != existing && (value == null || existing == null || !existing.equals(value))) {
-                    if (cache.compareAndSet(existing, value, cacheVersion[0], latestVersion)) {
-                        // Slight race condition here but not important enough to warrent locking
-                        lastUpdateTimeInMillis = System.currentTimeMillis();
-                        return value;
-                    }
-                    else {
-                        cache.getReference();
-                    }
-                }
-            }
-            catch (Exception e) {
-                LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
-            }
-            return existing;
-        }
-        
-        /**
          * Fetch the latest version of the property.  If not up to date then resolve to the latest
          * value, inline.
          * 
@@ -214,14 +185,23 @@ public class DefaultPropertyContainer implements PropertyContainer {
             int cacheVersion = cache.getStamp();
             int latestVersion  = masterVersion.get();
             
-            T value;
             if (cacheVersion != latestVersion) {
-                value = updateAndGet(latestVersion);
+                T currentValue = cache.getReference();
+                T newValue = null;
+                try {
+                    newValue = resolveCurrent();
+                }
+                catch (Exception e) {
+                    LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
+                }
+                
+                if (cache.compareAndSet(currentValue, newValue, cacheVersion, latestVersion)) {
+                    // Slight race condition here but not important enough to warrent locking
+                    lastUpdateTimeInMillis = System.currentTimeMillis();
+                    return firstNonNull(newValue, defaultValue);
+                }
             }
-            else {
-                value = cache.getReference();
-            }
-            return value != null ? value : defaultValue;
+            return firstNonNull(cache.getReference(), defaultValue);
         }
         
         public long getLastUpdateTime(TimeUnit units) {
@@ -232,6 +212,9 @@ public class DefaultPropertyContainer implements PropertyContainer {
             return DefaultPropertyContainer.this;
         }
         
+        private T firstNonNull(T first, T second) {
+            return first == null ? second : first;
+        }
         /**
          * Resolve to the most recent value
          * @return
