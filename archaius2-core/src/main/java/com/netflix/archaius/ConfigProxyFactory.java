@@ -68,10 +68,12 @@ public class ConfigProxyFactory {
      */
     private final Decoder decoder;
     private final PropertyFactory propertyFactory;
+    private final Config config;
     
     @Inject
-    public ConfigProxyFactory(Decoder decoder, PropertyFactory factory) {
+    public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
+        this.config = config;
         this.propertyFactory = factory;
     }
     
@@ -298,7 +300,13 @@ public class ConfigProxyFactory {
     }
 
     private <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final String defaultValue) {
-        final Property<T> prop = propertyFactory.getProperty(propName).asType(type, defaultValue != null ? decoder.decode(type, defaultValue) : null);
+        final Property<T> prop = propertyFactory
+                .getProperty(propName)
+                .asType(type, defaultValue != null 
+                    // This is a hack to force interpolation of the defaultValue assuming
+                    // that ther is never a property '*'
+                    ? decoder.decode(type, config.getString("*", defaultValue)) 
+                    : null);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {
