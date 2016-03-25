@@ -77,12 +77,12 @@ public class ConfigProxyFactory {
         this.propertyFactory = factory;
     }
     
-    public ConfigProxyFactory(PropertyFactory factory) {
-        this(DefaultDecoder.INSTANCE, factory);
+    public ConfigProxyFactory(Config config, PropertyFactory factory) {
+        this(config, DefaultDecoder.INSTANCE, factory);
     }
     
     public ConfigProxyFactory(Config config) {
-        this(DefaultPropertyFactory.from(config));
+        this(config, DefaultPropertyFactory.from(config));
     }
     
     /**
