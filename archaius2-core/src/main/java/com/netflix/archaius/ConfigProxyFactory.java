@@ -261,7 +261,11 @@ public class ConfigProxyFactory {
     private <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final String defaultValue) {
         final Property<T> prop = propertyFactory
                 .getProperty(propName)
-                .asType(type, defaultValue != null ? decoder.decode(type, config.getString(defaultValue, defaultValue)) : null);
+                .asType(type, defaultValue != null 
+                    // This is a hack to force interpolation of the defaultValue assuming
+                    // that ther is never a property '*'
+                    ? decoder.decode(type, config.getString("*", defaultValue)) 
+                    : null);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {

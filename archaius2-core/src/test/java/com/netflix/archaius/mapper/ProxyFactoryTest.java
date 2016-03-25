@@ -33,7 +33,7 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class ProxyFactoryTest {
-    public static interface MyConfig {
+    public static interface MyConfigWithInterpolation {
         @DefaultValue("default")
         String getString();
         
@@ -99,6 +99,51 @@ public class ProxyFactoryTest {
         String getInterpolatedDefaultValue();
     }
     
+    public static interface MyConfig {
+        @DefaultValue("default")
+        String getString();
+        
+        @DefaultValue("123")
+        int getInteger();
+        
+        Integer getInteger2();
+        
+        @DefaultValue("true")
+        boolean getBoolean();
+        
+        Boolean getBoolean2();
+        
+        @DefaultValue("3")
+        short getShort();
+        
+        Short getShort2();
+        
+        @DefaultValue("3")
+        long getLong();
+        
+        Long getLong2();
+
+        @DefaultValue("3.1")
+        float getFloat();
+        
+        Float getFloat2();
+        
+        @DefaultValue("3.1")
+        double getDouble();
+        
+        Double getDouble2();
+        
+        @DefaultValue("default")
+        @PropertyName(name="renamed.string")
+        String getRenamed();
+        
+        @DefaultValue("default")
+        String noVerb();
+        
+        @DefaultValue("false")
+        boolean isIs();
+    }
+    
     @Test
     public void testProxy() throws ConfigException {
         Properties props = new Properties();
@@ -122,8 +167,10 @@ public class ProxyFactoryTest {
         Config config = MapConfig.from(props);
 
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
-        MyConfig c = proxy.newProxy(MyConfig.class);
+        MyConfigWithInterpolation c = proxy.newProxy(MyConfigWithInterpolation.class);
 
+        assertThat((long)c.getLong(),    equalTo(1L));
+        
         assertThat(c.getString(),        equalTo("loaded"));
         assertThat(c.getInterpolatedDefaultValue(),        equalTo("replaced"));
         assertThat(c.getRenamed(),       equalTo("loaded"));
@@ -137,7 +184,7 @@ public class ProxyFactoryTest {
         assertThat(c.isIs(),             equalTo(true));
         assertThat((int)c.getShort(),    equalTo(1));
         assertThat((int)c.getShort2(),   equalTo(2));
-        assertThat((long)c.getLong(),    equalTo(1L));
+
         assertThat(c.getLong2(),         equalTo(2L));
         assertThat(c.getFloat(),         equalTo(1.1f));
         assertThat(c.getFloat2(),        equalTo(2.1f));
