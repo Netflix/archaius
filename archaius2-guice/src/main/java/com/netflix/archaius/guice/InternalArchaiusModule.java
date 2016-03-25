@@ -220,8 +220,8 @@ final class InternalArchaiusModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConfigProxyFactory getProxyFactory(Decoder decoder, PropertyFactory factory) {
-        return new ConfigProxyFactory(decoder, factory);
+    ConfigProxyFactory getProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
+        return new ConfigProxyFactory(config, decoder, factory);
     }
     
     @Override

@@ -12,6 +12,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyFactory;
@@ -34,10 +35,12 @@ public class ConfigProxyFactory {
      */
     private final Decoder decoder;
     private final PropertyFactory propertyFactory;
+    private final Config config;
     
     @Inject
-    public ConfigProxyFactory(Decoder decoder, PropertyFactory factory) {
+    public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
+        this.config = config;
         this.propertyFactory = factory;
     }
     
@@ -256,7 +259,9 @@ public class ConfigProxyFactory {
     }
 
     private <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final String defaultValue) {
-        final Property<T> prop = propertyFactory.getProperty(propName).asType(type, defaultValue != null ? decoder.decode(type, defaultValue) : null);
+        final Property<T> prop = propertyFactory
+                .getProperty(propName)
+                .asType(type, defaultValue != null ? decoder.decode(type, config.getString(defaultValue, defaultValue)) : null);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {

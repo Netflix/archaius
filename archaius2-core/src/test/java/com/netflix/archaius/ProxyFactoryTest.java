@@ -97,7 +97,7 @@ public class ProxyFactoryTest {
         config.setProperty("valueWithoutDefault2", "default2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ImmutableConfig c = proxy.newProxy(ImmutableConfig.class);
         
         assertThat(c.getValueWithDefault(), equalTo("default"));
@@ -113,7 +113,7 @@ public class ProxyFactoryTest {
         Config config = EmptyConfig.INSTANCE;
 
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class);
         
@@ -138,7 +138,7 @@ public class ProxyFactoryTest {
         config.setProperty("prefix.baseBoolean", true);
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class, "prefix");
         
@@ -173,7 +173,7 @@ public class ProxyFactoryTest {
         config.setProperty("b.abc.2", "value2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
         Assert.assertEquals("value1",  withArgs.getProperty("a", 1));

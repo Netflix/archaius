@@ -306,7 +306,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<String>(Type.STRING) {
                 @Override
                 protected String resolveCurrent() throws Exception {
-                    return config.getString(key, null);
+                    return config.getString(key, defaultValue);
                 }
             });
         }
@@ -320,7 +320,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Integer>(Type.INTEGER) {
                 @Override
                 protected Integer resolveCurrent() throws Exception {
-                    return config.getInteger(key, null);
+                    return config.getInteger(key, defaultValue);
                 }
             });
         }
@@ -334,7 +334,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Long>(Type.LONG) {
                 @Override
                 protected Long resolveCurrent() throws Exception {
-                    return config.getLong(key, null);
+                    return config.getLong(key, defaultValue);
                 }
             });
         }
@@ -348,7 +348,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Double>(Type.DOUBLE) {
                 @Override
                 protected Double resolveCurrent() throws Exception {
-                    return config.getDouble(key, null);
+                    return config.getDouble(key, defaultValue);
                 }
             });
         }
@@ -362,7 +362,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Float>(Type.FLOAT) {
                 @Override
                 protected Float resolveCurrent() throws Exception {
-                    return config.getFloat(key, null);
+                    return config.getFloat(key, defaultValue);
                 }
             });
         }
@@ -376,7 +376,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Short>(Type.SHORT) {
                 @Override
                 protected Short resolveCurrent() throws Exception {
-                    return config.getShort(key, null);
+                    return config.getShort(key, defaultValue);
                 }
             });
         }
@@ -390,7 +390,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Byte>(Type.BYTE) {
                 @Override
                 protected Byte resolveCurrent() throws Exception {
-                    return config.getByte(key, null);
+                    return config.getByte(key, defaultValue);
                 }
             });
         }
@@ -404,7 +404,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<BigDecimal>(Type.BIG_DECIMAL) {
                 @Override
                 protected BigDecimal resolveCurrent() throws Exception {
-                    return config.getBigDecimal(key, null);
+                    return config.getBigDecimal(key, defaultValue);
                 }
             });
         }
@@ -418,7 +418,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<Boolean>(Type.BOOLEAN) {
                 @Override
                 protected Boolean resolveCurrent() throws Exception {
-                    return config.getBoolean(key, null);
+                    return config.getBoolean(key, defaultValue);
                 }
             });
         }
@@ -432,7 +432,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
             prop = add(new CachedProperty<BigInteger>(Type.BIG_INTEGER) {
                 @Override
                 protected BigInteger resolveCurrent() throws Exception {
-                    return config.getBigInteger(key, null);
+                    return config.getBigInteger(key, defaultValue);
                 }
             });
         }
