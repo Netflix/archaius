@@ -49,4 +49,17 @@ public class DynamicPropertyTest {
         Assert.assertEquals(123, (int)prop2.get());
         
     }
+    
+    @Test
+    public void testInterpolation() {
+        Injector injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
+
+        ConfigurationManager.getConfigInstance().setProperty("foo", "${bar}");
+        ConfigurationManager.getConfigInstance().setProperty("bar", "value");
+        
+        DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty("foo", "default");
+        
+        Assert.assertEquals("value", prop.get());
+        
+    }
 }

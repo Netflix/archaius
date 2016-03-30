@@ -80,8 +80,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
 
     @Override
     public String getString(String key, String defaultValue) {
-        Object value = getProperty(key);
-        return value != null ? value.toString() : defaultValue;
+        return delegate.getString(key, defaultValue);
     }
 
     @Override
