@@ -128,8 +128,7 @@ public abstract class AbstractConfig implements Config {
         if (value instanceof String) {
             return interpolator.create(getLookup()).resolve(value.toString());
         } else {
-            throw new UnsupportedOperationException(
-                    "Property values other than String not supported");
+            return value.toString();
         }
     }
 
@@ -143,8 +142,7 @@ public abstract class AbstractConfig implements Config {
         if (value instanceof String) {
             return interpolator.create(getLookup()).resolve(value.toString());
         } else {
-            throw new UnsupportedOperationException(
-                    "Property values other than String not supported");
+            return value.toString();
         }
     }
 
