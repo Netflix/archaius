@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -20,6 +21,7 @@ import com.netflix.config.PropertyListener;
  * @see StaticArchaiusBridgeModule
  * @author elandau
  */
+@Singleton
 public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
     
     private static volatile AbstractConfigurationBridge delegate;
@@ -44,7 +46,7 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
         if (!actualConfig.equals(staticConfig)) {
-            throw new RuntimeException("Not using expected bridge!!!");
+            throw new RuntimeException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass());
         }
         
         DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
@@ -74,6 +76,15 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
             return false;
         }
         return delegate.containsKey(key);
+    }
+
+    @Override
+    public String getString(String key, String defaultValue) {
+        if (delegate == null) {
+            System.out.println("[getString(" + key + ", " + defaultValue + ")] StaticAbstractConfiguration not initialized yet.");
+            return defaultValue;
+        }
+         return delegate.getString(key, defaultValue);
     }
 
     @Override

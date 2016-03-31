@@ -22,6 +22,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.netflix.archaius.api.config.PollingStrategy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,11 @@ public class PollingDynamicConfig extends AbstractConfig {
         strategy.execute(new Runnable() {
             @Override
             public void run() {
-                update();
+                try {
+                    update();
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to poll configuration", e);
+                }
             }
         });
     }
@@ -71,7 +77,7 @@ public class PollingDynamicConfig extends AbstractConfig {
         return current.get(key);
     }
 
-    private void update() {
+    private void update() throws Exception {
         // OK to ignore calls to update() if already busy updating 
         if (busy.compareAndSet(false, true)) {
             updateCounter.incrementAndGet();
@@ -83,6 +89,8 @@ public class PollingDynamicConfig extends AbstractConfig {
                 }
             }
             catch (Exception e) {
+                LOG.trace("Error reading data from remote server ", e);
+                
                 errorCounter.incrementAndGet();
                 try {
                     notifyError(e, this);
@@ -90,6 +98,7 @@ public class PollingDynamicConfig extends AbstractConfig {
                 catch (Exception e2) {
                     LOG.warn("Failed to notify error observer", e2);
                 }
+                throw e;
             }
             finally {
                 busy.set(false);

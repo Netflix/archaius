@@ -23,7 +23,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.junit.TestHttpServer;
 import com.netflix.archaius.property.PropertiesServerHandler;
@@ -173,7 +173,13 @@ public class PollingDynamicConfigTest {
         prop1.setProperty("a", "ANew");
         prop1.setResponseCode(500);
 
-        strategy.fire();
+        try {
+            strategy.fire();
+            Assert.fail("Should have thrown an exception");
+        }
+        catch (Exception e) {
+            
+        }
         
         Assert.assertEquals(1, errorCount.get());
         Assert.assertEquals(1, updateCount.get());

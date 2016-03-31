@@ -13,15 +13,15 @@ import org.apache.commons.configuration.Configuration;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.netflix.archaius.Config;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.commons.CommonsToConfig;
-import com.netflix.archaius.config.CompositeConfig;
 import com.netflix.archaius.config.DefaultConfigListener;
-import com.netflix.archaius.config.SettableConfig;
 import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
-import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.DeploymentContext;
 import com.netflix.config.DynamicPropertySupport;
@@ -62,6 +62,11 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     @Override
     public boolean containsKey(String key) {
         return config.containsKey(key);
+    }
+    
+    @Override
+    public String getString(String key, String defaultValue) {
+        return config.getString(key, defaultValue);
     }
 
     @Override
@@ -109,7 +114,7 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
 
     @Override
     public Configuration getConfiguration(String name) {
-        throw new UnsupportedOperationException();
+        return new ConfigToCommonsAdapter(libraries.getConfig(name));
     }
 
     @Override

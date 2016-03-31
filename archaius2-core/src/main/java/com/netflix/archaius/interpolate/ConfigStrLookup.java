@@ -1,7 +1,7 @@
 package com.netflix.archaius.interpolate;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.StrInterpolator.Lookup;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.StrInterpolator.Lookup;
 
 /**
  * Interpolator lookup using a Config as the source

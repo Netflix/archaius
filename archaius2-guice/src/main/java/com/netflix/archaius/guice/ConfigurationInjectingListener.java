@@ -14,16 +14,17 @@ import com.google.inject.name.Names;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigLoader;
 import com.netflix.archaius.ConfigMapper;
-import com.netflix.archaius.IoCContainer;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.inject.LibrariesLayer;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigLoader;
+import com.netflix.archaius.api.IoCContainer;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.cascade.NoCascadeStrategy;
 
 public class ConfigurationInjectingListener implements TypeListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
@@ -41,11 +42,15 @@ public class ConfigurationInjectingListener implements TypeListener {
         @Inject
         private @LibrariesLayer   CompositeConfig   libraries;
         
-        @Inject
-        private ArchaiusConfiguration archaiusConfiguration;
+        @com.google.inject.Inject(optional = true)
+        private CascadeStrategy   cascadeStrategy;
+        
+        CascadeStrategy getCascadeStrategy() {
+            return cascadeStrategy != null ? cascadeStrategy : NoCascadeStrategy.INSTANCE;
+        }
     }
     
-    private ConfigMapper mapper = new ConfigMapper(true);
+    private ConfigMapper mapper = new ConfigMapper();
     
     @Override
     public <I> void hear(TypeLiteral<I> typeLiteral, final TypeEncounter<I> encounter) {
@@ -64,16 +69,14 @@ public class ConfigurationInjectingListener implements TypeListener {
                     ConfigurationSource source = injectee.getClass().getAnnotation(ConfigurationSource.class);
                     CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                                              ? holder.get().injector.getInstance(source.cascading()) 
-                                             : holder.get().archaiusConfiguration.getCascadeStrategy();
+                                             : holder.get().getCascadeStrategy();
                                              
                     if (source != null) {
                         for (String resourceName : source.value()) {
                             LOG.debug("Trying to loading configuration resource {}", resourceName);
                             try {
-                                Config override = holder.get().archaiusConfiguration.getLibraryOverrides().get(resourceName);
                                 CompositeConfig loadedConfig = holder.get().loader.newLoader()
                                             .withCascadeStrategy(strategy)
-                                            .withOverrides(override)
                                             .load(resourceName);
                                 holder.get().libraries.addConfig(resourceName, loadedConfig);
                             } 

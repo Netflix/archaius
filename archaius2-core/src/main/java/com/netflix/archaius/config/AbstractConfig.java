@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.DefaultDecoder;
-import com.netflix.archaius.StrInterpolator;
-import com.netflix.archaius.StrInterpolator.Lookup;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.exceptions.ParseException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
@@ -51,10 +51,15 @@ public abstract class AbstractConfig implements Config {
     protected CopyOnWriteArrayList<ConfigListener> getListeners() {
         return listeners;
     }
-    protected Lookup getLookup() { return lookup; }
+    
+    protected Lookup getLookup() { 
+        return lookup; 
+    }
+    
     public String getListDelimiter() {
         return listDelimiter;
     }
+    
     public void setListDelimiter(String delimiter) {
         listDelimiter = delimiter;
     }
@@ -117,14 +122,13 @@ public abstract class AbstractConfig implements Config {
     public String getString(String key, String defaultValue) {
         Object value = getRawProperty(key);
         if (value == null) {
-            return notFound(key, defaultValue != null ? interpolator.create(lookup).resolve(defaultValue) : null);
+            return notFound(key, defaultValue != null ? interpolator.create(getLookup()).resolve(defaultValue) : null);
         }
 
         if (value instanceof String) {
-            return interpolator.create(lookup).resolve(value.toString());
+            return interpolator.create(getLookup()).resolve(value.toString());
         } else {
-            throw new UnsupportedOperationException(
-                    "Property values other than String not supported");
+            return value.toString();
         }
     }
 
@@ -136,10 +140,9 @@ public abstract class AbstractConfig implements Config {
         }
 
         if (value instanceof String) {
-            return interpolator.create(lookup).resolve(value.toString());
+            return interpolator.create(getLookup()).resolve(value.toString());
         } else {
-            throw new UnsupportedOperationException(
-                    "Property values other than String not supported");
+            return value.toString();
         }
     }
 
@@ -219,7 +222,7 @@ public abstract class AbstractConfig implements Config {
         T result = null;
         Iterator<String> iter = getKeys();
         while (iter.hasNext()) {
-            result = visitor.visit(this, iter.next());
+            result = visitor.visitKey(this, iter.next());
         }
         return result;
     }
@@ -231,7 +234,7 @@ public abstract class AbstractConfig implements Config {
         }
         if (rawProp instanceof String) {
             try {
-                String value = interpolator.create(lookup).resolve(rawProp.toString());
+                String value = interpolator.create(getLookup()).resolve(rawProp.toString());
                 return decoder.decode(type, value);
             } catch (NumberFormatException e) {
                 return parseError(key, rawProp.toString(), e);

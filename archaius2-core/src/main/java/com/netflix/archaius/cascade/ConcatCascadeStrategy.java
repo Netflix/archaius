@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.netflix.archaius.CascadeStrategy;
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.StrInterpolator;
 
 /**
  * Given a list of parameters generate all combinations by progressively

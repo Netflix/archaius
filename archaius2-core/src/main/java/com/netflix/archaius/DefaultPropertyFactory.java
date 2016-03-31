@@ -4,6 +4,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.property.DefaultPropertyContainer;
 import com.netflix.archaius.property.ListenerManager;
 
@@ -88,10 +92,5 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         // in the configuration regardless of change. The blanket update is done since we don't track
         // a dependency graph of replacements.
         listeners.updateAll();
-    }
-
-    @Override
-    public Config getConfig() {
-        return config;
     }
 }

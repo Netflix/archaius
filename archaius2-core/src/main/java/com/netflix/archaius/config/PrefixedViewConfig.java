@@ -18,10 +18,12 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.Decoder;
-import com.netflix.archaius.StrInterpolator;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.api.StrInterpolator.Lookup;
+import com.netflix.archaius.interpolate.ConfigStrLookup;
 
 /**
  * View into another Config for properties starting with a specified prefix.
@@ -35,10 +37,12 @@ import com.netflix.archaius.StrInterpolator;
 public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;
+    private final Lookup nonPrefixedLookup;
     
-    public PrefixedViewConfig(String prefix, Config config) {
+    public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
+        this.nonPrefixedLookup = ConfigStrLookup.from(config);
     }
 
     @Override
@@ -78,6 +82,11 @@ public class PrefixedViewConfig extends AbstractConfig {
         return null;
     }
     
+    @Override
+    protected Lookup getLookup() { 
+        return nonPrefixedLookup; 
+    }
+
     @Override
     public synchronized void setDecoder(Decoder decoder)
     {

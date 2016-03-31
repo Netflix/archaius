@@ -23,7 +23,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import com.netflix.archaius.annotations.Configuration;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.IoCContainer;
+import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 
@@ -34,16 +36,6 @@ public class ConfigMapper {
             return null;
         }
     };
-    
-    private final boolean allowPostConfigure;
-    
-    public ConfigMapper() {
-        this(true);
-    }
-    
-    public ConfigMapper(boolean allowPostConfigure) {
-        this.allowPostConfigure = allowPostConfigure;
-    }
     
     /**
      * Map the configuration from the provided config object onto the injectee and use

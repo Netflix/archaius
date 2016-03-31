@@ -17,12 +17,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.annotations.ConfigurationSource;
-import com.netflix.archaius.config.SettableConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.guice.ConfigSeeders;
-import com.netflix.archaius.inject.RuntimeLayer;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
@@ -57,7 +56,6 @@ public class AbstractConfigurationBridgeTest {
             install(new ArchaiusModule());
             
             bind(SomeClient.class).asEagerSingleton();
-            ConfigSeeders.bind(binder(), properties, RuntimeLayer.class);
         }
     }
     

@@ -1,6 +1,7 @@
 package com.netflix.archaius;
 
-import java.util.concurrent.TimeUnit;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyListener;
 
 public abstract class DelegatingProperty<T> implements Property<T> {
 
@@ -11,24 +12,17 @@ public abstract class DelegatingProperty<T> implements Property<T> {
     }
     
     @Override
-    public void unsubscribe() {
-        delegate.unsubscribe();
-    }
-
-    @Override
-    public Property<T> addListener(PropertyListener<T> listener) {
+    public void addListener(PropertyListener<T> listener) {
         delegate.addListener(listener);
-        return this;
     }
-
+    
     @Override
     public void removeListener(PropertyListener<T> listener) {
         delegate.removeListener(listener);
     }
-
+    
     @Override
     public String getKey() {
         return delegate.getKey();
     }
-
 }

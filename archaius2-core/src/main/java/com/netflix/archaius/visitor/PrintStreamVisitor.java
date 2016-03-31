@@ -17,8 +17,8 @@ package com.netflix.archaius.visitor;
 
 import java.io.PrintStream;
 
-import com.netflix.archaius.Config;
-import com.netflix.archaius.config.CompositeConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.CompositeConfig;
 
 public class PrintStreamVisitor implements CompositeConfig.CompositeVisitor<Void> {
     private final PrintStream stream;
@@ -35,13 +35,13 @@ public class PrintStreamVisitor implements CompositeConfig.CompositeVisitor<Void
     }
     
     @Override
-    public Void visit(Config config, String key) {
+    public Void visitKey(Config config, String key) {
         stream.println(prefix + key + " = " + config.getString(key));
         return null;
     }
 
     @Override
-    public Void visit(String name, Config child) {
+    public Void visitChild(String name, Config child) {
         stream.println(prefix + "Config: " + name);
         prefix += "  ";
         child.accept(this);

@@ -11,7 +11,11 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import com.netflix.archaius.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
 import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
@@ -53,17 +57,13 @@ import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
  *
  */
 public class Persisted2ConfigProvider implements Provider<Config> {
-    private final String              url;
-    private final Persisted2ClientConfig config;
+    private final Logger LOG = LoggerFactory.getLogger(Persisted2ConfigProvider.class);
+    
+    private final Provider<Persisted2ClientConfig>  config;
     private volatile PollingDynamicConfig dynamicConfig;
     
     @Inject
-    public Persisted2ConfigProvider(Persisted2ClientConfig config) throws Exception {
-        this.url = new StringBuilder()
-            .append(config.getServiceUrl())
-            .append("?skipPropsWithExtraScopes=").append(config.getSkipPropsWithExtraScopes())
-            .append("&filter=").append(URLEncoder.encode(getFilterString(config.getQueryScopes()), "UTF-8"))
-            .toString();
+    public Persisted2ConfigProvider(Provider<Persisted2ClientConfig> config) throws Exception {
         this.config = config;
     }
     
@@ -106,18 +106,29 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     
     @Override
     public Config get() {
-        JsonPersistedV2Reader reader;
         try {
-            reader = JsonPersistedV2Reader.builder(new HTTPStreamLoader(new URL(url)))
-                .withPath("propertiesList")
-                .withScopes(config.getPrioritizedScopes())
-                .withPredicate(ScopePredicates.fromMap(config.getScopes()))
-                .build();
-        } catch (Exception e) {
-            throw new RuntimeException("Error setting up reader", e);
+            Persisted2ClientConfig clientConfig = config.get();
+            LOG.info("Remote config : " + clientConfig);
+            String url = new StringBuilder()
+                .append(clientConfig.getServiceUrl())
+                .append("?skipPropsWithExtraScopes=").append(clientConfig.getSkipPropsWithExtraScopes())
+                .append("&filter=").append(URLEncoder.encode(getFilterString(clientConfig.getQueryScopes()), "UTF-8"))
+                .toString();
+
+            if (!clientConfig.isEnabled()) {
+                return EmptyConfig.INSTANCE;
+            }
+            
+            JsonPersistedV2Reader reader = JsonPersistedV2Reader.builder(new HTTPStreamLoader(new URL(url)))
+                    .withPath("propertiesList")
+                    .withScopes(clientConfig.getPrioritizedScopes())
+                    .withPredicate(ScopePredicates.fromMap(clientConfig.getScopes()))
+                    .build();
+            
+            return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
+        } catch (Exception e1) {
+            throw new RuntimeException(e1);
         }
-        
-        return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(config.getRefreshRate(), TimeUnit.SECONDS));
     }
     
     @PreDestroy

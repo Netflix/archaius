@@ -5,18 +5,17 @@ import javax.inject.Singleton;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
-import com.google.inject.util.Modules;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.annotations.Configuration;
-import com.netflix.archaius.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.inject.RuntimeLayer;
 
 public class ProxyTest {
     public static interface MyConfig {
@@ -42,19 +41,16 @@ public class ProxyTest {
     }
     
     @Test
-    public void testConfigWithNoPrefix() {
-        Injector injector = Guice.createInjector(Modules
-            .override(new ArchaiusModule())
-            .with(new AbstractModule() {
+    public void testConfigWithNoPrefix() throws ConfigException {
+        Injector injector = Guice.createInjector(
+            new ArchaiusModule() {
                 @Override
-                protected void configure() {
-                    ConfigSeeders.bind(binder(), 
-                            MapConfig.builder()
-                                .put("integer", 1)
-                                .put("string", "bar")
-                                .put("subConfig.integer", 2)
-                                .build(), 
-                            RuntimeLayer.class);
+                protected void configureArchaius() {
+                    this.bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
+                            .put("integer", 1)
+                            .put("string", "bar")
+                            .put("subConfig.integer", 2)
+                            .build());
                 }
                 
                 @Provides
@@ -62,7 +58,7 @@ public class ProxyTest {
                 public MyConfig getMyConfig(ConfigProxyFactory factory) {
                     return factory.newProxy(MyConfig.class);
                 }
-            })
+            }
         );
         
         SettableConfig cfg = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
@@ -77,18 +73,15 @@ public class ProxyTest {
     }
     
     @Test
-    public void testConfigWithProvidedPrefix() {
-        Injector injector = Guice.createInjector(Modules
-            .override(new ArchaiusModule())
-            .with(new AbstractModule() {
+    public void testConfigWithProvidedPrefix() throws ConfigException {
+        Injector injector = Guice.createInjector(
+            new ArchaiusModule() {
                 @Override
-                protected void configure() {
-                    ConfigSeeders.bind(binder(), 
-                            MapConfig.builder()
-                                .put("prefix.integer", 1)
-                                .put("prefix.string", "bar")
-                                .build(), 
-                            RuntimeLayer.class);
+                protected void configureArchaius() {
+                    this.bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
+                    .put("prefix.integer", 1)
+                    .put("prefix.string", "bar")
+                    .build());
                 }
                 
                 @Provides
@@ -96,8 +89,7 @@ public class ProxyTest {
                 public MyConfig getMyConfig(ConfigProxyFactory factory) {
                     return factory.newProxy(MyConfig.class, "prefix");
                 }
-            })
-            );
+            });
         
         MyConfig config = injector.getInstance(MyConfig.class);
         Assert.assertEquals("bar", config.getString());

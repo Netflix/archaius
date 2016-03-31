@@ -15,298 +15,238 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Properties;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.matcher.Matchers;
+import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
-import com.netflix.archaius.Config;
-import com.netflix.archaius.ConfigListener;
-import com.netflix.archaius.ConfigLoader;
-import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.ConfigReader;
-import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.PropertyFactory;
-import com.netflix.archaius.cascade.NoCascadeStrategy;
-import com.netflix.archaius.config.CompositeConfig;
-import com.netflix.archaius.config.CompositeConfig.Builder;
-import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.EnvironmentConfig;
-import com.netflix.archaius.config.SettableConfig;
-import com.netflix.archaius.config.SystemConfig;
-import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
-import com.netflix.archaius.exceptions.ConfigException;
-import com.netflix.archaius.inject.ApplicationLayer;
-import com.netflix.archaius.inject.DefaultsLayer;
-import com.netflix.archaius.inject.LibrariesLayer;
-import com.netflix.archaius.inject.RemoteLayer;
-import com.netflix.archaius.inject.RuntimeLayer;
-import com.netflix.archaius.interpolate.ConfigStrLookup;
-import com.netflix.archaius.readers.PropertiesConfigReader;
+import com.google.inject.name.Names;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.inject.DefaultLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.archaius.config.MapConfig;
 
 /**
- * Guice module with default bindings to enable Config injection and 
- * configuration mapping/binding in a Guice based application.
+ * Guice Module for enabling archaius and making its components injectable.  Installing this
+ * module also enables the following functionality.
  * 
- * By default this module will create a top level Config that is a 
- * CompositeConfig of the following layers,
- * RUNTIME     - properties set from code
- * OVERRIDE    - properties loaded from a remote source
- * SYSTEM      - System properties
- * ENVIRONMENT - Environment properties
- * APPLICATION - Configuration loaded by the application
- * LIBRARIES   - Configuration loaded by libraries used by the application
- * DEFAULTS    - Defaults that can be set from code
+ * <ul>
+ * <li>Injectable Config</li>
+ * <li>Configuration Proxy</li>
+ * <li>Configuration mapping</li>
+ * </uL>
  * 
- * Runtime properties may be set by either injecting and calling one of the
- * setters for,
- *  @RuntimeLayer SettableConfig config
- * or at startup by specifying a multibinding
- *  Multibinder.newSetBinder(binder(), ConfigResolver.class, RuntimeLayer.class)...
+ * This module creates an injectable Config instance that has the following override structure in
+ * order of precedence. 
+ * 
+ *  RUNTIME     - properties set from code
+ *  REMOTE      - properties loaded from a remote source
+ *  SYSTEM      - System properties
+ *  ENVIRONMENT - Environment properties
+ *  APPLICATION - Configuration loaded by the application
+ *  LIBRARIES   - Configuration loaded by libraries used by the application
+ *  DEFAULT     - Default properties driven by bindings
+ * 
+ * Runtime properties may be set in code by injecting and calling one of the setXXX methods of,
+ *  {@literal @}RuntimeLayer SettableConfig config
  *  
- * Override properties may be set by either injecting 
- *  @OverrideLayer CompositeConfig config
- * or at startup by specifying a multibinding
- *  Multibinder.newSetBinder(binder(), ConfigResolver.class, OverrideLayer.class)...
+ * A remote configuration may be specified by binding to {@literal @}RemoteLayer Config
+ * When setting up a remote configuration that needs access to Archaius's Config
+ * make sure to inject the qualified {@literal @}Raw Config otherwise the injector will fail
+ * with a circular dependency error.  Note that the injected config will have 
+ * system, environment and application properties loaded into it.
  * 
- * Application properties will be loaded automatically from resources with the base 
- * name indicated by the binding to @ApplicationLayer String.  The default value
- * is 'application' be can be changed via a binding override.
- * 
- * @author elandau
+ * <code>
+ * public class FooRemoteModule extends ArchaiusModule {
+ *     {@literal @}Provides
+ *     {@literal @}RemoteLayer
+ *     Config getRemoteConfig({@literal @}Raw Config config) {
+ *         return new FooRemoteConfigImplementaiton(config);
+ *     }
+ * }
+ * </code>
  */
-public final class ArchaiusModule extends AbstractModule {
+public class ArchaiusModule extends AbstractModule {
+    // These are here to force using the backwards compatibility bridge for 
+    // Archaius1's static API
+    static {
+        System.setProperty("archaius.default.configuration.class",      "com.netflix.archaius.bridge.StaticAbstractConfiguration");
+        System.setProperty("archaius.default.deploymentContext.class",  "com.netflix.archaius.bridge.StaticDeploymentContext");
+    }
     
-    private static final String RUNTIME_LAYER_NAME              = "RUNTIME";
-    private static final String REMOTE_LAYER_NAME               = "REMOTE";
-    private static final String SYSTEM_LAYER_NAME               = "SYSTEM";
-    private static final String ENVIRONMENT_LAYER_NAME          = "ENVIRONMENT";
-    private static final String APPLICATION_OVERRIDE_LAYER_NAME = "APPLICATION_OVERRIDE";
-    private static final String APPLICATION_LAYER_NAME          = "APPLICATION";
-    private static final String LIBRARIES_LAYER_NAME            = "LIBRARIES";
-    private static final String DEFAULTS_LAYER_NAME             = "DEFAULTS";
-    
-    private static final AtomicInteger idCounter = new AtomicInteger();
-    
-    @Override
-    protected void configure() {
-        bindListener(Matchers.any(), new ConfigurationInjectingListener());
+    @Deprecated
+    private Class<? extends CascadeStrategy> cascadeStrategy = null;
 
-        Multibinder.newSetBinder(binder(), ConfigReader.class)
-            .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
-        
-        bind(ArchaiusConfiguration.class).to(OptionalArchaiusConfiguration.class);
+    @Deprecated
+    private Config applicationOverride;
+    
+    @Deprecated
+    private String configName;
+    
+    @Deprecated
+    public ArchaiusModule withConfigName(String value) {
+        this.configName = value;
+        return this;
     }
     
-    @Provides
-    @Singleton
-    @RuntimeLayer
-    SettableConfig getSettableConfig() {
-        return new DefaultSettableConfig();
+    @Deprecated
+    public ArchaiusModule withApplicationOverrides(Properties prop) {
+        return withApplicationOverrides(MapConfig.from(prop));
     }
     
-    @Provides
-    @Singleton
-    @DefaultsLayer
-    SettableConfig getDefaultsConfig() {
-        return new DefaultSettableConfig();
+    @Deprecated
+    public ArchaiusModule withApplicationOverrides(Config config) {
+        applicationOverride = config;
+        return this;
+    }
+  
+    /**
+     * @deprecated  Customize by binding CascadeStrategy in a guice module
+     */
+    @Deprecated
+    public ArchaiusModule withCascadeStrategy(Class<? extends CascadeStrategy> cascadeStrategy) {
+        this.cascadeStrategy = cascadeStrategy;
+        return this;
     }
     
-    @Provides
-    @Singleton
-    @ApplicationLayer 
-    CompositeConfig getApplicationLayer() {
-        return new CompositeConfig();
-    }
-
-    @Provides
-    @Singleton
-    @LibrariesLayer
-    CompositeConfig getLibrariesLayer() {
-        return new CompositeConfig();
-    }
-    
-    @Provides
-    @Singleton
-    @RemoteLayer
-    CompositeConfig getRemoteLayer() {
-        return new CompositeConfig();
-    }
-    
-    @Provides
-    @Singleton
-    @RemoteLayer
-    Config getRemoteLayer(@RemoteLayer CompositeConfig config) {
-        return config;
+    protected void configureArchaius() {
     }
     
     /**
-     * This is the main config loader for the application.
+     * Customize the filename for the main application configuration.  The default filename is
+     * 'application'.  
      * 
-     * @param rootConfig
-     * @param defaultStrategy
-     * @param readers
-     * @return
-     */
-    @Provides
-    @Singleton
-    ConfigLoader getLoader(
-            @RootLayer            Config config,
-            ArchaiusConfiguration archaiusConfiguration,
-            Set<ConfigReader>     readers
-            ) {
-        return DefaultConfigLoader.builder()
-                .withConfigReader(readers)
-                .withDefaultCascadingStrategy(archaiusConfiguration.getCascadeStrategy())
-                .withFailOnFirst(false)
-                .withStrLookup(ConfigStrLookup.from(config))
-                .build();
-    }
-
-    /**
-     * The internal RootLayer is meant only to construct the override hierarchy and 
-     * not to load or initialize any of the layers.  Initialization of layers is done
-     * is getConfig()
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindConfigurationName().toInstance("myconfig");
+     *    }
+     * });
+     * </code>
      * 
-     * @param archaiusConfiguration
-     * @param settableLayer
-     * @param overrideLayer
-     * @param applicationLayer
-     * @param librariesLayer
-     * @param defaultsLayer
-     * @return
-     * @throws ConfigException
+     * @return LinkedBindingBuilder to which the implementation is set
      */
-    @Provides
-    @Singleton
-    @RootLayer
-    Config getInternalConfig(
-            ArchaiusConfiguration archaiusConfiguration,
-            @RuntimeLayer             SettableConfig    settableLayer,
-            @RemoteLayer              Config            overrideLayer,
-            @ApplicationLayer         CompositeConfig   applicationLayer, 
-            @LibrariesLayer           CompositeConfig   librariesLayer,
-            @DefaultsLayer            SettableConfig    defaultsLayer) throws ConfigException {
-        Builder builder = CompositeConfig.builder()
-                .withConfig(RUNTIME_LAYER_NAME,              settableLayer)
-                .withConfig(REMOTE_LAYER_NAME,               overrideLayer)
-                .withConfig(SYSTEM_LAYER_NAME,               SystemConfig.INSTANCE)
-                .withConfig(ENVIRONMENT_LAYER_NAME,          EnvironmentConfig.INSTANCE);
-        
-        if (archaiusConfiguration.getApplicationOverride() != null) {
-            builder.withConfig(APPLICATION_OVERRIDE_LAYER_NAME, archaiusConfiguration.getApplicationOverride());
-        }
-        builder.withConfig(APPLICATION_LAYER_NAME,          applicationLayer)
-                .withConfig(LIBRARIES_LAYER_NAME,            librariesLayer)
-                .withConfig(DEFAULTS_LAYER_NAME,             defaultsLayer)
-                ;
-        
-        return builder.build();
+    protected LinkedBindingBuilder<String> bindConfigurationName() {
+        return bind(String.class).annotatedWith(Names.named(InternalArchaiusModule.CONFIG_NAME_KEY));
     }
     
     /**
-     * All code will ultimately inject Config to gain access to the entire 
-     * configuration hierarchy.  The empty hierarchy is created by @RootLayer
-     * but here we do the actual Configuration initialization which includes,
-     * 1.  Loading application properties
-     * 2.  Loading runtime overrides
-     * 3.  Loading override layer overrides 
+     * Set application overrides.  This is normally done for unit tests.
      * 
-     * @param librariesLayer
-     * @param applicationLayer
-     * @param settableLayer
-     * @param remoteLayer
-     * @return
-     * @throws ConfigException
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
+     *          .put("some_property_to_override", "value")
+     *          .build()
+     *          );
+     *    }
+     * });
+     * </code>
+     * 
+     * @return LinkedBindingBuilder to which the implementation is set
      */
-    @Provides
-    @Singleton
-    public Config getConfig(
-            ArchaiusConfiguration archaiusConfiguration,
-            @RootLayer        Config            config,
-            @ApplicationLayer CompositeConfig   applicationLayer,
-            @RemoteLayer      CompositeConfig   remoteLayer,
-            @RuntimeLayer     SettableConfig    runtimeLayer,
-            @DefaultsLayer    SettableConfig    defaultsLayer,
-                              ConfigLoader      loader
-            ) throws Exception {
-        
-        // First load the single application configuration 
-        CompositeConfig compositeConfig = loader
-                .newLoader()
-                .withCascadeStrategy(NoCascadeStrategy.INSTANCE)
-                .load(archaiusConfiguration.getConfigName());
-        if (compositeConfig != null) {
-            applicationLayer.replaceConfig(APPLICATION_LAYER_NAME, compositeConfig);
-        }
-
-        // Load any defaults from code.  These defaults may be initialized as part of 
-        // conditional module loading provided by Governator.  
-        for (ConfigSeeder provider : archaiusConfiguration.getDefaultsLayerSeeders()) {
-            defaultsLayer.setProperties(provider.get(config));
-        }
- 
-        // load any runtime overrides
-        for (ConfigSeeder provider : archaiusConfiguration.getRuntimeLayerSeeders()) {
-            runtimeLayer.setProperties(provider.get(config));
-        }
- 
-        // Finally, load any cascaded configuration files for the application
-        compositeConfig = loader.newLoader().withCascadeStrategy(archaiusConfiguration.getCascadeStrategy()).load(archaiusConfiguration.getConfigName());
-        if (compositeConfig != null) {
-            applicationLayer.replaceConfig(APPLICATION_LAYER_NAME, compositeConfig);
-        }
-        
-        // Remote layers most likely need some configuration so we load them after application
-        // configuration has been loaded. 
-        for (ConfigSeeder provider : archaiusConfiguration.getRemoteLayerSeeders()) {
-            remoteLayer.addConfig("remote" + idCounter.incrementAndGet(), provider.get(config));
-        }
-        
-        for (ConfigListener listener : archaiusConfiguration.getConfigListeners()) {
-            config.addListener(listener);
-        }
-        
-        return config;
+    protected LinkedBindingBuilder<Config> bindApplicationConfigurationOverride() {
+        return bind(Config.class).annotatedWith(ApplicationOverride.class);
     }
     
     /**
-     * Top level 'fast' property factory which is bound to the root configuration 
-     * @param root
-     * @return
+     * Specify the Config to use for the remote layer. 
+     * 
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindRemoteConfig().to(SomeRemoteConfigImpl.class);
+     *    }
+     * });
+     * </code>
+     * 
+     * @return LinkedBindingBuilder to which the implementation is set
      */
-    @Provides
-    @Singleton
-    PropertyFactory getPropertyFactory(Config root) {
-        return DefaultPropertyFactory.from(root);
+    protected LinkedBindingBuilder<Config> bindRemoteConfig() {
+        return bind(Config.class).annotatedWith(RemoteLayer.class);
+    }
+    
+    /**
+     * Specify the CascadeStrategy used to load environment overrides for application and
+     * library configurations.
+     * 
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindCascadeStrategy().to(MyCascadeStrategy.class);
+     *    }
+     * });
+     * </code>
+     * 
+     * @return LinkedBindingBuilder to which the implementation is set
+     */
+    protected LinkedBindingBuilder<CascadeStrategy> bindCascadeStrategy() {
+        return bind(CascadeStrategy.class);
+    }
+    
+    /**
+     * Add a config to the bottom of the Config hierarchy.  Use this when configuration is added
+     * through code.  Can be called multiple times as ConfigReader is added to a multibinding.
+     * 
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindDefaultConfig().to(MyDefaultConfig.class);
+     *    }
+     * });
+     * </code>
+     * 
+     * @return LinkedBindingBuilder to which the implementation is set
+     */
+    protected LinkedBindingBuilder<Config> bindDefaultConfig() {
+        return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
 
-    @Provides
-    @Singleton
-    ConfigProxyFactory getProxyFactory(ArchaiusConfiguration config, PropertyFactory factory) {
-        return new ConfigProxyFactory(config.getDecoder(), factory);
+    /**
+     * Add support for a new configuration format.  Can be called multiple times to add support for
+     * multiple file format.
+     * 
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindConfigReader().to(SomeConfigFormatReader.class);
+     *    }
+     * });
+     * </code>
+     * 
+     * @return LinkedBindingBuilder to which the implementation is set
+     */
+    protected LinkedBindingBuilder<Config> bindConfigReader() {
+        return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
     
     @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        return ArchaiusModule.class.equals(obj.getClass());
-    }
+    protected final void configure() {
+        install(new InternalArchaiusModule());
+      
+        configureArchaius();
 
-    @Override
-    public int hashCode() {
-        return ArchaiusModule.class.hashCode();
-    }
+        // TODO: Remove in next release
+        if (configName != null) {
+            this.bindConfigurationName().toInstance(configName);
+        }
+        
+        // TODO: Remove in next release
+        if (cascadeStrategy != null) {
+            this.bindCascadeStrategy().to(cascadeStrategy);
+        }
 
+        // TODO: Remove in next release
+        if (applicationOverride != null) {
+            this.bindApplicationConfigurationOverride().toInstance(applicationOverride);
+        }
+    }
 }
