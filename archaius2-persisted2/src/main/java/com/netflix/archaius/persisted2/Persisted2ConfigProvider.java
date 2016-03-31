@@ -125,7 +125,7 @@ public class Persisted2ConfigProvider implements Provider<Config> {
                     .withPredicate(ScopePredicates.fromMap(clientConfig.getScopes()))
                     .build();
             
-            return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS, clientConfig.getSyncInit()));
+            return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
         } catch (Exception e1) {
             throw new RuntimeException(e1);
         }
