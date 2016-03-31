@@ -38,4 +38,12 @@ public interface Persisted2ClientConfig {
      * @return
      */
     String getServiceUrl();
+
+    /**
+     * When set to true, the initial loading of persistent properties has to be successful. Otherwise,
+     * the client will keep re-trying and Archaius initialization will not finish. In turn, the application's
+     * initialization will not finish and application will not start up. This is going to be the default
+     * behavior of persistent client.
+     */
+    boolean getSyncInit();
 }

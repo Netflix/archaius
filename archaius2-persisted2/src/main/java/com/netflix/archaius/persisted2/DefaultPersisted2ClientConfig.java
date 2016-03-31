@@ -16,6 +16,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     private String serviceUrl;
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
+    private boolean syncInit = true;
     
     public DefaultPersisted2ClientConfig withRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;
@@ -72,6 +73,16 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     @Override
     public String getServiceUrl() {
         return this.serviceUrl;
+    }
+
+    public DefaultPersisted2ClientConfig withSyncInit(boolean syncInit) {
+        this.syncInit = syncInit;
+        return this;
+    }
+
+    @Override
+    public boolean getSyncInit() {
+        return this.syncInit;
     }
 
     public DefaultPersisted2ClientConfig withSkipPropsWithExtraScopes(boolean value) {

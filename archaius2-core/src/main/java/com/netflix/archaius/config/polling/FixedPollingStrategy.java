@@ -29,13 +29,12 @@ import com.netflix.archaius.util.ThreadFactories;
 
 public class FixedPollingStrategy implements PollingStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(FixedPollingStrategy.class);
-    public static final int MAX_NUM_RETRIES = 4;
-
+    private final int MAX_NUM_RETRIES = 4;
     private final ScheduledExecutorService executor;
     private final long interval;
     private final TimeUnit units;
     private final boolean syncInit;
-    private int numRetries;
+
 
     public FixedPollingStrategy(long interval, TimeUnit units) {
         this(interval, units, true);
@@ -46,18 +45,18 @@ public class FixedPollingStrategy implements PollingStrategy {
         this.interval = interval;
         this.units    = units;
         this.syncInit = syncInit;
-        numRetries = MAX_NUM_RETRIES;
+
     }
     
     @Override
     public Future<?> execute(final Runnable callback) {
-        while (syncInit) {
+        int numRetries = MAX_NUM_RETRIES;
+        while (true) {
             try {
-                if (numRetries == 0) {
+                if (!syncInit && numRetries == 0) {
                     break;
                 }
                 callback.run();
-                numRetries = MAX_NUM_RETRIES;
                 break;
             } 
             catch (Exception e) {
