@@ -29,32 +29,28 @@ import com.netflix.archaius.util.ThreadFactories;
 
 public class FixedPollingStrategy implements PollingStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(FixedPollingStrategy.class);
-    
     private final ScheduledExecutorService executor;
     private final long interval;
     private final TimeUnit units;
-    private final boolean syncInit;
-    
+
+
     public FixedPollingStrategy(long interval, TimeUnit units) {
-        this(interval, units, true);
-    }
-    
-    public FixedPollingStrategy(long interval, TimeUnit units, boolean syncInit) {
         this.executor = Executors.newSingleThreadScheduledExecutor(ThreadFactories.newNamedDaemonThreadFactory("Archaius-Poller-%d"));
         this.interval = interval;
         this.units    = units;
-        this.syncInit = syncInit;
+
     }
     
     @Override
     public Future<?> execute(final Runnable callback) {
-        while (syncInit) {
+        while (true) {
             try {
                 callback.run();
                 break;
             } 
             catch (Exception e) {
                 try {
+                    LOG.warn("Fail to poll the polling source", e);
                     units.sleep(interval);
                 } 
                 catch (InterruptedException e1) {
