@@ -16,14 +16,15 @@
 package com.netflix.archaius.commons;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationListener;
+import org.apache.commons.lang3.StringUtils;
 
 import com.netflix.archaius.config.AbstractConfig;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
@@ -38,6 +39,12 @@ public class CommonsToConfig extends AbstractConfig {
     
     public CommonsToConfig(AbstractConfiguration config) {
         this.config = config;
+        config.addConfigurationListener(new ConfigurationListener() {
+            @Override
+            public void configurationChanged(ConfigurationEvent event) {
+                notifyConfigUpdated(CommonsToConfig.this);
+            }
+        });
     }
 
     @Override
@@ -52,7 +59,7 @@ public class CommonsToConfig extends AbstractConfig {
 
     @Override
     public Object getRawProperty(String key) {
-        return config.getString(key);
+        return config.getProperty(key);
     }
 
     @Override
@@ -66,7 +73,7 @@ public class CommonsToConfig extends AbstractConfig {
         if (value == null) {
             return notFound(key);
         }
-;
+
         List<T> result = new ArrayList<T>();
         for (Object part : value) {
             if (type.isInstance(part)) {
@@ -89,7 +96,7 @@ public class CommonsToConfig extends AbstractConfig {
         }
         return value;
     }
-
+    
     @Override
     public String getString(String key, String defaultValue) {
         List value = config.getList(key);

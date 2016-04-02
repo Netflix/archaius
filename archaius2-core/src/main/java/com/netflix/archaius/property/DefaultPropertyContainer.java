@@ -207,7 +207,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
                     newValue = resolveCurrent();
                 }
                 catch (Exception e) {
-                    LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
+                    LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e);
                 }
                 
                 if (cache.compareAndSet(currentValue, newValue, cacheVersion, latestVersion)) {
