@@ -15,19 +15,18 @@
  */
 package com.netflix.archaius;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.IoCContainer;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
+import org.apache.commons.lang3.text.StrSubstitutor;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConfigMapper {
     private static final IoCContainer NULL_IOC_CONTAINER = new IoCContainer() {
@@ -43,7 +42,6 @@ public class ConfigMapper {
      * 
      * @param injectee
      * @param config
-     * @param ioc
      * @throws MappingException
      */
     public <T> void mapConfig(T injectee, Config config) throws MappingException {
@@ -111,18 +109,8 @@ public class ConfigMapper {
                 
                 String name = field.getName();
                 Class<?> type = field.getType();
-                Object value = null;
-                if (type.isInterface()) {
-                    // TODO: Do Class.newInstance() if objName is a classname
-                    String objName = config.getString(prefix + name, null);
-                    if (objName != null) {
-                        value = ioc.getInstance(objName, type);
-                    }
-                }
-                else {
-                    value = config.get(type, prefix + name, null);
-                }
-                
+                Object value = getValue(config, ioc, prefix, name, type);
+
                 if (value != null) {
                     try {
                         field.setAccessible(true);
@@ -160,17 +148,8 @@ public class ConfigMapper {
     
                 method.setAccessible(true);
                 Class<?> type = method.getParameterTypes()[0];
-                Object value = null;
-                if (type.isInterface()) {
-                    String objName = config.getString(prefix + name, null);
-                    if (objName != null) {
-                        value = ioc.getInstance(objName, type);
-                    }
-                }
-                else {
-                    value = config.get(type, prefix + name, null);
-                }
-                
+                Object value = getValue(config, ioc, prefix, name, type);
+
                 if (value != null) {
                     try {
                         method.invoke(injectee, value);
@@ -189,5 +168,22 @@ public class ConfigMapper {
                 throw new MappingException("Unable to invoke postConfigure method " + configAnnot.postConfigure(), e);
             }
         }
+    }
+
+    private Object getValue(Config config, IoCContainer ioc, String prefix, String name, Class<?> type) {
+        if (type.isInterface()) {
+            Object rawProperty = config.getRawProperty(prefix + name);
+            if (rawProperty != null && type.isAssignableFrom(rawProperty.getClass())) {
+                return rawProperty;
+            }
+
+            // TODO: Do Class.newInstance() if objName is a classname
+            String objName = config.getString(prefix + name, null);
+            if (objName != null) {
+                return ioc.getInstance(objName, type);
+            }
+        }
+
+        return config.get(type, prefix + name, null);
     }
 }
