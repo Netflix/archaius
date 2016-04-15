@@ -11,7 +11,7 @@ import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.property.DefaultPropertyContainer;
 import com.netflix.archaius.property.ListenerManager;
 
-public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
+public final class DefaultPropertyFactory implements PropertyFactory {
     /**
      * Create a Property factory that is attached to a specific config
      * @param config
@@ -46,7 +46,27 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     
     public DefaultPropertyFactory(Config config) {
         this.config = config;
-        this.config.addListener(this);
+        this.config.addListener(new ConfigListener() {
+            @Override
+            public void onConfigAdded(Config config) {
+                invalidate();
+            }
+
+            @Override
+            public void onConfigRemoved(Config config) {
+                invalidate();
+            }
+
+            @Override
+            public void onConfigUpdated(Config config) {
+                invalidate();
+            }
+
+            @Override
+            public void onError(Throwable error, Config config) {
+                // TODO:
+            }
+        });
     }
 
     @Override
@@ -63,26 +83,6 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         return container;
     }
     
-    @Override
-    public void onConfigAdded(Config config) {
-        invalidate();
-    }
-
-    @Override
-    public void onConfigRemoved(Config config) {
-        invalidate();
-    }
-
-    @Override
-    public void onConfigUpdated(Config config) {
-        invalidate();
-    }
-
-    @Override
-    public void onError(Throwable error, Config config) {
-        // TODO
-    }
-
     public void invalidate() {
         // Incrementing the version will cause all PropertyContainer instances to invalidate their
         // cache on the next call to get

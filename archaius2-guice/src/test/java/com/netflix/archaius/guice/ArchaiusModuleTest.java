@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -341,5 +342,28 @@ public class ArchaiusModuleTest {
         Assert.assertEquals("default", configProxy.getString());
         Assert.assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
         Assert.assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
+    }
+    
+    @Test
+    public void overrideApplicationFromFile() {
+        Injector injector = Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+                this.setApplicationConfigurationOverrideFile("overrides.properties");
+            }
+        });
+        
+        Config config = injector.getInstance(Config.class);
+        Assert.assertEquals("override_value", config.getString("a"));
+    }
+    
+    @Test(expected=CreationException.class)
+    public void failToLoadApplicationOverrideFromFile() {
+        Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+                this.setApplicationConfigurationOverrideFile("overrides_not_exists.properties");
+            }
+        });
     }
 }
