@@ -19,6 +19,8 @@ apply plugin: 'java'
 dependencies {
     compile     project(':archaius2-core')
     compile     'com.typesafe:config:1.2.1'
+
+    testCompile project(':archaius2-guice')
 }
 
 eclipse {
