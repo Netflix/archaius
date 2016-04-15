@@ -42,6 +42,8 @@ public class DynamicTypesafeConfigTest {
         assertEquals(true, appConfig.flag);
         assertEquals(111, appConfig.number.intValue());
         assertEquals(Lists.newArrayList(1, 2), appConfig.list);
+        assertEquals(300, appConfig.size.toBytes());
+        assertEquals(500, appConfig.duration.toMillis());
     }
 
     @Test
@@ -101,6 +103,9 @@ public class DynamicTypesafeConfigTest {
         assertEquals(false, updatedAppConfig.flag);
         assertEquals(222, updatedAppConfig.number.intValue());
         assertEquals(Lists.newArrayList(3, 4), updatedAppConfig.list);
+        // Removed keys in the updated config.
+        assertEquals(null, updatedAppConfig.duration);
+        assertEquals(null, updatedAppConfig.size);
     }
 
     private String getResourceUrl(String resourceName) {
