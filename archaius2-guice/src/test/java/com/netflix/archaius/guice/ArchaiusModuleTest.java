@@ -15,13 +15,7 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.Properties;
-
-import javax.inject.Inject;
-
-import org.junit.Assert;
-import org.junit.Test;
-
+import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -45,6 +39,13 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.inject.Inject;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
 
 public class ArchaiusModuleTest {
     
@@ -63,6 +64,8 @@ public class ArchaiusModuleTest {
         private Boolean bool_value;
         private Double  double_value;
         private Property<Integer> fast_int;
+        private List<Integer> int_list;
+        private Date date;
         private Named named;
         
         public void setStr_value(String value) {
@@ -342,4 +345,27 @@ public class ArchaiusModuleTest {
         Assert.assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
         Assert.assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
     }
+
+    @Test
+    public void testObjectInjection() throws MappingException {
+        Date date = new Date(100);
+        final Config config = MapConfig.builder()
+                .put("env", "prod")
+                .put("prefix-prod.int_list", Lists.newArrayList(1, 2, 3))
+                .put("prefix-prod.date", date)
+                .build();
+
+        Injector injector = Guice.createInjector(
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                        bindApplicationConfigurationOverride().toInstance(config);
+                    }
+                });
+
+        MyServiceConfig serviceConfig = injector.getInstance(MyServiceConfig.class);
+        Assert.assertEquals(Lists.newArrayList(1, 2, 3), serviceConfig.int_list);
+        Assert.assertEquals(date, serviceConfig.date);
+    }
+
 }
