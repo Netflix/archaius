@@ -93,4 +93,8 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         // a dependency graph of replacements.
         listeners.updateAll();
     }
+    
+    protected Config getConfig() {
+        return this.config;
+    }
 }

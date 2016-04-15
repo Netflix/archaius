@@ -124,7 +124,7 @@ public class ConfigProxyFactory {
      *
      * @param <T>
      */
-    private static interface MethodInvoker<T> {
+    public static interface MethodInvoker<T> {
         /**
          * Invoke the method with the provided arguments
          * @param args
@@ -276,7 +276,7 @@ public class ConfigProxyFactory {
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
     }
     
-    private <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, final String defaultValue) {
+    protected <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, final String defaultValue) {
         return new PropertyMethodInvoker<T>(propName) {
             private volatile T cached;
             
@@ -290,7 +290,7 @@ public class ConfigProxyFactory {
         };
     }
     
-    private <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
+    protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
         return new PropertyMethodInvoker<T>(propName) {
             @Override
             public T get() {
@@ -299,7 +299,7 @@ public class ConfigProxyFactory {
         };
     }
 
-    private <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final String defaultValue) {
+    protected <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final String defaultValue) {
         final Property<T> prop = propertyFactory
                 .getProperty(propName)
                 .asType(type, defaultValue != null 
