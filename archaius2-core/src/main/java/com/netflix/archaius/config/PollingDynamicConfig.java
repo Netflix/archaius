@@ -40,7 +40,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
 public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
-    private volatile Map<String, String> current = new HashMap<String, String>();
+    private volatile Map<String, Object> current = new HashMap<String, Object>();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<PollingResponse> reader;
     private final AtomicLong updateCounter = new AtomicLong();
