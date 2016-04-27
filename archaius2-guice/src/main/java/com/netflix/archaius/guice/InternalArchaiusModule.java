@@ -110,7 +110,7 @@ final class InternalArchaiusModule extends AbstractModule {
         Config applicationOverride;
 
         @Inject(optional =true)
-        @OverrideResources
+        @ApplicationOverrideResources
         Set<String> overrideResources;
         
         boolean hasApplicationOverride() {
@@ -170,7 +170,7 @@ final class InternalArchaiusModule extends AbstractModule {
             }
         }
 
-        if(params.hasOverrideResources()) {
+        if (params.hasOverrideResources()) {
             for (String resourceName : params.overrideResources) {
                 applicationLayer.addConfig(resourceName, loader.newLoader().load(resourceName));
             }

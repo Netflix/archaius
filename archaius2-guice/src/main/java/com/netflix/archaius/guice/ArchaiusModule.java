@@ -243,7 +243,7 @@ public class ArchaiusModule extends AbstractModule {
      * @return
      */
     protected void bindApplicationConfigurationOverrideResource(String overrideResource)  {
-        Multibinder.newSetBinder(binder(), String.class, OverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
+        Multibinder.newSetBinder(binder(), String.class, ApplicationOverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
     }
 
     @Override
