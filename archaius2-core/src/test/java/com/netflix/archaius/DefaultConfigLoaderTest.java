@@ -1,5 +1,6 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.config.CompositeConfig;
@@ -53,5 +54,14 @@ public class DefaultConfigLoaderTest {
 
         application.replaceConfig("application", loader.newLoader().load("application"));
         Assert.assertTrue(config.getBoolean("application.loaded"));
+    }
+
+    @Test
+    public void testDefaultLoaderBehavior() throws ConfigException {
+        Config applicationConfig = DefaultConfigLoader.builder().build().newLoader().load("application");
+        Config applicationProdConfig = DefaultConfigLoader.builder().build().newLoader().load("application-prod");
+        ((CompositeConfig) applicationConfig).addConfig("prod", applicationProdConfig);
+        Assert.assertEquals(applicationConfig.getString("application.list2"), "a,b");
+        Assert.assertEquals(applicationConfig.getBoolean("application-prod.loaded"), true);
     }
 }
