@@ -26,10 +26,7 @@ import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.inject.DefaultLayer;
-import com.netflix.archaius.api.inject.LibrariesLayer;
-import com.netflix.archaius.api.inject.RemoteLayer;
-import com.netflix.archaius.api.inject.RuntimeLayer;
+import com.netflix.archaius.api.inject.*;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
@@ -111,6 +108,10 @@ final class InternalArchaiusModule extends AbstractModule {
         @Inject(optional=true)
         @ApplicationOverride
         Config applicationOverride;
+
+        @Inject(optional =true)
+        @ApplicationOverrideResources
+        Set<String> overrideResources;
         
         boolean hasApplicationOverride() {
             return applicationOverride != null;
@@ -122,6 +123,10 @@ final class InternalArchaiusModule extends AbstractModule {
 
         boolean hasRemoteLayer() {
             return remoteLayerProvider != null;
+        }
+
+        boolean hasOverrideResources() {
+            return overrideResources != null;
         }
         
         String getConfigName() {
@@ -164,7 +169,13 @@ final class InternalArchaiusModule extends AbstractModule {
                 defaultLayer.addConfig(getUniqueName("default"), c);
             }
         }
-        
+
+        if (params.hasOverrideResources()) {
+            for (String resourceName : params.overrideResources) {
+                applicationLayer.addConfig(resourceName, loader.newLoader().load(resourceName));
+            }
+        }
+
         if (params.hasApplicationOverride()) {
             applicationLayer.addConfig(getUniqueName("override"), params.applicationOverride);
         }
