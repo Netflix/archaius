@@ -250,35 +250,37 @@ public class DynamoDbDeploymentContextTableCache extends AbstractDynamoDbConfigu
      * Scan the table in dynamo and create a map with the results.  In this case the map has a complex type as the value,
      * so that Deployment Context is taken into account.
      *
-     * @param table
+     * @param tables
      * @return
      */
     @Override
-    protected Map<String, PropertyWithDeploymentContext> loadPropertiesFromTable(String table) {
+    protected Map<String, PropertyWithDeploymentContext> loadPropertiesFromTable(String tables) {
         Map<String, PropertyWithDeploymentContext> propertyMap = new HashMap<String, PropertyWithDeploymentContext>();
-        Map<String, AttributeValue> lastKeysEvaluated = null;
-        do {
-            ScanRequest scanRequest = new ScanRequest()
-                    .withTableName(table)
-                    .withExclusiveStartKey(lastKeysEvaluated);
-            ScanResult result = dbScanWithThroughputBackOff(scanRequest);
-            for (Map<String, AttributeValue> item : result.getItems()) {
-                String keyVal = item.get(keyAttributeName.get()).getS();
+        for (String table : tables.split(",")) {
+            Map<String, AttributeValue> lastKeysEvaluated = null;
+            do {
+                ScanRequest scanRequest = new ScanRequest()
+                        .withTableName(table)
+                        .withExclusiveStartKey(lastKeysEvaluated);
+                ScanResult result = dbScanWithThroughputBackOff(scanRequest);
+                for (Map<String, AttributeValue> item : result.getItems()) {
+                    String keyVal = item.get(keyAttributeName.get()).getS();
 
-                //Need to deal with the fact that these attributes might not exist
-                DeploymentContext.ContextKey contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
-                String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
-                String key = keyVal + ";" + contextKey + ";" + contextVal;
-                propertyMap.put(key,
-                        new PropertyWithDeploymentContext(
-                                contextKey,
-                                contextVal,
-                                keyVal,
-                                item.get(valueAttributeName.get()).getS()
-                        ));
-            }
-            lastKeysEvaluated = result.getLastEvaluatedKey();
-        } while (lastKeysEvaluated != null);
+                    //Need to deal with the fact that these attributes might not exist
+                    DeploymentContext.ContextKey contextKey = item.containsKey(contextKeyAttributeName.get()) ? DeploymentContext.ContextKey.valueOf(item.get(contextKeyAttributeName.get()).getS()) : null;
+                    String contextVal = item.containsKey(contextValueAttributeName.get()) ? item.get(contextValueAttributeName.get()).getS() : null;
+                    String key = keyVal + ";" + contextKey + ";" + contextVal;
+                    propertyMap.put(key,
+                            new PropertyWithDeploymentContext(
+                                    contextKey,
+                                    contextVal,
+                                    keyVal,
+                                    item.get(valueAttributeName.get()).getS()
+                            ));
+                }
+                lastKeysEvaluated = result.getLastEvaluatedKey();
+            } while (lastKeysEvaluated != null);
+        }
         return propertyMap;
     }
 
