@@ -21,7 +21,7 @@ import com.netflix.archaius.api.Config;
  */
 @Documented
 @Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.TYPE, ElementType.METHOD})
 public @interface TestPropertyOverride {
     
     /**
@@ -35,7 +35,7 @@ public @interface TestPropertyOverride {
     
     /***
      * Use a file location to create properties.
-     * ex. {@literal @}TestPropertyOverride(locations={"unittest.properties"})
+     * ex. {@literal @}TestPropertyOverride(propertyFiles={"unittest.properties"})
      * 
      * These properties will be overwritten by those created from the
      * value attribute in the event of conflicts. 
