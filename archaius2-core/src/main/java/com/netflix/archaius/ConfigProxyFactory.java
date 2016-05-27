@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 
@@ -238,13 +239,18 @@ public class ConfigProxyFactory {
     }
     
     @SuppressWarnings("unchecked")
-    private <T> MethodInvoker<T> createMapProperty(String propName, ParameterizedType type, boolean immutable) {
-        Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
+    private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable) {
+        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
         Map<String, Object> map = new ReadOnlyMap<String, Object>() {
             Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
             @Override
-            public Object get(Object key) {
-                return lookup.computeIfAbsent((String) key, (k) -> newProxy(valueType, propName + "." + key, immutable));
+            public Object get(final Object key) {
+                return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
+                    @Override
+                    public Object apply(String key) {
+                        return newProxy(valueType, propName + "." + key, immutable);
+                    }
+                });
             }
         };
         
