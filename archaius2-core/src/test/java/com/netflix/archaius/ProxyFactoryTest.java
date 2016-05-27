@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
+import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import com.netflix.archaius.api.Config;
@@ -179,5 +181,29 @@ public class ProxyFactoryTest {
         Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
         Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
         Assert.assertEquals("default", withArgs.getProperty("a", 2));
+    }
+    
+    public static interface ConfigWithMap {
+        Map<String, SubConfig> getChildren();
+    }
+    
+    @Test
+    public void testWithMap() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("children.1.str", "value1");
+        config.setProperty("children.2.str", "value2");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithMap withArgs = proxy.newProxy(ConfigWithMap.class);
+        
+        SubConfig sub1 = withArgs.getChildren().get("1");
+        SubConfig sub2 = withArgs.getChildren().get("2");
+
+        Assert.assertEquals("value1", sub1.str());
+        Assert.assertEquals("value2", sub2.str());
+        
+        config.setProperty("children.2.str", "value3");
+        Assert.assertEquals("value3", sub2.str());
     }
 }
