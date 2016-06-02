@@ -10,23 +10,99 @@ To enable Archaius2 in Guice just add the ArchaiusModule when creating the injec
 Injector injector = Guice.createInjector(new ArchaiusModule());
 ```
 
-ArchaiusModule specifies a complete set of default bindings to enable all archaius features.  The default bindings  may be replaced using Guice's Modules.override() mechanims.
+ArchaiusModule specifies a complete set of default bindings to enable all archaius features.  These features may be customized by calling any of the custom bind methods in ArchaiusModule#configurationArchaius()
 
 ```java
-Injector injector = Guice.createInjector(Modules
-    .override(new ArchaiusModule()),
-    .with(new AbstractModule() {
-        void configure() {
-           // Load 'config.properties' instead of 'application.properties'
-           bind(String.class).annotatedWith(ApplicationLayer.class).to("config");
-           // Use MyCascadeStrategy instead of the default CascadeStrategy.
-           bind(CascadeStrategy.class).to(MyCascadeStrategy.class);
-        }
-    });
-    
+Injector injector = Guice.createInjector(new ArchaiusModule() {
+    @Override
+    protected void configureArchaius() {
+        bindConfigurationName().toInstance("foo"); // Use this instead of 'application'.properties
+
+        bindApplicationConfigurationOverride().toInstance(MapConfig.builder()
+            .put("some.property", "overridevalue")
+            .build);
+            
+        bindRemoteConfig().to(MyRemoteConfigurationLayerImplementation.class);
+        
+        bindCascadeStrategy().to(MyApplicationCascadeStrategy.class);
+    }
+});
 ```
 
-Once installed the following types may be injected
+## Configuration Interface
+
+We encourage users of archaius to capture configuration in a Java interface.  You can then either implement that interface and read configuration directly from an injected Config or use the ConfigurationProxyFactory to let Archaius create a Java Proxy that is bound to configuration.  The main benefit to this approach is the decoupling of your code from a configuration implementation.  By injecting a separate configuration class into your business logic class you also avoid the need for @PostConstruct as the configuration is fully loaded and bound in the constructor where it is injected. 
+
+A configuration class would like like this,
+
+```java
+@Configuration(prefix="foo")
+interface FooConfiguration {
+   int getTimeout();     // maps to "foo.timeout"
+   
+   String getName();     // maps to "foo.name"
+}
+```
+
+To create a proxy instance, 
+```java
+public class FooModule extends AbstractModule {
+    @Provides
+    FooConfiguration getFooConfiguration(ConfigProxyFactory proxyFactory) {
+        proxyFactory.newProxy(FooConfiguration.class);
+    }
+}
+```
+
+The configuration is used like this,
+```java
+@Singleton
+public class Foo {
+    @Inject
+    public Foo(FooConfiguration config) {
+        this.timeout = timeout;
+    }
+}
+```
+
+To override the prefix in @Configuration or provide a prefix when there is no @Configuration annotation simply pass in a prefix to the call to newProxy.
+
+```java
+public class FooModule extends AbstractModule {
+    @Provides
+    FooConfiguration getFooConfiguration(ConfigProxyFactory proxyFactory) {
+        proxyFactory.newProxy(FooConfiguration.class, "otherprefix.foo");
+    }
+}
+```
+
+By default all properties are dynamic and can therefore change from call to call.  To make the configuration static set the immutable attributes of @Configuration to true.
+
+## Configuration binding
+
+Configuration binding is triggered by annotating a class with @Configuration.
+
+```java
+@Configuration(prefix="serviceA")
+public class ServiceAConfiguration {
+    // Can inject configuration into field
+    private Integer timeout;
+    
+    // Can inject configuration into setter methods
+    public void setTimeout(Integer timeout) {
+    }
+    
+    // Can inject into withXXX methods used by builders
+    public void withTimeout(Integer timeout) {
+    }
+}
+```
+
+```properties
+serviceA.timeout=10000
+```
+
+## Injection Archaius Components
 
 ### Config
 
@@ -178,31 +254,3 @@ public static class MyCascadingStrategy extends ConcatCascadeStrategy {
     }
 }
 ```
-
-## Configuration binding
-
-Configuration binding is triggered by annotating a class with @Configuration.
-
-```java
-@Configuration(prefix="serviceA")
-public class ServiceAConfiguration {
-    // Can inject configuration into field
-    private Integer timeout;
-    
-    // Can inject configuration into setter methods
-    public void setTimeout(Integer timeout) {
-    }
-    
-    // Can inject into withXXX methods used by builders
-    public void withTimeout(Integer timeout) {
-    }
-}
-```
-
-```properties
-serviceA.timeout=10000
-```
-
-## Configuration based named injection
-
-TBD
