@@ -49,7 +49,7 @@ To create a proxy instance,
 public class FooModule extends AbstractModule {
     @Provides
     FooConfiguration getFooConfiguration(ConfigProxyFactory proxyFactory) {
-        proxyFactory..newProxy(FooConfiguration.class);
+        proxyFactory.newProxy(FooConfiguration.class);
     }
 }
 ```
@@ -71,7 +71,7 @@ To override the prefix in @Configuration or provide a prefix when there is no @C
 public class FooModule extends AbstractModule {
     @Provides
     FooConfiguration getFooConfiguration(ConfigProxyFactory proxyFactory) {
-        proxyFactory..newProxy(FooConfiguration.class, "otherprefix.foo");
+        proxyFactory.newProxy(FooConfiguration.class, "otherprefix.foo");
     }
 }
 ```
