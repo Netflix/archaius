@@ -2,6 +2,7 @@ package com.netflix.archaius.test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -35,8 +36,8 @@ import com.netflix.archaius.config.DefaultSettableConfig;
  * 
  * See {@link TestPropertyOverride} for additional usage information.
  */
-public class Archaius2TestConfig implements TestRule, Config, SettableConfig {
-    private  TestCompositeConfig testCompositeConfig;
+public class Archaius2TestConfig implements TestRule, SettableConfig {
+    private TestCompositeConfig testCompositeConfig;
     private final TestPropertyOverrideAnnotationReader annotationReader = new TestPropertyOverrideAnnotationReader();
 
     public Statement apply(final Statement base, final Description description) {
@@ -45,7 +46,9 @@ public class Archaius2TestConfig implements TestRule, Config, SettableConfig {
             public void evaluate() throws Throwable {
                 SettableConfig classLevelProperties = new DefaultSettableConfig();
                 SettableConfig methodLevelProperties = new DefaultSettableConfig();
-                for(Class<?> parentClass : ClassUtils.getAllSuperclasses(description.getTestClass())) {
+                List<Class<?>> allSuperclasses = ClassUtils.getAllSuperclasses(description.getTestClass());
+                Collections.reverse(allSuperclasses);
+                for(Class<?> parentClass : allSuperclasses) {
                     classLevelProperties.setProperties(annotationReader.getPropertiesForAnnotation(parentClass.getAnnotation(TestPropertyOverride.class)));
                 }               
                 classLevelProperties.setProperties(annotationReader.getPropertiesForAnnotation(description.getTestClass().getAnnotation(TestPropertyOverride.class)));

@@ -29,8 +29,12 @@ public class TestCompositeConfig extends DefaultCompositeConfig implements Setta
     }
     
     public void resetForTest() {
-        clear((SettableConfig) getConfig(METHOD_LEVEL_LAYER_NAME));
-        clear((SettableConfig) getConfig(RUNTIME_LAYER_NAME));
+        clear(getSettableConfig(METHOD_LEVEL_LAYER_NAME));
+        clear(getSettableConfig(RUNTIME_LAYER_NAME));
+    }
+    
+    private SettableConfig getSettableConfig(String configName) {
+        return (SettableConfig) super.getConfig(configName);
     }
     
     private void clear(SettableConfig config) {
@@ -42,21 +46,21 @@ public class TestCompositeConfig extends DefaultCompositeConfig implements Setta
 
     @Override
     public void setProperties(Config config) {
-        ((SettableConfig) getConfig(RUNTIME_LAYER_NAME)).setProperties(config);
+        getSettableConfig(RUNTIME_LAYER_NAME).setProperties(config);
     }
 
     @Override
     public void setProperties(Properties properties) {
-        ((SettableConfig) getConfig(RUNTIME_LAYER_NAME)).setProperties(properties);
+        getSettableConfig(RUNTIME_LAYER_NAME).setProperties(properties);
     }
 
     @Override
     public <T> void setProperty(String propName, T propValue) {
-        ((SettableConfig) getConfig(RUNTIME_LAYER_NAME)).setProperty(propName, propValue);
+        getSettableConfig(RUNTIME_LAYER_NAME).setProperty(propName, propValue);
     }
 
     @Override
     public void clearProperty(String propName) {
-        ((SettableConfig) getConfig(RUNTIME_LAYER_NAME)).clearProperty(propName);
+        getSettableConfig(RUNTIME_LAYER_NAME).clearProperty(propName);
     }
 }
