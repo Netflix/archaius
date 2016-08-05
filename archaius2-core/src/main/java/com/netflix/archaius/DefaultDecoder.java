@@ -15,15 +15,11 @@
  */
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.exceptions.ParseException;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.LongBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,6 +38,9 @@ import java.util.function.Function;
 
 import javax.inject.Singleton;
 import javax.xml.bind.DatatypeConverter;
+
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.exceptions.ParseException;
 
 /**
  * @author Spencer Gibb
