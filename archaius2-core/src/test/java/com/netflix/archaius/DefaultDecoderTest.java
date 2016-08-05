@@ -16,6 +16,23 @@
 package com.netflix.archaius;
 
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.ZonedDateTime;
+import java.util.BitSet;
+import java.util.Currency;
+import java.util.Date;
+
+import javax.xml.bind.DatatypeConverter;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,5 +47,23 @@ public class DefaultDecoderTest {
         Assert.assertEquals(true, flag);
         int int_value = decoder.decode(int.class, "123");
         Assert.assertEquals(123, int_value);
+
+        Assert.assertEquals(Byte.valueOf(Byte.MAX_VALUE), decoder.decode(Byte.class, String.valueOf(Byte.MAX_VALUE)));
+        Assert.assertEquals(Short.valueOf(Short.MAX_VALUE), decoder.decode(Short.class, String.valueOf(Short.MAX_VALUE)));
+        Assert.assertEquals(BigInteger.valueOf(Long.MAX_VALUE), decoder.decode(BigInteger.class, String.valueOf(Long.MAX_VALUE)));
+        Assert.assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), decoder.decode(BigDecimal.class, String.valueOf(Double.MAX_VALUE)));
+
+        Assert.assertEquals(Duration.parse("PT20M30S"), decoder.decode(Duration.class, "PT20M30S"));
+        Assert.assertEquals(Period.of(1, 2, 25), decoder.decode(Period.class, "P1Y2M3W4D"));
+        Assert.assertEquals(OffsetDateTime.parse("2016-08-03T10:15:30+07:00"), decoder.decode(OffsetDateTime.class, "2016-08-03T10:15:30+07:00"));
+        Assert.assertEquals(OffsetTime.parse("10:15:30+18:00"), decoder.decode(OffsetTime.class, "10:15:30+18:00"));
+        Assert.assertEquals(ZonedDateTime.parse("2016-08-03T10:15:30+01:00[Europe/Paris]"), decoder.decode(ZonedDateTime.class, "2016-08-03T10:15:30+01:00[Europe/Paris]"));
+        Assert.assertEquals(LocalDate.parse("2016-08-03"), decoder.decode(LocalDate.class, "2016-08-03"));
+        Assert.assertEquals(LocalTime.parse("10:15:30"), decoder.decode(LocalTime.class, "10:15:30"));
+        Assert.assertEquals(Instant.from(OffsetDateTime.parse("2016-08-03T10:15:30+07:00")), decoder.decode(Instant.class, "2016-08-03T10:15:30+07:00"));
+        Date newDate = new Date();
+        Assert.assertEquals(newDate, decoder.decode(Date.class, String.valueOf(newDate.getTime())));
+        Assert.assertEquals(Currency.getInstance("USD"), decoder.decode(Currency.class, "USD"));
+        Assert.assertEquals(BitSet.valueOf(DatatypeConverter.parseHexBinary("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
     }
 }

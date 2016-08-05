@@ -23,16 +23,77 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.LongBuffer;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.ZonedDateTime;
+import java.util.BitSet;
+import java.util.Currency;
+import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 import javax.inject.Singleton;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * @author Spencer Gibb
  */
 @Singleton
 public class DefaultDecoder implements Decoder {
+    private Map<Class<?>, Function<String, ?>> decoderRegistry;
 
     public static DefaultDecoder INSTANCE = new DefaultDecoder();
+    
+    {
+        decoderRegistry = new IdentityHashMap<>(75);
+        decoderRegistry.put(String.class, v->v);
+        decoderRegistry.put(boolean.class, v->{
+            if (v.equalsIgnoreCase("true") || v.equalsIgnoreCase("yes") || v.equalsIgnoreCase("on")) {
+                return Boolean.TRUE;
+            }
+            else if (v.equalsIgnoreCase("false") || v.equalsIgnoreCase("no") || v.equalsIgnoreCase("off")) {
+                return Boolean.FALSE;
+            }
+            throw new ParseException("Error parsing value '" + v, new Exception("Expected one of [true, yes, on, false, no, off]"));
+
+        });
+        decoderRegistry.put(Boolean.class, decoderRegistry.get(boolean.class));
+        decoderRegistry.put(Integer.class, Integer::valueOf);
+        decoderRegistry.put(int.class, Integer::valueOf);
+        decoderRegistry.put(long.class, Long::valueOf);
+        decoderRegistry.put(Long.class, Long::valueOf);
+        decoderRegistry.put(short.class, Short::valueOf);
+        decoderRegistry.put(Short.class, Short::valueOf);
+        decoderRegistry.put(byte.class, Byte::valueOf);
+        decoderRegistry.put(Byte.class, Byte::valueOf);
+        decoderRegistry.put(double.class, Double::valueOf);
+        decoderRegistry.put(Double.class, Double::valueOf);
+        decoderRegistry.put(float.class, Float::valueOf);
+        decoderRegistry.put(Float.class, Float::valueOf);
+        decoderRegistry.put(BigInteger.class, BigInteger::new);
+        decoderRegistry.put(BigDecimal.class, BigDecimal::new);
+        decoderRegistry.put(Duration.class, Duration::parse);
+        decoderRegistry.put(Period.class, Period::parse);
+        decoderRegistry.put(LocalDateTime.class, LocalDateTime::parse);
+        decoderRegistry.put(LocalDate.class, LocalDate::parse);
+        decoderRegistry.put(LocalTime.class, LocalTime::parse);
+        decoderRegistry.put(OffsetDateTime.class, OffsetDateTime::parse);
+        decoderRegistry.put(OffsetTime.class, OffsetTime::parse);
+        decoderRegistry.put(ZonedDateTime.class, ZonedDateTime::parse);
+        decoderRegistry.put(Instant.class, v->Instant.from(OffsetDateTime.parse(v)));
+        decoderRegistry.put(Date.class, v->new Date(Long.parseLong(v)));
+        decoderRegistry.put(Currency.class, Currency::getInstance);
+        decoderRegistry.put(BitSet.class, v->BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
+    }
+    
     
     @SuppressWarnings("unchecked")
     @Override
@@ -40,41 +101,11 @@ public class DefaultDecoder implements Decoder {
         if (encoded == null) {
             return null;
         }
-        // Try primitives first
-        if (type.equals(String.class)) {
-            return (T) encoded;
+        if (decoderRegistry.containsKey(type)) {
+            return (T)decoderRegistry.get(type).apply(encoded);
         }
-        else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-                if (encoded.equalsIgnoreCase("true") || encoded.equalsIgnoreCase("yes") || encoded.equalsIgnoreCase("on")) {
-                    return (T) Boolean.TRUE;
-                }
-                else if (encoded.equalsIgnoreCase("false") || encoded.equalsIgnoreCase("no") || encoded.equalsIgnoreCase("off")) {
-                    return (T) Boolean.FALSE;
-                }
-                throw new ParseException("Error parsing value '" + encoded, new Exception("Expected one of [true, yes, on, false, no, off]"));
-        }
-        else if (type.equals(int.class) || type.equals(Integer.class)) {
-            return (T) Integer.valueOf(encoded);
-        }
-        else if (type.equals(long.class) || type.equals(Long.class)) {
-            return (T) Long.valueOf(encoded);
-        }
-        else if (type.equals(short.class) || type.equals(Short.class)) {
-            return (T) Short.valueOf(encoded);
-        }
-        else if (type.equals(double.class) || type.equals(Double.class)) {
-            return (T) Double.valueOf(encoded);
-        }
-        else if (type.equals(float.class) || type.equals(Float.class)) {
-            return (T) Float.valueOf(encoded);
-        }
-        else if (type.equals(BigInteger.class)) {
-            return (T) new BigInteger(encoded);
-        }
-        else if (type.equals(BigDecimal.class)) {
-            return (T) new BigDecimal(encoded);
-        }
-        else if (type.isArray()) {
+        
+        if (type.isArray()) {
             String[] elements = encoded.split(",");
             T[] ar = (T[]) Array.newInstance(type.getComponentType(), elements.length);
             for (int i = 0; i < elements.length; i++) {
