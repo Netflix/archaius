@@ -34,6 +34,8 @@ import java.util.Currency;
 import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import javax.inject.Singleton;
@@ -79,6 +81,8 @@ public class DefaultDecoder implements Decoder {
         decoderRegistry.put(Float.class, Float::valueOf);
         decoderRegistry.put(BigInteger.class, BigInteger::new);
         decoderRegistry.put(BigDecimal.class, BigDecimal::new);
+        decoderRegistry.put(AtomicInteger.class, s->new AtomicInteger(Integer.parseInt(s)));
+        decoderRegistry.put(AtomicLong.class, s->new AtomicLong(Long.parseLong(s)));
         decoderRegistry.put(Duration.class, Duration::parse);
         decoderRegistry.put(Period.class, Period::parse);
         decoderRegistry.put(LocalDateTime.class, LocalDateTime::parse);
