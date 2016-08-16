@@ -1,5 +1,17 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.LibrariesConfig;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
+
+import org.apache.commons.lang3.text.StrSubstitutor;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -12,16 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import javax.inject.Inject;
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -72,20 +74,14 @@ public class ConfigProxyFactory {
     private final Decoder decoder;
     private final PropertyFactory propertyFactory;
     private final Config config;
+    private final LibrariesConfig libraries;
     
     @Inject
-    public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
+    public ConfigProxyFactory(LibrariesConfig libraries, Config config, Decoder decoder, PropertyFactory factory) {
+        this.libraries = libraries;
         this.decoder = decoder;
         this.config = config;
         this.propertyFactory = factory;
-    }
-    
-    public ConfigProxyFactory(Config config, PropertyFactory factory) {
-        this(config, DefaultDecoder.INSTANCE, factory);
-    }
-    
-    public ConfigProxyFactory(Config config) {
-        this(config, DefaultPropertyFactory.from(config));
     }
     
     /**
@@ -158,6 +154,10 @@ public class ConfigProxyFactory {
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
+        ConfigurationSource source = type.getAnnotation(ConfigurationSource.class);
+        if (source != null) {
+            libraries.load(source);
+        }
         Configuration annot = type.getAnnotation(Configuration.class);
         
         final String prefix = derivePrefix(annot, initialPrefix);

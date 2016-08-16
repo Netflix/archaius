@@ -4,21 +4,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.PropertyFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
+import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.api.config.SettableConfig;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -99,7 +99,7 @@ public class ProxyFactoryTest {
         config.setProperty("valueWithoutDefault2", "default2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), factory);
         ImmutableConfig c = proxy.newProxy(ImmutableConfig.class);
         
         assertThat(c.getValueWithDefault(), equalTo("default"));
@@ -115,7 +115,7 @@ public class ProxyFactoryTest {
         Config config = EmptyConfig.INSTANCE;
 
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class);
         
@@ -140,7 +140,7 @@ public class ProxyFactoryTest {
         config.setProperty("prefix.baseBoolean", true);
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class, "prefix");
         
@@ -175,7 +175,7 @@ public class ProxyFactoryTest {
         config.setProperty("b.abc.2", "value2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
         Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
@@ -194,7 +194,7 @@ public class ProxyFactoryTest {
         config.setProperty("children.2.str", "value2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), factory);
         ConfigWithMap withArgs = proxy.newProxy(ConfigWithMap.class);
         
         SubConfig sub1 = withArgs.getChildren().get("1");

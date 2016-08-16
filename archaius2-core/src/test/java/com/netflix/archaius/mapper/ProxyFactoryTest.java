@@ -19,18 +19,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.util.Properties;
+import com.netflix.archaius.ConfigProxyFactory;
+import com.netflix.archaius.DefaultPropertyFactory;
+import com.netflix.archaius.NoLibrariesConfig;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.EmptyConfig;
+import com.netflix.archaius.config.MapConfig;
 
 import org.junit.Test;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
+import java.util.Properties;
 
 public class ProxyFactoryTest {
     public static interface MyConfigWithInterpolation {
@@ -166,7 +167,7 @@ public class ProxyFactoryTest {
         props.put("replacement",     "replaced");
         Config config = MapConfig.from(props);
 
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfigWithInterpolation c = proxy.newProxy(MyConfigWithInterpolation.class);
 
         assertThat((long)c.getLong(),    equalTo(1L));
@@ -198,7 +199,7 @@ public class ProxyFactoryTest {
     public void testProxyWithDefaults() throws ConfigException{
         Config config = EmptyConfig.INSTANCE;
         
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
+        ConfigProxyFactory proxy = new ConfigProxyFactory(new NoLibrariesConfig(), config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfig c = proxy.newProxy(MyConfig.class);
         
         assertThat(c.getInteger(),      equalTo(123));
