@@ -206,4 +206,29 @@ public class ProxyFactoryTest {
         config.setProperty("children.2.str", "value3");
         Assert.assertEquals("value3", sub2.str());
     }
+    
+    public static interface ConfigWithLongMap {
+        Map<String, Long> getChildren();
+    }
+    
+    @Test
+    public void testWithLongMap() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("children.1", "123");
+        config.setProperty("children.2", "456");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithLongMap withArgs = proxy.newProxy(ConfigWithLongMap.class);
+        
+        long sub1 = withArgs.getChildren().get("1");
+        long sub2 = withArgs.getChildren().get("2");
+
+        Assert.assertEquals(123, sub1);
+        Assert.assertEquals(456, sub2);
+        
+        config.setProperty("children.2", "789");
+        sub2 = withArgs.getChildren().get("2");
+        Assert.assertEquals(789, sub2);
+    }
 }
