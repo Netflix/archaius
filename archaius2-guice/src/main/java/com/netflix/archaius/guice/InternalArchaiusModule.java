@@ -16,7 +16,6 @@ import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.LibrariesConfig;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
@@ -70,7 +69,6 @@ final class InternalArchaiusModule extends AbstractModule {
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bind(ConfigurationInjectingListener.class).toInstance(listener);
-        bind(LibrariesConfig.class).toInstance(listener);
         requestStaticInjection(ConfigurationInjectingListener.class);
         bindListener(Matchers.any(), listener);
         
@@ -240,8 +238,8 @@ final class InternalArchaiusModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConfigProxyFactory getProxyFactory(LibrariesConfig libraries, Config config, Decoder decoder, PropertyFactory factory) {
-        return new ConfigProxyFactory(libraries, config, decoder, factory);
+    ConfigProxyFactory getProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
+        return new ConfigProxyFactory(config, decoder, factory);
     }
     
     @Override

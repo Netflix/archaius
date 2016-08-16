@@ -3,17 +3,13 @@ package com.netflix.archaius.guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
-import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
-import com.google.inject.spi.InjectionListener;
-import com.google.inject.spi.TypeEncounter;
-import com.google.inject.spi.TypeListener;
+import com.google.inject.spi.ProvisionListener;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.IoCContainer;
-import com.netflix.archaius.api.LibrariesConfig;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.config.CompositeConfig;
@@ -26,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
-public class ConfigurationInjectingListener implements TypeListener, LibrariesConfig {
+public class ConfigurationInjectingListener implements ProvisionListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
     
     @Inject
@@ -56,20 +52,34 @@ public class ConfigurationInjectingListener implements TypeListener, LibrariesCo
     private ConfigMapper mapper = new ConfigMapper();
     
     @Override
-    public <I> void hear(TypeLiteral<I> typeLiteral, final TypeEncounter<I> encounter) {
-        Class<?> clazz = typeLiteral.getRawType();
+    public <T> void onProvision(ProvisionInvocation<T> provision) {
+        if (injector == null) {
+            LOG.warn("Can't inject configuration until ConfigurationInjectingListener has been initialized");
+            return;
+        }
+        
+        Class<?> clazz = provision.getBinding().getKey().getTypeLiteral().getRawType();
         
         //
         // Configuration Loading
         //
-        final ConfigurationSource source = clazz.getAnnotation(ConfigurationSource.class);
+        final ConfigurationSource source = clazz.getDeclaredAnnotation(ConfigurationSource.class);
         if (source != null) {
-            encounter.register(new InjectionListener<I>() {
-                @Override
-                public void afterInjection(I injectee) {
-                    load(source);
+            CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
+                    ? injector.getInstance(source.cascading()) : getCascadeStrategy();
+
+            for (String resourceName : source.value()) {
+                LOG.debug("Trying to loading configuration resource {}", resourceName);
+                try {
+                    CompositeConfig loadedConfig = loader
+                        .newLoader()
+                        .withCascadeStrategy(strategy)
+                        .load(resourceName);
+                    libraries.addConfig(resourceName, loadedConfig);
+                } catch (ConfigException e) {
+                    throw new ProvisionException("Unable to load configuration for " + resourceName, e);
                 }
-            });
+            }
         }
         
         //
@@ -77,54 +87,17 @@ public class ConfigurationInjectingListener implements TypeListener, LibrariesCo
         //
         Configuration configAnnot = clazz.getAnnotation(Configuration.class);
         if (configAnnot != null) {
-            encounter.register(new InjectionListener<I>() {
-                @Override
-                public void afterInjection(I injectee) {
-                    if (injector == null) {
-                        LOG.warn("Can't inject configuration until ConfigurationInjectingListener has been initialized");
-                        return;
+            try {
+                mapper.mapConfig(provision.provision(), config, new IoCContainer() {
+                    @Override
+                    public <T> T getInstance(String name, Class<T> type) {
+                        return injector.getInstance(Key.get(type, Names.named(name)));
                     }
-                    
-                    try {
-                        mapper.mapConfig(injectee, config, new IoCContainer() {
-                            @Override
-                            public <T> T getInstance(String name, Class<T> type) {
-                                return injector.getInstance(Key.get(type, Names.named(name)));
-                            }
-                        });
-                    }
-                    catch (Exception e) {
-                        throw new ProvisionException("Unable to bind configuration to " + injectee.getClass(), e);
-                    }
-                }
-            });
-        }        
-    }
-
-    @Override
-    public void load(ConfigurationSource source) {
-        if (injector == null) {
-            LOG.warn("Can't inject configuration until ConfigurationInjectingListener has been initialized");
-            return;
-        }
-        
-        CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
-                                 ? injector.getInstance(source.cascading()) 
-                                 : getCascadeStrategy();
-                                 
-        if (source != null) {
-            for (String resourceName : source.value()) {
-                LOG.debug("Trying to loading configuration resource {}", resourceName);
-                try {
-                    CompositeConfig loadedConfig = loader.newLoader()
-                                .withCascadeStrategy(strategy)
-                                .load(resourceName);
-                    libraries.addConfig(resourceName, loadedConfig);
-                } 
-                catch (ConfigException e) {
-                    throw new ProvisionException("Unable to load configuration for " + resourceName, e);
-                }
+                });
             }
-        }
+            catch (Exception e) {
+                throw new ProvisionException("Unable to bind configuration to " + clazz, e);
+            }
+        }        
     }
 }

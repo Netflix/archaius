@@ -2,11 +2,9 @@ package com.netflix.archaius;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.LibrariesConfig;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
@@ -74,11 +72,9 @@ public class ConfigProxyFactory {
     private final Decoder decoder;
     private final PropertyFactory propertyFactory;
     private final Config config;
-    private final LibrariesConfig libraries;
     
     @Inject
-    public ConfigProxyFactory(LibrariesConfig libraries, Config config, Decoder decoder, PropertyFactory factory) {
-        this.libraries = libraries;
+    public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
         this.config = config;
         this.propertyFactory = factory;
@@ -154,10 +150,6 @@ public class ConfigProxyFactory {
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
-        ConfigurationSource source = type.getAnnotation(ConfigurationSource.class);
-        if (source != null) {
-            libraries.load(source);
-        }
         Configuration annot = type.getAnnotation(Configuration.class);
         
         final String prefix = derivePrefix(annot, initialPrefix);
