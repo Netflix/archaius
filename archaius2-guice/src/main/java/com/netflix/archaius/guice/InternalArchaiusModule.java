@@ -1,11 +1,5 @@
 package com.netflix.archaius.guice;
 
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Named;
-import javax.inject.Provider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -26,7 +20,10 @@ import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.inject.*;
+import com.netflix.archaius.api.inject.DefaultLayer;
+import com.netflix.archaius.api.inject.LibrariesLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
@@ -34,6 +31,12 @@ import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
+
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Named;
+import javax.inject.Provider;
 
 final class InternalArchaiusModule extends AbstractModule {
     static final String CONFIG_NAME_KEY         = "archaius.config.name";
@@ -63,7 +66,11 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @Override
     protected void configure() {
-        bindListener(Matchers.any(), new ConfigurationInjectingListener());
+        ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
+        requestInjection(listener);
+        bind(ConfigurationInjectingListener.class).toInstance(listener);
+        requestStaticInjection(ConfigurationInjectingListener.class);
+        bindListener(Matchers.any(), listener);
         
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);

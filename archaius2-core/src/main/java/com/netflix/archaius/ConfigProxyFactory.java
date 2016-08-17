@@ -1,17 +1,5 @@
 package com.netflix.archaius;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.inject.Inject;
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Property;
@@ -19,6 +7,21 @@ import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
+
+import org.apache.commons.lang3.text.StrSubstitutor;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+import javax.inject.Inject;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -77,14 +80,6 @@ public class ConfigProxyFactory {
         this.propertyFactory = factory;
     }
     
-    public ConfigProxyFactory(Config config, PropertyFactory factory) {
-        this(config, DefaultDecoder.INSTANCE, factory);
-    }
-    
-    public ConfigProxyFactory(Config config) {
-        this(config, DefaultPropertyFactory.from(config));
-    }
-    
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property.
@@ -120,7 +115,6 @@ public class ConfigProxyFactory {
     
     /**
      * Encapsulated the invocation of a single method of the interface
-     * @author elandau
      *
      * @param <T>
      */
@@ -141,8 +135,6 @@ public class ConfigProxyFactory {
     
     /**
      * Abstract method invoker that encapsulates a property
-     * @author elandau
-     *
      * @param <T>
      */
     private static abstract class PropertyMethodInvoker<T> extends AbstractProperty<T> implements MethodInvoker<T> {
@@ -168,74 +160,38 @@ public class ConfigProxyFactory {
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
         
         for (Method m : type.getMethods()) {
-            final String verb;
-            if (m.getName().startsWith("get")) {
-                verb = "get";
-            }
-            else if (m.getName().startsWith("is")) {
-                verb = "is";
-            }
-            else {
-                verb = "";
-            }
-            
-            final DefaultValue defaultValue = m.getAnnotation(DefaultValue.class);
-            final Class<?> returnType = m.getReturnType();
-            final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
-            final String propName = nameAnnot != null && nameAnnot.name() != null
-                            ? prefix + nameAnnot.name()
-                            : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
-
-            // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
-            // methods can still return dynamic values
-            if (returnType.isInterface()) {
-                invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
-            }
-            else {
-                if (m.getParameterTypes().length > 0) {
-                    invokers.put(m, new MethodInvoker() {
-                        @Override
-                        public Object invoke(Object[] args) {
-                            // Determine the actual property name by replacing with arguments using the argument index
-                            // to the method.  For example,
-                            //      @PropertyName(name="foo.${1}.${0}")
-                            //      String getFooValue(String arg0, Integer arg1) 
-                            // 
-                            // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
-                            Map<String, Object> values = new HashMap<>();
-                            for (int i = 0; i < args.length; i++) {
-                                values.put("" + i, args[i]);
-                            }
-                            String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot.name());
-                            return getPropertyWithDefault(returnType, propName, (defaultValue != null) ? defaultValue.value() : null);
-                        }
-
-                        <R> R getPropertyWithDefault(Class<R> type, String propName, String defaultValue) {
-                            return propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
-                        }
-
-                        @Override
-                        public String getKey() {
-                            return propName;
-                        }
-                    });
+            try {
+                final String verb;
+                if (m.getName().startsWith("get")) {
+                    verb = "get";
+                } else if (m.getName().startsWith("is")) {
+                    verb = "is";
+                } else {
+                    verb = "";
                 }
-                else if (immutable) {
-                    if (defaultValue != null) {
-                        invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, defaultValue.value()));
-                    }
-                    else {
-                        invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, null));
-                    }
+                
+                final String defaultValue = m.getAnnotation(DefaultValue.class) != null ? m.getAnnotation(DefaultValue.class).value() : null;
+                final Class<?> returnType = m.getReturnType();
+                final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
+                final String propName = nameAnnot != null && nameAnnot.name() != null
+                                ? prefix + nameAnnot.name()
+                                : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
+    
+                // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
+                // methods can still return dynamic values
+                if (returnType.equals(Map.class)) {
+                    invokers.put(m, createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable));
+                } else if (returnType.isInterface()) {
+                    invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
+                } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
+                    invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultValue));
+                } else if (immutable) {
+                    invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, defaultValue));
+                } else {
+                    invokers.put(m, createDynamicProperty(m.getReturnType(), propName, defaultValue));
                 }
-                else {
-                    if (defaultValue != null) {
-                        invokers.put(m, createDynamicProperty(m.getReturnType(), propName, defaultValue.value()));
-                    } 
-                    else {
-                        invokers.put(m, createDynamicProperty(m.getReturnType(), propName, null));
-                    }
-                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error proxying method " + m.getName(), e);
             }
         }
         
@@ -256,8 +212,7 @@ public class ConfigProxyFactory {
                         sb.append(entry.getKey().substring(prefix.length())).append("='");
                         try {
                             sb.append(entry.invoke(null));
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             sb.append(e.getMessage());
                         }
                         sb.append("'");
@@ -267,8 +222,7 @@ public class ConfigProxyFactory {
                     }
                     sb.append("]");
                     return sb.toString();
-                }
-                else {
+                } else {
                     throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
                 }
             }
@@ -276,6 +230,37 @@ public class ConfigProxyFactory {
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
     }
     
+    @SuppressWarnings("unchecked")
+    private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable) {
+        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
+        Map<String, Object> map;
+        // This is a map for String -> Interface so create a proxy for any value
+        if (valueType.isInterface()) {
+            map = new ReadOnlyMap<String, Object>() {
+                Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
+                @Override
+                public Object get(final Object key) {
+                    return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
+                        @Override
+                        public Object apply(String key) {
+                            return newProxy(valueType, propName + "." + key, immutable);
+                        }
+                    });
+                }
+            };
+        } else {
+        // This is a map of String -> DecodableType (i.e. String, Long, etc...) 
+            map = new ReadOnlyMap<String, Object>() {
+                @Override
+                public Object get(final Object key) {
+                    return config.get(valueType, propName + "." + key);
+                }
+            };
+        }
+        
+        return (MethodInvoker<T>) createInterfaceProperty(propName, map);
+    }
+
     protected <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, final String defaultValue) {
         return new PropertyMethodInvoker<T>(propName) {
             private volatile T cached;
@@ -318,5 +303,34 @@ public class ConfigProxyFactory {
                 return prop.getKey();
             }
         };
+    }
+    
+    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, final String defaultValue) {
+        return new MethodInvoker<T>() {
+            @Override
+            public T invoke(Object[] args) {
+                // Determine the actual property name by replacing with arguments using the argument index
+                // to the method.  For example,
+                //      @PropertyName(name="foo.${1}.${0}")
+                //      String getFooValue(String arg0, Integer arg1) 
+                // 
+                // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
+                Map<String, Object> values = new HashMap<>();
+                for (int i = 0; i < args.length; i++) {
+                    values.put("" + i, args[i]);
+                }
+                String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
+                return getPropertyWithDefault(returnType, propName, defaultValue);
+            }
+
+            <R> R getPropertyWithDefault(Class<R> type, String propName, String defaultValue) {
+                return propertyFactory.getProperty(propName).asType(type, decoder.decode(type, defaultValue)).get();
+            }
+
+            @Override
+            public String getKey() {
+                return propName;
+            }
+        }; 
     }
 }
