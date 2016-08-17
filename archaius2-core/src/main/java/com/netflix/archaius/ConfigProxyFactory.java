@@ -80,6 +80,20 @@ public class ConfigProxyFactory {
         this.propertyFactory = factory;
     }
     
+    @Deprecated
+    public ConfigProxyFactory(Config config, PropertyFactory factory) {
+        this.decoder = config.getDecoder();
+        this.config = config;
+        this.propertyFactory = factory;
+    }
+    
+    @Deprecated
+    public ConfigProxyFactory(Config config) {
+        this.decoder = config.getDecoder();
+        this.config = config;
+        this.propertyFactory = DefaultPropertyFactory.from(config);
+    }
+    
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property.
