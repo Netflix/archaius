@@ -53,11 +53,6 @@ public class ConfigurationInjectingListener implements ProvisionListener {
     
     @Override
     public <T> void onProvision(ProvisionInvocation<T> provision) {
-        if (injector == null) {
-            LOG.warn("Can't inject configuration until ConfigurationInjectingListener has been initialized");
-            return;
-        }
-        
         Class<?> clazz = provision.getBinding().getKey().getTypeLiteral().getRawType();
         
         //
@@ -65,6 +60,11 @@ public class ConfigurationInjectingListener implements ProvisionListener {
         //
         final ConfigurationSource source = clazz.getDeclaredAnnotation(ConfigurationSource.class);
         if (source != null) {
+            if (injector == null) {
+                LOG.warn("Can't inject configuration into {} until ConfigurationInjectingListener has been initialized", clazz.getName());
+                return;
+            }
+            
             CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                     ? injector.getInstance(source.cascading()) : getCascadeStrategy();
 
@@ -87,6 +87,11 @@ public class ConfigurationInjectingListener implements ProvisionListener {
         //
         Configuration configAnnot = clazz.getAnnotation(Configuration.class);
         if (configAnnot != null) {
+            if (injector == null) {
+                LOG.warn("Can't inject configuration into {} until ConfigurationInjectingListener has been initialized", clazz.getName());
+                return;
+            }
+            
             try {
                 mapper.mapConfig(provision.provision(), config, new IoCContainer() {
                     @Override
