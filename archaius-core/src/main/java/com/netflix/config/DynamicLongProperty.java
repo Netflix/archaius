@@ -18,7 +18,7 @@ package com.netflix.config;
 /**
  * A dynamic property whose value is a long.
  * <p>Use APIs in {@link DynamicPropertyFactory} to create instance of this class.
- *
+ * 
  * @author awang
  *
  */
@@ -26,7 +26,7 @@ public class DynamicLongProperty extends PropertyWrapper<Long> {
     public DynamicLongProperty(String propName, long defaultValue) {
         super(propName, Long.valueOf(defaultValue));
     }
-
+        
     /**
      * Get the current value from the underlying DynamicProperty
      */
