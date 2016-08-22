@@ -15,48 +15,31 @@
  */
 package com.netflix.config;
 
-import static org.junit.Assert.*;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStreamWriter;
-
+import com.google.common.collect.ImmutableMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import java.io.File;
+
+import static org.junit.Assert.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DynamicPropertyTest {
 
-    static File configFile;    
+    static File configFile;
     private static final String PROP_NAME = "biz.mindyourown.notMine";
     private static final String PROP_NAME2 = "biz.mindyourown.myProperty";
     private static DynamicConfiguration config;
     boolean meGotCalled = false;
-    
-    static void createConfigFile() throws Exception {
-        configFile = File.createTempFile("config", "properties");
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), "UTF-8"));
-        writer.write("props1=xyz");
-        writer.newLine();
-        writer.write("props2=abc");
-        writer.newLine();
-        writer.close();
-    }
-    
+
     static void modifyConfigFile() throws Exception {
         new Thread() {
             public void run() {
                 try {
-                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), "UTF-8"));
-                    writer.write("props2=456");
-                    writer.newLine();
-                    writer.write("props3=123");
-                    writer.close();      
+                    DynamicPropertyUtils.updateConfigFile(configFile, ImmutableMap.<String, Object>of("props2", "456", "props3", "123"));
                 } catch (Exception e) {
                     e.printStackTrace();
                     fail("Unexpected exception");
@@ -67,7 +50,7 @@ public class DynamicPropertyTest {
     
     @BeforeClass
     public static void init() throws Exception {
-        createConfigFile();
+        configFile = DynamicPropertyUtils.createConfigFile(ImmutableMap.<String, Object>of("props1", "xyz", "props2", "abc"));
         config = new DynamicURLConfiguration(100, 500, false, configFile.toURI().toURL().toString());
         System.out.println("Initializing with sources: " + config.getSource());
         DynamicPropertyFactory.initWithConfigurationSource(config);
@@ -305,7 +288,7 @@ public class DynamicPropertyTest {
         Runnable r = new Runnable() {
             public void run() {
                 meGotCalled = true;
-            }            
+            }
         };
         final DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty("foo.bar", "xyz", r);
         assertEquals("xyz", prop.get());

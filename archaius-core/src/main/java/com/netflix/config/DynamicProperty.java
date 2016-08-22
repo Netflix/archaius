@@ -15,16 +15,15 @@
  */
 package com.netflix.config;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Optional;
 import com.netflix.config.validation.PropertyChangeValidator;
 import com.netflix.config.validation.ValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A cached configuration property value that is automatically
@@ -127,6 +126,7 @@ public class DynamicProperty {
             if (exception != null) {
                 throw exception;
             } else {
+                UsedSettingsRegistry.instance().add(getName(), value);
                 return value;
             }
         }
