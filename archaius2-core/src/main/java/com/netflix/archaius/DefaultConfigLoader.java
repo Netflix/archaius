@@ -15,28 +15,31 @@
  */
 package com.netflix.archaius;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
-
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.config.DefaultCompositeConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.netflix.archaius.api.StrInterpolator.Lookup;
-import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.api.config.CompositeConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.cascade.NoCascadeStrategy;
+import com.netflix.archaius.config.DefaultCompositeConfig;
+import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -171,7 +174,10 @@ public class DefaultConfigLoader implements ConfigLoader {
                     for (ConfigReader reader : loaders) {
                         if (reader.canLoad(classLoader, name)) {
                             try {
-                                compositeConfig.addConfig(name, reader.load(classLoader, name, interpolator, lookup));
+                                Config config = reader.load(classLoader, name, interpolator, lookup);
+                                if (!config.isEmpty()) {
+                                    compositeConfig.addConfig(name, config);
+                                }
                                 LOG.debug("Loaded {} ", name);
                             }
                             catch (ConfigException e) {

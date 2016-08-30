@@ -15,14 +15,14 @@
  */
 package com.netflix.archaius.api.annotations;
 
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.StrInterpolator;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.List;
-
-import com.netflix.archaius.api.CascadeStrategy;
-import com.netflix.archaius.api.StrInterpolator;
 
 /**
  * Identifier for a configuration source as well as a customizable policy for

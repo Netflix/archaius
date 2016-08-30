@@ -83,12 +83,18 @@ public class ConfigProxyFactory {
         this.propertyFactory = factory;
     }
     
+    @Deprecated
     public ConfigProxyFactory(Config config, PropertyFactory factory) {
-        this(config, DefaultDecoder.INSTANCE, factory);
+        this.decoder = config.getDecoder();
+        this.config = config;
+        this.propertyFactory = factory;
     }
     
+    @Deprecated
     public ConfigProxyFactory(Config config) {
-        this(config, DefaultPropertyFactory.from(config));
+        this.decoder = config.getDecoder();
+        this.config = config;
+        this.propertyFactory = DefaultPropertyFactory.from(config);
     }
     
     /**
@@ -207,7 +213,7 @@ public class ConfigProxyFactory {
                     invokers.put(m, createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable));
                 } else if (returnType.isInterface()) {
                     invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
-                } else if (m.getParameterTypes().length > 0) {
+                } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
                     invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultValue));
                 } else if (immutable) {
                     invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, defaultValue));
@@ -271,18 +277,30 @@ public class ConfigProxyFactory {
     @SuppressWarnings("unchecked")
     private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable) {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
-        Map<String, Object> map = new ReadOnlyMap<String, Object>() {
-            Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
-            @Override
-            public Object get(final Object key) {
-                return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
-                    @Override
-                    public Object apply(String key) {
-                        return newProxy(valueType, propName + "." + key, immutable);
-                    }
-                });
-            }
-        };
+        Map<String, Object> map;
+        // This is a map for String -> Interface so create a proxy for any value
+        if (valueType.isInterface()) {
+            map = new ReadOnlyMap<String, Object>() {
+                Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
+                @Override
+                public Object get(final Object key) {
+                    return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
+                        @Override
+                        public Object apply(String key) {
+                            return newProxy(valueType, propName + "." + key, immutable);
+                        }
+                    });
+                }
+            };
+        } else {
+        // This is a map of String -> DecodableType (i.e. String, Long, etc...) 
+            map = new ReadOnlyMap<String, Object>() {
+                @Override
+                public Object get(final Object key) {
+                    return config.get(valueType, propName + "." + key);
+                }
+            };
+        }
         
         return (MethodInvoker<T>) createInterfaceProperty(propName, map);
     }
