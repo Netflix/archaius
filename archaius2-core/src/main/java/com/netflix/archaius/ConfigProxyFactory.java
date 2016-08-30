@@ -10,7 +10,6 @@ import com.netflix.archaius.api.annotations.PropertyName;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -184,6 +183,10 @@ public class ConfigProxyFactory {
                 
                 Object defaultValue = null;
                 if (m.getAnnotation(DefaultValue.class) != null) {
+                    if (m.isDefault()) {
+                        throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
+                                + m.getDeclaringClass().getName() + "#" + m.getName());
+                    }
                     String value = m.getAnnotation(DefaultValue.class).value();
                     if (m.getReturnType() == String.class) {
                         defaultValue = config.getString("*", value);
@@ -216,6 +219,7 @@ public class ConfigProxyFactory {
             }
         }
         
+        // Hack so that default interface methods may be called from a proxy
         final MethodHandles.Lookup temp;
         try {
             Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
