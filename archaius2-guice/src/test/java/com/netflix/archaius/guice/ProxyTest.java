@@ -25,6 +25,10 @@ public class ProxyTest {
         String getString();
         
         MySubConfig getSubConfig();
+        
+        default String getDefault() {
+            return getInteger() + "-" + getString();
+        }
     }
     
     public static interface MySubConfig {
@@ -66,7 +70,7 @@ public class ProxyTest {
         Assert.assertEquals("bar", config.getString());
         Assert.assertEquals(1, config.getInteger());
         Assert.assertEquals(2, config.getSubConfig().getInteger());
-        
+        Assert.assertEquals("1-bar", config.getDefault());
         cfg.setProperty("subConfig.integer", 3);
         
         Assert.assertEquals(3, config.getSubConfig().getInteger());
