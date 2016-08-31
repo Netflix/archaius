@@ -43,6 +43,25 @@ import javax.inject.Inject;
  * }
  * </pre>
  * 
+ * Default values may be set by adding a {@literal @}DefaultValue with a default value string.  Note
+ * that the default value type is a string to allow for interpolation.  Alternatively, methods can  
+ * provide a default method implementation.  Note that {@literal @}DefaultValue cannot be added to a default
+ * method as it would introduce ambiguity as to which mechanism wins.
+ * 
+ * For example,
+ * <pre>
+ * {@code
+ * {@literal @}Configuration(prefix="foo")
+ * interface FooConfiguration {
+ *    @DefaultValue("1000")
+ *    int getReadTimeout();     // maps to "foo.timeout"
+ *    
+ *    default int getWriteTimeout() {
+ *        return 1000;
+ *    }
+ * }
+ * }
+ * 
  * To create a proxy instance,
  * <pre>
  * {@code 
