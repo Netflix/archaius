@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
+import com.google.inject.ProvisionException;
 import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.annotations.Configuration;
@@ -29,6 +30,10 @@ public class ProxyTest {
         String getString();
         
         MySubConfig getSubConfig();
+        
+        default String getDefault() {
+            return getInteger() + "-" + getString();
+        }
     }
     
     public static interface MySubConfig {
@@ -70,7 +75,7 @@ public class ProxyTest {
         Assert.assertEquals("bar", config.getString());
         Assert.assertEquals(1, config.getInteger());
         Assert.assertEquals(2, config.getSubConfig().getInteger());
-        
+        Assert.assertEquals("1-bar", config.getDefault());
         cfg.setProperty("subConfig.integer", 3);
         
         Assert.assertEquals(3, config.getSubConfig().getInteger());
@@ -123,5 +128,38 @@ public class ProxyTest {
         Assert.assertEquals("fromFile", config.getProp1());
         
         injector.getInstance(Config.class).accept(new PrintStreamVisitor());
+    }
+    
+    public static interface DefaultMethodWithAnnotation {
+        @DefaultValue("fromAnnotation")
+        default String getValue() {
+            return "fromDefault";
+        }
+    }
+    
+    @Test
+    public void annotationAndDefaultImplementationNotAllowed() throws ConfigException {
+        try {
+            Injector injector = Guice.createInjector(
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                    }
+                    
+                    @Provides
+                    @Singleton
+                    public DefaultMethodWithAnnotation getMyConfig(ConfigProxyFactory factory) {
+                        return factory.newProxy(DefaultMethodWithAnnotation.class);
+                    }
+                });
+            
+            injector.getInstance(DefaultMethodWithAnnotation.class);
+            Assert.fail("Exepcted ProvisionException");
+        } catch (ProvisionException e) {
+            e.printStackTrace();
+            Assert.assertEquals(IllegalArgumentException.class, e.getCause().getCause().getClass());
+        } catch (Exception e) {
+            Assert.fail("Expected ProvisionException");
+        }
     }
 }
