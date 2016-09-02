@@ -1,11 +1,5 @@
 package com.netflix.archaius.guice;
 
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Named;
-import javax.inject.Provider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -38,6 +32,12 @@ import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Named;
+import javax.inject.Provider;
+
 final class InternalArchaiusModule extends AbstractModule {
     static final String CONFIG_NAME_KEY         = "archaius.config.name";
     
@@ -66,7 +66,11 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @Override
     protected void configure() {
-        bindListener(Matchers.any(), new ConfigurationInjectingListener());
+        ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
+        requestInjection(listener);
+        bind(ConfigurationInjectingListener.class).toInstance(listener);
+        requestStaticInjection(ConfigurationInjectingListener.class);
+        bindListener(Matchers.any(), listener);
         
         Multibinder.newSetBinder(binder(), ConfigReader.class)
             .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
@@ -111,6 +115,10 @@ final class InternalArchaiusModule extends AbstractModule {
         @Inject(optional=true)
         @ApplicationOverride
         Config applicationOverride;
+
+        @Inject(optional =true)
+        @ApplicationOverrideResources
+        Set<String> overrideResources;
         
         boolean hasApplicationOverride() {
             return applicationOverride != null;
@@ -122,6 +130,10 @@ final class InternalArchaiusModule extends AbstractModule {
 
         boolean hasRemoteLayer() {
             return remoteLayerProvider != null;
+        }
+
+        boolean hasOverrideResources() {
+            return overrideResources != null;
         }
         
         String getConfigName() {
@@ -164,7 +176,13 @@ final class InternalArchaiusModule extends AbstractModule {
                 defaultLayer.addConfig(getUniqueName("default"), c);
             }
         }
-        
+
+        if (params.hasOverrideResources()) {
+            for (String resourceName : params.overrideResources) {
+                applicationLayer.addConfig(resourceName, loader.newLoader().load(resourceName));
+            }
+        }
+
         if (params.hasApplicationOverride()) {
             applicationLayer.addConfig(getUniqueName("override"), params.applicationOverride);
         }
@@ -220,8 +238,8 @@ final class InternalArchaiusModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConfigProxyFactory getProxyFactory(Decoder decoder, PropertyFactory factory) {
-        return new ConfigProxyFactory(decoder, factory);
+    ConfigProxyFactory getProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
+        return new ConfigProxyFactory(config, decoder, factory);
     }
     
     @Override

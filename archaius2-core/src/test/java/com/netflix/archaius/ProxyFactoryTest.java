@@ -4,19 +4,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
-import javax.annotation.Nullable;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.PropertyFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
+import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
-import com.netflix.archaius.api.config.SettableConfig;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -97,7 +99,7 @@ public class ProxyFactoryTest {
         config.setProperty("valueWithoutDefault2", "default2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ImmutableConfig c = proxy.newProxy(ImmutableConfig.class);
         
         assertThat(c.getValueWithDefault(), equalTo("default"));
@@ -113,7 +115,7 @@ public class ProxyFactoryTest {
         Config config = EmptyConfig.INSTANCE;
 
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class);
         
@@ -138,7 +140,7 @@ public class ProxyFactoryTest {
         config.setProperty("prefix.baseBoolean", true);
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class, "prefix");
         
@@ -173,11 +175,60 @@ public class ProxyFactoryTest {
         config.setProperty("b.abc.2", "value2");
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
-        ConfigProxyFactory proxy = new ConfigProxyFactory(config.getDecoder(), factory);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
         Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
         Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
         Assert.assertEquals("default", withArgs.getProperty("a", 2));
+    }
+    
+    public static interface ConfigWithMap {
+        Map<String, SubConfig> getChildren();
+    }
+    
+    @Test
+    public void testWithMap() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("children.1.str", "value1");
+        config.setProperty("children.2.str", "value2");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithMap withArgs = proxy.newProxy(ConfigWithMap.class);
+        
+        SubConfig sub1 = withArgs.getChildren().get("1");
+        SubConfig sub2 = withArgs.getChildren().get("2");
+
+        Assert.assertEquals("value1", sub1.str());
+        Assert.assertEquals("value2", sub2.str());
+        
+        config.setProperty("children.2.str", "value3");
+        Assert.assertEquals("value3", sub2.str());
+    }
+    
+    public static interface ConfigWithLongMap {
+        Map<String, Long> getChildren();
+    }
+    
+    @Test
+    public void testWithLongMap() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("children.1", "123");
+        config.setProperty("children.2", "456");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithLongMap withArgs = proxy.newProxy(ConfigWithLongMap.class);
+        
+        long sub1 = withArgs.getChildren().get("1");
+        long sub2 = withArgs.getChildren().get("2");
+
+        Assert.assertEquals(123, sub1);
+        Assert.assertEquals(456, sub2);
+        
+        config.setProperty("children.2", "789");
+        sub2 = withArgs.getChildren().get("2");
+        Assert.assertEquals(789, sub2);
     }
 }

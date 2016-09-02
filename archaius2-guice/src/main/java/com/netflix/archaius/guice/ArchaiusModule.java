@@ -227,7 +227,25 @@ public class ArchaiusModule extends AbstractModule {
     protected LinkedBindingBuilder<Config> bindConfigReader() {
         return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
-    
+
+    /**
+     * Set application overrides to a particular resource.  This is normally done for unit tests.
+     *
+     * <code>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *        bindApplicationConfigurationOverrideResource("laptop");
+     *    }
+     * });
+     * </code>
+     *
+     * @return
+     */
+    protected void bindApplicationConfigurationOverrideResource(String overrideResource)  {
+        Multibinder.newSetBinder(binder(), String.class, ApplicationOverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
+    }
+
     @Override
     protected final void configure() {
         install(new InternalArchaiusModule());

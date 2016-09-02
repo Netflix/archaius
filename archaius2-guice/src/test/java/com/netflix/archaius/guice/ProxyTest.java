@@ -1,21 +1,26 @@
 package com.netflix.archaius.guice;
 
-import javax.inject.Singleton;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
+import com.google.inject.ProvisionException;
 import com.netflix.archaius.ConfigProxyFactory;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.guice.ArchaiusModuleTest.MyCascadingStrategy;
+import com.netflix.archaius.visitor.PrintStreamVisitor;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.inject.Singleton;
 
 public class ProxyTest {
     public static interface MyConfig {
@@ -25,6 +30,10 @@ public class ProxyTest {
         String getString();
         
         MySubConfig getSubConfig();
+        
+        default String getDefault() {
+            return getInteger() + "-" + getString();
+        }
     }
     
     public static interface MySubConfig {
@@ -66,7 +75,7 @@ public class ProxyTest {
         Assert.assertEquals("bar", config.getString());
         Assert.assertEquals(1, config.getInteger());
         Assert.assertEquals(2, config.getSubConfig().getInteger());
-        
+        Assert.assertEquals("1-bar", config.getDefault());
         cfg.setProperty("subConfig.integer", 3);
         
         Assert.assertEquals(3, config.getSubConfig().getInteger());
@@ -94,6 +103,63 @@ public class ProxyTest {
         MyConfig config = injector.getInstance(MyConfig.class);
         Assert.assertEquals("bar", config.getString());
         Assert.assertEquals(1, config.getInteger());
+    }
+    
+    @Configuration(prefix="prefix-${env}", allowFields=true)
+    @ConfigurationSource(value={"moduleTest"}, cascading=MyCascadingStrategy.class)
+    public static interface ModuleTestConfig {
+        public Boolean isLoaded();
+        public String getProp1();
+    }
+    
+    @Test
+    public void confirmConfigurationSourceWorksWithProxy() {
+        Injector injector = Guice.createInjector(
+            new ArchaiusModule() {
+                @Provides
+                @Singleton
+                public ModuleTestConfig getMyConfig(ConfigProxyFactory factory) {
+                    return factory.newProxy(ModuleTestConfig.class, "moduleTest");
+                }
+            });
+            
+        ModuleTestConfig config = injector.getInstance(ModuleTestConfig.class);
+        Assert.assertTrue(config.isLoaded());
+        Assert.assertEquals("fromFile", config.getProp1());
         
+        injector.getInstance(Config.class).accept(new PrintStreamVisitor());
+    }
+    
+    public static interface DefaultMethodWithAnnotation {
+        @DefaultValue("fromAnnotation")
+        default String getValue() {
+            return "fromDefault";
+        }
+    }
+    
+    @Test
+    public void annotationAndDefaultImplementationNotAllowed() throws ConfigException {
+        try {
+            Injector injector = Guice.createInjector(
+                new ArchaiusModule() {
+                    @Override
+                    protected void configureArchaius() {
+                    }
+                    
+                    @Provides
+                    @Singleton
+                    public DefaultMethodWithAnnotation getMyConfig(ConfigProxyFactory factory) {
+                        return factory.newProxy(DefaultMethodWithAnnotation.class);
+                    }
+                });
+            
+            injector.getInstance(DefaultMethodWithAnnotation.class);
+            Assert.fail("Exepcted ProvisionException");
+        } catch (ProvisionException e) {
+            e.printStackTrace();
+            Assert.assertEquals(IllegalArgumentException.class, e.getCause().getCause().getClass());
+        } catch (Exception e) {
+            Assert.fail("Expected ProvisionException");
+        }
     }
 }

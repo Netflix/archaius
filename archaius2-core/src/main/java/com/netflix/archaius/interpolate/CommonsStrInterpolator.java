@@ -34,7 +34,7 @@ public final class CommonsStrInterpolator implements StrInterpolator {
                   public String lookup(String key) {
                       return lookup.lookup(key);
                   }
-              }, "${", "}", '$');
+              }, "${", "}", '$').setValueDelimiter(":");
 
         return new Context() {
             @Override

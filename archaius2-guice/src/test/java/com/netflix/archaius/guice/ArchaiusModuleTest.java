@@ -19,6 +19,8 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 
+import com.netflix.archaius.DefaultConfigLoader;
+import com.netflix.archaius.api.exceptions.ConfigException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -341,5 +343,19 @@ public class ArchaiusModuleTest {
         Assert.assertEquals("default", configProxy.getString());
         Assert.assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
         Assert.assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
+    }
+
+    @Test
+    public void testAddingConfigFileOverride() {
+        Injector injector = Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+                bindApplicationConfigurationOverrideResource("application-override");
+           }
+        });
+        Config config = injector.getInstance(Config.class);
+        Assert.assertEquals("b_value_no_override", config.getString("b"));
+        Assert.assertEquals("a_value_override", config.getString("a"));
+        Assert.assertEquals("c_value_override", config.getString("c"));
     }
 }
