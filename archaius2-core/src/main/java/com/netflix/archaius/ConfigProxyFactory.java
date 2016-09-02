@@ -1,7 +1,5 @@
 package com.netflix.archaius;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Property;
@@ -19,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -258,7 +257,9 @@ public class ConfigProxyFactory {
                 } else if (returnType.isInterface()) {
                     invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
-                    Preconditions.checkNotNull(nameAnnot, "Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
+                    if (nameAnnot == null) {
+                        throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
+                    }
                     invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultValue));
                 } else if (immutable) {
                     invokers.put(m, createImmutablePropertyWithDefault(returnType, propName, defaultValue));
@@ -340,7 +341,7 @@ public class ConfigProxyFactory {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
         return createCustomProperty(s -> { 
             List list = listSupplier.get();
-            Splitter.on(",").trimResults().splitToList(s).forEach(v -> list.add(decoder.decode(valueType, v)));
+            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> list.add(decoder.decode(valueType, v)));
             return list;
         }, propName);
     }
@@ -349,7 +350,7 @@ public class ConfigProxyFactory {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
         return createCustomProperty(s -> { 
             Set set = setSupplier.get();
-            Splitter.on(",").trimResults().splitToList(s).forEach(v -> set.add(decoder.decode(valueType, v)));
+            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> set.add(decoder.decode(valueType, v)));
             return set;
         }, propName);
     }

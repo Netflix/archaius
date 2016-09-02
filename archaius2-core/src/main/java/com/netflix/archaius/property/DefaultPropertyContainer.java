@@ -15,6 +15,15 @@
  */
 package com.netflix.archaius.property;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyListener;
+import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,16 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
 import java.util.function.Function;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.MoreObjects;
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyContainer;
-import com.netflix.archaius.api.PropertyListener;
-import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
 
 /**
  * Implementation of PropertyContainer which reuses the same object for each
