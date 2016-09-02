@@ -18,6 +18,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -247,13 +248,13 @@ public class ConfigProxyFactory {
                 if (returnType.equals(Map.class)) {
                     invokers.put(m, createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable));
                 } else if (returnType.equals(Set.class)) {
-                    invokers.put(m, createSetProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new));
+                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new));
                 } else if (returnType.equals(SortedSet.class)) {
-                    invokers.put(m, createSetProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new));
+                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new));
                 } else if (returnType.equals(List.class)) {
-                    invokers.put(m, createListProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new));
+                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new));
                 } else if (returnType.equals(LinkedList.class)) {
-                    invokers.put(m, createListProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new));
+                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new));
                 } else if (returnType.isInterface()) {
                     invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
@@ -323,7 +324,7 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createCustomProperty(final Function<String, T> converter, final String propName) {
         final Property<T> prop = propertyFactory
                 .getProperty(propName)
-                .asType(converter, null);
+                .asType(converter, "");
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object obj, Object[] args) {
@@ -337,21 +338,18 @@ public class ConfigProxyFactory {
         };
     }
     
-    private MethodInvoker<?> createListProperty(String propName, ParameterizedType type, Supplier<List> listSupplier) {
+    private MethodInvoker<?> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection> listSupplier) {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
         return createCustomProperty(s -> { 
-            List list = listSupplier.get();
-            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> list.add(decoder.decode(valueType, v)));
+            Collection list = listSupplier.get();
+            if (!s.isEmpty()) {
+                Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
+                    if (!v.isEmpty() || valueType == String.class) { 
+                        list.add(decoder.decode(valueType, v));
+                    }
+                });
+            }
             return list;
-        }, propName);
-    }
-
-    private MethodInvoker<?> createSetProperty(String propName, ParameterizedType type, Supplier<Set> setSupplier) {
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
-        return createCustomProperty(s -> { 
-            Set set = setSupplier.get();
-            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> set.add(decoder.decode(valueType, v)));
-            return set;
         }, propName);
     }
 

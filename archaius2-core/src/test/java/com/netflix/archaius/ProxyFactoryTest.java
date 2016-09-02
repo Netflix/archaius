@@ -252,7 +252,7 @@ public class ProxyFactoryTest {
     public void testCollections() {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("list", "5,4,3,2,1");
-        config.setProperty("set", "5,4,3,2,1");
+        config.setProperty("set", "1,2,3,5,4");
         config.setProperty("sortedSet", "5,4,3,2,1");
         config.setProperty("linkedList", "5,4,3,2,1");
         
@@ -262,13 +262,59 @@ public class ProxyFactoryTest {
         
         Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
         Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
         Assert.assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
         
         config.setProperty("list", "6,7,8,9,10");
         Assert.assertEquals(Arrays.asList(6,7,8,9,10), new ArrayList<>(withCollections.getList()));
     }
+
+    @Test
+    public void emptyNonStringValuesIgnoredInCollections() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", ",4, ,2,1");
+        config.setProperty("set", ",2, ,5,4");
+        config.setProperty("sortedSet", ",4, ,2,1");
+        config.setProperty("linkedList", ",4, ,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
+        
+        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList(2,5,4), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList(1,2,4), new ArrayList<>(withCollections.getSortedSet()));
+    }
     
+    public static interface ConfigWithStringCollections {
+        List<String> getList();
+        
+        Set<String> getSet();
+        
+        SortedSet<String> getSortedSet();
+        
+        LinkedList<String> getLinkedList();
+    }
+
+    @Test
+    public void emptyStringValuesAreAddedToCollection() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", ",4, ,2,1");
+        config.setProperty("set", ",2, ,5,4");
+        config.setProperty("sortedSet", ",4, ,2,1");
+        config.setProperty("linkedList", ",4, ,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithStringCollections withCollections = proxy.newProxy(ConfigWithStringCollections.class);
+        
+        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList("" ,"2","5","4"), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList("", "1","2","4"), new ArrayList<>(withCollections.getSortedSet()));
+    }
+
     @Test
     public void testCollectionsWithoutValue() {
         SettableConfig config = new DefaultSettableConfig();
@@ -277,10 +323,10 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
         
-        Assert.assertNull(withCollections.getLinkedList());
-        Assert.assertNull(withCollections.getList());
-        Assert.assertNull(withCollections.getSet());
-        Assert.assertNull(withCollections.getSortedSet());
+        Assert.assertTrue(withCollections.getLinkedList().isEmpty());
+        Assert.assertTrue(withCollections.getList().isEmpty());
+        Assert.assertTrue(withCollections.getSet().isEmpty());
+        Assert.assertTrue(withCollections.getSortedSet().isEmpty());
     }
     
     public static interface ConfigWithCollectionsWithDefaultValueAnnotation {
