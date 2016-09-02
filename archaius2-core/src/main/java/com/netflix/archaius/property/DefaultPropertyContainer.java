@@ -22,10 +22,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.MoreObjects;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyContainer;
@@ -396,5 +398,15 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 return prop;
             }
         }
+    }
+
+    @Override
+    public <T> Property<T> asType(Function<String, T> type, String defaultValue) {
+        return add(new CachedProperty<T>(Type.CUSTOM, null) {
+            @Override
+            protected T resolveCurrent() throws Exception {
+                return type.apply(config.getString(key, defaultValue));
+            }
+        });
     }
 }

@@ -17,6 +17,7 @@ package com.netflix.archaius.api;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.function.Function;
 
 /**
  * Container for a single property that can be parse as any type.  
@@ -85,4 +86,6 @@ public interface PropertyContainer {
      * should be optimized to call one of the known parsing methods based on type. 
      */
     <T> Property<T> asType(Class<T> type, T defaultValue);
+    
+    <T> Property<T> asType(Function<String, T> type, String defaultValue);
 }

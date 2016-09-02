@@ -1,5 +1,7 @@
 package com.netflix.archaius;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Property;
@@ -16,10 +18,17 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -206,21 +215,29 @@ public class ConfigProxyFactory {
                     verb = "";
                 }
                 
+                final Class<?> returnType = m.getReturnType();
+                
                 Object defaultValue = null;
                 if (m.getAnnotation(DefaultValue.class) != null) {
                     if (m.isDefault()) {
                         throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
                                 + m.getDeclaringClass().getName() + "#" + m.getName());
+                    } else if (
+                            Map.class.isAssignableFrom(returnType) ||
+                            List.class.isAssignableFrom(returnType) ||
+                            Set.class.isAssignableFrom(returnType) ) {
+                        throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
+                                + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
+                    
                     String value = m.getAnnotation(DefaultValue.class).value();
-                    if (m.getReturnType() == String.class) {
+                    if (returnType == String.class) {
                         defaultValue = config.getString("*", value);
                     } else {
-                        defaultValue = decoder.decode(m.getReturnType(), config.getString("*", value));
+                        defaultValue = decoder.decode(returnType, config.getString("*", value));
                     }
                 } 
                 
-                final Class<?> returnType = m.getReturnType();
                 final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
                 final String propName = nameAnnot != null && nameAnnot.name() != null
                                 ? prefix + nameAnnot.name()
@@ -230,14 +247,23 @@ public class ConfigProxyFactory {
                 // methods can still return dynamic values
                 if (returnType.equals(Map.class)) {
                     invokers.put(m, createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable));
+                } else if (returnType.equals(Set.class)) {
+                    invokers.put(m, createSetProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new));
+                } else if (returnType.equals(SortedSet.class)) {
+                    invokers.put(m, createSetProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new));
+                } else if (returnType.equals(List.class)) {
+                    invokers.put(m, createListProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new));
+                } else if (returnType.equals(LinkedList.class)) {
+                    invokers.put(m, createListProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new));
                 } else if (returnType.isInterface()) {
                     invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
+                    Preconditions.checkNotNull(nameAnnot, "Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                     invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultValue));
                 } else if (immutable) {
-                    invokers.put(m, createImmutablePropertyWithDefault(m.getReturnType(), propName, defaultValue));
+                    invokers.put(m, createImmutablePropertyWithDefault(returnType, propName, defaultValue));
                 } else {
-                    invokers.put(m, createDynamicProperty(m.getReturnType(), propName, defaultValue));
+                    invokers.put(m, createScalarProperty(returnType, propName, defaultValue));
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error proxying method " + m.getName(), e);
@@ -293,6 +319,41 @@ public class ConfigProxyFactory {
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
     }
     
+    protected <T> MethodInvoker<T> createCustomProperty(final Function<String, T> converter, final String propName) {
+        final Property<T> prop = propertyFactory
+                .getProperty(propName)
+                .asType(converter, null);
+        return new MethodInvoker<T>() {
+            @Override
+            public T invoke(Object obj, Object[] args) {
+                return prop.get();
+            }
+
+            @Override
+            public String getKey() {
+                return prop.getKey();
+            }
+        };
+    }
+    
+    private MethodInvoker<?> createListProperty(String propName, ParameterizedType type, Supplier<List> listSupplier) {
+        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
+        return createCustomProperty(s -> { 
+            List list = listSupplier.get();
+            Splitter.on(",").trimResults().splitToList(s).forEach(v -> list.add(decoder.decode(valueType, v)));
+            return list;
+        }, propName);
+    }
+
+    private MethodInvoker<?> createSetProperty(String propName, ParameterizedType type, Supplier<Set> setSupplier) {
+        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
+        return createCustomProperty(s -> { 
+            Set set = setSupplier.get();
+            Splitter.on(",").trimResults().splitToList(s).forEach(v -> set.add(decoder.decode(valueType, v)));
+            return set;
+        }, propName);
+    }
+
     @SuppressWarnings("unchecked")
     private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable) {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
@@ -356,7 +417,7 @@ public class ConfigProxyFactory {
         };
     }
 
-    protected <T> MethodInvoker<T> createDynamicProperty(final Class<T> type, final String propName, final Object defaultValue) {
+    protected <T> MethodInvoker<T> createScalarProperty(final Class<T> type, final String propName, final Object defaultValue) {
         final Property<T> prop = propertyFactory
                 .getProperty(propName)
                 .asType(type, (T)defaultValue);
