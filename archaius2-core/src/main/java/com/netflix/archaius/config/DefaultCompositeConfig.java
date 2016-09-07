@@ -140,7 +140,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         else {
             children.add(child);
         }
-        child.addListener(listener);
         postConfigAdded(child);
         return true;
     }
