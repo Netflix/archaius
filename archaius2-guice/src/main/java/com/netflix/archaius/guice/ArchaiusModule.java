@@ -68,13 +68,6 @@ import com.netflix.archaius.config.MapConfig;
  * </code>
  */
 public class ArchaiusModule extends AbstractModule {
-    // These are here to force using the backwards compatibility bridge for 
-    // Archaius1's static API
-    static {
-        System.setProperty("archaius.default.configuration.class",      "com.netflix.archaius.bridge.StaticAbstractConfiguration");
-        System.setProperty("archaius.default.deploymentContext.class",  "com.netflix.archaius.bridge.StaticDeploymentContext");
-    }
-    
     @Deprecated
     private Class<? extends CascadeStrategy> cascadeStrategy = null;
 
