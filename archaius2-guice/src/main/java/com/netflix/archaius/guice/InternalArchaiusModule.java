@@ -51,13 +51,6 @@ final class InternalArchaiusModule extends AbstractModule {
     private static final String LIBRARIES_LAYER_NAME    = "LIBRARIES";
     private static final String DEFAULT_LAYER_NAME      = "DEFAULT";
     
-    // These are here to force using the backwards compatibility bridge for 
-    // Archaius1's static API
-    static {
-        System.setProperty("archaius.default.configuration.class",      "com.netflix.archaius.bridge.StaticAbstractConfiguration");
-        System.setProperty("archaius.default.deploymentContext.class",  "com.netflix.archaius.bridge.StaticDeploymentContext");
-    }
-    
     private static AtomicInteger uniqueNameCounter = new AtomicInteger();
 
     private static String getUniqueName(String prefix) {
