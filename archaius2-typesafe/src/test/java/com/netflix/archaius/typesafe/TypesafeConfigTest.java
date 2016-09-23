@@ -16,6 +16,7 @@
 package com.netflix.archaius.typesafe;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.test.ConfigInterfaceTest;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,8 +25,9 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
 import java.util.Iterator;
+import java.util.Map;
 
-public class TypesafeConfigTest {
+public class TypesafeConfigTest extends ConfigInterfaceTest {
     @Test
     public void simple() throws ConfigException {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a=b"));
@@ -85,5 +87,10 @@ public class TypesafeConfigTest {
             String k = ks.next();
             config.getString(k);
         }
+    }
+
+    @Override
+    protected Config getInstance(Map<String, String> properties) {
+        return new TypesafeConfig(ConfigFactory.parseMap(properties));
     }
 }
