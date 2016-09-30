@@ -15,13 +15,6 @@
  */
 package com.netflix.archaius.property;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyFactory;
@@ -29,6 +22,13 @@ import com.netflix.archaius.api.PropertyListener;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.DefaultSettableConfig;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PropertyTest {
     static class MyService {
@@ -208,5 +208,14 @@ public class PropertyTest {
         Assert.assertEquals(123, current.intValue());
         config.setProperty("foo", "${goo}");
         Assert.assertEquals(456, current.intValue());
+    }
+    
+    @Test
+    public void testDifferentDefaults() {
+        SettableConfig config = new DefaultSettableConfig();
+
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        Assert.assertFalse(factory.getProperty("foo").asBoolean(false).get());
+        Assert.assertTrue(factory.getProperty("foo").asBoolean(true).get());
     }
 }

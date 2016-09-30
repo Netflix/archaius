@@ -20,7 +20,6 @@ package com.netflix.archaius.api;
  * Factory of PropertyContainer objects.
  * 
  * @see PropertyContainer
- * @author elandau
  */
 public interface PropertyFactory {
     /**
