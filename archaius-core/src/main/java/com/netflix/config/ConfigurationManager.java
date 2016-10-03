@@ -15,13 +15,9 @@
  */
 package com.netflix.config;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
+import com.netflix.config.jmx.ConfigJMXManager;
+import com.netflix.config.jmx.ConfigMBean;
+import com.netflix.config.util.ConfigurationUtils;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -31,9 +27,17 @@ import org.apache.commons.configuration.event.ConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.config.jmx.ConfigJMXManager;
-import com.netflix.config.jmx.ConfigMBean;
-import com.netflix.config.util.ConfigurationUtils;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * The configuration manager is a central place where it manages the system wide Configuration and
@@ -54,6 +58,13 @@ public class ConfigurationManager {
     private static volatile ConfigMBean configMBean = null;
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
     static volatile DeploymentContext context = null;
+    
+    /**
+     * initStack will hold the stack trace at the time of static initialization for ConfigurationManager
+     * to help debug where/when ConfigurationManager was created.  We do this to help debug issues with
+     * Archaius2 where ConfigurationManager is initialized before the bridge has been properly set up
+     */
+    private static StackTraceElement[] initStack = null;
     
     public static final String PROP_NEXT_LOAD = "@next";
     public static final String URL_CONFIG_NAME = "archaius.dynamicPropertyFactory.URL_CONFIG";
@@ -77,6 +88,7 @@ public class ConfigurationManager {
     private static Set<String> loadedPropertiesURLs = new CopyOnWriteArraySet<String>();
     
     static {
+        initStack = Thread.currentThread().getStackTrace();
         try {
             String className = System.getProperty("archaius.default.configuration.class");
             if (className != null) {
@@ -108,6 +120,14 @@ public class ConfigurationManager {
         } catch (Exception e) {
             throw new RuntimeException("Error initializing configuration", e);
         }
+    }
+    
+    /**
+     * @return Return the stack trace that triggered static initialization of ConfigurationManager.  This
+     * information can be used to help debug static initialization issues with the Archaius2 bridge.
+     */
+    public static StackTraceElement[] getStaticInitializationSource() {
+        return initStack;
     }
     
     public static Set<String> getLoadedPropertiesURLs() {
