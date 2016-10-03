@@ -1,5 +1,14 @@
 package com.netflix.archaius.bridge;
 
+import com.netflix.config.AggregatedConfiguration;
+import com.netflix.config.ConfigurationManager;
+import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.config.DynamicPropertySupport;
+import com.netflix.config.PropertyListener;
+
+import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -7,15 +16,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.Configuration;
-
-import com.netflix.config.AggregatedConfiguration;
-import com.netflix.config.ConfigurationManager;
-import com.netflix.config.DynamicPropertyFactory;
-import com.netflix.config.DynamicPropertySupport;
-import com.netflix.config.PropertyListener;
 
 /**
  * @see StaticArchaiusBridgeModule
@@ -41,7 +41,10 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         
         // Additional check to make sure archaius actually created the bridge.
         if (staticConfig == null) {
-            throw new RuntimeException("Trying to use bridge but hasn't been configured yet!!!");
+            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
+            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
+            throw new RuntimeException("Trying to use bridge but hasn't been configured yet!!!." +
+                "  Please do not call ConfigurationManager.getConfigInstance()", cause);
         }
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
