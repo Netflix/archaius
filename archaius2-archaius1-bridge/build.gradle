@@ -20,7 +20,7 @@ dependencies {
     compile  project(':archaius2-core')
     compile  project(':archaius2-guice')
     compile  project(':archaius2-commons-configuration')
-    compile  'com.netflix.archaius:archaius-core:0.7.3'
+    compile  'com.netflix.archaius:archaius-core:0.7.5'
 }
 
 eclipse {
