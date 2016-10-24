@@ -27,4 +27,8 @@ subprojects {
     }
     
     group = "com.netflix.${githubProjectName}"
+    
+    tasks.withType(Javadoc) {
+      options.addStringOption('Xdoclint:none', '-quiet')
+    }
 }
