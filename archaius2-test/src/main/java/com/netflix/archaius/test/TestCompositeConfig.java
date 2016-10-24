@@ -18,14 +18,20 @@ public class TestCompositeConfig extends DefaultCompositeConfig implements Setta
     private static final String METHOD_LEVEL_LAYER_NAME =   "METHOD_LEVEL_TEST_OVERRIDES";
     private static final String RUNTIME_LAYER_NAME =        "RUNTIME";
     
-    public TestCompositeConfig(SettableConfig classLevelOverrides, SettableConfig methodLevelOverrides) {
+    
+    public TestCompositeConfig(SettableConfig runtimeOverrides, SettableConfig classLevelOverrides, SettableConfig methodLevelOverrides) {
         try {
-            addConfig(RUNTIME_LAYER_NAME, new DefaultSettableConfig());
+            addConfig(RUNTIME_LAYER_NAME, runtimeOverrides);
             addConfig(METHOD_LEVEL_LAYER_NAME, methodLevelOverrides);
             addConfig(CLASS_LEVEL_LAYER_NAME, classLevelOverrides);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    @Deprecated
+    public TestCompositeConfig(SettableConfig classLevelOverrides, SettableConfig methodLevelOverrides) {
+        this(new DefaultSettableConfig(), classLevelOverrides, methodLevelOverrides);
     }
     
     public void resetForTest() {
