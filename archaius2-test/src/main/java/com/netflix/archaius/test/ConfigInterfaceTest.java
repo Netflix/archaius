@@ -15,9 +15,15 @@ public abstract class ConfigInterfaceTest {
 
     private final Map<String, String> props = new HashMap<>();
 
+    public ConfigInterfaceTest() {
+        props.put("goo", "baz");
+    }
+
     @Test
     public final void getValue() throws Exception {
         Config instance = getInstance(props);
+        String result = instance.getString("goo");
+        assertEquals("baz", result);
     }
 
     @Test

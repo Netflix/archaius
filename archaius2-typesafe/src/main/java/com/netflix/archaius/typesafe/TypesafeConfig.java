@@ -24,7 +24,6 @@ import com.typesafe.config.ConfigValue;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 
 public class TypesafeConfig extends AbstractConfig {
 
@@ -50,7 +49,7 @@ public class TypesafeConfig extends AbstractConfig {
         try {
             return config.getValue(quoteKey(key)).unwrapped().toString();
         } catch (ConfigException.Missing ex) {
-            throw new NoSuchElementException();
+            return null;
         }
     }
 
