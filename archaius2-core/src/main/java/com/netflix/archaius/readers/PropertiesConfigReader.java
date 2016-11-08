@@ -48,8 +48,14 @@ public class PropertiesConfigReader implements ConfigReader {
     @Override
     public Config load(ClassLoader loader, String resourceName, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException {
         Builder builder = DefaultCompositeConfig.builder();
-        int id = 0;
-        for (URL url : getResource(loader, resourceName)) {
+        Collection<URL> resources = getResources(loader, resourceName);
+        if (resources.size() > 1) {
+            LOG.warn("Multiple resource files found for {}. {}." + 
+                     "  All resources will be loaded with override order undefined.",
+                     resourceName, resources);
+        }
+        
+        for (URL url : resources) {
             builder.withConfig(url.toString(), load(loader, url, strInterpolator, lookup));
         }
         
@@ -57,7 +63,6 @@ public class PropertiesConfigReader implements ConfigReader {
         if (config.getConfigNames().isEmpty()) {
             throw new ConfigException("No resources found for '" + resourceName + SUFFIX + "'");
         }
-        
         
         return config;
     }
@@ -88,7 +93,7 @@ public class PropertiesConfigReader implements ConfigReader {
                 if (next != null) {
                     p.remove(INCLUDE_KEY);
                     for (String urlString : next.split(",")) {
-                        for (URL nextUrl : getResource(loader, strInterpolator.create(lookup).resolve(urlString))) {
+                        for (URL nextUrl : getResources(loader, strInterpolator.create(lookup).resolve(urlString))) {
                             internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
                         }
                     }
@@ -104,7 +109,7 @@ public class PropertiesConfigReader implements ConfigReader {
 
     @Override
     public boolean canLoad(ClassLoader loader, String name) {
-        return getResource(loader, name) != null;
+        return getResources(loader, name) != null;
     }
 
     @Override
@@ -112,7 +117,7 @@ public class PropertiesConfigReader implements ConfigReader {
         return uri.getPath().endsWith(SUFFIX);
     }
 
-    private static Collection<URL> getResource(ClassLoader loader, String resourceName) {
+    private static Collection<URL> getResources(ClassLoader loader, String resourceName) {
         LinkedHashSet<URL> resources = new LinkedHashSet<URL>();
         if (!resourceName.endsWith(SUFFIX)) {
             resourceName += SUFFIX;
