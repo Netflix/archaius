@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.api;
 
+import java.util.function.Supplier;
+
 /**
  * API to access latest cached value for a Property.  A Property is created from a PropertyFactory
  * that is normally bound to a top level configuration.  
@@ -40,7 +42,7 @@ package com.netflix.archaius.api;
  *
  * @param <T>
  */
-public interface Property<T> {
+public interface Property<T> extends Supplier<T> {
     /**
      * Return the most recent value of the property.  
      * 
