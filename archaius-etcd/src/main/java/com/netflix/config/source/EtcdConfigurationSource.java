@@ -67,7 +67,7 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
     private void init() {
         final Response listResponse = etcd.list(configPath);
         if (listResponse.wasError()){
-            LOG.error(String.format(ERROR_RESPONSE_LIST, configPath, listResponse.responseCode()));
+            logger.error(String.format(ERROR_RESPONSE_LIST, configPath, listResponse.responseCode()));
         } else {
             cacheConfigValues(listResponse.node());
         }
