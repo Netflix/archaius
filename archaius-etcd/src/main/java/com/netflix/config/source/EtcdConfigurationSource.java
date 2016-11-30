@@ -45,6 +45,9 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
     private final Map<String, Object> valueCache = Maps.newConcurrentMap();
     private final List<WatchedUpdateListener> listeners = new CopyOnWriteArrayList<WatchedUpdateListener>();
 
+    private static final String ERROR_RESPONSE_LIST =
+        "Error occurred while getting list response for configPath '%s'. Response code: %s";
+    
     private final Etcd etcd;
     private final String configPath;
 
@@ -63,16 +66,22 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
 
     private void init() {
         final Response listResponse = etcd.list(configPath);
-        cacheValues(listResponse.node());
+        if (listResponse.wasError()){
+            LOG.error(String.format(ERROR_RESPONSE_LIST, configPath, listResponse.responseCode()));
+        } else {
+            cacheConfigValues(listResponse.node());
+        }
         etcd.waitRecursive(updateHandler, configPath);
     }
 
     private void cacheValues(Node configNode) {
-        for (Node valueNode : configNode.getNodes()) {
-            final String etcdKey = valueNode.key();
-            final String sourceKey = Iterables.getLast(keySplitter.split(etcdKey));
-            final String value = valueNode.getValue();
-            valueCache.put(sourceKey, value);
+        if (configNode != null){
+            for (Node valueNode : configNode.getNodes()) {
+                final String etcdKey = valueNode.key();
+                final String sourceKey = Iterables.getLast(keySplitter.split(etcdKey));
+                final String value = valueNode.getValue();
+                valueCache.put(sourceKey, value);
+            }
         }
     }
     
