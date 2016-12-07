@@ -85,6 +85,11 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     }
 
     @Override
+    protected void clearPropertyDirect(String key) {
+        settable.clearProperty(key);
+    }
+
+    @Override
     public void addConfiguration(AbstractConfiguration config) {
         addConfiguration(config, "Config-" + libNameCounter.incrementAndGet());
     }
