@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class PollingResponse {
-    public static PollingResponse forSnapshot(final Map<String, String> values) {
+    public static PollingResponse forSnapshot(final Map<String, Object> values) {
         return new PollingResponse() {
             @Override
-            public Map<String, String> getToAdd() {
+            public Map<String, Object> getToAdd() {
                 return values;
             }
 
@@ -28,7 +28,7 @@ public abstract class PollingResponse {
     public static PollingResponse noop() {
         return new PollingResponse() {
             @Override
-            public Map<String, String> getToAdd() {
+            public Map<String, Object> getToAdd() {
                 return Collections.emptyMap();
             }
 
@@ -44,7 +44,7 @@ public abstract class PollingResponse {
         };
     }
     
-    public abstract Map<String, String> getToAdd();
+    public abstract Map<String, Object> getToAdd();
     public abstract Collection<String> getToRemove();
     public abstract boolean hasData(); 
 }

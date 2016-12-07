@@ -187,7 +187,7 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         }
         
         // Resolve to a single property value
-        final Map<String, String> result = new HashMap<String, String>();
+        final Map<String, Object> result = new HashMap<String, Object>();
         for (Entry<String, List<ScopedValue>> entry : props.entrySet()) {
             result.put(entry.getKey(), valueResolver.resolve(entry.getKey(), entry.getValue()));
         }

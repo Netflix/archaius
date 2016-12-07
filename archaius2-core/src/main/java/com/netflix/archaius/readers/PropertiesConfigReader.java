@@ -83,13 +83,13 @@ public class PropertiesConfigReader implements ConfigReader {
             try {
                 // Load properties into the single Properties object overriding any property
                 // that may already exist
-                Map<String, String> p = new URLConfigReader(url).call().getToAdd();
+                Map<String, Object> p = new URLConfigReader(url).call().getToAdd();
                 LOG.debug("Loaded : {}", url.toExternalForm());
                 props.putAll(p);
     
                 // Recursively load any files referenced by an @next property in the file
                 // Only one @next property is expected and the value may be a list of files
-                String next = p.get(INCLUDE_KEY);
+                String next = (String) p.get(INCLUDE_KEY);
                 if (next != null) {
                     p.remove(INCLUDE_KEY);
                     for (String urlString : next.split(",")) {

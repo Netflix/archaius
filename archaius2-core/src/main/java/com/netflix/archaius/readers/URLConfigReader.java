@@ -69,7 +69,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
     
     @Override
     public PollingResponse call() throws IOException {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
             Properties props = new Properties();
             InputStream fin = url.openStream();
@@ -95,7 +95,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
         }
         return new PollingResponse() {
             @Override
-            public Map<String, String> getToAdd() {
+            public Map<String, Object> getToAdd() {
                 return map;
             }
 
