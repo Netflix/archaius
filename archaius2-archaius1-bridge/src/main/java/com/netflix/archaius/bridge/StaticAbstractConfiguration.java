@@ -167,6 +167,11 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     }
 
     @Override
+    protected void clearPropertyDirect(String key) {
+        delegate.clearProperty(key);
+    }
+
+    @Override
     public void addConfigurationListener(PropertyListener expandedPropertyListener) {
         if (delegate == null) {
             pendingListeners.add(expandedPropertyListener);
