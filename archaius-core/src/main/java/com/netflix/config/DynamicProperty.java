@@ -559,6 +559,16 @@ public class DynamicProperty {
         return updateValue(newValue);
     }
 
+    private void setStatusForValues() {
+        cachedStringValue.isCached = false;
+        booleanValue.isCached = false;
+        integerValue.isCached = false;
+        floatValue.isCached = false;
+        classValue.isCached = false;
+        doubleValue.isCached = false;
+        longValue.isCached = false;
+    }
+
     // return true iff the value actually changed
     boolean updateValue(Object newValue) {
         String nv = (newValue == null) ? null : newValue.toString();
@@ -568,13 +578,7 @@ public class DynamicProperty {
                 return false;
             }
             stringValue = nv;
-            cachedStringValue.flush();
-            booleanValue.flush();
-            integerValue.flush();
-            floatValue.flush();
-            classValue.flush();
-            doubleValue.flush();
-            longValue.flush();
+            setStatusForValues();
             changedTime = System.currentTimeMillis();
             return true;
         }
