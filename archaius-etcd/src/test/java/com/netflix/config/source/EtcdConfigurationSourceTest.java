@@ -43,7 +43,8 @@ public class EtcdConfigurationSourceTest {
                     new Node("/config/test.key1", "test.value1-etcd", 19311, 19311, 0, false, null),
                     new Node("/config/test.key4", "test.value4-etcd", 1388, 1388, 0, false, null),
                     new Node("/config/test.key6", "test.value6-etcd", 1232, 1232, 0, false, null),
-                    new Node("/config/test.key7", "test.value7-etcd", 1234, 1234, 0, false, null)
+                    new Node("/config/test.key7", "test.value7-etcd", 1234, 1234, 0, false, null),
+                    new Node("/config/test.key8", "test.value8-etcd", 1236, 1236, 0, false, null)
             )));
     private static Handler<Response> ETCD_UPDATE_HANDLER;
     private static final Answer WITH_ETCD_UPDATE_HANDLER = new Answer() {
