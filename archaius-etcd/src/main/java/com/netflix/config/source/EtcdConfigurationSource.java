@@ -134,6 +134,11 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
                         updateConfiguration(createIncremental(ImmutableMap.<String, Object>of(sourceKey, value), null, null));
                         break;
 
+                    case "update":
+                        valueCache.put(sourceKey, value);
+                        updateConfiguration(createIncremental(null, ImmutableMap.<String, Object>of(sourceKey, value), null));
+                        break;
+
                     case "delete":
                         valueCache.remove(sourceKey);
                         updateConfiguration(createIncremental(null, null, ImmutableMap.<String, Object>of(sourceKey, "")));
