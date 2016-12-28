@@ -136,10 +136,10 @@ public class EtcdConfigurationSourceTest {
     }
 
     /**
-     * should update EtcdConfigurationSource when Etcd client handles writes
+     * should set EtcdConfigurationSource when Etcd client handles writes
      */
     @Test
-    public void testUpdateEtcdProperty() throws Exception {
+    public void testSetEtcdProperty() throws Exception {
         final String updateProperty = "test.key6";
         final String updateKey = CONFIG_PATH + "/" + updateProperty;
         final String updateValue = "test.value6-etcd-override";
@@ -164,5 +164,21 @@ public class EtcdConfigurationSourceTest {
 
         ETCD_UPDATE_HANDLER.handle(new Response("delete", 200, new Node(deleteKey, null, 12345, 12345, 0, false, null)));
         assertEquals("test.value7-map", DynamicPropertyFactory.getInstance().getStringProperty(deleteProperty, "default").get());
+    }
+
+    /**
+     * should update EtcdConfigurationSource when Etcd client handles writes
+     */
+    @Test
+    public void testUpdateEtcdProperty() throws Exception {
+        final String updateProperty = "test.key8";
+        final String updateKey = CONFIG_PATH + "/" + updateProperty;
+        final String updateValue = "test.value8-etcd-override";
+        final String initialValue = "test.value8-etcd";
+
+        assertEquals(initialValue, DynamicPropertyFactory.getInstance().getStringProperty(updateProperty, "default").get());
+
+        ETCD_UPDATE_HANDLER.handle(new Response("update", 200, new Node(updateKey, updateValue, 19414, 19414, 0, false, null)));
+        assertEquals(updateValue, DynamicPropertyFactory.getInstance().getStringProperty(updateProperty, "default").get());
     }
 }
