@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.netflix.archaius.api.config.PollingStrategy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import com.netflix.archaius.config.polling.PollingResponse;
 
@@ -38,7 +38,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
  *
  */
 public class PollingDynamicConfig extends AbstractConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(PollingDynamicConfig.class);
     
     private volatile Map<String, String> current = new HashMap<String, String>();
     private final AtomicBoolean busy = new AtomicBoolean();
