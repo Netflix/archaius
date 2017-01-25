@@ -1,6 +1,5 @@
 package com.netflix.archaius.log;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ArchaiusLoggerFactory {
 	
@@ -12,7 +11,6 @@ public class ArchaiusLoggerFactory {
 	}
 	
 	public static void setLoggerService(final ArchaiusLoggerService s) {
-		checkNotNull(s, "service");
 		service = s;
 	}
 
