@@ -24,15 +24,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.netflix.config.PollResult;
 import com.netflix.config.PolledConfigurationSource;
-import com.netflix.config.util.ConfigurationUtils;
 
 /**
  * A polled configuration source based on a set of URLs. For each poll,
@@ -179,10 +180,23 @@ public class URLConfigurationSource implements PolledConfigurationSource {
         }
         Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
-            InputStream fin = url.openStream();
-            Properties props = ConfigurationUtils.loadPropertiesFromInputStream(fin);
-            for (Entry<Object, Object> entry: props.entrySet()) {
-                map.put((String) entry.getKey(), entry.getValue());
+            try {
+                PropertiesConfiguration pc = new PropertiesConfiguration();
+                InputStream is = null;
+                try {
+                    is = pc.getFileSystem().getInputStream(url);
+                    pc.load(is, Charsets.UTF_8.name());
+                } finally {
+                    if (is != null) { 
+                        is.close();
+                    }
+                }
+                
+                for (String key : ImmutableList.copyOf(pc.getKeys())) {
+                    map.put(key, pc.getProperty(key));
+                }
+            } catch (ConfigurationException e) {
+                throw new RuntimeException(e);
             }
         }
         return PollResult.createFull(map);
