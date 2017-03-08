@@ -15,6 +15,15 @@
  */
 package com.netflix.archaius.readers;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigReader;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.MapConfig;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -24,19 +33,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigReader;
-import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
-
 public class PropertiesConfigReader implements ConfigReader {
     private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);
     
-    private static final String INCLUDE_KEY = "@next";
+    private static final String[] INCLUDE_KEYS = { "@next", "netflixconfiguration.properties.nextLoad" };
     private static final String SUFFIX = ".properties";
     
     @Override
@@ -68,15 +68,17 @@ public class PropertiesConfigReader implements ConfigReader {
                 LOG.debug("Loaded : {}", url.toExternalForm());
                 props.putAll(p);
     
-                // Recursively load any files referenced by an @next property in the file
-                // Only one @next property is expected and the value may be a list of files
-                String next = p.get(INCLUDE_KEY);
-                if (next != null) {
-                    p.remove(INCLUDE_KEY);
-                    for (String urlString : next.split(",")) {
-                        URL nextUrl = getResource(loader, strInterpolator.create(lookup).resolve(urlString));
-                        if (nextUrl != null) {
-                            internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                // Recursively load any files referenced by one of several 'include' properties
+                // in the file.  The property value contains a list of URL's to load, where the
+                // last loaded file wins for any individual property collisions. 
+                for (String nextLoadPropName : INCLUDE_KEYS) {
+                    String nextLoadValue = (String)props.remove(nextLoadPropName);
+                    if (nextLoadValue != null) {
+                        for (String urlString : nextLoadValue.split(",")) {
+                            URL nextUrl = getResource(loader, strInterpolator.create(lookup).resolve(urlString));
+                            if (nextUrl != null) {
+                                internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                            }
                         }
                     }
                 }
