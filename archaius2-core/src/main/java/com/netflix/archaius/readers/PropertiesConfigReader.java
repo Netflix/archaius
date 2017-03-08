@@ -42,7 +42,7 @@ import java.util.Set;
 public class PropertiesConfigReader implements ConfigReader {
     private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);
     
-    private static final String INCLUDE_KEY = "@next";
+    private static final String[] INCLUDE_KEYS = { "@next", "netflixconfiguration.properties.nextLoad" };
     private static final String SUFFIX = ".properties";
     
     @Override
@@ -87,14 +87,16 @@ public class PropertiesConfigReader implements ConfigReader {
                 LOG.debug("Loaded : {}", url.toExternalForm());
                 props.putAll(p);
     
-                // Recursively load any files referenced by an @next property in the file
-                // Only one @next property is expected and the value may be a list of files
-                String next = p.get(INCLUDE_KEY);
-                if (next != null) {
-                    p.remove(INCLUDE_KEY);
-                    for (String urlString : next.split(",")) {
-                        for (URL nextUrl : getResources(loader, strInterpolator.create(lookup).resolve(urlString))) {
-                            internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                // Recursively load any files referenced by one of several 'include' properties
+                // in the file.  The property value contains a list of URL's to load, where the
+                // last loaded file wins for any individual property collisions. 
+                for (String nextLoadPropName : INCLUDE_KEYS) {
+                    String nextLoadValue = (String)props.remove(nextLoadPropName);
+                    if (nextLoadValue != null) {
+                        for (String urlString : nextLoadValue.split(",")) {
+                            for (URL nextUrl : getResources(loader, strInterpolator.create(lookup).resolve(urlString))) {
+                                internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                            }
                         }
                     }
                 }
