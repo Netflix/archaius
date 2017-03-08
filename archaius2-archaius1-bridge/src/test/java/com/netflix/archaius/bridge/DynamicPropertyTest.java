@@ -1,5 +1,7 @@
 package com.netflix.archaius.bridge;
 
+import com.netflix.archaius.api.Config;
+import org.apache.commons.configuration.AbstractConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,5 +63,20 @@ public class DynamicPropertyTest {
         
         Assert.assertEquals("value", prop.get());
         
+    }
+
+    @Test
+    public void testPropertyDeletion() {
+        Injector injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
+        AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
+        Config config2 = injector.getInstance(Config.class);
+        config1.setProperty("libA.loaded", "true");
+        Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
+        Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
+
+        config1.clearProperty("libA.loaded");
+        Assert.assertFalse(config1.getBoolean("libA.loaded",  false));
+        Assert.assertFalse(config2.getBoolean("libA.loaded",  false));
+
     }
 }
