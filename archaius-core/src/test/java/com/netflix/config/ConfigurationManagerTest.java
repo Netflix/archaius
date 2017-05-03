@@ -65,7 +65,7 @@ public class ConfigurationManagerTest {
     @Test
     public void testLoadChineseProperties() throws Exception {
         ConfigurationManager.loadPropertiesFromResources("test-chinese.properties");
-        assertEquals("中文测试", ConfigurationManager.getConfigInstance().getProperty("subject"));
+        assertEquals("\u4E2D\u6587\u6D4B\u8BD5", ConfigurationManager.getConfigInstance().getProperty("subject"));
     }
     
     @Test
