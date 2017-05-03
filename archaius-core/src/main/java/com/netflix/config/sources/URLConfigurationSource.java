@@ -56,13 +56,18 @@ public class URLConfigurationSource implements PolledConfigurationSource {
     /**
      * Default configuration file name to be used by default constructor. This file should
      * be on the classpath. The file name can be overridden by the value of system property
-     * <code>configurationSource.defaultFileName</code>
+     * {@link #DEFAULT_CONFIG_FILE_PROPERTY}.
      */
     public static final String DEFAULT_CONFIG_FILE_NAME = "config.properties";
-        
-    public static final String DEFAULT_CONFIG_FILE_FROM_CLASSPATH = 
-        System.getProperty("archaius.configurationSource.defaultFileName") == null ? DEFAULT_CONFIG_FILE_NAME : System.getProperty("archaius.configurationSource.defaultFileName");
-    
+
+    /**
+     * System property name to be used to learn the location of the configuration file name
+     * on the classpath.
+     */
+    public static final String DEFAULT_CONFIG_FILE_PROPERTY = "archaius.configurationSource.defaultFileName";
+
+    public static final String DEFAULT_CONFIG_FILE_FROM_CLASSPATH = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY, DEFAULT_CONFIG_FILE_NAME);
+
     private static final Logger logger = LoggerFactory.getLogger(URLConfigurationSource.class);
 
     /**
