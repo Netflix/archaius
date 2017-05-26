@@ -9,6 +9,7 @@ import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -355,33 +356,59 @@ public class ConfigProxyFactory {
 
     @SuppressWarnings("unchecked")
     private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable) {
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
-        Map<String, Object> map;
-        // This is a map for String -> Interface so create a proxy for any value
-        if (valueType.isInterface()) {
-            map = new ReadOnlyMap<String, Object>() {
-                Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
-                @Override
-                public Object get(final Object key) {
-                    return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
-                        @Override
-                        public Object apply(String key) {
-                            return newProxy(valueType, propName + "." + key, immutable);
-                        }
-                    });
-                }
-            };
+        Object valueType = type.getActualTypeArguments()[1];
+        if(ParameterizedType.class.isAssignableFrom(type.getActualTypeArguments()[1].getClass())) {
+            final ParameterizedType valueTypeInst = (ParameterizedType)valueType;
+
+            // This is a map for String -> Interface so create a proxy for any value
+            if (valueTypeInst.getRawType().getTypeName().equalsIgnoreCase(List.class.getCanonicalName())) {
+                Map<String, List<Object>> map = new ReadOnlyMap<String, List<Object>>() {
+                    Map<String, List<Object>> lookup = new ConcurrentHashMap<String, List<Object>>();
+
+                    @Override
+                    public List<Object> get(final Object key) {
+                        return lookup.computeIfAbsent((String) key, new Function<String, List<Object>>() {
+                            @Override
+                            public List<Object> apply(String key) {
+                                return (List<Object>)config.getList(propName + "." + key,(Class)valueTypeInst.getActualTypeArguments()[0]);
+                            }
+                        });
+                    }
+                };
+                return (MethodInvoker<T>) createInterfaceProperty(propName, map);
+            } else {
+                throw new RuntimeException("The value map handler for " + valueTypeInst.getRawType().getTypeName() + " type is not implemented.");
+            }
+
         } else {
-        // This is a map of String -> DecodableType (i.e. String, Long, etc...) 
-            map = new ReadOnlyMap<String, Object>() {
-                @Override
-                public Object get(final Object key) {
-                    return config.get(valueType, propName + "." + key);
-                }
-            };
+            final Class<?> valueTypeClass = (Class<?>)valueType;
+            Map<String, Object> map;
+            // This is a map for String -> Interface so create a proxy for any value
+            if (valueTypeClass.isInterface()) {
+                map = new ReadOnlyMap<String, Object>() {
+                    Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
+
+                    @Override
+                    public Object get(final Object key) {
+                        return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
+                            @Override
+                            public Object apply(String key) {
+                                return newProxy(valueTypeClass, propName + "." + key, immutable);
+                            }
+                        });
+                    }
+                };
+            } else {
+                // This is a map of String -> DecodableType (i.e. String, Long, etc...)
+                map = new ReadOnlyMap<String, Object>() {
+                    @Override
+                    public Object get(final Object key) {
+                        return config.get(valueTypeClass, propName + "." + key);
+                    }
+                };
+            }
+            return (MethodInvoker<T>) createInterfaceProperty(propName, map);
         }
-        
-        return (MethodInvoker<T>) createInterfaceProperty(propName, map);
     }
 
     protected <T> Supplier<T> defaultValueFromString(Class<T> type, String defaultValue) {

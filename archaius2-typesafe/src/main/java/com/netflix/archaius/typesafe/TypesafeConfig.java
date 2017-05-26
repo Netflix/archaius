@@ -21,6 +21,7 @@ import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigUtil;
 import com.typesafe.config.ConfigValue;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -47,14 +48,20 @@ public class TypesafeConfig extends AbstractConfig {
     public Object getRawProperty(String key) {
         // TODO: Handle lists
         try {
-            return config.getValue(quoteKey(key)).unwrapped().toString();
+            Object o = config.getValue(quoteKey(key)).unwrapped();
+            if(Collection.class.isAssignableFrom(o.getClass())) {
+                return String.join(",",(Collection)o);
+            } else {
+                return o.toString();
+            }
         } catch (ConfigException.Missing ex) {
             return null;
         }
     }
 
+    @Override
     public List getList(String key) {
-        throw new UnsupportedOperationException("Not supported yet");
+        return config.getList(quoteKey(key)).unwrapped();
     }
 
     private String quoteKey(String key) {
