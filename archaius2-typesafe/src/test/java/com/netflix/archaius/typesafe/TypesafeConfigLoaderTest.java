@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.typesafe;
 
+import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,12 +34,12 @@ public class TypesafeConfigLoaderTest {
                 .put("env",    "prod")
                 .put("region", "us-east")
                 .build());
-        
+
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withConfigReader(new TypesafeConfigReader())
                 .withStrLookup(config)
                 .build();
-        
+
         config.replaceConfig("foo", loader.newLoader()
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
@@ -46,6 +47,37 @@ public class TypesafeConfigLoaderTest {
         Assert.assertEquals("prod", config.getString("@environment"));
         Assert.assertEquals("foo-prod", config.getString("foo.prop1"));
         Assert.assertEquals("foo", config.getString("foo.prop2"));
+    }
+
+    @Test
+    public void testWithLists() throws ConfigException {
+        CompositeConfig config = new DefaultCompositeConfig();
+        config.addConfig("config-with-list", MapConfig.builder()
+                .build());
+
+        DefaultConfigLoader loader = DefaultConfigLoader.builder()
+                .withConfigReader(new TypesafeConfigReader())
+                .withStrLookup(config)
+                .build();
+
+        config.replaceConfig("config-with-list", loader.newLoader()
+//                .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
+                .load("config-with-list"));
+
+        ConfigProxyFactory proxyFactory = new ConfigProxyFactory(config);
+
+        TestApplicationConfig testApplicationConfig = proxyFactory.newProxy(TestApplicationConfig.class);
+
+        Assert.assertEquals(2, testApplicationConfig.getModuleWithSomePlugins().size());
+        Assert.assertEquals(0, testApplicationConfig.getModuleWithNoPlugins().size());
+        Assert.assertEquals(0, testApplicationConfig.getModuleWithNonExistingPlugins().size());
+        Assert.assertEquals("plugin1", testApplicationConfig.getModuleWithSomePlugins().get(0));
+        Assert.assertEquals("plugin2", testApplicationConfig.getModuleWithSomePlugins().get(1));
+
+        Assert.assertEquals(1, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin1").size());
+        Assert.assertEquals(2, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin2").size());
+//        Assert.assertEquals(0, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin3").size());
+//        Assert.assertEquals(0, testApplicationConfig.getModuleWithNoPluginsMatrix().size());
     }
 
 }

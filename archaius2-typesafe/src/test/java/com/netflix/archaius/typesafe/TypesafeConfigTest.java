@@ -64,6 +64,12 @@ public class TypesafeConfigTest extends ConfigInterfaceTest {
     }
 
     @Test
+    public void listValue() throws ConfigException {
+        Config config = new TypesafeConfig(ConfigFactory.parseString("a=[\"foo\",\"boo\"]"));
+        Assert.assertArrayEquals(new String[]{"foo","boo"}, config.getList("a").toArray(new String[]{}));
+    }
+
+    @Test
     public void specialChars() throws ConfigException {
         for (char c = '!'; c <= '~'; ++c) {
             if (c == '.') continue;
