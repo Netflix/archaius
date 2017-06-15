@@ -1,15 +1,5 @@
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -34,6 +24,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
+
+import org.apache.commons.lang3.text.StrSubstitutor;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -169,7 +169,7 @@ public class ConfigProxyFactory {
          * @param args
          * @return
          */
-        T invoke(Object obj, Object[] args);
+        T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier);
 
         /**
          * Return the property key
@@ -188,7 +188,7 @@ public class ConfigProxyFactory {
         }
         
         @Override
-        public T invoke(Object Obj, Object[] args) {
+        public T invoke(Object Obj, Object[] args, Supplier<T> defaultSupplier) {
             return get();
         }
     }
@@ -286,13 +286,20 @@ public class ConfigProxyFactory {
         final InvocationHandler handler = (proxy, method, args) -> {
             MethodInvoker<?> invoker = invokers.get(method);
             if (invoker != null) {
-                Object result = invoker.invoke(proxy, args);
-                if (result == null && method.isDefault()) {
-                    result = temp.unreflectSpecial(method, type)
-                            .bindTo(proxy)
-                            .invokeWithArguments();
+                if (method.isDefault()) {
+                    Supplier defaultSupplier = () -> { 
+                        try {
+                            return temp.unreflectSpecial(method, type)
+                                .bindTo(proxy)
+                                .invokeWithArguments();
+                        } catch (Throwable t) {
+                            return null;
+                        }
+                    };
+                    return invoker.invoke(proxy, args, defaultSupplier);
+                } else {
+                    return invoker.invoke(proxy, args, () -> null);
                 }
-                return result;
             }
             
             if ("toString".equals(method.getName())) {
@@ -303,7 +310,7 @@ public class ConfigProxyFactory {
                     MethodInvoker entry = iter.next().getValue();
                     sb.append(entry.getKey().substring(prefix.length())).append("='");
                     try {
-                        sb.append(entry.invoke(proxy, null));
+                        sb.append(entry.invoke(proxy, null, () -> null));
                     } catch (Exception e) {
                         sb.append(e.getMessage());
                     }
@@ -324,11 +331,16 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createCustomProperty(final Function<String, T> converter, final String propName) {
         final Property<T> prop = propertyFactory
                 .getProperty(propName)
-                .asType(converter, "");
+                .asType(converter, null);
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args) {
-                return prop.get();
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
+                T value = prop.get();
+                if (value != null) {
+                    return value;
+                } else {
+                    return defaultSupplier.get();
+                }
             }
 
             @Override
@@ -338,19 +350,45 @@ public class ConfigProxyFactory {
         };
     }
     
-    private MethodInvoker<?> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection> listSupplier) {
+    private <T> MethodInvoker<T> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection> collectionFactory) {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
-        return createCustomProperty(s -> { 
-            Collection list = listSupplier.get();
-            if (!s.isEmpty()) {
-                Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
-                    if (!v.isEmpty() || valueType == String.class) { 
-                        list.add(decoder.decode(valueType, v));
-                    }
-                });
+        final Property<T> prop = propertyFactory
+                .getProperty(propName)
+                .asType(s -> { 
+                  if (s != null) {
+                      Collection list = collectionFactory.get();
+                      if (!s.isEmpty()) {
+                          Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
+                              if (!v.isEmpty() || valueType == String.class) { 
+                                  list.add(decoder.decode(valueType, v));
+                              }
+                          });
+                      }
+                      return (T)list;
+                  } else {
+                      return null;
+                  }
+              }, null);
+        
+        
+        return new MethodInvoker<T>() {
+            @Override
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
+                T value = prop.get();
+                if (value == null) {
+                    value = defaultSupplier.get();
+                }
+                if (value == null) {
+                    value = (T) collectionFactory.get();
+                }
+                return value;
             }
-            return list;
-        }, propName);
+
+            @Override
+            public String getKey() {
+                return prop.getKey();
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -393,7 +431,7 @@ public class ConfigProxyFactory {
             private volatile T cached;
             
             @Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultValueSupplier) {
                 if (cached == null) {
                     cached = get();
                 }
@@ -422,7 +460,7 @@ public class ConfigProxyFactory {
                 .asType(type, (T)defaultValue);
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
                 return prop.get();
             }
 
@@ -436,7 +474,7 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Object defaultValue) {
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
                 // Determine the actual property name by replacing with arguments using the argument index
                 // to the method.  For example,
                 //      @PropertyName(name="foo.${1}.${0}")
