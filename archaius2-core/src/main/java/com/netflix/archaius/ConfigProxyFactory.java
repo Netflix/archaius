@@ -188,8 +188,12 @@ public class ConfigProxyFactory {
         }
         
         @Override
-        public T invoke(Object Obj, Object[] args, Supplier<T> defaultSupplier) {
-            return get();
+        public T invoke(Object Obj, Object[] args, Supplier<T> defaultValueSupplier) {
+            T result = get();
+            if (result == null) {
+                result = defaultValueSupplier.get();
+            }
+            return result;
         }
     }
     
@@ -334,13 +338,12 @@ public class ConfigProxyFactory {
                 .asType(converter, null);
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultValueSupplier) {
                 T value = prop.get();
-                if (value != null) {
-                    return value;
-                } else {
-                    return defaultSupplier.get();
+                if (value == null) {
+                    value = defaultValueSupplier.get();
                 }
+                return value;
             }
 
             @Override
@@ -373,10 +376,10 @@ public class ConfigProxyFactory {
         
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultValueSupplier) {
                 T value = prop.get();
                 if (value == null) {
-                    value = defaultSupplier.get();
+                    value = defaultValueSupplier.get();
                 }
                 if (value == null) {
                     value = (T) collectionFactory.get();
@@ -435,6 +438,9 @@ public class ConfigProxyFactory {
                 if (cached == null) {
                     cached = get();
                 }
+                if (cached == null) {
+                    cached = defaultValueSupplier.get();
+                }
                 return cached;
             }
             
@@ -460,8 +466,12 @@ public class ConfigProxyFactory {
                 .asType(type, (T)defaultValue);
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
-                return prop.get();
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultValueSupplier) {
+                T result = prop.get();
+                if (result == null) {
+                    result = defaultValueSupplier.get();
+                }
+                return result;
             }
 
             @Override
@@ -474,7 +484,7 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Object defaultValue) {
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args, Supplier<T> defaultSupplier) {
+            public T invoke(Object obj, Object[] args, Supplier<T> defaultValueSupplier) {
                 // Determine the actual property name by replacing with arguments using the argument index
                 // to the method.  For example,
                 //      @PropertyName(name="foo.${1}.${0}")
@@ -486,7 +496,11 @@ public class ConfigProxyFactory {
                     values.put("" + i, args[i]);
                 }
                 String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
-                return getPropertyWithDefault(returnType, propName, (T)defaultValue);
+                T result = getPropertyWithDefault(returnType, propName, (T)defaultValue);
+                if (result == null) {
+                    result = defaultValueSupplier.get();
+                }
+                return result;
             }
 
             <R> R getPropertyWithDefault(Class<R> type, String propName, R defaultValue) {
