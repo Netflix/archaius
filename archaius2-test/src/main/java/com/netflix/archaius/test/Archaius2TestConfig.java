@@ -276,7 +276,7 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
-        testCompositeConfig.forEach(consumer);
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
+        testCompositeConfig.forEachProperty(consumer);
     }
 }

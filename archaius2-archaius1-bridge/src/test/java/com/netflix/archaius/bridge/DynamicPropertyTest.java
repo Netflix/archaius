@@ -63,7 +63,7 @@ public class DynamicPropertyTest {
         Injector injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
 
         Config config = injector.getInstance(Config.class);
-        config.forEach((k, v) -> System.out.println(k + " = " + v));
+        config.forEachProperty((k, v) -> System.out.println(k + " = " + v));
         ConfigurationManager.getConfigInstance().setProperty("foo", "${bar}");
         ConfigurationManager.getConfigInstance().setProperty("bar", "value");
         

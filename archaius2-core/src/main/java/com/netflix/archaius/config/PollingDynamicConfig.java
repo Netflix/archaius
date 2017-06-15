@@ -121,7 +121,7 @@ public class PollingDynamicConfig extends AbstractConfig {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         current.forEach(consumer);
     }
 }

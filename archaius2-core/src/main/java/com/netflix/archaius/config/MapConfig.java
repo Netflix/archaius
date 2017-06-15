@@ -110,7 +110,7 @@ public class MapConfig extends AbstractConfig {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         props.forEach(consumer);
     }
 }

@@ -82,7 +82,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         public State(Map<String, Config> children, int size) {
             this.children = children;
             this.data = new HashMap<>(size);
-            children.values().forEach(child -> child.forEach(data::putIfAbsent));
+            children.values().forEach(child -> child.forEachProperty(data::putIfAbsent));
         }
         
         State addConfig(String name, Config config) {
@@ -293,7 +293,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         this.state.data.forEach(consumer);
     }
 

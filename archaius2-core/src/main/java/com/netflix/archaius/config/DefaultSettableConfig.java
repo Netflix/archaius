@@ -90,7 +90,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
         if (null != src) {
             synchronized (this) {
                 Map<String, Object> copy = new HashMap<>(props);
-                src.forEach(copy::put);
+                src.forEachProperty(copy::put);
                 props = copy;
                 notifyConfigUpdated(this);
             }
@@ -98,7 +98,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         props.forEach(consumer);
     }
 }

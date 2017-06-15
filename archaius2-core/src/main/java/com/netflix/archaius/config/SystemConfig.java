@@ -60,7 +60,7 @@ public class SystemConfig extends AbstractConfig {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         System.getProperties().forEach((k, v) -> consumer.accept(k.toString(), v));
     }
 }

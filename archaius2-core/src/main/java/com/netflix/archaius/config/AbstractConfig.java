@@ -222,7 +222,7 @@ public abstract class AbstractConfig implements Config {
     @Override
     public <T> T accept(Visitor<T> visitor) {
         T result = null;
-        forEach((k, v) -> visitor.visitKey(k, v));
+        forEachProperty((k, v) -> visitor.visitKey(k, v));
         return null;
     }
 
@@ -393,7 +393,7 @@ public abstract class AbstractConfig implements Config {
     }
     
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         Iterator<String> keys = getKeys();
         while (keys.hasNext()) {
             String key = keys.next();

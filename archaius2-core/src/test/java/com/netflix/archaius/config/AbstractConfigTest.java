@@ -46,7 +46,7 @@ public class AbstractConfigTest {
         }
 
         @Override
-        public void forEach(BiConsumer<String, Object> consumer) {
+        public void forEachProperty(BiConsumer<String, Object> consumer) {
             consumer.accept("foo",  "bar");
         }
     };

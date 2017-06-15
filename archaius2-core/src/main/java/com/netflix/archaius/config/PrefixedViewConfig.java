@@ -45,7 +45,7 @@ public class PrefixedViewConfig extends AbstractConfig {
         
         public State(Config config, String prefix) {
             data = new LinkedHashMap<String, Object>();
-            config.forEach((k, v) -> {
+            config.forEachProperty((k, v) -> {
                 if (k.startsWith(prefix)) {
                     data.put(k.substring(prefix.length()+1), v);
                 }
@@ -140,7 +140,7 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
         this.state.data.forEach(consumer);
     }
 }
