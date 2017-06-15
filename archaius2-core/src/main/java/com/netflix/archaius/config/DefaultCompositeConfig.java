@@ -15,15 +15,16 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +40,6 @@ import com.netflix.archaius.api.exceptions.ConfigException;
  * the same property in configuration that was added later.  It is however possible
  * to set a flag that reverses the override order.
  * 
- * @author elandau
- *
  * TODO: Optional cache of queried properties
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
@@ -50,7 +49,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     
     /**
      * The builder provides a fluent style API to create a CompositeConfig
-     * @author elandau
      */
     public static class Builder {
         LinkedHashMap<String, Config> configs = new LinkedHashMap<>();
@@ -77,10 +75,54 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         return DefaultCompositeConfig.builder().build();
     }
     
-    private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
-    private final Map<String, Config>           lookup    = new LinkedHashMap<String, Config>();
-    private final ConfigListener                listener;
-    private final boolean                       reversed;
+    private class State {
+        private final Map<String, Config> children;
+        private final Map<String, Object> data;
+        
+        public State(Map<String, Config> children, int size) {
+            this.children = children;
+            this.data = new HashMap<>(size);
+            children.values().forEach(child -> child.forEach(data::putIfAbsent));
+        }
+        
+        State addConfig(String name, Config config) {
+            LinkedHashMap<String, Config> children = new LinkedHashMap<>(this.children.size() + 1);
+            if (reversed) {
+                children.put(name, config);
+                children.putAll(this.children);
+            } else {
+                children.putAll(this.children);
+                children.put(name, config);
+            }
+            return new State(children, data.size() + 16);
+        }
+        
+        State removeConfig(String name) {
+            if (children.containsKey(name)) {
+                LinkedHashMap<String, Config> children = new LinkedHashMap<>(this.children);
+                children.remove(name);
+                return new State(children, data.size());
+            }
+            return this;
+        }
+        
+        public State refresh() {
+            return new State(children, data.size());
+        }
+
+
+        Config getConfig(String name) {
+            return children.get(name);
+        }
+        
+        boolean containsConfig(String name) {
+            return getConfig(name) != null;
+        }
+    }
+    
+    private final ConfigListener listener;
+    private final boolean reversed;
+    private volatile State state;
     
     public DefaultCompositeConfig() {
         this(false);
@@ -91,16 +133,19 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         listener = new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
+                refreshState();
                 notifyConfigAdded(DefaultCompositeConfig.this);
             }
 
             @Override
             public void onConfigRemoved(Config config) {
+                refreshState();
                 notifyConfigRemoved(DefaultCompositeConfig.this);
             }
 
             @Override
             public void onConfigUpdated(Config config) {
+                refreshState();
                 notifyConfigUpdated(DefaultCompositeConfig.this);
             }
 
@@ -109,7 +154,14 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
                 notifyError(error, DefaultCompositeConfig.this);
             }
         };
+        
+        this.state = new State(Collections.emptyMap(), 0);
     }
+
+    private void refreshState() {
+        this.state = state.refresh();
+    }
+
 
     @Override
     public synchronized boolean addConfig(String name, Config child) throws ConfigException {
@@ -117,7 +169,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     }
     
     private synchronized boolean internalAddConfig(String name, Config child) throws ConfigException {
-        LOG.trace("Adding config {} to {}", name, hashCode());
+        LOG.info("Adding config {} to {}", name, hashCode());
         
         if (child == null) {
             // TODO: Log a warning?
@@ -128,22 +180,16 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
             throw new ConfigException("Child configuration must be named");
         }
         
-        if (lookup.containsKey(name)) {
+        if (state.containsConfig(name)) {
             LOG.info("Configuration with name'{}' already exists", name);
             return false;
         }
 
-        lookup.put(name, child);
-        if (reversed) {
-            children.add(0, child);
-        }
-        else {
-            children.add(child);
-        }
+        state = state.addConfig(name, child);
         postConfigAdded(child);
         return true;
     }
-
+    
     @Override
     public synchronized void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
         for (Entry<String, Config> entry : configs.entrySet()) {
@@ -160,9 +206,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public synchronized Collection<String> getConfigNames() {
-        List<String> result = new ArrayList<String>();
-        result.addAll(this.lookup.keySet());
-        return result;
+        return state.children.keySet();
     }
     
     protected void postConfigAdded(Config child) {
@@ -184,72 +228,24 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     }
     
     public synchronized Config internalRemoveConfig(String name) {
-        Config child = this.lookup.remove(name);
+        Config child = state.getConfig(name);
         if (child != null) {
-            this.children.remove(child);
+            state = state.removeConfig(name);
             child.removeListener(listener);
             this.notifyConfigRemoved(child);
-            return child;
         }
-        return null;
+        return child;
     }    
 
     @Override
     public Config getConfig(String name) {
-        return lookup.get(name);
+        return state.children.get(name);
     }
 
 
     @Override
     public Object getRawProperty(String key) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return child.getRawProperty(key);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public <T> List<T> getList(String key, Class<T> type) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return child.getList(key, type);
-            }
-        }
-        return notFound(key);
-    }
-
-    @Override
-    public List getList(String key) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return child.getList(key);
-            }
-        }
-        return notFound(key);
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        for (Config child : children) {
-            if (!child.isEmpty()) {
-                return false;
-            }
-        }
-        
-        return true;
+        return state.data.get(key);
     }
 
     /**
@@ -261,34 +257,21 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
      */
     @Override
     public Iterator<String> getKeys() {
-        HashSet<String> result = new HashSet<>();
-        for (Config config : children) {
-            Iterator<String> iter = config.getKeys();
-            while (iter.hasNext()) {
-               String key = iter.next();
-                result.add(key);
-            }
-        }
-        return result.iterator();
+        return state.data.keySet().iterator();
     }
     
     @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
-        T result = null;
+        AtomicReference<T> result = new AtomicReference<>(null);
         if (visitor instanceof CompositeVisitor) {
-            synchronized (this) {
-                CompositeVisitor<T> cv = (CompositeVisitor<T>)visitor;
-                for (Entry<String, Config> entry : lookup.entrySet()) {
-                    result = cv.visitChild(entry.getKey(), entry.getValue());
-                }
-            }
+            CompositeVisitor<T> cv = (CompositeVisitor<T>)visitor;
+            state.children.forEach((key, config) -> {
+                result.set(cv.visitChild(key, config));
+            });
+        } else {
+            state.data.forEach(visitor::visitKey);
         }
-        else {
-            for (Config child : children) {
-                result = child.accept(visitor);
-            }
-        }
-        return result;
+        return result.get();
     }
 
     public static com.netflix.archaius.api.config.CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
@@ -300,14 +283,22 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     }
     
     @Override
+    public boolean containsKey(String key) {
+        return state.data.containsKey(key);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return state.data.isEmpty();
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        this.state.data.forEach(consumer);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        
-        for (Config child : children) {
-            sb.append(child.toString()).append(" ");
-        }
-        sb.append("]");
-        return sb.toString();
+        return "[" + state.children.keySet().stream().collect(Collectors.joining(" ")) + "]";
     }
 }

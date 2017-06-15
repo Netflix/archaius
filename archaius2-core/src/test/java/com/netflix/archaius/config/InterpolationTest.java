@@ -6,6 +6,7 @@ import org.junit.Test;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class InterpolationTest {
     @Test
@@ -77,7 +78,7 @@ public class InterpolationTest {
         Assert.assertEquals("key2_value", config.getString("prefix.key1"));
         
         Config prefixedConfig = config.getPrefixedView("prefix");
-        
+        prefixedConfig.accept(new PrintStreamVisitor());
         Assert.assertEquals("key2_value", prefixedConfig.getString("key1"));
     }
     

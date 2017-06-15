@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.rules.TestRule;
@@ -272,5 +273,10 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     @Override
     public void clearProperty(String propName) {
         testCompositeConfig.clearProperty(propName);
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        testCompositeConfig.forEach(consumer);
     }
 }

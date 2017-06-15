@@ -23,11 +23,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
+import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.exceptions.ParseException;
@@ -160,6 +161,7 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
+    @Deprecated
     public Iterator<String> getKeys(final String prefix) {
         return new Iterator<String>() {
             Iterator<String> iter = getKeys();
@@ -220,11 +222,8 @@ public abstract class AbstractConfig implements Config {
     @Override
     public <T> T accept(Visitor<T> visitor) {
         T result = null;
-        Iterator<String> iter = getKeys();
-        while (iter.hasNext()) {
-            result = visitor.visitKey(this, iter.next());
-        }
-        return result;
+        forEach((k, v) -> visitor.visitKey(k, v));
+        return null;
     }
 
     protected <T> T getValue(Class<T> type, String key) {
@@ -391,5 +390,17 @@ public abstract class AbstractConfig implements Config {
 
     private <T> T parseError(String key, String value, Exception e) {
         throw new ParseException("Error parsing value '" + value + "' for property '" + key + "'", e);
+    }
+    
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        Iterator<String> keys = getKeys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value = this.getRawProperty(key);
+            if (value != null) {
+                consumer.accept(key, value);
+            }
+        }
     }
 }

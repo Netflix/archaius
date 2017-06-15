@@ -21,21 +21,18 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.netflix.archaius.api.config.PollingStrategy;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.archaius.api.config.PollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
 
 /**
  * Special DynamicConfig that reads an entire snapshot of the configuration
  * from a source and performs a delta comparison.  Each new snapshot becomes
  * the new immutable Map backing this config.  
- * 
- * @author elandau
- *
  */
 public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
@@ -121,5 +118,10 @@ public class PollingDynamicConfig extends AbstractConfig {
     @Override
     public Iterator<String> getKeys() {
         return current.keySet().iterator();
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        current.forEach(consumer);
     }
 }

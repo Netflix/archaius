@@ -16,7 +16,10 @@
 package com.netflix.archaius.config;
 
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -30,56 +33,81 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
  * 
  * This class is meant to work with dynamic Config object that may have properties
  * added and removed.
- * 
- * @author elandau
- *
  */
 public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;
     private final Lookup nonPrefixedLookup;
+    private volatile State state;
+
+    private static class State {
+        final Map<String, Object> data;
+        
+        public State(Config config, String prefix) {
+            data = new LinkedHashMap<String, Object>();
+            config.forEach((k, v) -> {
+                if (k.startsWith(prefix)) {
+                    data.put(k.substring(prefix.length()+1), v);
+                }
+            });
+        }
+    }
     
     public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
         this.nonPrefixedLookup = ConfigStrLookup.from(config);
+        this.state = new State(config, prefix);
+        
+        this.config.addListener(new ConfigListener() {
+            @Override
+            public void onConfigAdded(Config config) {
+                state = new State(config, prefix);
+            }
+
+            @Override
+            public void onConfigRemoved(Config config) {
+                state = new State(config, prefix);
+            }
+
+            @Override
+            public void onConfigUpdated(Config config) {
+                state = new State(config, prefix);
+            }
+
+            @Override
+            public void onError(Throwable error, Config config) {
+            }
+        });
     }
 
     @Override
     public Iterator<String> getKeys() {
-        LinkedHashSet<String> result = new LinkedHashSet<String>();
-        Iterator<String> iter = config.getKeys();
-        while (iter.hasNext()) {
-            String key = iter.next();
-            if (key.startsWith(prefix)) {
-                result.add(key.substring(prefix.length()));
-            }
-        }
-        return result.iterator();
+        return state.data.keySet().iterator();
     }
 
     @Override
     public boolean containsKey(String key) {
-        return config.containsKey(prefix + key);
+        return state.data.containsKey(prefix + key);
     }
 
     @Override
     public boolean isEmpty() {
-        // This is terribly inefficient
-        return !config.getKeys().hasNext();
+        return state.data.isEmpty();
     }
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
-        return config.accept(visitor);
+        T t = null;
+        for (Entry<String, Object> entry : state.data.entrySet()) {
+            t = visitor.visitKey(entry.getKey(), entry.getValue());
+        }
+        return t;
     }
 
     @Override
     public Object getRawProperty(String key) {
-        if (config.containsKey(prefix + key)) {
-            return config.getRawProperty(prefix + key);
-        }
-        return null;
+        return state.data.get(key);
     }
     
     @Override
@@ -88,30 +116,31 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public synchronized void setDecoder(Decoder decoder)
-    {
+    public synchronized void setDecoder(Decoder decoder) {
         super.setDecoder(decoder);
         config.setDecoder(decoder);
     }
 
     @Override
-    public synchronized void setStrInterpolator(StrInterpolator interpolator)
-    {
+    public synchronized void setStrInterpolator(StrInterpolator interpolator) {
         super.setStrInterpolator(interpolator);
         config.setStrInterpolator(interpolator);
     }
 
     @Override
-    public synchronized void addListener(ConfigListener listener)
-    {
+    public synchronized void addListener(ConfigListener listener) {
         super.addListener(listener);
         config.addListener(listener);
     }
 
     @Override
-    public synchronized void removeListener(ConfigListener listener)
-    {
+    public synchronized void removeListener(ConfigListener listener) {
         super.removeListener(listener);
         config.removeListener(listener);
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        this.state.data.forEach(consumer);
     }
 }
