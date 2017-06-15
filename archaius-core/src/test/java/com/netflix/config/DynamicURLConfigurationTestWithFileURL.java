@@ -68,7 +68,7 @@ public class DynamicURLConfigurationTestWithFileURL {
     @Test
     public void testChineseCharacters(){
         DynamicURLConfiguration config = new DynamicURLConfiguration();
-        Assert.assertEquals("中文测试", config.getString("com.netflix.test-subject"));
+        Assert.assertEquals("\u4E2D\u6587\u6D4B\u8BD5", config.getString("com.netflix.test-subject"));
     }
 
     private void populateFile(File temporary, String prop1, String prop2) throws IOException {
