@@ -26,8 +26,11 @@ class ChainedFloatProperty(
 extends ChainedProperty[Float]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Float, callback: Option[() => Unit] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Float, callback: Option[() => Unit]) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
+  }
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Float) = {
+    this(ChainMakers.fanPropertyName(prefix, name, suffix), default)
   }
 
   callback.foreach(addCallback)

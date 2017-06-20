@@ -15,9 +15,9 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-trait ChainedPropertyBehaviors[TYPE] { this: PropertiesTestHelp with ShouldMatchers =>
+trait ChainedPropertyBehaviors[TYPE] { this: PropertiesTestHelp with Matchers =>
 
   def fixture(pre: Option[String], mid: String, post: Option[String]): ChainedProperty[TYPE]
 

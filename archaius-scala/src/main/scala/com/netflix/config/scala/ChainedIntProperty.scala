@@ -26,8 +26,12 @@ class ChainedIntProperty(
 extends ChainedProperty[Int]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Int, callback: Option[() => Unit] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Int, callback: Option[() => Unit]) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
+  }
+
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Int) = {
+    this(ChainMakers.fanPropertyName(prefix, name, suffix), default)
   }
 
   callback.foreach(addCallback)

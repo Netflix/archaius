@@ -17,10 +17,10 @@ package com.netflix.config.scala
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 @RunWith(classOf[JUnitRunner])
-class DynamicIntPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Int] {
+class DynamicIntPropertyTest extends PropertiesTestHelp with Matchers with DynamicPropertyBehaviors[Int] {
 
   override def fixture(name: String) =
     DynamicIntProperty(name, 1)
