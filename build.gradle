@@ -23,8 +23,10 @@ subprojects {
     }
     group = "com.netflix.${githubProjectName}" 
 
-   //Javadoc would fail, disabled temporarily to build & publish
-   tasks.withType(Javadoc).all { enabled = false }
+    //Java 8 has JavaDoc linting enabled by default and will fail
+    tasks.withType(Javadoc).all {
+      options.addBooleanOption('Xdoclint:none', true)
+    }
 
     tasks.withType(Test) { forkEvery = 1 }
     test {
@@ -114,6 +116,33 @@ project(':archaius-etcd') {
     }
 }
 
+project(':archaius-scala') {
+    apply plugin: 'scala'
+
+    dependencies {
+        compile project(':archaius-core')
+        compile 'org.scala-lang:scala-library:2.10.4'
+        testCompile 'org.scalatest:scalatest_2.10:3.0.2'
+        testCompile 'junit:junit:4.11'
+    }
+}
+
+project(':archaius-scala_2.11') {
+    apply plugin: 'scala'
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    buildDir = 'build_2.11'
+
+    dependencies {
+        compile project(':archaius-core')
+        compile 'org.scala-lang:scala-library:2.11.11'
+        testCompile 'org.scalatest:scalatest_2.11:3.0.2'
+        testCompile 'junit:junit:4.11'
+    }
+}
+
 project(':archaius-scala_2.12') {
     apply plugin: 'scala'
 
@@ -130,16 +159,6 @@ project(':archaius-scala_2.12') {
     }
 }
 
-project(':archaius-scala') {
-    apply plugin: 'scala'
-
-    dependencies {
-        compile project(':archaius-core')
-        compile 'org.scala-lang:scala-library:2.10.4'
-        testCompile 'org.scalatest:scalatest_2.10:3.0.2'
-        testCompile 'junit:junit:4.11'
-    }
-}
 
 project(':archaius-samplelibrary') {
     apply plugin: 'scala'

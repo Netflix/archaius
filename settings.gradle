@@ -4,9 +4,11 @@ include 'archaius-samplelibrary'
 include 'archaius-aws'
 //include 'archaius-jclouds'
 include 'archaius-scala'
+include 'archaius-scala_2.11'
 include 'archaius-scala_2.12'
 include 'archaius-zookeeper'
 include 'archaius-etcd'
 include 'archaius-typesafe'
 
 project(':archaius-scala_2.12').projectDir=file("archaius-scala")
+project(':archaius-scala_2.11').projectDir=file("archaius-scala")
