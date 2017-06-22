@@ -28,7 +28,7 @@ public class PropertyOverrideVisitor implements CompositeConfig.CompositeVisitor
     }
     
     @Override
-    public LinkedHashMap<String, String> visitKey(Config config, String key) {
+    public LinkedHashMap<String, String> visitKey(String key, Object value) {
         return hierarchy;
     }
 
