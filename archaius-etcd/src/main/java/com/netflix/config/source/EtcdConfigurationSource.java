@@ -1,6 +1,6 @@
 package com.netflix.config.source;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -57,7 +57,7 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
      */
     public EtcdConfigurationSource(Etcd etcd, String configPath) {
         this.etcd = etcd;
-        this.configPath = Objects.firstNonNull(configPath, "").replaceAll("^/+","");
+        this.configPath = MoreObjects.firstNonNull(configPath, "").replaceAll("^/+","");
         init();
     }
 
