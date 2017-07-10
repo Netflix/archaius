@@ -380,4 +380,18 @@ public class ProxyFactoryTest {
         Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getSortedSet()));
     }
 
+    public static interface FailingError {
+        default String getValue() { throw new IllegalStateException("error"); }
+    }
+    
+    @Test(expected=RuntimeException.class)
+    public void interfaceWithBadDefault() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        FailingError c = proxy.newProxy(FailingError.class);
+        c.getValue();
+        
+    }
 }
