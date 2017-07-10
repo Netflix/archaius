@@ -292,13 +292,13 @@ public class ConfigProxyFactory {
             if (invoker != null) {
                 if (method.isDefault()) {
                     Supplier defaultSupplier = () -> { 
-                        try {
-                            return temp.unreflectSpecial(method, type)
-                                .bindTo(proxy)
-                                .invokeWithArguments();
-                        } catch (Throwable t) {
-                            return null;
-                        }
+                            try {
+                                return temp.unreflectSpecial(method, type)
+                                    .bindTo(proxy)
+                                    .invokeWithArguments();
+                            } catch (Throwable e) {
+                                throw new RuntimeException("Error invoking default method of " + method, e);
+                            }
                     };
                     return invoker.invoke(proxy, args, defaultSupplier);
                 } else {
