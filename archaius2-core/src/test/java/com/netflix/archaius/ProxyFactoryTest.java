@@ -384,7 +384,7 @@ public class ProxyFactoryTest {
         default String getValue() { throw new IllegalStateException("error"); }
     }
     
-    @Test
+    @Test(expected=RuntimeException.class)
     public void interfaceWithBadDefault() {
         SettableConfig config = new DefaultSettableConfig();
         
