@@ -17,8 +17,26 @@ import com.netflix.config.DeploymentContext;
 @Singleton
 public class ConfigBasedDeploymentContext implements DeploymentContext {
 
+    private static DeploymentContext staticContext;
+    
     private final Config config;
     private final SettableConfig override;
+    
+    @Inject
+    public static void initialize(DeploymentContext context) {
+        staticContext = context;
+    }
+    
+    public static void reset() {
+        staticContext = null;
+    }
+
+    public static DeploymentContext getInstance() {
+        if (staticContext == null) {
+            throw new RuntimeException("DeploymentContext not initialized yet.");
+        }
+        return staticContext;
+    }
     
     @Inject
     public ConfigBasedDeploymentContext(Config config, @RuntimeLayer SettableConfig override) {
@@ -95,5 +113,4 @@ public class ConfigBasedDeploymentContext implements DeploymentContext {
     public void setDeploymentRegion(String region) {
         override.setProperty(ContextKey.region.getKey(), region);
     }
-
 }

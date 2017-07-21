@@ -32,7 +32,7 @@ public class AbstractConfigurationBridgeFailureTest {
     @Before
     public void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         StaticAbstractConfiguration.reset();
-        StaticDeploymentContext.reset();
+        ConfigBasedDeploymentContext.reset();
     }
     
     @Test
