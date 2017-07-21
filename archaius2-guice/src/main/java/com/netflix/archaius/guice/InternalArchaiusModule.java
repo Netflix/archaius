@@ -80,7 +80,7 @@ final class InternalArchaiusModule extends AbstractModule {
     @Singleton
     @LibrariesLayer
     CompositeConfig getLibrariesLayer() {
-        return new DefaultCompositeConfig();
+        return new DefaultCompositeConfig(true);
     }
     
     @Singleton

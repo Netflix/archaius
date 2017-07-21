@@ -13,8 +13,8 @@ public class SLF4JConfigVisitor implements CompositeConfig.CompositeVisitor<Void
     private String currentIndent = "";
     
     @Override
-    public Void visitKey(Config config, String key) {
-        LOG.debug(currentIndent + key + " = " + config.getRawProperty(key));
+    public Void visitKey(String key, Object value) {
+        LOG.debug(currentIndent + key + " = " + value);
         return null;
     }
 

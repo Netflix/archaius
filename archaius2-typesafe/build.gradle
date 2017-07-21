@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 apply plugin: 'java'
 
 dependencies {
-    compile     project(':archaius2-core')
-    compile     'com.typesafe:config:1.3.+'
+    compile project(':archaius2-core')
+    compile 'com.typesafe:config:1.3.+'
+    testCompile project(':archaius2-test')
 }
 
 eclipse {

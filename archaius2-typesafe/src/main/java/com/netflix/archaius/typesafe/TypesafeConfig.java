@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,19 +15,20 @@
  */
 package com.netflix.archaius.typesafe;
 
+import com.netflix.archaius.config.AbstractConfig;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigUtil;
+import com.typesafe.config.ConfigValue;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.netflix.archaius.config.AbstractConfig;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigUtil;
-import com.typesafe.config.ConfigValue;
-
 public class TypesafeConfig extends AbstractConfig {
 
     private final Config config;
-    
+
     public TypesafeConfig(Config config) {
         this.config = config;
     }
@@ -45,7 +46,11 @@ public class TypesafeConfig extends AbstractConfig {
     @Override
     public Object getRawProperty(String key) {
         // TODO: Handle lists
-        return config.getValue(quoteKey(key)).unwrapped().toString();
+        try {
+            return config.getValue(quoteKey(key)).unwrapped().toString();
+        } catch (ConfigException.Missing ex) {
+            return null;
+        }
     }
 
     public List getList(String key) {
@@ -71,7 +76,7 @@ public class TypesafeConfig extends AbstractConfig {
     public Iterator<String> getKeys() {
         return new Iterator<String>() {
             Iterator<Entry<String, ConfigValue>> iter = config.entrySet().iterator();
-                    
+
             @Override
             public boolean hasNext() {
                 return iter.hasNext();

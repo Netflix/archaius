@@ -16,21 +16,18 @@
 package com.netflix.archaius.commons;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.lang.StringUtils;
 
 import com.netflix.archaius.config.AbstractConfig;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
  * as an Archaius2 Config
- * 
- * @author elandau
- *
  */
 public class CommonsToConfig extends AbstractConfig {
 

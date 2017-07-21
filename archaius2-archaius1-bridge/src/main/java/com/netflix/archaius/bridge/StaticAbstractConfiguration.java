@@ -234,7 +234,12 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     }
 
     @Override
+    protected void clearPropertyDirect(String key) {
+        settable.clearProperty(key);
+    }
+
+    @Override
     public Configuration removeConfigurationAt(int index) {
-        throw new UnsupportedOperationException();
+        return null;
     }
 }
