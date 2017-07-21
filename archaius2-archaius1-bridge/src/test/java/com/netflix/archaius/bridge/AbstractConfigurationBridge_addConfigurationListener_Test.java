@@ -24,7 +24,7 @@ public class AbstractConfigurationBridge_addConfigurationListener_Test {
                 .withConfig("override", settableConfig)
                 .build();
         
-        AbstractConfigurationBridge bridge = new AbstractConfigurationBridge(
+        StaticAbstractConfiguration bridge = new StaticAbstractConfiguration(
                 settableConfig, 
                 librariesConfig,
                 settableConfig,

@@ -50,6 +50,45 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         AbstractConfiguration.setDefaultListDelimiter('\0');
     }
 
+    public static AbstractConfiguration getInstance() {
+        if (staticConfig == null) {
+            throw new RuntimeException("Do no call ConfigurationManager.getConfigInstance() before static injection of StaticAbstractConfiguration.");
+        }
+
+        return staticConfig;
+    }
+    
+    @Inject
+    public static void initialize(DeploymentContext context, StaticAbstractConfiguration config) {
+        
+        // Force archaius1 to initialize, if not already done, which will trigger the above constructor.
+        ConfigurationManager.getConfigInstance();
+        
+        // Additional check to make sure archaius actually created the bridge.
+        if (staticConfig == null) {
+            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
+            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
+            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See stack trace below.", cause);
+        }
+        
+        AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
+        if (!actualConfig.equals(staticConfig)) {
+            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
+            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
+            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass() + ".  See stack trace below.", cause);
+        }
+        
+        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
+        PropertyListener listener;
+        while (null != (listener = pendingListeners.poll())) {
+            staticConfig.addConfigurationListener(listener);
+        }
+    }
+
+    public static void reset() {
+        staticConfig = null;
+    }
+
     @Inject
     public StaticAbstractConfiguration(
             final Config config, 
@@ -79,43 +118,6 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
                 fireEvent(HierarchicalConfiguration.EVENT_ADD_NODES, null, null, false);
             }            
         });
-    }
-
-    public static AbstractConfiguration getInstance() {
-        if (staticConfig == null) {
-            throw new RuntimeException("Do no call ConfigurationManager.getConfigInstance() before static injection of StaticAbstractConfiguration.");
-        }
-
-        return staticConfig;
-    }
-    
-    @Inject
-    public static void initialize(DeploymentContext context, StaticAbstractConfiguration config) {
-        
-        // Force archaius1 to initialize, if not already done, which will trigger the above constructor.
-        ConfigurationManager.getConfigInstance();
-        
-        // Additional check to make sure archaius actually created the bridge.
-        if (staticConfig == null) {
-            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
-            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See stack trace below.", cause);
-        }
-        
-        AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
-        if (!actualConfig.equals(staticConfig)) {
-            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass());
-        }
-        
-        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
-        PropertyListener listener;
-        while (null != (listener = pendingListeners.poll())) {
-            staticConfig.addConfigurationListener(listener);
-        }
-    }
-
-    public static void reset() {
-        staticConfig = null;
     }
 
     @Override

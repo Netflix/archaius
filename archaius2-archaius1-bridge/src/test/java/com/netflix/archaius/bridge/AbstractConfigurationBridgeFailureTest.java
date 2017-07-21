@@ -32,7 +32,7 @@ public class AbstractConfigurationBridgeFailureTest {
     @Before
     public void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         StaticAbstractConfiguration.reset();
-        StaticDeploymentContext.reset();
+        ConfigBasedDeploymentContext.reset();
     }
     
     @Test
@@ -43,6 +43,7 @@ public class AbstractConfigurationBridgeFailureTest {
                 new BadModule());
             Assert.fail();
         } catch (Exception e) { 
+            e.printStackTrace();
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String stack = sw.toString();
