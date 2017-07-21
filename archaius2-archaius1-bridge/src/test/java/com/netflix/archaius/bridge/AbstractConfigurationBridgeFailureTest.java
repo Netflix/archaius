@@ -43,7 +43,6 @@ public class AbstractConfigurationBridgeFailureTest {
                 new BadModule());
             Assert.fail();
         } catch (Exception e) { 
-            e.printStackTrace();
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String stack = sw.toString();

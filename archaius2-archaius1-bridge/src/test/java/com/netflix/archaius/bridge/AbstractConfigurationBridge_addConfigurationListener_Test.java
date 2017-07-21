@@ -25,7 +25,7 @@ public class AbstractConfigurationBridge_addConfigurationListener_Test {
                 .build();
         
         StaticAbstractConfiguration bridge = new StaticAbstractConfiguration(
-                settableConfig, 
+                config, 
                 librariesConfig,
                 settableConfig,
                 Mockito.mock(DeploymentContext.class)
@@ -38,8 +38,6 @@ public class AbstractConfigurationBridge_addConfigurationListener_Test {
         
         ArgumentCaptor<ConfigurationEvent> events = ArgumentCaptor.forClass(ConfigurationEvent.class);
         Mockito.verify(listener, Mockito.times(2)).configurationChanged(events.capture());
-        
-        System.out.println(events.getAllValues());
     }
 
 }
