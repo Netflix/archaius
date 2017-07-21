@@ -88,7 +88,7 @@ public class PrefixedViewConfig extends AbstractConfig {
 
     @Override
     public boolean containsKey(String key) {
-        return state.data.containsKey(prefix + key);
+        return state.data.containsKey(key);
     }
 
     @Override
