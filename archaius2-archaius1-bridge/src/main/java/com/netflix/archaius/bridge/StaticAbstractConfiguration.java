@@ -68,14 +68,14 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         if (staticConfig == null) {
             UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
             cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See stack trace below.", cause);
+            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See the troubleshooting section at https://github.com/Netflix/archaius/blob/2.x/archaius2-archaius1-bridge/README.md for more info.", cause);
         }
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
         if (!actualConfig.equals(staticConfig)) {
             UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
             cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass() + ".  See stack trace below.", cause);
+            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass() + ".  See the troubleshooting section at https://github.com/Netflix/archaius/blob/2.x/archaius2-archaius1-bridge/README.md for more info.");
         }
         
         DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
