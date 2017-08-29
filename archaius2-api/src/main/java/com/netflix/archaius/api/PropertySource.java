@@ -22,7 +22,7 @@ public interface PropertySource {
     /**
      * @return Name used to identify the source such as a filename.
      */
-    default String getName() { return "unknown"; }
+    default String getName() { return "unnamed"; }
 
     /**
      * @return True if empty or false otherwise.

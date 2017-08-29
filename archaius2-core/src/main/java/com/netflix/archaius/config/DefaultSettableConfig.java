@@ -15,6 +15,9 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.SettableConfig;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,11 +26,16 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.config.SettableConfig;
-
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
     private volatile Map<String, Object> props = Collections.emptyMap();
+    
+    public DefaultSettableConfig(String name) {
+        super(name);
+    }
+
+    public DefaultSettableConfig() {
+        super(generateUniqueName("settable-"));
+    }
     
     @Override
     public synchronized <T> void setProperty(String propName, T propValue) {
