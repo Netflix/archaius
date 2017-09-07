@@ -188,9 +188,7 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
             }
         }
         
-        return o1.layer.isReversedOrder()
-                ? o1.internalOrder - o2.internalOrder
-                : o2.internalOrder - o1.internalOrder;                        
+        return o2.internalOrder - o1.internalOrder;
     };
 
     /**

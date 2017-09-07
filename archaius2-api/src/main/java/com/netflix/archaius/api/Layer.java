@@ -4,13 +4,12 @@ package com.netflix.archaius.api;
 /**
  * Key used to group and order {@link Config}s into layers (@see Layers).
  * Layers are ordered by natural order such that lower order values have 
- * precedence over a higher value.  Within a layer configurations are prioritized by
- * insertion order (or reversed if 'reversed=true')
+ * precedence over a higher value.  Within a layer configurations are prioritized
+ * such that the last config wins.
  */
 public final class Layer {
     private final String name;
     private final int order;
-    private final boolean reversed;
     
     /**
      * Construct an Layer key.  
@@ -19,18 +18,17 @@ public final class Layer {
      * @param order
      * @return
      */
-    public static Layer of(String name, int order, boolean reversed) {
-        return new Layer(name, order, reversed);
+    public static Layer of(String name, int order) {
+        return new Layer(name, order);
     }
     
-    private Layer(String name, int order, boolean reversed) {
+    private Layer(String name, int order) {
         this.name = name;
         this.order = order;
-        this.reversed = reversed;
     }
 
     public Layer withOrder(int order) {
-        return new Layer(name, order, reversed);
+        return new Layer(name, order);
     }
     
     public int getOrder() {
@@ -39,10 +37,6 @@ public final class Layer {
     
     public String getName() {
         return name;
-    }
-    
-    public boolean isReversedOrder() {
-        return reversed;
     }
     
     @Override
