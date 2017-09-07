@@ -15,16 +15,6 @@
  */
 package com.netflix.archaius.config;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiConsumer;
-
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -35,6 +25,17 @@ import com.netflix.archaius.exceptions.ParseException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+
 public abstract class AbstractConfig implements Config {
 
     private final CopyOnWriteArrayList<ConfigListener> listeners = new CopyOnWriteArrayList<ConfigListener>();
@@ -42,11 +43,22 @@ public abstract class AbstractConfig implements Config {
     private Decoder decoder;
     private StrInterpolator interpolator;
     private String listDelimiter = ",";
+    private final String name;
     
-    public AbstractConfig() {
+    private static final AtomicInteger idCounter = new AtomicInteger();
+    protected static String generateUniqueName(String prefix) {
+        return prefix + idCounter.incrementAndGet();
+    }
+    
+    public AbstractConfig(String name) {
         this.decoder = new DefaultDecoder();
         this.interpolator = CommonsStrInterpolator.INSTANCE;
         this.lookup = ConfigStrLookup.from(this);
+        this.name = name == null ? generateUniqueName("unnamed-") : name;
+    }
+    
+    public AbstractConfig() {
+        this(generateUniqueName("unnamed-"));
     }
 
     protected CopyOnWriteArrayList<ConfigListener> getListeners() {
@@ -402,5 +414,10 @@ public abstract class AbstractConfig implements Config {
                 consumer.accept(key, value);
             }
         }
+    }
+
+    @Override
+    public String getName() { 
+        return name; 
     }
 }
