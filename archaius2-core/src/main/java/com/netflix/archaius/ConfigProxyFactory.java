@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -420,21 +421,8 @@ public class ConfigProxyFactory {
     }
     
     protected <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, Supplier<T> next) {
-        return new MethodInvoker<T>() {
-            private T value;
-            
-        	{
-        		value = propertyFactory.getProperty(propName).asType(type, null).get();
-	        	if (value == null) {
-	        		value = next.get();
-	        	}
-        	}
-            
-            @Override
-            public T invoke(Object obj, Object[] args) {
-            	return value;
-            }
-        };
+    	final T value = Optional.ofNullable(propertyFactory.getProperty(propName).asType(type, null).get()).orElseGet(next);
+    	return (obj, args) -> value;
     }
     
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy, Supplier<T> next) {
