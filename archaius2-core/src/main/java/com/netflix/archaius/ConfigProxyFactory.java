@@ -170,7 +170,7 @@ public class ConfigProxyFactory {
          * @param args
          * @return
          */
-        T invoke(Object obj, Object[] args);
+        T invoke(Object[] args);
     }
     
     static class DefaultMethodValueSupplier<T> implements Supplier<T> {
@@ -184,7 +184,6 @@ public class ConfigProxyFactory {
 		@Override
         public T get() {
             try {
-            	handle.invokeWithArguments();
                 return (T) handle.invokeWithArguments();
             } catch (Throwable e) {
                 throw new RuntimeException(e);
@@ -205,7 +204,7 @@ public class ConfigProxyFactory {
         }
         
         @Override
-        public T invoke(Object obj, Object[] args) {
+        public T invoke(Object[] args) {
             T result = get();
             if (result == null) {
                 return next.get();
@@ -229,7 +228,7 @@ public class ConfigProxyFactory {
         final InvocationHandler handler = (proxy, method, args) -> {
             MethodInvoker<?> invoker = invokers.get(method);
             if (invoker != null) {
-                return invoker.invoke(proxy, args);
+                return invoker.invoke(args);
             }
             
             if ("toString".equals(method.getName())) {
@@ -239,7 +238,7 @@ public class ConfigProxyFactory {
                 	StringBuilder sbProperty = new StringBuilder();
                 	sbProperty.append(propertyNames.get(entry.getKey()).substring(prefix.length())).append("='");
                     try {
-                    	sbProperty.append(entry.getValue().invoke(proxy, null));
+                    	sbProperty.append(entry.getValue().invoke(null));
                     } catch (Exception e) {
                     	sbProperty.append(e.getMessage());
                     }
@@ -372,7 +371,7 @@ public class ConfigProxyFactory {
         
         return new MethodInvoker<T>() {
 			@Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object[] args) {
                 T value = prop.get();
                 if (value == null) {
                     value = next.get();
@@ -422,7 +421,7 @@ public class ConfigProxyFactory {
     
     protected <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, Supplier<T> next) {
     	final T value = Optional.ofNullable(propertyFactory.getProperty(propName).asType(type, null).get()).orElseGet(next);
-    	return (obj, args) -> value;
+    	return (args) -> value;
     }
     
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy, Supplier<T> next) {
@@ -435,7 +434,7 @@ public class ConfigProxyFactory {
     }
     
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
-        return (obj,args) -> proxy;
+        return (args) -> proxy;
     }
 
     protected <T> MethodInvoker<T> createScalarProperty(final Class<T> type, final String propName, Supplier<T> next) {
@@ -444,7 +443,7 @@ public class ConfigProxyFactory {
                 .asType(type, null);
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object[] args) {
                 T result = prop.get();
                 if (result == null) {
                     result = next.get();
@@ -457,7 +456,7 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Supplier<T> next) {
         return new MethodInvoker<T>() {
             @Override
-            public T invoke(Object obj, Object[] args) {
+            public T invoke(Object[] args) {
                 // Determine the actual property name by replacing with arguments using the argument index
                 // to the method.  For example,
                 //      @PropertyName(name="foo.${1}.${0}")
