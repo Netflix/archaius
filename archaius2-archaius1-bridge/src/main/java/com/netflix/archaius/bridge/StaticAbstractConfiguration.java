@@ -1,14 +1,17 @@
 package com.netflix.archaius.bridge;
 
+import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.event.ConfigurationListener;
+
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
+import com.netflix.config.DeploymentContext;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
 
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.Configuration;
-
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -19,45 +22,39 @@ import javax.inject.Singleton;
 
 /**
  * @see StaticArchaiusBridgeModule
- * @author elandau
  */
 @Singleton
 public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
     
     private static volatile AbstractConfigurationBridge delegate;
     private static ConcurrentLinkedQueue<PropertyListener> pendingListeners = new ConcurrentLinkedQueue<>();
-    private static StaticAbstractConfiguration staticConfig;
     
-    public StaticAbstractConfiguration() {
-        staticConfig = this;
-    }
+    private static final StaticAbstractConfiguration INSTANCE = new StaticAbstractConfiguration();
     
     @Inject
-    public static void initialize(AbstractConfigurationBridge config) {
+    public static void initialize(DeploymentContext context, AbstractConfigurationBridge config) {
         delegate = config;
-
-        // Force archaius1 to initialize, if not already done, which will trigger the above constructor.
-        ConfigurationManager.getConfigInstance();
-        
-        // Additional check to make sure archaius actually created the bridge.
-        if (staticConfig == null) {
-            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
-            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See stack trace below.", cause);
-        }
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
-        if (!actualConfig.equals(staticConfig)) {
-            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass());
+        if (!actualConfig.equals(INSTANCE)) {
+            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
+            
+            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
+            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + StaticAbstractConfiguration.class, cause);
         }
         
-        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
+        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)INSTANCE);
+        
         PropertyListener listener;
         while (null != (listener = pendingListeners.poll())) {
             delegate.addConfigurationListener(listener);
         }
     }
-
+    
+    public static AbstractConfiguration getInstance() {
+    	 return INSTANCE;
+    }
+    
     public static void reset() {
         delegate = null;
     }
@@ -179,5 +176,17 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         else {  
             delegate.addConfigurationListener(expandedPropertyListener);
         }
+    }
+    
+    public void addConfigurationListener(ConfigurationListener l) {
+        delegate.addConfigurationListener(l);
+    }
+
+    public boolean removeConfigurationListener(ConfigurationListener l) {
+        return delegate.removeConfigurationListener(l);
+    }
+
+    public Collection<ConfigurationListener> getConfigurationListeners() {
+        return getConfigurationListeners();
     }
 }
