@@ -267,6 +267,8 @@ public class ConfigProxyFactory {
 
         for (Method m : type.getMethods()) {
             try {
+                final MethodInvoker<?> invoker;
+                
                 final String verb;
                 if (m.getName().startsWith("get")) {
                     verb = "get";
@@ -314,26 +316,31 @@ public class ConfigProxyFactory {
                 // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
                 // methods can still return dynamic values
                 if (returnType.equals(Map.class)) {
-                    invokers.put(m, createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable, defaultSupplier));
+                    invoker = createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable, defaultSupplier);
                 } else if (returnType.equals(Set.class)) {
-                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new, defaultSupplier));
+                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new, defaultSupplier);
                 } else if (returnType.equals(SortedSet.class)) {
-                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new, defaultSupplier));
+                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new, defaultSupplier);
                 } else if (returnType.equals(List.class)) {
-                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new, defaultSupplier));
+                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new, defaultSupplier);
                 } else if (returnType.equals(LinkedList.class)) {
-                    invokers.put(m, createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new, defaultSupplier));
+                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new, defaultSupplier);
                 } else if (returnType.isInterface()) {
-                    invokers.put(m, createInterfaceProperty(propName, newProxy(returnType, propName, immutable)));
+                    invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
                     if (nameAnnot == null) {
                         throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
-                    invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultSupplier));
-                } else if (immutable) {
-                    invokers.put(m, createImmutablePropertyWithDefault(returnType, propName, defaultSupplier));
+                    invoker = createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultSupplier);
                 } else {
-                    invokers.put(m, createScalarProperty(returnType, propName, defaultSupplier));
+                    invoker = createScalarProperty(returnType, propName, defaultSupplier);
+                }
+                
+                if (immutable) {
+                    Object value = invoker.invoke(new Object[]{});
+                    invokers.put(m, (args) -> value);
+                } else {
+                    invokers.put(m, invoker);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error proxying method " + m.getName(), e);
