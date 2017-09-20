@@ -1,19 +1,13 @@
 package com.netflix.archaius.bridge;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -23,13 +17,19 @@ import com.netflix.archaius.commons.CommonsToConfig;
 import com.netflix.archaius.config.DefaultConfigListener;
 import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
 import com.netflix.config.AggregatedConfiguration;
-import com.netflix.config.DeploymentContext;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * @see StaticArchaiusBridgeModule
- * @author elandau
  */
 @Singleton
 class AbstractConfigurationBridge extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
@@ -47,11 +47,31 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     public AbstractConfigurationBridge(
             final Config config, 
             @LibrariesLayer CompositeConfig libraries, 
-            @RuntimeLayer SettableConfig settable, 
-            DeploymentContext context) {
+            @RuntimeLayer SettableConfig settable) {
         this.config = config;
         this.settable = settable;
         this.libraries = libraries;
+        this.config.addListener(new ConfigListener() {
+			@Override
+			public void onConfigAdded(Config child) {
+				onConfigUpdated(config);
+			}
+
+			@Override
+			public void onConfigRemoved(Config child) {
+				onConfigUpdated(config);
+			}
+
+			@Override
+			public void onConfigUpdated(Config config) {
+				fireEvent(HierarchicalConfiguration.EVENT_ADD_NODES, null, null, true);
+				fireEvent(HierarchicalConfiguration.EVENT_ADD_NODES, null, null, false);
+			}
+
+			@Override
+			public void onError(Throwable error, Config config) {
+			}
+        });
     }
     
     @Override
