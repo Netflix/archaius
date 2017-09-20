@@ -10,7 +10,7 @@ public final class StaticDeploymentContext implements DeploymentContext {
     private static volatile DeploymentContext delegate;
     
     @Inject
-    public static void intiailize(DeploymentContext context) {
+    public static void initialize(DeploymentContext context) {
         delegate = context;
     }
     
