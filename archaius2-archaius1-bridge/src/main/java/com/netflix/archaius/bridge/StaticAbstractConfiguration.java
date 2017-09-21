@@ -1,7 +1,19 @@
 package com.netflix.archaius.bridge;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
 
 import com.netflix.config.AggregatedConfiguration;
@@ -11,15 +23,6 @@ import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * @see StaticArchaiusBridgeModule
  */
@@ -27,12 +30,12 @@ import javax.inject.Singleton;
 public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
     
     private static volatile AbstractConfigurationBridge delegate;
-    private static ConcurrentLinkedQueue<PropertyListener> pendingListeners = new ConcurrentLinkedQueue<>();
     
     private static final StaticAbstractConfiguration INSTANCE = new StaticAbstractConfiguration();
     
     @Inject
-    public static void initialize(DeploymentContext context, AbstractConfigurationBridge config) {
+    public synchronized static void initialize(DeploymentContext context, AbstractConfigurationBridge config) {
+        reset();
         delegate = config;
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
@@ -44,21 +47,66 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         }
         
         DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)INSTANCE);
-        
-        PropertyListener listener;
-        while (null != (listener = pendingListeners.poll())) {
-            delegate.addConfigurationListener(listener);
-        }
+
+        // Bridge change notification from the new delegate to any listeners registered on 
+        // this static class.  Notifications will be removed if the StaticAbstractConfiguration 
+        // is reset and will reattached to a new bridge should initialize be called again.
+        config.addConfigurationListener(INSTANCE.forwardingConfigurationListener);
+        config.addConfigurationListener(INSTANCE.forwardingPropertyListener);
     }
     
     public static AbstractConfiguration getInstance() {
     	 return INSTANCE;
     }
     
-    public static void reset() {
+    public synchronized static void reset() {
+    	if (delegate != null) {
+    		delegate.removeConfigurationListener(INSTANCE.forwardingConfigurationListener);
+    	}
         delegate = null;
     }
 
+    private final PropertyListener forwardingPropertyListener;
+    private final ConfigurationListener forwardingConfigurationListener;
+    private final CopyOnWriteArrayList<PropertyListener> propertyListeners = new CopyOnWriteArrayList<>();
+
+    public StaticAbstractConfiguration() {
+        this.forwardingPropertyListener = new PropertyListener() {
+    		@Override
+    		public void configSourceLoaded(Object source) {
+    			propertyListeners.forEach(listener -> listener.configSourceLoaded(source));
+    		}
+
+    		@Override
+    		public void addProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.addProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void setProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.setProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void clearProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.clearProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void clear(Object source, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.clear(source, beforeUpdate));
+    		}
+        	
+        };
+        
+        this.forwardingConfigurationListener = new ConfigurationListener() {
+    		@Override
+    		public void configurationChanged(ConfigurationEvent event) {
+    			StaticAbstractConfiguration.this.fireEvent(event.getType(), event.getPropertyName(), event.getPropertyValue(), event.isBeforeUpdate());
+    		}
+        };    	
+    }
+    
     @Override
     public boolean isEmpty() {
         if (delegate == null) {
@@ -168,25 +216,14 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
         delegate.clearProperty(key);
     }
 
-    @Override
-    public void addConfigurationListener(PropertyListener expandedPropertyListener) {
-        if (delegate == null) {
-            pendingListeners.add(expandedPropertyListener);
-        }
-        else {  
-            delegate.addConfigurationListener(expandedPropertyListener);
-        }
-    }
-    
-    public void addConfigurationListener(ConfigurationListener l) {
-        delegate.addConfigurationListener(l);
-    }
-
-    public boolean removeConfigurationListener(ConfigurationListener l) {
-        return delegate.removeConfigurationListener(l);
-    }
-
     public Collection<ConfigurationListener> getConfigurationListeners() {
-        return getConfigurationListeners();
-    }
+    	List<ConfigurationListener> listeners = new ArrayList<>(super.getConfigurationListeners());
+    	Optional.ofNullable(delegate).ifPresent(d -> listeners.addAll(d.getConfigurationListeners()));
+    	return listeners;
+	}
+
+	@Override
+	public void addConfigurationListener(PropertyListener expandedPropertyListener) {
+		propertyListeners.add(expandedPropertyListener);
+	}
 }
