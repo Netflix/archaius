@@ -5,9 +5,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadFactories {
+    
+    private static final AtomicInteger counter = new AtomicInteger();
+    
     public static ThreadFactory newNamedDaemonThreadFactory(final String name) {
-        final AtomicInteger counter = new AtomicInteger();
-        
+       
         return new ThreadFactory() {
             @Override
             public Thread newThread(Runnable runnable) {
