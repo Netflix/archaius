@@ -17,6 +17,10 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +72,9 @@ public class ConfigurationInjectingListener implements ProvisionListener {
             CascadeStrategy strategy = source.cascading() != ConfigurationSource.NullCascadeStrategy.class
                     ? injector.getInstance(source.cascading()) : getCascadeStrategy();
 
-            for (String resourceName : source.value()) {
+            List<String> sources = Arrays.asList(source.value());
+            Collections.reverse(sources);
+            for (String resourceName : sources) {
                 LOG.debug("Trying to loading configuration resource {}", resourceName);
                 try {
                     CompositeConfig loadedConfig = loader
@@ -95,7 +101,7 @@ public class ConfigurationInjectingListener implements ProvisionListener {
             try {
                 mapper.mapConfig(provision.provision(), config, new IoCContainer() {
                     @Override
-                    public <T> T getInstance(String name, Class<T> type) {
+                    public <S> S getInstance(String name, Class<S> type) {
                         return injector.getInstance(Key.get(type, Names.named(name)));
                     }
                 });
