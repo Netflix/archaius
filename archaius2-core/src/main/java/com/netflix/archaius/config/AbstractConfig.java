@@ -22,6 +22,7 @@ import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.exceptions.ParseException;
+import com.netflix.archaius.exceptions.StackSupressedNoSuchElementException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 
@@ -169,7 +170,7 @@ public abstract class AbstractConfig implements Config {
     }
     
     protected <T> T notFound(String key) {
-        throw new NoSuchElementException("'" + key + "' not found");
+        throw new StackSupressedNoSuchElementException("'" + key + "' not found");
     }
 
     @Override
