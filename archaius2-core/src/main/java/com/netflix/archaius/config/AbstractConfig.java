@@ -239,9 +239,18 @@ public abstract class AbstractConfig implements Config {
     }
 
     protected <T> T getValue(Class<T> type, String key) {
+        T value = getValueWithDefault(type, key, null);
+        if (value == null) {
+            return notFound(key);
+        } else {
+            return value;
+        }
+    }
+
+    protected <T> T getValueWithDefault(Class<T> type, String key, T defaultValue) {
         Object rawProp = getRawProperty(key);
         if (rawProp == null) {
-            return notFound(key);
+            return defaultValue;
         }
         if (rawProp instanceof String) {
             try {
@@ -255,14 +264,6 @@ public abstract class AbstractConfig implements Config {
         } else {
             return parseError(key, rawProp.toString(),
                     new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getCanonicalName()));
-        }
-    }
-
-    protected <T> T getValueWithDefault(Class<T> type, String key, T defaultValue) {
-        try {
-            return getValue(type, key);
-        } catch (NoSuchElementException e) {
-            return defaultValue;
         }
     }
 
