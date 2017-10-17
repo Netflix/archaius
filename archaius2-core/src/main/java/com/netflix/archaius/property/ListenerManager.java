@@ -11,8 +11,6 @@ import com.netflix.archaius.api.PropertyListener;
  * an optimization so it is not necessary to iterate through all property
  * containers when the listeners need to be invoked since the expectation
  * is to have far less listeners than property containers.
- * 
- * @author elandau
  */
 public class ListenerManager {
     public static interface ListenerUpdater {
