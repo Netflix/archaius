@@ -15,27 +15,32 @@
  */
 package com.netflix.archaius.api;
 
+import java.util.function.Consumer;
+
 /**
  * Handler for property change notifications for a single property key
  * 
- * @see {@link DefaultAppConfig} for usage example
- * 
- * @author elandau
- *
  * @param <T>
  */
-public interface PropertyListener<T> {
+public interface PropertyListener<T> extends Consumer<T> {
     /**
      * Notification that the property value changed.  next=null indicates that the property
      * has been deleted.
      * 
      * @param value The new value for the property.
      */
-    public void onChange(T value);
+    @Deprecated
+    void onChange(T value);
+    
+    default void accept(T value) {
+        onChange(value);
+    }
     
     /**
      * Notification that a property update failed
      * @param error
+     * @deprecated This method isn't actually used by anyone.  Parse errors will be handled in Config
      */
-    public void onParseError(Throwable error);
+    @Deprecated
+    default void onParseError(Throwable error) {};
 }

@@ -4,6 +4,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.config.DefaultSettableConfig;
+import com.netflix.archaius.config.EmptyConfig;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,15 +27,6 @@ import javax.annotation.Nullable;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.EmptyConfig;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -177,6 +177,7 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),      equalTo("str2"));
         assertThat(a.getSubConfigFromString().part1(), equalTo("a"));
         assertThat(a.getSubConfigFromString().part2(), equalTo("b"));
+        assertThat(a.getBaseBoolean(), equalTo(true));
 
         config.setProperty("prefix.subConfig.str", "str3");
         assertThat(a.getSubConfig().str(),      equalTo("str3"));

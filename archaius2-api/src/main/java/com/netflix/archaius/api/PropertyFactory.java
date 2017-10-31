@@ -15,14 +15,14 @@
  */
 package com.netflix.archaius.api;
 
-
 /**
- * Factory of PropertyContainer objects.
+ * Factory of Property objects.
  * 
- * @see PropertyContainer
- * @author elandau
+ * @see Property
+ * @deprecated Deprecated in favor of using PropertyRepository
  */
-public interface PropertyFactory {
+@Deprecated
+public interface PropertyFactory extends PropertyRepository {
     /**
      * Create a property for the property name.  
      */

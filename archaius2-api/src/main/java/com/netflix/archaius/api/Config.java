@@ -157,4 +157,12 @@ public interface Config extends PropertySource {
      * @param visitor
      */
     <T> T accept(Visitor<T> visitor);
+    
+    default String resolve(String value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default <T> T resolve(String value, Class<T> type) {
+        throw new UnsupportedOperationException();
+    }
 }
