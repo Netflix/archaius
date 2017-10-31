@@ -84,7 +84,7 @@ public class PropertyTest {
         Assert.assertEquals(123, (int)service.value.get());
         Assert.assertEquals(123, (int)service.value2.get());
         // setValue() is called once when we init to 1 and twice when we set foo to 123.
-        Assert.assertEquals(2, service.setValueCallsCounter.get());
+        Assert.assertEquals(1, service.setValueCallsCounter.get());
     }
 
     @Test
@@ -198,6 +198,7 @@ public class PropertyTest {
             public void onParseError(Throwable error) {
             }
         });
+        current.set(prop.get());
 
         Assert.assertEquals(123, current.intValue());
         config.setProperty("foo", 1);

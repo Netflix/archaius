@@ -25,7 +25,6 @@ public class ListenerManager {
     public void add(PropertyListener<?> listener, ListenerUpdater updater) {
         lookup.put(listener, updater);
         updaters.add(updater);
-        updater.update();
     }
 
     public void remove(PropertyListener<?> listener) {
