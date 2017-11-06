@@ -42,10 +42,8 @@ import java.util.function.Function;
  * 
  * Once created a PropertyContainer property cannot be removed.  However, listeners may be
  * added and removed. 
- * 
- * @author elandau
- *
  */
+@Deprecated
 public class DefaultPropertyContainer implements PropertyContainer {
     private final Logger LOG = LoggerFactory.getLogger(DefaultPropertyContainer.class);
     

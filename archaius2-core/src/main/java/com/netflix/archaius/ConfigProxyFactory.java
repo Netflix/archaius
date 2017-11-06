@@ -1,5 +1,14 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyRepository;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -15,7 +24,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -27,14 +35,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -102,28 +102,28 @@ public class ConfigProxyFactory {
      * The decoder is used for the purpose of decoding any @DefaultValue annotation
      */
     private final Decoder decoder;
-    private final PropertyFactory propertyFactory;
+    private final PropertyRepository propertyRepository;
     private final Config config;
     
     @Inject
     public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
         this.config = config;
-        this.propertyFactory = factory;
+        this.propertyRepository = factory;
     }
     
     @Deprecated
     public ConfigProxyFactory(Config config, PropertyFactory factory) {
         this.decoder = config.getDecoder();
         this.config = config;
-        this.propertyFactory = factory;
+        this.propertyRepository = factory;
     }
     
     @Deprecated
     public ConfigProxyFactory(Config config) {
         this.decoder = config.getDecoder();
         this.config = config;
-        this.propertyFactory = DefaultPropertyFactory.from(config);
+        this.propertyRepository = DefaultPropertyFactory.from(config);
     }
     
     /**
@@ -296,9 +296,9 @@ public class ConfigProxyFactory {
                     
                     String value = m.getAnnotation(DefaultValue.class).value();
                     if (returnType == String.class) {
-                        defaultSupplier = memoize((T) config.getString("*", value));
+                        defaultSupplier = memoize((T) config.resolve(value));
                     } else {
-                        defaultSupplier = memoize(decoder.decode(returnType, config.getString("*", value)));
+                        defaultSupplier = memoize(decoder.decode(returnType, config.resolve(value)));
                     }
                 } 
                 
@@ -357,9 +357,9 @@ public class ConfigProxyFactory {
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	private <T> MethodInvoker<T> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection> collectionFactory, Supplier<T> next) {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
-        final Property<T> prop = propertyFactory
-                .getProperty(propName)
-                .asType(s -> { 
+        final Property<T> prop = propertyRepository
+                .get(propName, String.class)
+                .map(s -> { 
                   if (s != null) {
                       Collection list = collectionFactory.get();
                       if (!s.isEmpty()) {
@@ -373,8 +373,7 @@ public class ConfigProxyFactory {
                   } else {
                       return null;
                   }
-              }, null);
-        
+              });
         
         return new MethodInvoker<T>() {
 			@Override
@@ -426,11 +425,6 @@ public class ConfigProxyFactory {
         return () -> decoder.decode(type, defaultValue);
     }
     
-    protected <T> MethodInvoker<T> createImmutablePropertyWithDefault(final Class<T> type, final String propName, Supplier<T> next) {
-    	final T value = Optional.ofNullable(propertyFactory.getProperty(propName).asType(type, null).get()).orElseGet(next);
-    	return (args) -> value;
-    }
-    
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy, Supplier<T> next) {
         return new PropertyMethodInvoker<T>(propName, next) {
             @Override
@@ -445,9 +439,7 @@ public class ConfigProxyFactory {
     }
 
     protected <T> MethodInvoker<T> createScalarProperty(final Class<T> type, final String propName, Supplier<T> next) {
-        final Property<T> prop = propertyFactory
-                .getProperty(propName)
-                .asType(type, null);
+        final Property<T> prop = propertyRepository.get(propName, type);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {
@@ -483,7 +475,7 @@ public class ConfigProxyFactory {
             }
 
             <R> R getPropertyWithDefault(Class<R> type, String propName) {
-                return propertyFactory.getProperty(propName).asType(type, null).get();
+                return propertyRepository.get(propName, type).get();
             }
         }; 
     }

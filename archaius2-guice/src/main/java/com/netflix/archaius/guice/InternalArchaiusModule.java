@@ -17,6 +17,7 @@ import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -227,6 +228,12 @@ final class InternalArchaiusModule extends AbstractModule {
     @Singleton
     PropertyFactory getPropertyFactory(Config config) {
         return DefaultPropertyFactory.from(config);
+    }
+    
+    @Provides
+    @Singleton
+    PropertyRepository getPropertyRespository(PropertyFactory propertyFactory) {
+        return propertyFactory;
     }
 
     @Provides

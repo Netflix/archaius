@@ -139,7 +139,7 @@ public abstract class AbstractConfig implements Config {
         }
 
         if (value instanceof String) {
-            return interpolator.create(getLookup()).resolve(value.toString());
+            return resolve((String)value);
         } else {
             return value.toString();
         }
@@ -153,7 +153,7 @@ public abstract class AbstractConfig implements Config {
         }
 
         if (value instanceof String) {
-            return interpolator.create(getLookup()).resolve(value.toString());
+            return resolve(value.toString());
         } else {
             return value.toString();
         }
@@ -254,17 +254,27 @@ public abstract class AbstractConfig implements Config {
         }
         if (rawProp instanceof String) {
             try {
-                String value = interpolator.create(getLookup()).resolve(rawProp.toString());
+                String value = resolve(rawProp.toString());
                 return decoder.decode(type, value);
             } catch (NumberFormatException e) {
                 return parseError(key, rawProp.toString(), e);
             }
-        } else if (type.isInstance(rawProp)) {
+        } else if (type.isInstance(rawProp) || type.isPrimitive()) {
             return (T)rawProp;
         } else {
             return parseError(key, rawProp.toString(),
                     new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getCanonicalName()));
         }
+    }
+
+    @Override
+    public String resolve(String value) {
+        return interpolator.create(getLookup()).resolve(value);
+    }
+
+    @Override
+    public <T> T resolve(String value, Class<T> type) {
+        return getDecoder().decode(type, resolve(value));
     }
 
     @Override
