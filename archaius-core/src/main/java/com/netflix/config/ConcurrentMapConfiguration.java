@@ -55,7 +55,7 @@ import com.netflix.config.validation.ValidationException;
  *
  */
 public class ConcurrentMapConfiguration extends AbstractConfiguration {
-    protected ConcurrentHashMap<String,Object> map;
+    protected Map<String,Object> map;
     private Collection<ConfigurationListener> listeners = new CopyOnWriteArrayList<ConfigurationListener>();    
     private Collection<ConfigurationErrorListener> errorListeners = new CopyOnWriteArrayList<ConfigurationErrorListener>();    
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentMapConfiguration.class);
