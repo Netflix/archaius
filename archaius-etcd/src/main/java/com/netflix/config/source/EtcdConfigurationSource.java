@@ -68,6 +68,10 @@ public class EtcdConfigurationSource implements WatchedConfigurationSource {
     }
 
     private void cacheValues(Node configNode) {
+        if(configNode == null || configNode.getNodes() == null) {
+            return;
+        }
+
         for (Node valueNode : configNode.getNodes()) {
             final String etcdKey = valueNode.key();
             final String sourceKey = Iterables.getLast(keySplitter.split(etcdKey));
