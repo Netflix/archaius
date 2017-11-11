@@ -15,10 +15,11 @@
  */
 package com.netflix.config;
 
+import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     private static final IdentityHashMap<Class<? extends PropertyWrapper>, Object> SUBCLASSES_WITH_NO_CALLBACK
             = new IdentityHashMap<Class<? extends PropertyWrapper>, Object>();
     private static final Logger logger = LoggerFactory.getLogger(PropertyWrapper.class);
-    private final List<Runnable> callbackList = Lists.newArrayList();
+    private final Set<Runnable> callbacks = new CopyOnWriteArraySet<Runnable>();
 
     static {
         PropertyWrapper.registerSubClassWithNoCallback(DynamicIntProperty.class);
@@ -81,7 +82,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
                 }
             };
             this.prop.addCallback(callback);
-            callbackList.add(callback);
+            callbacks.add(callback);
             this.prop.addValidator(new PropertyChangeValidator() {                
                 @Override
                 public void validate(String newValue) {
@@ -149,7 +150,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     public void addCallback(Runnable callback) {
         if (callback != null) {
             prop.addCallback(callback);
-            callbackList.add(callback);
+            callbacks.add(callback);
         }
     }
 
@@ -158,9 +159,11 @@ public abstract class PropertyWrapper<V> implements Property<V> {
      */
     @Override
     public void removeAllCallbacks() {
-        for (Runnable callback: callbackList) {
+        final Set<Runnable> callbacksToRemove = new HashSet<Runnable>(callbacks);
+        for (Runnable callback : callbacksToRemove) {
             prop.removeCallback(callback);
         }
+        callbacks.removeAll(callbacksToRemove);
     }
 
     /**
