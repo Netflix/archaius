@@ -26,10 +26,8 @@ import java.util.function.Function;
  * of Property are non-blocking and optimize updating property values 
  * in the background so as not to incur any overhead during hot call
  * paths.
- * 
- * @author elandau
- *
  */
+@Deprecated
 public interface PropertyContainer {
     /**
      * Parse the property as a string 

@@ -1,16 +1,21 @@
 package com.netflix.archaius.bridge;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.config.CompositeConfig;
-import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.inject.LibrariesLayer;
-import com.netflix.archaius.api.inject.RuntimeLayer;
-import com.netflix.archaius.commons.CommonsToConfig;
-import com.netflix.archaius.config.DefaultConfigListener;
-import com.netflix.archaius.exceptions.ConfigAlreadyExistsException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationListener;
+
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
@@ -18,228 +23,207 @@ import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
 
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.HierarchicalConfiguration;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * @see StaticArchaiusBridgeModule
- * @author elandau
  */
 @Singleton
 public class StaticAbstractConfiguration extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
     
-    private static ConcurrentLinkedQueue<PropertyListener> pendingListeners = new ConcurrentLinkedQueue<>();
-    private static StaticAbstractConfiguration staticConfig;
-
-    private final Config config;
-    private final SettableConfig settable;
-    private final CompositeConfig libraries;
-    private final AtomicInteger libNameCounter = new AtomicInteger();
-
-    {
-        AbstractConfiguration.setDefaultListDelimiter('\0');
-    }
-
-    public static AbstractConfiguration getInstance() {
-        if (staticConfig == null) {
-            throw new RuntimeException("Do no call ConfigurationManager.getConfigInstance() before static injection of StaticAbstractConfiguration.");
-        }
-
-        return staticConfig;
-    }
+    private static volatile AbstractConfigurationBridge delegate;
+    
+    private static final StaticAbstractConfiguration INSTANCE = new StaticAbstractConfiguration();
     
     @Inject
-    public static void initialize(DeploymentContext context, StaticAbstractConfiguration config) {
-        
-        // Force archaius1 to initialize, if not already done, which will trigger the above constructor.
-        ConfigurationManager.getConfigInstance();
-        
-        // Additional check to make sure archaius actually created the bridge.
-        if (staticConfig == null) {
-            UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
-            cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See the troubleshooting section at https://github.com/Netflix/archaius/blob/2.x/archaius2-archaius1-bridge/README.md for more info.", cause);
-        }
+    public synchronized static void initialize(DeploymentContext context, AbstractConfigurationBridge config) {
+        reset();
+        delegate = config;
         
         AbstractConfiguration actualConfig = ConfigurationManager.getConfigInstance();
-        if (!actualConfig.equals(staticConfig)) {
+        if (!actualConfig.equals(INSTANCE)) {
             UnsupportedOperationException cause = new UnsupportedOperationException("**** Remove static reference to ConfigurationManager or FastProperty in this call stack ****");
+            
             cause.setStackTrace(ConfigurationManager.getStaticInitializationSource());
-            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + staticConfig.getClass() + ".  See the troubleshooting section at https://github.com/Netflix/archaius/blob/2.x/archaius2-archaius1-bridge/README.md for more info.", cause);
+            throw new IllegalStateException("Not using expected bridge!!! " + actualConfig.getClass() + " instead of " + StaticAbstractConfiguration.class, cause);
         }
         
-        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)staticConfig);
-        PropertyListener listener;
-        while (null != (listener = pendingListeners.poll())) {
-            staticConfig.addConfigurationListener(listener);
-        }
+        DynamicPropertyFactory.initWithConfigurationSource((AbstractConfiguration)INSTANCE);
+
+        // Bridge change notification from the new delegate to any listeners registered on 
+        // this static class.  Notifications will be removed if the StaticAbstractConfiguration 
+        // is reset and will reattached to a new bridge should initialize be called again.
+        config.addConfigurationListener(INSTANCE.forwardingConfigurationListener);
+        config.addConfigurationListener(INSTANCE.forwardingPropertyListener);
+    }
+    
+    public static AbstractConfiguration getInstance() {
+    	 return INSTANCE;
+    }
+    
+    public synchronized static void reset() {
+    	if (delegate != null) {
+    		delegate.removeConfigurationListener(INSTANCE.forwardingConfigurationListener);
+    	}
+        delegate = null;
     }
 
-    public static void reset() {
-        staticConfig = null;
-    }
+    private final PropertyListener forwardingPropertyListener;
+    private final ConfigurationListener forwardingConfigurationListener;
+    private final CopyOnWriteArrayList<PropertyListener> propertyListeners = new CopyOnWriteArrayList<>();
 
-    @Inject
-    public StaticAbstractConfiguration(
-            final Config config, 
-            @LibrariesLayer CompositeConfig libraries, 
-            @RuntimeLayer SettableConfig settable, 
-            DeploymentContext context) {
-        staticConfig = this;
+    public StaticAbstractConfiguration() {
+        this.forwardingPropertyListener = new PropertyListener() {
+    		@Override
+    		public void configSourceLoaded(Object source) {
+    			propertyListeners.forEach(listener -> listener.configSourceLoaded(source));
+    		}
+
+    		@Override
+    		public void addProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.addProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void setProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.setProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void clearProperty(Object source, String name, Object value, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.clearProperty(source, name, value, beforeUpdate));
+    		}
+
+    		@Override
+    		public void clear(Object source, boolean beforeUpdate) {
+    			propertyListeners.forEach(listener -> listener.clear(source, beforeUpdate));
+    		}
+        	
+        };
         
-        this.config = config;
-        this.settable = settable;
-        this.libraries = libraries;
-        
-        config.addListener(new DefaultConfigListener() {
-            @Override
-            public void onConfigAdded(Config config) {
-                onConfigUpdated(config);
-            }
-
-            @Override
-            public void onConfigRemoved(Config config) {
-                onConfigUpdated(config);
-            }
-
-            @Override
-            public void onConfigUpdated(Config config) {
-                fireEvent(HierarchicalConfiguration.EVENT_ADD_NODES, null, null, true);
-                fireEvent(HierarchicalConfiguration.EVENT_ADD_NODES, null, null, false);
-            }            
-        });
+        this.forwardingConfigurationListener = new ConfigurationListener() {
+    		@Override
+    		public void configurationChanged(ConfigurationEvent event) {
+    			StaticAbstractConfiguration.this.fireEvent(event.getType(), event.getPropertyName(), event.getPropertyValue(), event.isBeforeUpdate());
+    		}
+        };    	
     }
-
-    @Override
-    public void addConfigurationListener(PropertyListener expandedPropertyListener) {
-        if (staticConfig == null) {
-            pendingListeners.add(expandedPropertyListener);
-        } else {  
-            config.addListener(new DefaultConfigListener() {
-                @Override
-                public void onConfigAdded(Config config) {
-                    expandedPropertyListener.configSourceLoaded(config);
-                }
-
-                @Override
-                public void onConfigRemoved(Config config) {
-                    expandedPropertyListener.configSourceLoaded(config);
-                }
-
-                @Override
-                public void onConfigUpdated(Config config) {
-                    expandedPropertyListener.configSourceLoaded(config);
-                }
-            });
-        }
-    }
-
+    
     @Override
     public boolean isEmpty() {
-        return config.isEmpty();
+        if (delegate == null) {
+            System.err.println("[isEmpty()] StaticAbstractConfiguration not initialized yet.");
+            return true;
+        }
+        return delegate.isEmpty();
     }
 
     @Override
     public boolean containsKey(String key) {
-        return config.containsKey(key);
+        if (delegate == null) {
+            System.err.println("[containsKey(" + key + ")] StaticAbstractConfiguration not initialized yet.");
+            return false;
+        }
+        return delegate.containsKey(key);
     }
-    
+
     @Override
     public String getString(String key, String defaultValue) {
-        return config.getString(key, defaultValue);
+        if (delegate == null) {
+            System.out.println("[getString(" + key + ", " + defaultValue + ")] StaticAbstractConfiguration not initialized yet.");
+            return defaultValue;
+        }
+         return delegate.getString(key, defaultValue);
     }
 
     @Override
     public Object getProperty(String key) {
-        return config.getRawProperty(key);  // Should interpolate
+        if (delegate == null) {
+            System.out.println("[getProperty(" + key + ")] StaticAbstractConfiguration not initialized yet.");
+            return null;
+        }
+        return delegate.getProperty(key);
     }
 
     @Override
     public Iterator<String> getKeys() {
-        return config.getKeys();
-    }
-
-    @Override
-    protected void addPropertyDirect(String key, Object value) {
-        settable.setProperty(key, value);
+        if (delegate == null) {
+            throw new RuntimeException("[getKeys()] StaticAbstractConfiguration not initialized yet.");
+        }
+        return delegate.getKeys();
     }
 
     @Override
     public void addConfiguration(AbstractConfiguration config) {
-        addConfiguration(config, "Config-" + libNameCounter.incrementAndGet());
+        delegate.addConfiguration(config);
     }
 
     @Override
     public void addConfiguration(AbstractConfiguration config, String name) {
-        try {
-            libraries.addConfig(name, new CommonsToConfig(config));
-        }
-        catch (ConfigAlreadyExistsException e) {
-            // OK To ignore
-        } 
-        catch (ConfigException e) {
-            throw new RuntimeException("Unable to add configuration " + name, e);
-        }
+        delegate.addConfiguration(config, name);
     }
 
     @Override
     public Set<String> getConfigurationNames() {
-        return Sets.newHashSet(libraries.getConfigNames());
+        return delegate.getConfigurationNames();
     }
 
     @Override
     public List<String> getConfigurationNameList() {
-        return Lists.newArrayList(libraries.getConfigNames());
+        return delegate.getConfigurationNameList();
     }
 
     @Override
     public Configuration getConfiguration(String name) {
-        return new ConfigToCommonsAdapter(libraries.getConfig(name));
+        return delegate.getConfiguration(name);
     }
 
     @Override
     public int getNumberOfConfigurations() {
-        return libraries.getConfigNames().size();
+        return delegate.getNumberOfConfigurations();
     }
 
     @Override
     public Configuration getConfiguration(int index) {
-        throw new UnsupportedOperationException();
+        return delegate.getConfiguration(index);
     }
 
     @Override
     public List<AbstractConfiguration> getConfigurations() {
-        throw new UnsupportedOperationException();
+        return delegate.getConfigurations();
     }
 
     @Override
     public Configuration removeConfiguration(String name) {
-        libraries.removeConfig(name);
-        return null;
+        return delegate.removeConfiguration(name);
     }
 
     @Override
     public boolean removeConfiguration(Configuration config) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected void clearPropertyDirect(String key) {
-        settable.clearProperty(key);
+        return delegate.removeConfiguration(config);
     }
 
     @Override
     public Configuration removeConfigurationAt(int index) {
-        return null;
+        return delegate.removeConfigurationAt(index);
     }
+
+    @Override
+    protected void addPropertyDirect(String key, Object value) {
+        delegate.addPropertyDirect(key, value);
+    }
+
+    @Override
+    protected void clearPropertyDirect(String key) {
+        delegate.clearProperty(key);
+    }
+
+    public Collection<ConfigurationListener> getConfigurationListeners() {
+    	List<ConfigurationListener> listeners = new ArrayList<>(super.getConfigurationListeners());
+    	Optional.ofNullable(delegate).ifPresent(d -> listeners.addAll(d.getConfigurationListeners()));
+    	return listeners;
+	}
+
+	@Override
+	public void addConfigurationListener(PropertyListener expandedPropertyListener) {
+		propertyListeners.add(expandedPropertyListener);
+	}
 }

@@ -1,13 +1,13 @@
 package com.netflix.archaius.bridge;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.config.ConfigurationManager;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,7 +32,7 @@ public class AbstractConfigurationBridgeFailureTest {
     @Before
     public void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         StaticAbstractConfiguration.reset();
-        ConfigBasedDeploymentContext.reset();
+        StaticDeploymentContext.reset();
     }
     
     @Test

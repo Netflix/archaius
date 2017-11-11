@@ -1,5 +1,13 @@
 package com.netflix.archaius.bridge;
 
+import org.apache.commons.configuration.AbstractConfiguration;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -15,40 +23,24 @@ import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-
 public class DynamicPropertyTest {
-    static Injector injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
-    
     @Rule
     public TestName testName = new TestName();
     
-    @Test
-    public void testBridge() {
-        String propName = testName.getMethodName() + "foo";
-        
-        Property<String> prop2 = injector.getInstance(PropertyFactory.class)
-                .getProperty(propName)
-                .asString("default");
-        
-        DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty(propName, "default");
-        Assert.assertEquals("default", prop.get());
-        Assert.assertEquals("default", prop2.get());
-        
-        SettableConfig config = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
-        config.setProperty(propName, "newvalue");
-        
-        Assert.assertEquals("newvalue", prop.get());
-        Assert.assertEquals("newvalue", prop2.get());
+    private Injector injector;
+    
+    @Before
+    public void before() {
+        injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
+    }
+    
+    @After
+    public void after() {
+        StaticArchaiusBridgeModule.resetStaticBridges();
     }
     
     @Test
     public void settingOnArchaius2UpdateArchaius1() {
-
         Property<String> a2prop = injector.getInstance(PropertyFactory.class).getProperty(testName.getMethodName()).asString("default");
         DynamicStringProperty a1prop = DynamicPropertyFactory.getInstance().getStringProperty(testName.getMethodName(), "default");
         
@@ -64,31 +56,26 @@ public class DynamicPropertyTest {
     
     @Test
     public void testNonStringDynamicProperty() {
-        String propName = testName.getMethodName() + "foo";
-
-        ConfigurationManager.getConfigInstance().setProperty(propName, 123);
-        
         Config config = injector.getInstance(Config.class);
         config.accept(new PrintStreamVisitor());
-        ConfigurationManager.getConfigInstance().setProperty(propName, 123);
+        ConfigurationManager.getConfigInstance().setProperty("foo", 123);
         
-        Property<Integer> prop2 = injector.getInstance(PropertyFactory.class).getProperty(propName).asInteger(1);
+        Property<Integer> prop2 = injector.getInstance(PropertyFactory.class).getProperty("foo").asInteger(1);
         
-        DynamicIntProperty prop = DynamicPropertyFactory.getInstance().getIntProperty(propName, 2);
+        DynamicIntProperty prop = DynamicPropertyFactory.getInstance().getIntProperty("foo", 2);
         
-        Assert.assertEquals(123, prop.get());
         Assert.assertEquals(123, (int)prop2.get());
-        
+        Assert.assertEquals(123, prop.get());
     }
     
     @Test
     public void testInterpolation() {
-        String propName = testName.getMethodName() + "foo";
-        
-        ConfigurationManager.getConfigInstance().setProperty(propName, "${bar}");
+        Config config = injector.getInstance(Config.class);
+        config.forEachProperty((k, v) -> System.out.println(k + " = " + v));
+        ConfigurationManager.getConfigInstance().setProperty("foo", "${bar}");
         ConfigurationManager.getConfigInstance().setProperty("bar", "value");
         
-        DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty(propName, "default");
+        DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty("foo", "default");
         
         Assert.assertEquals("value", prop.get());
         

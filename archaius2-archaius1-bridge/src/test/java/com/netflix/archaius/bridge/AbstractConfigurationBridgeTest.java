@@ -1,17 +1,15 @@
 package com.netflix.archaius.bridge;
 
-import java.io.IOException;
-import java.util.Properties;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import org.apache.commons.configuration.AbstractConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.MapConfiguration;
+import org.apache.commons.configuration.event.ConfigurationListener;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
+import org.mockito.Mockito;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -22,24 +20,15 @@ import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.guice.ArchaiusModule;
-import com.netflix.archaius.visitor.PrintStreamVisitor;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DeploymentContext;
+import com.netflix.config.DeploymentContext.ContextKey;
 
-@Ignore
-public class AbstractConfigurationBridgeTest {
-    @Singleton
-    public static class SomeClient {
-        final String fooValue;
-        
-        @Inject
-        public SomeClient(Config config) {
-            config.accept(new PrintStreamVisitor());
-            fooValue = ConfigurationManager.getConfigInstance().getString("foo", null);
-        }
-    }
-    
+import java.io.IOException;
+import java.util.Properties;
+
+public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
     public static class TestModule extends AbstractModule {
         private Properties properties;
         TestModule(Properties props) {
@@ -53,24 +42,27 @@ public class AbstractConfigurationBridgeTest {
         @Override
         protected void configure() {
             install(new StaticArchaiusBridgeModule());
-            install(new ArchaiusModule());
+            install(new ArchaiusModule().withApplicationOverrides(properties)) ;
             
             bind(SomeClient.class).asEagerSingleton();
         }
     }
     
-    @Before
-    public void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        StaticAbstractConfiguration.reset();
-        ConfigBasedDeploymentContext.reset();
-    }
+    @Rule
+    public TestName testName = new TestName();
     
-    @Test
-    public void testBasicWiring() {
+    private static SettableConfig settable;
+    private static Injector injector;
+    private static AbstractConfiguration commonsConfig;
+    private static Config config;
+    
+    @BeforeClass
+    public static void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         final Properties props = new Properties();
-        props.setProperty("foo", "bar");
+        props.setProperty("app.override.foo", "bar");
+        props.setProperty(ContextKey.environment.getKey(), "test");
         
-        Injector injector = Guice.createInjector(
+        injector = Guice.createInjector(
             new TestModule(props),
             new AbstractModule() {
                 @Override
@@ -79,49 +71,53 @@ public class AbstractConfigurationBridgeTest {
                 }
             });
         
+        config = injector.getInstance(Config.class);
+        settable = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
+        Assert.assertTrue(ConfigurationManager.isConfigurationInstalled());
+        commonsConfig = ConfigurationManager.getConfigInstance();
+        Assert.assertEquals(StaticAbstractConfiguration.class, commonsConfig.getClass());
+    }
+    
+    @Test
+    public void testBasicWiring() {
         SomeClient client = injector.getInstance(SomeClient.class);
         Assert.assertNotNull(ConfigurationManager.getConfigInstance());
         Assert.assertEquals("bar", client.fooValue);
     }
     
-    @ConfigurationSource(value={"libA"})
+    @ConfigurationSource(value={"AbstractConfigurationBridgeTest_libA"})
     static class LibA {
     }
     
-    @ConfigurationSource(value={"libB"})
+    @ConfigurationSource(value={"AbstractConfigurationBridgeTest_libB"})
     static class LibB {
     }
     
     @Test
-    public void confirmOverrideOrder() throws IOException {
-        ConfigurationManager.getConfigInstance();
-        Assert.assertFalse(ConfigurationManager.isConfigurationInstalled());
-        Injector injector = Guice.createInjector(new TestModule());
-        
+    public void lastLoadedLibraryWins() throws IOException {
         Config config = injector.getInstance(Config.class);
         
         injector.getInstance(LibA.class);
+        
         Assert.assertTrue(config.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config.getString("lib.override", null));
         
         injector.getInstance(LibB.class);
+        
         Assert.assertTrue(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("lib.override", null));
     }
     
     @Test
     public void basicBridgeTest() throws IOException {
-        ConfigurationManager.getConfigInstance();
         DeploymentContext context1 = ConfigurationManager.getDeploymentContext();
         Assert.assertNotNull(context1);
-        Assert.assertEquals(null, context1.getDeploymentEnvironment());
+        Assert.assertEquals("test", context1.getDeploymentEnvironment());
         
-        Injector injector = Guice.createInjector(new TestModule());
-
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
         DeploymentContext contextDi = injector.getInstance(DeploymentContext.class);
         Assert.assertNotSame(contextDi, context1);
-        ConfigurationManager.loadCascadedPropertiesFromResources("libA");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
         Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config1.getString("lib.override", null));
         
@@ -139,7 +135,7 @@ public class AbstractConfigurationBridgeTest {
         Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config2.getString("lib.override", null));
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libB");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
         Assert.assertTrue(config1.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config1.getString("lib.override", null));
         Assert.assertTrue(config2.getBoolean("libB.loaded", false));
@@ -155,18 +151,16 @@ public class AbstractConfigurationBridgeTest {
      */
     @Test
     public void testBridgePropertiesFromLegacyToNew() throws IOException {
-        Injector injector = Guice.createInjector(new TestModule());
-        
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
         Config                config2 = injector.getInstance(Config.class);
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libA");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
         Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config1.getString("lib.override", null));
         Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config2.getString("lib.override", null));
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libB");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
         Assert.assertTrue(config1.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config1.getString("lib.override", null));
         Assert.assertTrue(config2.getBoolean("libB.loaded", false));
@@ -184,17 +178,15 @@ public class AbstractConfigurationBridgeTest {
     public void confirmLegacyOverrideOrder() throws IOException {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libA");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
         Assert.assertTrue(config.getBoolean("libA.loaded",  false));
         Assert.assertEquals("libA", config.getString("lib.override", null));
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libB");
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
         Assert.assertTrue(config.getBoolean("libB.loaded", false));
         Assert.assertEquals("libA", config.getString("lib.override", null));
         
-        ConfigurationManager.loadCascadedPropertiesFromResources("libB");
-        
-        System.out.println(ConfigurationManager.getLoadedPropertiesURLs());
+        ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
     }
     
     /**
@@ -202,20 +194,15 @@ public class AbstractConfigurationBridgeTest {
      * with the other tests since the static state of ConfigurationManager cannot
      * be reset between tests.
      * @throws IOException
+     * @throws ConfigurationException 
      */
     @Test
-    public void confirmLegacyOverrideOrderResources() throws IOException {
-        AbstractConfiguration config = ConfigurationManager.getConfigInstance();
-        
-        ConfigurationManager.loadPropertiesFromResources("libA.properties");
-        Assert.assertTrue(config.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
-        
-        ConfigurationManager.loadPropertiesFromResources("libB.properties");
-        Assert.assertTrue(config.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
-        
-        System.out.println(ConfigurationManager.getLoadedPropertiesURLs());
+    public void confirmLegacyOverrideOrderResources() throws IOException, ConfigurationException {
+    	super.confirmLegacyOverrideOrderResources();
+    	
+    	Assert.assertEquals("libA", config.getString("lib.legacy.override"));
+    	Assert.assertTrue(config.getBoolean("libA.legacy.loaded"));
+    	Assert.assertTrue(config.getBoolean("libB.legacy.loaded"));
     }
     
     /**
@@ -226,22 +213,35 @@ public class AbstractConfigurationBridgeTest {
      */
     @Test
     public void confirmLegacyOverrideOrderAddConfig() throws IOException {
-        AggregatedConfiguration config = (AggregatedConfiguration) ConfigurationManager.getConfigInstance();
+        AggregatedConfiguration aggregatedConfig = (AggregatedConfiguration) ConfigurationManager.getConfigInstance();
         
         Properties p1 = new Properties();
         p1.setProperty("lib.override", "libA");
         p1.setProperty("libA.loaded", "true");
-        config.addConfiguration(new MapConfiguration(p1));
+        aggregatedConfig.addConfiguration(new MapConfiguration(p1));
         
-        Assert.assertTrue(config.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        Assert.assertTrue(aggregatedConfig.getBoolean("libA.loaded",  false));
+        Assert.assertEquals("libA", aggregatedConfig.getString("lib.override", null));
         
         Properties p2 = new Properties();
         p2.setProperty("lib.override", "libB");
         p2.setProperty("libB.loaded", "true");
-        config.addConfiguration(new MapConfiguration(p2));
+        aggregatedConfig.addConfiguration(new MapConfiguration(p2));
         
-        Assert.assertTrue(config.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        Assert.assertTrue(aggregatedConfig.getBoolean("libB.loaded", false));
+        Assert.assertEquals("libA", aggregatedConfig.getString("lib.override", null));
+    }
+    
+    @Test
+    public void testCommonConfigurationListener() {
+        ConfigurationListener listener = Mockito.mock(ConfigurationListener.class);
+    	AbstractConfiguration config = ConfigurationManager.getConfigInstance();
+    	config.addConfigurationListener(listener);
+    	
+    	SettableConfig settable = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
+    	settable.setProperty("new_property", "new_value");
+    	
+    	Mockito.verify(listener, Mockito.times(2)).configurationChanged(Mockito.any());
+    	
     }
 }
