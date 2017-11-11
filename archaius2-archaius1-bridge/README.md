@@ -26,9 +26,9 @@ The bridge calls ConfigurationManager.install() to configure the legacy API with
 
 ## Troubleshooting
 
-The static bridge can be a bit fragile as it tries to 'fix' the static usage pattern of the old API with dependency injection.  As such static access of ConfigurationManager before Guice has finished bootstrapping will result in an IllegalStateException.  
+The static bridge can be a bit fragile as it tries to 'fix' the static usage pattern of the old API with dependency injection.  As such, any static access of ConfigurationManager before Guice has finished bootstrapping will result in an IllegalStateException.  
 
-### IllegalStateException("Archaius2 bridge not usable because ConfigurationManager was initialized too early.  See stack trace below.")
+### IllegalStateException("Not using expected bridge...")
 
 This happens when the legacy ConfigurationManager is accessed before StaticArchaiusBridgeModule is installed and the necessary System properties set to enable this bridge.  This is most likely the result of either calling ConfigurationManager.getInstance() in a Guice module or creating objects in a Guice module's configure method.  Take a look at the accompanying stack trace to identify areas in your code where one of the above is done.  Make sure to replace usages of toInstance() bindings with @Provides method.  For example,
 
@@ -56,7 +56,7 @@ public class MyModule extends AbstractModule {
 }
 ```
 
-### IllegalStateException("Not using expected bridge!!! ...)
+### IllegalStateException("Not using expected bridge ...)
 
 This happens when multiple Guice injectors are created in the same JVM.  Due to the nature of the static bridge the first injector installing the StaticArchaiusBridgeModule will set up ConfigurationManager's static state which cannot be changed.  The error indicates that a second attempt to set up the static bridge failed.  
 
