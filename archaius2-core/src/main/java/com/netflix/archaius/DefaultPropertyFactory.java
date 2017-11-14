@@ -122,6 +122,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
 
             @Override
             public <T> Property<T> asType(Function<String, T> mapper, String defaultValue) {
+                T typedDefaultValue = mapper.apply(defaultValue);
                 return getFromSupplier(propName, null, () -> {
                     String value = config.getString(propName, null);
                     if (value != null) {
@@ -132,7 +133,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
                         }
                     }
                     
-                    return mapper.apply(defaultValue);
+                    return typedDefaultValue;
                 });
             }
         };
