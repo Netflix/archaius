@@ -1,11 +1,5 @@
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyContainer;
-import com.netflix.archaius.api.PropertyFactory;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -21,6 +15,12 @@ import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyFactory;
 
 public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPropertyFactory.class);
@@ -122,9 +122,19 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
 
             @Override
             public <T> Property<T> asType(Function<String, T> mapper, String defaultValue) {
-                return getFromSupplier(propName, null, () ->
-                    mapper.apply(Optional.ofNullable(config.getString(propName)).orElse(defaultValue))
-                );
+                T typedDefaultValue = mapper.apply(defaultValue);
+                return getFromSupplier(propName, null, () -> {
+                    String value = config.getString(propName, null);
+                    if (value != null) {
+                        try {
+                            return mapper.apply(value);
+                        } catch (Exception e) {
+                            LOG.warn("Invalid value '{}' for property '{}'", propName, value);
+                        }
+                    }
+                    
+                    return typedDefaultValue;
+                });
             }
         };
     }

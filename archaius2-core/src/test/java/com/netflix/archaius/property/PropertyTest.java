@@ -15,15 +15,6 @@
  */
 package com.netflix.archaius.property;
 
-import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.PropertyListener;
-import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.MapConfig;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +25,16 @@ import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import com.netflix.archaius.DefaultPropertyFactory;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyListener;
+import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.DefaultSettableConfig;
+import com.netflix.archaius.config.MapConfig;
 
 public class PropertyTest {
     static class MyService {
@@ -353,5 +354,36 @@ public class PropertyTest {
                 .map(Integer::parseInt)
                 .orElseGet("third")
                 ;
+    }
+    
+    @Test
+    public void customMappingWithDefault() {
+        Config config = MapConfig.builder().build();
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+
+        Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
+        Assert.assertEquals(1, value.intValue());
+    }
+    
+    @Test
+    public void customMapping() {
+        Config config = MapConfig.builder()
+                .put("a", "2")
+                .build();
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+
+        Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
+        Assert.assertEquals(2, value.intValue());
+    }
+
+    @Test
+    public void customMappingWithError() {
+        Config config = MapConfig.builder()
+                .put("a", "###bad_integer_value###")
+                .build();
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+
+        Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
+        Assert.assertEquals(1, value.intValue());
     }
 }
