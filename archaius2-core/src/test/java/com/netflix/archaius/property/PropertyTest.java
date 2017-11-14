@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.Property.Subscription;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.PropertyListener;
 import com.netflix.archaius.api.config.SettableConfig;
@@ -217,6 +218,49 @@ public class PropertyTest {
         Assert.assertEquals(456, current.get().intValue());
     }
 
+    @Test
+    public void unregisterOldCallback() {
+        SettableConfig config = new DefaultSettableConfig();
+
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+
+        PropertyListener<Integer> listener = Mockito.mock(PropertyListener.class);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(1);
+        prop.addListener(listener);
+
+        Mockito.verify(listener, Mockito.never()).accept(Mockito.anyInt());
+        config.setProperty("foo", "2");
+        Mockito.verify(listener, Mockito.times(1)).accept(Mockito.anyInt());
+
+        prop.removeListener(listener);
+        config.setProperty("foo", "3");
+        
+        Mockito.verify(listener, Mockito.times(1)).accept(Mockito.anyInt());
+    }
+    
+    @Test
+    public void unsubscribeOnChange() {
+        SettableConfig config = new DefaultSettableConfig();
+
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+
+        Consumer<Integer> consumer = Mockito.mock(Consumer.class);
+        
+        Property<Integer> prop = factory.getProperty("foo").asInteger(1);
+        Subscription sub = prop.onChange(consumer);
+
+        Mockito.verify(consumer, Mockito.never()).accept(Mockito.anyInt());
+        config.setProperty("foo", "2");
+        Mockito.verify(consumer, Mockito.times(1)).accept(Mockito.anyInt());
+
+        sub.unsubscribe();
+        
+        config.setProperty("foo", "3");
+        
+        Mockito.verify(consumer, Mockito.times(1)).accept(Mockito.anyInt());        
+    }
+    
     @Test
     public void chainedPropertyNoneSet() {
         MapConfig config = MapConfig.builder().build();

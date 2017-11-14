@@ -44,6 +44,14 @@ import java.util.function.Supplier;
  */
 public interface Property<T> extends Supplier<T> {
     /**
+     * Token returned when calling onChange through which change notification can be
+     * unsubscribed.  
+     */
+    interface Subscription {
+        void unsubscribe();
+    }
+    
+    /**
      * Return the most recent value of the property.  
      * 
      * @return  Most recent value for the property
@@ -77,16 +85,20 @@ public interface Property<T> extends Supplier<T> {
      * since the notification only applies to the state of the chained property
      * up until this point. Changes to subsequent Property objects returned from {@link Property#orElse} 
      * or {@link Property#map(Function)} will not trigger calls to this consumer.
+
      * @param consumer
-     * @return This property object
+     * @return Subscription that may be unsubscribed to no longer get change notifications
      */
-    default void onChange(Consumer<T> consumer) {
-        addListener(new PropertyListener<T>() {
+    default Subscription onChange(Consumer<T> consumer) {
+        PropertyListener<T> listener = new PropertyListener<T>() {
             @Override
             public void onChange(T value) {
                 consumer.accept(value);
             }
-        });
+        };
+        
+        addListener(listener);
+        return () -> removeListener(listener);
     }
     
     /**

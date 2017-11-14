@@ -21,6 +21,7 @@ import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyContainer;
 import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyListener;
 
 public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPropertyFactory.class);
@@ -192,7 +193,8 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         private final KeyAndType<T> keyAndType;
         private final Supplier<T> supplier;
         private final AtomicStampedReference<T> cache = new AtomicStampedReference<>(null, -1);
-
+        private final ConcurrentMap<PropertyListener<?>, Subscription> oldSubscriptions = new ConcurrentHashMap<>();
+        
         public PropertyImpl(KeyAndType<T> keyAndType, Supplier<T> supplier) {
             this.keyAndType = keyAndType;
             this.supplier = supplier;
@@ -226,8 +228,8 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         }
         
         @Override
-        public void onChange(Consumer<T> consumer) {
-            listeners.add(new Runnable() {
+        public Subscription onChange(Consumer<T> consumer) {
+            Runnable action = new Runnable() {
                 private T current = get();
                 @Override
                 public synchronized void run() {
@@ -245,9 +247,32 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
                     }
                     consumer.accept(current);
                 }
-            });
+            };
+            
+            listeners.add(action);
+            return () -> listeners.remove(action);
         }
 
+        @Deprecated
+        public void addListener(PropertyListener<T> listener) {
+            Subscription cancel = onChange(new Consumer<T>() {
+                @Override
+                public void accept(T t) {
+                    listener.accept(t);
+                }
+            });
+            oldSubscriptions.put(listener, cancel);
+        }
+
+        /**
+         * Remove a listener previously registered by calling addListener
+         * @param listener
+         */
+        @Deprecated
+        public void removeListener(PropertyListener<T> listener) {
+            Optional.ofNullable(oldSubscriptions.remove(listener)).ifPresent(Subscription::unsubscribe);
+        }
+        
         @Override
         public Property<T> orElse(T defaultValue) {
             return new PropertyImpl<T>(keyAndType, () -> Optional.ofNullable(supplier.get()).orElse(defaultValue));
