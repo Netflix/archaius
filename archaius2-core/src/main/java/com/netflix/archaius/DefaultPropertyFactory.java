@@ -228,7 +228,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         }
         
         @Override
-        public Subscription onChange(Consumer<T> consumer) {
+        public Subscription subscribe(Consumer<T> consumer) {
             Runnable action = new Runnable() {
                 private T current = get();
                 @Override
