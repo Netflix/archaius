@@ -1,5 +1,14 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyRepository;
+import com.netflix.archaius.api.annotations.Configuration;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -27,15 +36,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.PropertyRepository;
-import com.netflix.archaius.api.annotations.Configuration;
-import com.netflix.archaius.api.annotations.DefaultValue;
-import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -386,16 +386,12 @@ public class ConfigProxyFactory {
                 .map(s -> {
                     if (s == null) 
                         return null;
-                    T result = Arrays
+                    T result = mapFactory.get();
+                    Arrays
                         .stream(s.split("\\s*,\\s*"))
                         .filter(pair -> !pair.isEmpty())
                         .map(pair -> pair.split("\\s*=\\s*"))
-                        .collect(Collectors.toMap(
-                                a -> decoder.decode(keyType, a[0]), 
-                                a -> decoder.decode(valueType, a[1]), 
-                                (v1, v2) -> v2,
-                                mapFactory
-                                ));
+                        .forEach(kv -> result.put(decoder.decode(keyType, kv[0]), decoder.decode(valueType, kv[1])));
                     return (T)Collections.unmodifiableMap(result);
                 }
                 ).orElse((T) Collections.unmodifiableMap(next.get()));
