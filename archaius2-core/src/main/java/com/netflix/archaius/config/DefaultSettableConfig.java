@@ -15,28 +15,47 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.function.BiConsumer;
+
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
-    private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
+    private volatile Map<String, Object> props = Collections.emptyMap();
+    
+    public DefaultSettableConfig(String name) {
+        super(name);
+    }
+
+    public DefaultSettableConfig() {
+        super(generateUniqueName("settable-"));
+    }
     
     @Override
-    public <T> void setProperty(String propName, T propValue) {
-        props.put(propName, propValue);
+    public synchronized <T> void setProperty(String propName, T propValue) {
+        Map<String, Object> copy = new HashMap<>(props.size() + 1);
+        copy.putAll(props);
+        copy.put(propName, propValue);
+        props = copy;
         notifyConfigUpdated(this);
     }
     
     @Override
     public void clearProperty(String propName) {
-        props.remove(propName);
-        notifyConfigUpdated(this);
+        if (props.containsKey(propName)) {
+            synchronized (this) {
+                Map<String, Object> copy = new HashMap<>(props);
+                copy.remove(propName);
+                props = copy;
+                notifyConfigUpdated(this);
+            }
+        }
     }
 
     @Override
@@ -60,23 +79,34 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     }
 
     @Override
-    public void setProperties(Properties properties) {
-        if (null != properties) {
-            for (Entry<Object, Object> prop : properties.entrySet()) {
-                setProperty(prop.getKey().toString(), prop.getValue());
+    public void setProperties(Properties src) {
+        if (null != src) {
+            synchronized (this) {
+                Map<String, Object> copy = new HashMap<>(props.size() + src.size());
+                copy.putAll(props);
+                for (Entry<Object, Object> prop : src.entrySet()) {
+                    copy.put(prop.getKey().toString(), prop.getValue());
+                }
+                props = copy;
+                notifyConfigUpdated(this);
             }
         }
     }
 
     @Override
-    public void setProperties(Config config) {
-        if (null != config) {
-            Iterator<String> iter = config.getKeys();
-            while (iter.hasNext()) {
-                String key = iter.next();
-                setProperty(key, config.getRawProperty(key));
+    public void setProperties(Config src) {
+        if (null != src) {
+            synchronized (this) {
+                Map<String, Object> copy = new HashMap<>(props);
+                src.forEachProperty(copy::put);
+                props = copy;
+                notifyConfigUpdated(this);
             }
         }
     }
 
+    @Override
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
+        props.forEach(consumer);
+    }
 }

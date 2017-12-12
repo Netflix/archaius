@@ -26,21 +26,23 @@ import com.netflix.config.DeploymentContext;
  *     }
  * }
  * </pre>
- * 
- * @author elandau
- *
  */
 public final class StaticArchaiusBridgeModule extends AbstractModule {
     static {
-        System.setProperty("archaius.default.configuration.class",      StaticAbstractConfiguration.class.getName());
-        System.setProperty("archaius.default.deploymentContext.class",  StaticDeploymentContext.class.getName());
+        System.setProperty("archaius.default.configuration.factory",      StaticAbstractConfiguration.class.getName());
+        System.setProperty("archaius.default.deploymentContext.factory",  StaticDeploymentContext.class.getName());
     }
     
     @Override
     protected void configure() {
-        requestStaticInjection(StaticAbstractConfiguration.class);
         requestStaticInjection(StaticDeploymentContext.class);
+        requestStaticInjection(StaticAbstractConfiguration.class);
         bind(DeploymentContext.class).to(ConfigBasedDeploymentContext.class);
+    }
+    
+    public static void resetStaticBridges() {
+        StaticAbstractConfiguration.reset();
+        StaticDeploymentContext.reset();
     }
     
     @Override

@@ -13,12 +13,20 @@ import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
 
-import org.junit.Assert;
-import org.junit.Test;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.annotation.Nullable;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ProxyFactoryTest {
     public static enum TestEnum {
@@ -130,6 +138,25 @@ public class ProxyFactoryTest {
     }
     
     @Test
+    public void testDefaultValuesImmutable() {
+        Config config = EmptyConfig.INSTANCE;
+
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        
+        RootConfig a = proxy.newProxy(RootConfig.class, "", true);
+        
+        assertThat(a.getStr(),                          equalTo("default"));
+        assertThat(a.getInteger(),                      equalTo(0));
+        assertThat(a.getEnum(),                         equalTo(TestEnum.NONE));
+        assertThat(a.getSubConfig().str(),              equalTo("default"));
+        assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
+        assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
+        assertThat(a.getNullable(),                     nullValue());
+        assertThat(a.getBaseBoolean(), nullValue());
+    }
+    
+    @Test
     public void testAllPropertiesSet() {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("prefix.str", "str1");
@@ -150,6 +177,7 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfig().str(),      equalTo("str2"));
         assertThat(a.getSubConfigFromString().part1(), equalTo("a"));
         assertThat(a.getSubConfigFromString().part2(), equalTo("b"));
+        assertThat(a.getBaseBoolean(), equalTo(true));
 
         config.setProperty("prefix.subConfig.str", "str3");
         assertThat(a.getSubConfig().str(),      equalTo("str3"));
@@ -230,5 +258,181 @@ public class ProxyFactoryTest {
         config.setProperty("children.2", "789");
         sub2 = withArgs.getChildren().get("2");
         Assert.assertEquals(789, sub2);
+    }
+    
+    public static interface ConfigWithCollections {
+        List<Integer> getList();
+        
+        Set<Integer> getSet();
+        
+        SortedSet<Integer> getSortedSet();
+        
+        LinkedList<Integer> getLinkedList();
+    }
+    
+    @Test
+    public void testCollections() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", "5,4,3,2,1");
+        config.setProperty("set", "1,2,3,5,4");
+        config.setProperty("sortedSet", "5,4,3,2,1");
+        config.setProperty("linkedList", "5,4,3,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
+        
+        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
+        
+        config.setProperty("list", "6,7,8,9,10");
+        Assert.assertEquals(Arrays.asList(6,7,8,9,10), new ArrayList<>(withCollections.getList()));
+    }
+
+    @Test
+    public void testCollectionsImmutable() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", "5,4,3,2,1");
+        config.setProperty("set", "1,2,3,5,4");
+        config.setProperty("sortedSet", "5,4,3,2,1");
+        config.setProperty("linkedList", "5,4,3,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class, "", true);
+        
+        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
+        
+        config.setProperty("list", "4,7,8,9,10");
+        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+    }
+
+    @Test
+    public void emptyNonStringValuesIgnoredInCollections() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", ",4, ,2,1");
+        config.setProperty("set", ",2, ,5,4");
+        config.setProperty("sortedSet", ",4, ,2,1");
+        config.setProperty("linkedList", ",4, ,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
+        
+        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList(2,5,4), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList(1,2,4), new ArrayList<>(withCollections.getSortedSet()));
+    }
+    
+    public static interface ConfigWithStringCollections {
+        List<String> getList();
+        
+        Set<String> getSet();
+        
+        SortedSet<String> getSortedSet();
+        
+        LinkedList<String> getLinkedList();
+    }
+
+    @Test
+    public void emptyStringValuesAreAddedToCollection() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("list", ",4, ,2,1");
+        config.setProperty("set", ",2, ,5,4");
+        config.setProperty("sortedSet", ",4, ,2,1");
+        config.setProperty("linkedList", ",4, ,2,1");
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithStringCollections withCollections = proxy.newProxy(ConfigWithStringCollections.class);
+        
+        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getLinkedList()));
+        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList("" ,"2","5","4"), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList("", "1","2","4"), new ArrayList<>(withCollections.getSortedSet()));
+    }
+    
+    @Test
+    public void collectionsReturnEmptySetsByDefault() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithStringCollections withCollections = proxy.newProxy(ConfigWithStringCollections.class);
+        
+        Assert.assertTrue(withCollections.getLinkedList().isEmpty());
+        Assert.assertTrue(withCollections.getList().isEmpty());
+        Assert.assertTrue(withCollections.getSet().isEmpty());
+        Assert.assertTrue(withCollections.getSortedSet().isEmpty());
+    }
+
+    @Test
+    public void testCollectionsWithoutValue() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
+        
+        Assert.assertTrue(withCollections.getLinkedList().isEmpty());
+        Assert.assertTrue(withCollections.getList().isEmpty());
+        Assert.assertTrue(withCollections.getSet().isEmpty());
+        Assert.assertTrue(withCollections.getSortedSet().isEmpty());
+    }
+    
+    public static interface ConfigWithCollectionsWithDefaultValueAnnotation {
+        @DefaultValue("")
+        LinkedList<Integer> getLinkedList();
+    }
+    
+    @Test(expected=RuntimeException.class)
+    public void testCollectionsWithDefaultValueAnnotation() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        proxy.newProxy(ConfigWithCollectionsWithDefaultValueAnnotation.class);
+    }
+    
+    public static interface ConfigWithDefaultStringCollections {
+        default List<String> getList() { return Collections.singletonList("default"); }
+        
+        default Set<String> getSet() { return Collections.singleton("default"); }
+        
+        default SortedSet<String> getSortedSet() { return new TreeSet<>(Collections.singleton("default")); }
+    }
+
+    @Test
+    public void interfaceDefaultCollections() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithDefaultStringCollections withCollections = proxy.newProxy(ConfigWithDefaultStringCollections.class);
+        
+        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getSortedSet()));
+    }
+
+    public static interface FailingError {
+        default String getValue() { throw new IllegalStateException("error"); }
+    }
+    
+    @Test(expected=RuntimeException.class)
+    public void interfaceWithBadDefault() {
+        SettableConfig config = new DefaultSettableConfig();
+        
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        FailingError c = proxy.newProxy(FailingError.class);
+        c.getValue();
+        
     }
 }

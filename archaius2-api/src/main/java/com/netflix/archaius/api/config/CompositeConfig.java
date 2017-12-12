@@ -1,10 +1,10 @@
 package com.netflix.archaius.api.config;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.exceptions.ConfigException;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.exceptions.ConfigException;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track
@@ -12,13 +12,10 @@ import java.util.LinkedHashMap;
  * treats them as overrides so that a property existing in a configuration supersedes
  * the same property in configuration based on some ordering.  Implementations of this
  * interface should specify and implement the override ordering.
- *
- * @author David Liu
- *
  */
 public interface CompositeConfig extends Config {
 
-    public static interface CompositeVisitor<T> extends Visitor<T> {
+    static interface CompositeVisitor<T> extends Visitor<T> {
         /**
          * Visit a child of the configuration
          *
@@ -28,7 +25,7 @@ public interface CompositeConfig extends Config {
          */
         T visitChild(String name, Config child);
     }
-
+    
     /**
      * Add a named configuration.  The newly added configuration takes precedence over all
      * previously added configurations.  Duplicate configurations are not allowed
@@ -39,8 +36,8 @@ public interface CompositeConfig extends Config {
      * @param child
      * @throws ConfigException
      */
-    public boolean addConfig(String name, Config child) throws ConfigException;
-
+    boolean addConfig(String name, Config child) throws ConfigException;
+    
     /**
      * Replace the configuration with the specified name
      *
@@ -50,7 +47,7 @@ public interface CompositeConfig extends Config {
      * @param child
      * @throws ConfigException
      */
-    public void replaceConfig(String name, Config child) throws ConfigException;
+    void replaceConfig(String name, Config child) throws ConfigException;
 
     /**
      * Add a map of named configurations.  The newly added configurations takes precedence over all
@@ -61,7 +58,7 @@ public interface CompositeConfig extends Config {
      * @param configs a map of [configName, config]
      * @throws ConfigException
      */
-    public void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException;
+    void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException;
 
     /**
      * Replace all configurations with the specified names in the map
@@ -71,7 +68,7 @@ public interface CompositeConfig extends Config {
      * @param configs a map of [configName, config]
      * @throws ConfigException
      */
-    public void replaceConfigs(LinkedHashMap<String, Config> configs) throws ConfigException;
+    void replaceConfigs(LinkedHashMap<String, Config> configs) throws ConfigException;
 
     /**
      * Remove a named configuration.
@@ -81,7 +78,7 @@ public interface CompositeConfig extends Config {
      * @param name
      * @return
      */
-    public Config removeConfig(String name);
+    Config removeConfig(String name);
 
     /**
      * Look up a configuration by name
@@ -89,12 +86,12 @@ public interface CompositeConfig extends Config {
      * @param name the config name to look up
      * @return the Config that matches the name, null otherwise
      */
-    public Config getConfig(String name);
+    Config getConfig(String name);
 
     /**
      *
      * @return a collection of all configNames
      */
-    public Collection<String> getConfigNames();
+    Collection<String> getConfigNames();
 
 }

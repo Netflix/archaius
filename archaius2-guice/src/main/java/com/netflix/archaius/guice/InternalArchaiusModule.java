@@ -17,6 +17,7 @@ import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -50,13 +51,6 @@ final class InternalArchaiusModule extends AbstractModule {
     private static final String APPLICATION_LAYER_NAME  = "APPLICATION";
     private static final String LIBRARIES_LAYER_NAME    = "LIBRARIES";
     private static final String DEFAULT_LAYER_NAME      = "DEFAULT";
-    
-    // These are here to force using the backwards compatibility bridge for 
-    // Archaius1's static API
-    static {
-        System.setProperty("archaius.default.configuration.class",      "com.netflix.archaius.bridge.StaticAbstractConfiguration");
-        System.setProperty("archaius.default.deploymentContext.class",  "com.netflix.archaius.bridge.StaticDeploymentContext");
-    }
     
     private static AtomicInteger uniqueNameCounter = new AtomicInteger();
 
@@ -234,6 +228,12 @@ final class InternalArchaiusModule extends AbstractModule {
     @Singleton
     PropertyFactory getPropertyFactory(Config config) {
         return DefaultPropertyFactory.from(config);
+    }
+    
+    @Provides
+    @Singleton
+    PropertyRepository getPropertyRespository(PropertyFactory propertyFactory) {
+        return propertyFactory;
     }
 
     @Provides

@@ -15,37 +15,56 @@
  */
 package com.netflix.archaius.readers;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigReader;
+import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.DefaultCompositeConfig;
+import com.netflix.archaius.config.DefaultCompositeConfig.Builder;
+import com.netflix.archaius.config.MapConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigReader;
-import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 public class PropertiesConfigReader implements ConfigReader {
     private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);
     
-    private static final String INCLUDE_KEY = "@next";
+    private static final String[] INCLUDE_KEYS = { "@next", "netflixconfiguration.properties.nextLoad" };
     private static final String SUFFIX = ".properties";
     
     @Override
     public Config load(ClassLoader loader, String resourceName, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException {
-        URL url = getResource(loader, resourceName);
-        if (url == null) {
-            throw new ConfigException("Unable to resolve URL for resource " + resourceName);
+        Builder builder = DefaultCompositeConfig.builder();
+        Collection<URL> resources = getResources(loader, resourceName);
+        if (resources.size() > 1) {
+            LOG.warn("Multiple resource files found for {}. {}." + 
+                     "  All resources will be loaded with override order undefined.",
+                     resourceName, resources);
         }
-        return load(loader, url, strInterpolator, lookup);
+        
+        for (URL url : resources) {
+            builder.withConfig(url.toString(), load(loader, url, strInterpolator, lookup));
+        }
+        
+        CompositeConfig config = builder.build();
+        if (config.getConfigNames().isEmpty()) {
+            throw new ConfigException("No resources found for '" + resourceName + SUFFIX + "'");
+        }
+        
+        return config;
     }
 
     @Override
@@ -68,15 +87,16 @@ public class PropertiesConfigReader implements ConfigReader {
                 LOG.debug("Loaded : {}", url.toExternalForm());
                 props.putAll(p);
     
-                // Recursively load any files referenced by an @next property in the file
-                // Only one @next property is expected and the value may be a list of files
-                String next = p.get(INCLUDE_KEY);
-                if (next != null) {
-                    p.remove(INCLUDE_KEY);
-                    for (String urlString : next.split(",")) {
-                        URL nextUrl = getResource(loader, strInterpolator.create(lookup).resolve(urlString));
-                        if (nextUrl != null) {
-                            internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                // Recursively load any files referenced by one of several 'include' properties
+                // in the file.  The property value contains a list of URL's to load, where the
+                // last loaded file wins for any individual property collisions. 
+                for (String nextLoadPropName : INCLUDE_KEYS) {
+                    String nextLoadValue = (String)props.remove(nextLoadPropName);
+                    if (nextLoadValue != null) {
+                        for (String urlString : nextLoadValue.split(",")) {
+                            for (URL nextUrl : getResources(loader, strInterpolator.create(lookup).resolve(urlString))) {
+                                internalLoad(props, seenUrls, loader, nextUrl, strInterpolator, lookup);
+                            }
                         }
                     }
                 }
@@ -91,7 +111,7 @@ public class PropertiesConfigReader implements ConfigReader {
 
     @Override
     public boolean canLoad(ClassLoader loader, String name) {
-        return getResource(loader, name) != null;
+        return getResources(loader, name) != null;
     }
 
     @Override
@@ -99,32 +119,41 @@ public class PropertiesConfigReader implements ConfigReader {
         return uri.getPath().endsWith(SUFFIX);
     }
 
-    private static URL getResource(ClassLoader loader, String resourceName) {
+    private static Collection<URL> getResources(ClassLoader loader, String resourceName) {
+        LinkedHashSet<URL> resources = new LinkedHashSet<URL>();
         if (!resourceName.endsWith(SUFFIX)) {
             resourceName += SUFFIX;
         }
         
-        URL url = null;
         // attempt to load from the context classpath
         if (loader == null) {
             loader = Thread.currentThread().getContextClassLoader();
         }
         
         if (loader != null) {
-            url = loader.getResource(resourceName);
-        }
-        if (url == null) {
-            // attempt to load from the system classpath
-            url = ClassLoader.getSystemResource(resourceName);
-        }
-        if (url == null) {
             try {
-                resourceName = URLDecoder.decode(resourceName, "UTF-8");
-                url = (new File(resourceName)).toURI().toURL();
-            } catch (Exception e) {
-
+                resources.addAll(Collections.list(loader.getResources(resourceName)));
+            } catch (IOException e) {
+                LOG.debug("Failed to load resources for {}", resourceName, e);
             }
         }
-        return url;
+        
+        try {
+            resources.addAll(Collections.list(ClassLoader.getSystemResources(resourceName)));
+        } catch (IOException e) {
+            LOG.debug("Failed to load resources for {}", resourceName, e);
+        }
+        
+        try {
+            resourceName = URLDecoder.decode(resourceName, "UTF-8");
+            File file = new File(resourceName);
+            if (file.exists()) {
+                resources.add(file.toURI().toURL());
+            }
+        } catch (Exception e) {
+            LOG.debug("Failed to load resources for {}", resourceName, e);
+        }
+        
+        return resources;
     }
 }

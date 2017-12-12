@@ -63,7 +63,7 @@ public class DefaultDecoder implements Decoder {
             else if (v.equalsIgnoreCase("false") || v.equalsIgnoreCase("no") || v.equalsIgnoreCase("off")) {
                 return Boolean.FALSE;
             }
-            throw new ParseException("Error parsing value '" + v, new Exception("Expected one of [true, yes, on, false, no, off]"));
+            throw new ParseException("Error parsing value '" + v + "'", new Exception("Expected one of [true, yes, on, false, no, off]"));
 
         });
         decoderRegistry.put(Boolean.class, decoderRegistry.get(boolean.class));

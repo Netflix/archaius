@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 /**
  * Config backed by an immutable map.
@@ -38,18 +39,33 @@ public class MapConfig extends AbstractConfig {
      *      .build()
      * </pre>
      * }
-     * @author elandau
      */
     public static class Builder {
         Map<String, String> map = new HashMap<String, String>();
+        String named;
         
         public <T> Builder put(String key, T value) {
             map.put(key, value.toString());
             return this;
         }
         
+        public <T> Builder putAll(Map<String, String> props) {
+            map.putAll(props);
+            return this;
+        }
+        
+        public <T> Builder putAll(Properties props) {
+            props.forEach((k, v) -> map.put(k.toString(), v.toString()));
+            return this;
+        }
+        
+        public Builder name(String name) {
+            this.named = name;
+            return this;
+        }
+        
         public MapConfig build() {
-            return new MapConfig(map);
+            return new MapConfig(named == null ? generateUniqueName("immutable-") : named, map);
         }
     }
     
@@ -67,12 +83,19 @@ public class MapConfig extends AbstractConfig {
     
     private Map<String, String> props = new HashMap<String, String>();
     
+    public MapConfig(String name, Map<String, String> props) {
+        super(name);
+        this.props.putAll(props);
+        this.props = Collections.unmodifiableMap(this.props);
+    }
+    
     /**
      * Construct a MapConfig as a copy of the provided Map
      * @param name
      * @param props
      */
     public MapConfig(Map<String, String> props) {
+        super(generateUniqueName("immutable-"));
         this.props.putAll(props);
         this.props = Collections.unmodifiableMap(this.props);
     }
@@ -83,6 +106,7 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Properties props) {
+        super(generateUniqueName("immutable-"));
         for (Entry<Object, Object> entry : props.entrySet()) {
             this.props.put(entry.getKey().toString(), entry.getValue().toString());
         }
@@ -109,4 +133,8 @@ public class MapConfig extends AbstractConfig {
         return props.keySet().iterator();
     }
 
+    @Override
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
+        props.forEach(consumer);
+    }
 }

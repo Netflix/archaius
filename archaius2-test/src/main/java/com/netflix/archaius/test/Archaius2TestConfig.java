@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.rules.TestRule;
@@ -44,6 +45,7 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                SettableConfig runtimeLevelProperties = new DefaultSettableConfig();
                 SettableConfig classLevelProperties = new DefaultSettableConfig();
                 SettableConfig methodLevelProperties = new DefaultSettableConfig();
                 List<Class<?>> allSuperclasses = ClassUtils.getAllSuperclasses(description.getTestClass());
@@ -53,7 +55,7 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
                 }               
                 classLevelProperties.setProperties(annotationReader.getPropertiesForAnnotation(description.getTestClass().getAnnotation(TestPropertyOverride.class)));
                 methodLevelProperties.setProperties(annotationReader.getPropertiesForAnnotation(description.getAnnotation(TestPropertyOverride.class)));                    
-                testCompositeConfig = new TestCompositeConfig(classLevelProperties, methodLevelProperties);
+                testCompositeConfig = new TestCompositeConfig(runtimeLevelProperties, classLevelProperties, methodLevelProperties);
                 base.evaluate();
              }
         };
@@ -271,5 +273,10 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     @Override
     public void clearProperty(String propName) {
         testCompositeConfig.clearProperty(propName);
+    }
+
+    @Override
+    public void forEachProperty(BiConsumer<String, Object> consumer) {
+        testCompositeConfig.forEachProperty(consumer);
     }
 }

@@ -15,6 +15,15 @@
  */
 package com.netflix.archaius.property;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyListener;
+import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -22,15 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyContainer;
-import com.netflix.archaius.api.PropertyListener;
-import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
+import java.util.function.Function;
 
 /**
  * Implementation of PropertyContainer which reuses the same object for each
@@ -41,10 +42,8 @@ import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
  * 
  * Once created a PropertyContainer property cannot be removed.  However, listeners may be
  * added and removed. 
- * 
- * @author elandau
- *
  */
+@Deprecated
 public class DefaultPropertyContainer implements PropertyContainer {
     private final Logger LOG = LoggerFactory.getLogger(DefaultPropertyContainer.class);
     
@@ -205,9 +204,8 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 T newValue = null;
                 try {
                     newValue = resolveCurrent();
-                }
-                catch (Exception e) {
-                    LOG.warn("Unable to get current version of property '{}'. Error: {}", key, e.getMessage());
+                } catch (Exception e) {
+                    LOG.warn("Unable to get current version of property '{}'", key, e);
                 }
                 
                 if (cache.compareAndSet(currentValue, newValue, cacheVersion, latestVersion)) {
@@ -396,5 +394,15 @@ public class DefaultPropertyContainer implements PropertyContainer {
                 return prop;
             }
         }
+    }
+
+    @Override
+    public <T> Property<T> asType(Function<String, T> type, String defaultValue) {
+        return add(new CachedProperty<T>(Type.CUSTOM, null) {
+            @Override
+            protected T resolveCurrent() throws Exception {
+                return type.apply(config.getString(key, defaultValue));
+            }
+        });
     }
 }

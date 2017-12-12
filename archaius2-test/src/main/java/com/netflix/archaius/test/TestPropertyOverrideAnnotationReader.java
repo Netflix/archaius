@@ -1,6 +1,8 @@
 package com.netflix.archaius.test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -18,7 +20,13 @@ public class TestPropertyOverrideAnnotationReader {
 
         for (String fileName : annotation.propertyFiles()) {
             try {
-                properties.load(this.getClass().getClassLoader().getResourceAsStream(fileName));
+                InputStream propFileStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
+                if(propFileStream != null) {
+                    properties.load(propFileStream);
+                }
+                else {
+                    throw new FileNotFoundException(fileName);
+                }
             } catch (IOException e) {
                 throw new TestConfigException("Failed to load property file from classpath", e);
             }

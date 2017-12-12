@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.function.BiConsumer;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,6 +43,11 @@ public class AbstractConfigTest {
         @Override
         public Object getRawProperty(String key) {
             return "bar";
+        }
+
+        @Override
+        public void forEachProperty(BiConsumer<String, Object> consumer) {
+            consumer.accept("foo",  "bar");
         }
     };
 

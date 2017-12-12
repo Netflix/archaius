@@ -67,4 +67,16 @@ public class PropertyConfigReaderTest {
 
         Assert.assertEquals("test-us-east-1.properties", config.getString("cascaded.property"));
     }
+    
+    @Test
+    public void loadMultipleAtNext() throws ConfigException {
+        PropertiesConfigReader reader = new PropertiesConfigReader();
+        Config mainConfig = MapConfig.builder().put("@region",  "us-east-1").build();
+        
+        Config config = reader.load(null, "override", CommonsStrInterpolator.INSTANCE, ConfigStrLookup.from(mainConfig));
+        config.accept(new PrintStreamVisitor());
+
+        Assert.assertEquals("200", config.getString("cascaded.property"));
+        Assert.assertEquals("true", config.getString("override.internal.style.next"));
+    }
 }

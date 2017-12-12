@@ -22,12 +22,10 @@ import java.util.List;
 
 /**
  * Core API for reading a configuration.  The API is read only.
- * 
- * @author elandau
  */
-public interface Config {
+public interface Config extends PropertySource {
     public interface Visitor<T> {
-        T visitKey(Config config, String key);
+        T visitKey(String key, Object value);
     }
     
     /**
@@ -122,11 +120,6 @@ public interface Config {
     boolean containsKey(String key);
     
     /**
-     * @return True if empty or false otherwise.
-     */
-    boolean isEmpty();
-    
-    /**
      * @return Return an iterator to all property names owned by this config
      */
     Iterator<String> getKeys();
@@ -164,4 +157,12 @@ public interface Config {
      * @param visitor
      */
     <T> T accept(Visitor<T> visitor);
+    
+    default String resolve(String value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default <T> T resolve(String value, Class<T> type) {
+        throw new UnsupportedOperationException();
+    }
 }
