@@ -52,16 +52,13 @@ public class TypesafeConfigLoaderTest {
     @Test
     public void testWithLists() throws ConfigException {
         CompositeConfig config = new DefaultCompositeConfig();
-        config.addConfig("config-with-list", MapConfig.builder()
-                .build());
 
         DefaultConfigLoader loader = DefaultConfigLoader.builder()
                 .withConfigReader(new TypesafeConfigReader())
                 .withStrLookup(config)
                 .build();
 
-        config.replaceConfig("config-with-list", loader.newLoader()
-//                .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
+        config.addConfig("config-with-list", loader.newLoader()
                 .load("config-with-list"));
 
         ConfigProxyFactory proxyFactory = new ConfigProxyFactory(config);
@@ -76,8 +73,9 @@ public class TypesafeConfigLoaderTest {
 
         Assert.assertEquals(1, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin1").size());
         Assert.assertEquals(2, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin2").size());
-//        Assert.assertEquals(0, testApplicationConfig.getModuleWithSomePluginsMatrix().get("plugin3").size());
-//        Assert.assertEquals(0, testApplicationConfig.getModuleWithNoPluginsMatrix().size());
+
+        Assert.assertEquals("Hello", testApplicationConfig.getModuleWithSubConfig().getVar1());
+        Assert.assertEquals(true, testApplicationConfig.getModuleWithSubConfig().getVar2());
     }
 
 }

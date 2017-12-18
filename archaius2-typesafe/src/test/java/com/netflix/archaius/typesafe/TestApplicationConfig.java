@@ -1,6 +1,5 @@
 package com.netflix.archaius.typesafe;
 
-import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.PropertyName;
 
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.Map;
 /**
  * Created by Milan Baran on 5/26/17.
  */
-//@Configuration(prefix="app")
 public interface TestApplicationConfig {
 
     @PropertyName(name = "module_with_some_plugins")
@@ -26,4 +24,7 @@ public interface TestApplicationConfig {
 
     @PropertyName(name = "module_with_no_matrix")
     Map<String,List<String>> getModuleWithNoPluginsMatrix();
+
+    @PropertyName(name = "module_with_sub_config")
+    SubConfig getModuleWithSubConfig();
 }
