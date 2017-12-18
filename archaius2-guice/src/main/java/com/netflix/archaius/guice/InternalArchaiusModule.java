@@ -3,21 +3,13 @@ package com.netflix.archaius.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
-import com.google.inject.multibindings.Multibinder;
 import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.api.CascadeStrategy;
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigLoader;
-import com.netflix.archaius.api.ConfigReader;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.PropertyRepository;
+import com.netflix.archaius.api.*;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -31,15 +23,11 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
-import com.netflix.archaius.readers.PropertiesConfigReader;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Named;
 import javax.inject.Provider;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class InternalArchaiusModule extends AbstractModule {
     static final String CONFIG_NAME_KEY         = "archaius.config.name";
