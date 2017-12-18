@@ -33,6 +33,8 @@ import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -65,9 +67,6 @@ final class InternalArchaiusModule extends AbstractModule {
         bind(ConfigurationInjectingListener.class).toInstance(listener);
         requestStaticInjection(ConfigurationInjectingListener.class);
         bindListener(Matchers.any(), listener);
-        
-        Multibinder.newSetBinder(binder(), ConfigReader.class)
-            .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
     }
 
     @Provides
