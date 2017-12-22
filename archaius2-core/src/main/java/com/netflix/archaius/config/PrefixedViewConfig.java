@@ -47,32 +47,33 @@ public class PrefixedViewConfig extends AbstractConfig {
             data = new LinkedHashMap<String, Object>();
             config.forEachProperty((k, v) -> {
                 if (k.startsWith(prefix)) {
-                    data.put(k.substring(prefix.length()+1), v);
+                    data.put(k.substring(prefix.length()), v);
                 }
             });
         }
     }
     
     public PrefixedViewConfig(final String prefix, final Config config) {
+        final String normalizedPrefix = prefix.endsWith(".") ? prefix : prefix + ".";
+        this.prefix = normalizedPrefix;
         this.config = config;
-        this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
         this.nonPrefixedLookup = ConfigStrLookup.from(config);
-        this.state = new State(config, prefix);
+        this.state = new State(config, normalizedPrefix);
         
         this.config.addListener(new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
-                state = new State(config, prefix);
+                state = new State(config, normalizedPrefix);
             }
 
             @Override
             public void onConfigRemoved(Config config) {
-                state = new State(config, prefix);
+                state = new State(config, normalizedPrefix);
             }
 
             @Override
             public void onConfigUpdated(Config config) {
-                state = new State(config, prefix);
+                state = new State(config, normalizedPrefix);
             }
 
             @Override
