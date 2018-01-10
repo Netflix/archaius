@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Core API for reading a configuration.  The API is read only.
@@ -48,6 +49,8 @@ public interface Config extends PropertySource {
      * @param key
      */
     Object getRawProperty(String key);
+    
+    default Optional<Object> getProperty(String key) { return Optional.ofNullable(getRawProperty(key)); }
     
     /**
      * Parse the property as a long.
