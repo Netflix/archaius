@@ -42,7 +42,10 @@ public class AbstractConfigTest {
 
         @Override
         public Object getRawProperty(String key) {
-            return "bar";
+            if ("foo".equals(key)) {
+                return "bar";
+            }
+            return null;
         }
 
         @Override
@@ -54,5 +57,15 @@ public class AbstractConfigTest {
     @Test
     public void testGet() throws Exception {
         Assert.assertEquals("bar", config.get(String.class, "foo"));
+    }
+    
+    @Test
+    public void getExistingProperty() {
+        Assert.assertEquals("bar", config.getProperty("foo").get());
+    }
+    
+    @Test
+    public void getNonExistentProperty() {
+        Assert.assertFalse(config.getProperty("non_existent").isPresent());
     }
 }
