@@ -9,6 +9,9 @@ import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
+import org.apache.commons.lang3.text.StrSubstitutor;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -172,14 +175,14 @@ public class ConfigProxyFactory {
          */
         T invoke(Object[] args);
     }
-    
+
     static class DefaultMethodValueSupplier<T> implements Supplier<T> {
         private final MethodHandle handle;
 
         DefaultMethodValueSupplier(MethodHandle handle) {
             this.handle = handle;
         }
-        
+
         @SuppressWarnings("unchecked")
 		@Override
         public T get() {
@@ -224,13 +227,13 @@ public class ConfigProxyFactory {
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
         final Map<Method, String> propertyNames = new HashMap<>();
-        
+
         final InvocationHandler handler = (proxy, method, args) -> {
             MethodInvoker<?> invoker = invokers.get(method);
             if (invoker != null) {
                 return invoker.invoke(args);
             }
-            
+
             if ("toString".equals(method.getName())) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(type.getSimpleName()).append("[");
@@ -251,7 +254,7 @@ public class ConfigProxyFactory {
                 throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
             }
         };
-        
+
         // Hack so that default interface methods may be called from a proxy
         final MethodHandles.Lookup lookup;
         try {
@@ -268,7 +271,7 @@ public class ConfigProxyFactory {
         for (Method m : type.getMethods()) {
             try {
                 final MethodInvoker<?> invoker;
-                
+
                 final String verb;
                 if (m.getName().startsWith("get")) {
                     verb = "get";
@@ -281,7 +284,7 @@ public class ConfigProxyFactory {
                 final Class<?> returnType = m.getReturnType();
                 
                 Supplier defaultSupplier = () -> null;
-                
+
                 if (m.getAnnotation(DefaultValue.class) != null) {
                     if (m.isDefault()) {
                         throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
@@ -301,18 +304,18 @@ public class ConfigProxyFactory {
                         defaultSupplier = memoize(decoder.decode(returnType, config.resolve(value)));
                     }
                 } 
-                
+
                 if (m.isDefault()) {
                     defaultSupplier = new DefaultMethodValueSupplier<T>(lookup.unreflectSpecial(m, type).bindTo(proxyObject));
                 }
-                
+
                 final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
                 final String propName = nameAnnot != null && nameAnnot.name() != null
                                 ? prefix + nameAnnot.name()
                                 : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
     
                 propertyNames.put(m, propName);
-                
+
                 // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
                 // methods can still return dynamic values
                 if (returnType.equals(Map.class)) {
@@ -335,7 +338,7 @@ public class ConfigProxyFactory {
                 } else {
                     invoker = createScalarProperty(returnType, propName, defaultSupplier);
                 }
-                
+
                 if (immutable) {
                     Object value = invoker.invoke(new Object[]{});
                     invokers.put(m, (args) -> value);
@@ -349,7 +352,7 @@ public class ConfigProxyFactory {
         
         return proxyObject;
     }
-    
+
     private static <T> Supplier<T> memoize(T value) {
     	return () -> value;
     }
@@ -359,12 +362,12 @@ public class ConfigProxyFactory {
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
-                .map(s -> { 
+                .map(s -> {
                   if (s != null) {
                       Collection list = collectionFactory.get();
                       if (!s.isEmpty()) {
                           Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
-                              if (!v.isEmpty() || valueType == String.class) { 
+                              if (!v.isEmpty() || valueType == String.class) {
                                   list.add(decoder.decode(valueType, v));
                               }
                           });
@@ -374,7 +377,7 @@ public class ConfigProxyFactory {
                       return null;
                   }
               });
-        
+
         return new MethodInvoker<T>() {
 			@Override
             public T invoke(Object[] args) {
@@ -392,33 +395,59 @@ public class ConfigProxyFactory {
 
     @SuppressWarnings("unchecked")
     private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable, Supplier<T> next) {
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
-        Map<String, Object> map;
-        // This is a map for String -> Interface so create a proxy for any value
-        if (valueType.isInterface()) {
-            map = new ReadOnlyMap<String, Object>() {
-                Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
-                @Override
-                public Object get(final Object key) {
-                    return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
-                        @Override
-                        public Object apply(String key) {
-                            return newProxy(valueType, propName + "." + key, immutable);
-                        }
-                    });
-                }
-            };
+        Object valueType = type.getActualTypeArguments()[1];
+        if(ParameterizedType.class.isAssignableFrom(type.getActualTypeArguments()[1].getClass())) {
+            final ParameterizedType valueTypeInst = (ParameterizedType)valueType;
+
+            // This is a map for String -> Interface so create a proxy for any value
+            if (valueTypeInst.getRawType().getTypeName().equalsIgnoreCase(List.class.getCanonicalName())) {
+                Map<String, List<Object>> map = new ReadOnlyMap<String, List<Object>>() {
+                    Map<String, List<Object>> lookup = new ConcurrentHashMap<String, List<Object>>();
+
+                    @Override
+                    public List<Object> get(final Object key) {
+                        return lookup.computeIfAbsent((String) key, new Function<String, List<Object>>() {
+                            @Override
+                            public List<Object> apply(String key) {
+                                return (List<Object>)config.getList(propName + "." + key,(Class)valueTypeInst.getActualTypeArguments()[0]);
+                            }
+                        });
+                    }
+                };
+                return (MethodInvoker<T>) createInterfaceProperty(propName, map);
+            } else {
+                throw new RuntimeException("The value map handler for " + valueTypeInst.getRawType().getTypeName() + " type is not implemented.");
+            }
+
         } else {
-        // This is a map of String -> DecodableType (i.e. String, Long, etc...) 
-            map = new ReadOnlyMap<String, Object>() {
-                @Override
-                public Object get(final Object key) {
-                    return config.get(valueType, propName + "." + key);
-                }
-            };
+            final Class<?> valueTypeClass = (Class<?>)valueType;
+            Map<String, Object> map;
+            // This is a map for String -> Interface so create a proxy for any value
+            if (valueTypeClass.isInterface()) {
+                map = new ReadOnlyMap<String, Object>() {
+                    Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
+
+                    @Override
+                    public Object get(final Object key) {
+                        return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
+                            @Override
+                            public Object apply(String key) {
+                                return newProxy(valueTypeClass, propName + "." + key, immutable);
+                            }
+                        });
+                    }
+                };
+            } else {
+                // This is a map of String -> DecodableType (i.e. String, Long, etc...)
+                map = new ReadOnlyMap<String, Object>() {
+                    @Override
+                    public Object get(final Object key) {
+                        return config.get(valueTypeClass, propName + "." + key);
+                    }
+                };
+            }
+            return (MethodInvoker<T>) createInterfaceProperty(propName, map, (Supplier<Map<String, Object>>)next);
         }
-        
-        return (MethodInvoker<T>) createInterfaceProperty(propName, map, (Supplier<Map<String, Object>>)next);
     }
 
     protected <T> Supplier<T> defaultValueFromString(Class<T> type, String defaultValue) {
@@ -433,7 +462,7 @@ public class ConfigProxyFactory {
             }
         };
     }
-    
+
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
         return (args) -> proxy;
     }
