@@ -1,3 +1,11 @@
+buildscript {
+ configurations.classpath {
+   resolutionStrategy {
+     force 'com.netflix.nebula:nebula-publishing-plugin:4.9.1'
+  }
+ }
+}
+
 plugins {
     id 'nebula.netflixoss' version '3.5.1'
     id 'nebula.provided-base' version '3.1.0'
