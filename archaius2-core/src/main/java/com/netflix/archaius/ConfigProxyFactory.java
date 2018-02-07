@@ -230,8 +230,13 @@ public class ConfigProxyFactory {
             if (invoker != null) {
                 return invoker.invoke(args);
             }
-            
-            if ("toString".equals(method.getName())) {
+            if ("equals".equals(method.getName())) {
+            	return proxy == args[0];
+            }
+            else if ("hashCode".equals(method.getName())) {
+            	return System.identityHashCode(proxy);
+            }
+            else if ("toString".equals(method.getName())) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(type.getSimpleName()).append("[");
                 sb.append(invokers.entrySet().stream().map(entry -> {
