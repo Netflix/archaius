@@ -18,10 +18,9 @@ package com.netflix.archaius.commons;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
 
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.configuration2.AbstractConfiguration;
+import org.apache.commons.lang3.StringUtils;
 
 import com.netflix.archaius.config.AbstractConfig;
 
