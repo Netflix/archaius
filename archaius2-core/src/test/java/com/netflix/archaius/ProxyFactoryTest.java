@@ -432,12 +432,9 @@ public class ProxyFactoryTest {
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
-        ConfigWithMap withMap = proxy.newProxy(ConfigWithMap.class);
         
         Assert.assertEquals("WithArguments[${0}.abc.${1}='null']", withArgs.toString());
         Assert.assertNotNull(withArgs.hashCode());
-        Assert.assertNotEquals(withArgs.hashCode(), withMap.hashCode());
         Assert.assertTrue(withArgs.equals(withArgs));
-        Assert.assertFalse(withMap.equals(withArgs));
     }
 }
