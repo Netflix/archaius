@@ -244,6 +244,7 @@ public class DynamicProperty {
     public static DynamicProperty getInstance(String propName) {
         // This is to ensure that a configuration source is registered with
         // DynamicProperty
+        logger.info("consumed property name: " + propName);
         if (dynamicPropertySupportImpl == null) {
             DynamicPropertyFactory.getInstance();
         }
