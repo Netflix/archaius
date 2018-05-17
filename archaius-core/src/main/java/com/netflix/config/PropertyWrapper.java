@@ -65,6 +65,7 @@ public abstract class PropertyWrapper<V> implements Property<V> {
     }
     
     protected PropertyWrapper(String propName, V defaultValue) {
+        logger.info("consumed property name: " + propName);
         this.prop = DynamicProperty.getInstance(propName);
         this.defaultValue = defaultValue;
         Class<?> c = getClass();
