@@ -386,8 +386,6 @@ public class ConfigProxyFactory {
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
                 .map(s -> {
-                    if (s == null) 
-                        return null;
                     T result = mapFactory.get();
                     Arrays
                         .stream(s.split("\\s*,\\s*"))
