@@ -290,7 +290,14 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         
         @Override
         public <S> Property<S> map(Function<T, S> mapper) {
-            return new PropertyImpl<S>(keyAndType.discardType(), () -> mapper.apply(supplier.get()));
+            return new PropertyImpl<S>(keyAndType.discardType(), () -> {
+                T value = supplier.get();
+                if (value != null) {
+                    return mapper.apply(supplier.get());
+                } else {
+                    return null;
+                }
+            });
         }
     }
     
