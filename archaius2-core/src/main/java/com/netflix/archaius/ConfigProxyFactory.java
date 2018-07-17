@@ -19,16 +19,17 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -230,8 +231,13 @@ public class ConfigProxyFactory {
             if (invoker != null) {
                 return invoker.invoke(args);
             }
-            
-            if ("toString".equals(method.getName())) {
+            if ("equals".equals(method.getName())) {
+            	return proxy == args[0];
+            }
+            else if ("hashCode".equals(method.getName())) {
+            	return System.identityHashCode(proxy);
+            }
+            else if ("toString".equals(method.getName())) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(type.getSimpleName()).append("[");
                 sb.append(invokers.entrySet().stream().map(entry -> {
@@ -313,10 +319,8 @@ public class ConfigProxyFactory {
     
                 propertyNames.put(m, propName);
                 
-                // For sub-interfaces create a proxy instance where the same proxy instance is returned but its
-                // methods can still return dynamic values
                 if (returnType.equals(Map.class)) {
-                    invoker = createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), immutable, defaultSupplier);
+                    invoker = createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashMap::new, defaultSupplier);
                 } else if (returnType.equals(Set.class)) {
                     invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new, defaultSupplier);
                 } else if (returnType.equals(SortedSet.class)) {
@@ -351,76 +355,55 @@ public class ConfigProxyFactory {
     }
     
     private static <T> Supplier<T> memoize(T value) {
-    	return () -> value;
+        return () -> value;
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	private <T> MethodInvoker<T> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection> collectionFactory, Supplier<T> next) {
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[0];
+	private <T> MethodInvoker<T> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection<T>> collectionFactory, Supplier<T> next) {
+        final Class valueType = (Class) type.getActualTypeArguments()[0];
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
-                .map(s -> { 
-                  if (s != null) {
-                      Collection list = collectionFactory.get();
-                      if (!s.isEmpty()) {
-                          Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
-                              if (!v.isEmpty() || valueType == String.class) { 
-                                  list.add(decoder.decode(valueType, v));
-                              }
-                          });
-                      }
-                      return (T)list;
-                  } else {
-                      return null;
-                  }
-              });
-        
-        return new MethodInvoker<T>() {
-			@Override
-            public T invoke(Object[] args) {
-                T value = prop.get();
-                if (value == null) {
-                    value = next.get();
-                }
-                if (value == null) {
-                    value = (T) collectionFactory.get();
-                }
-                return value;
-            }
-        };
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, final boolean immutable, Supplier<T> next) {
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
-        Map<String, Object> map;
-        // This is a map for String -> Interface so create a proxy for any value
-        if (valueType.isInterface()) {
-            map = new ReadOnlyMap<String, Object>() {
-                Map<String, Object> lookup = new ConcurrentHashMap<String, Object>();
-                @Override
-                public Object get(final Object key) {
-                    return lookup.computeIfAbsent((String) key, new Function<String, Object>() {
-                        @Override
-                        public Object apply(String key) {
-                            return newProxy(valueType, propName + "." + key, immutable);
+                .map(s -> {
+                    if (s != null) {
+                        Collection list = collectionFactory.get();
+                        if (!s.isEmpty()) {
+                            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
+                                if (!v.isEmpty() || valueType == String.class) {
+                                    list.add(decoder.decode(valueType, v));
+                                }
+                            });
                         }
-                    });
-                }
-            };
-        } else {
-        // This is a map of String -> DecodableType (i.e. String, Long, etc...) 
-            map = new ReadOnlyMap<String, Object>() {
-                @Override
-                public Object get(final Object key) {
-                    return config.get(valueType, propName + "." + key);
-                }
-            };
-        }
+                        return (T) list;
+                    } else {
+                        return next.get();
+                    }
+                });
         
-        return (MethodInvoker<T>) createInterfaceProperty(propName, map, (Supplier<Map<String, Object>>)next);
+        return args -> Optional.ofNullable(prop.get()).orElseGet((Supplier<? extends T>) collectionFactory);
     }
 
+    private <T extends Map> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, Supplier<T> mapFactory, Supplier<T> next) {
+        final Class<?> keyType = (Class<?>)type.getActualTypeArguments()[0];
+        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
+        
+        final Property<T> prop = propertyRepository
+                .get(propName, String.class)
+                .map(s -> {
+                    if (s == null) 
+                        return null;
+                    T result = mapFactory.get();
+                    Arrays
+                        .stream(s.split("\\s*,\\s*"))
+                        .filter(pair -> !pair.isEmpty())
+                        .map(pair -> pair.split("\\s*=\\s*"))
+                        .forEach(kv -> result.put(decoder.decode(keyType, kv[0]), decoder.decode(valueType, kv[1])));
+                    return (T)Collections.unmodifiableMap(result);
+                }
+                ).orElse((T) Collections.unmodifiableMap(next.get()));
+
+        return args -> Optional.ofNullable(prop.get()).orElseGet(mapFactory);
+    }
+    
     protected <T> Supplier<T> defaultValueFromString(Class<T> type, String defaultValue) {
         return () -> decoder.decode(type, defaultValue);
     }
@@ -440,16 +423,7 @@ public class ConfigProxyFactory {
 
     protected <T> MethodInvoker<T> createScalarProperty(final Class<T> type, final String propName, Supplier<T> next) {
         final Property<T> prop = propertyRepository.get(propName, type);
-        return new MethodInvoker<T>() {
-            @Override
-            public T invoke(Object[] args) {
-                T result = prop.get();
-                if (result == null) {
-                    result = next.get();
-                }
-                return result;
-            }
-        };
+        return args -> Optional.ofNullable(prop.get()).orElseGet(next);
     }
     
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Supplier<T> next) {
