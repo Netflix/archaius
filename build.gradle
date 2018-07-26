@@ -90,11 +90,11 @@ project(':archaius-zookeeper') {
             exclude group: 'com.sun.jmx', module: 'jmxri'
             exclude group: 'javax.jms', module: 'jms'
         }
-        compile 'org.apache.curator:curator-client:2.3.0'
-        compile 'org.apache.curator:curator-recipes:2.3.0'
+        compile 'org.apache.curator:curator-client:4.0.1'
+        compile 'org.apache.curator:curator-recipes:4.0.1'
         testCompile 'junit:junit:4.11'
         testCompile 'org.slf4j:slf4j-simple:1.6.4'
-        testCompile 'org.apache.curator:curator-test:2.3.0'
+        testCompile 'org.apache.curator:curator-test:4.0.1'
     }
 }
 
