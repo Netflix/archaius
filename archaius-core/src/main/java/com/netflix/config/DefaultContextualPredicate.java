@@ -68,4 +68,9 @@ public class DefaultContextualPredicate implements Predicate<Map<String, Collect
         return true;
 
     }
+
+    @Override
+    public boolean test(@Nullable Map<String, Collection<String>> input) {
+        return apply(input);
+    }
 }
