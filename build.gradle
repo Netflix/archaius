@@ -1,5 +1,14 @@
+buildscript {
+ configurations.classpath {
+   resolutionStrategy {
+     force 'com.netflix.nebula:nebula-publishing-plugin:4.9.1'
+  }
+ }
+}
+
 plugins {
     id 'nebula.netflixoss' version '5.0.0'
+    id 'nebula.provided-base' version '3.1.0'
 }
 
 // Establish version and status
@@ -7,12 +16,13 @@ ext.githubProjectName = rootProject.name
 
 subprojects {
     apply plugin: 'nebula.netflixoss'
+    apply plugin: 'nebula.provided-base'
     apply plugin: 'java'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    repositories { 
+    repositories {
         jcenter()
     }
 
@@ -23,9 +33,9 @@ subprojects {
         testCompile 'org.mockito:mockito-core:1.+'
         testCompile 'com.google.guava:guava:18.0'
     }
-    
+
     group = "com.netflix.${githubProjectName}"
-    
+
     tasks.withType(Javadoc) {
       options.addStringOption('Xdoclint:none', '-quiet')
     }

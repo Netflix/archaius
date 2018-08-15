@@ -96,4 +96,39 @@ public class InterpolationTest {
         Assert.assertEquals(123, prefixedConfig.getInteger("key1").intValue());
     }
 
+    @Test
+    public void nestedInterpolations() {
+        Config config = MapConfig.builder()
+                .put("a", "A")
+                .put("b", "${c:${a}}")
+                .build();
+
+        Assert.assertEquals("A", config.getString("b"));
+    }
+
+    @Test
+    public void nestedInterpolationsWithResolve() {
+        Config config = MapConfig.builder()
+                .put("a", "A")
+                .build();
+
+        Assert.assertEquals("A", config.resolve("${b:${c:${a}}}"));
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void failOnCircularResolve() {
+        Config config = MapConfig.builder()
+                .build();
+
+        config.resolve("${b:${c:${b}}}");
+    }
+    
+    @Test
+    public void returnStringOnMissingInterpolation() {
+        Config config = MapConfig.builder()
+                .build();
+
+        Assert.assertEquals("${c}", config.resolve("${b:${c}}"));
+        
+    }
 }
