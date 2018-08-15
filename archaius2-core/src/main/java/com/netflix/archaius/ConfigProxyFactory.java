@@ -364,20 +364,17 @@ public class ConfigProxyFactory {
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
                 .map(s -> {
-                    if (s != null) {
-                        Collection list = collectionFactory.get();
-                        if (!s.isEmpty()) {
-                            Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
-                                if (!v.isEmpty() || valueType == String.class) {
-                                    list.add(decoder.decode(valueType, v));
-                                }
-                            });
-                        }
-                        return (T) list;
-                    } else {
-                        return next.get();
+                    Collection list = collectionFactory.get();
+                    if (!s.isEmpty()) {
+                        Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
+                            if (!v.isEmpty() || valueType == String.class) {
+                                list.add(decoder.decode(valueType, v));
+                            }
+                        });
                     }
-                });
+                    return (T) list;
+                })
+                .orElse(next.get());
         
         return args -> Optional.ofNullable(prop.get()).orElseGet((Supplier<? extends T>) collectionFactory);
     }
@@ -389,8 +386,6 @@ public class ConfigProxyFactory {
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
                 .map(s -> {
-                    if (s == null) 
-                        return null;
                     T result = mapFactory.get();
                     Arrays
                         .stream(s.split("\\s*,\\s*"))

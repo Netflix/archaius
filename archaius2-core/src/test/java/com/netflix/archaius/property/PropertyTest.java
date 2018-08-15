@@ -240,6 +240,26 @@ public class PropertyTest {
     }
     
     @Test
+    public void subscribePropertyChange() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        
+        Property<Integer> prop = factory.get("foo", String.class)
+                .map(Integer::parseInt)
+                .orElse(2)
+                ;
+        
+        AtomicInteger value = new AtomicInteger();
+        prop.subscribe(value::set);
+        
+        Assert.assertEquals(2, prop.get().intValue());
+        Assert.assertEquals(0, value.get());
+        config.setProperty("foo", "1");
+        Assert.assertEquals(1, prop.get().intValue());
+        Assert.assertEquals(1, value.get());
+    }
+    
+    @Test
     public void unsubscribeOnChange() {
         SettableConfig config = new DefaultSettableConfig();
 
