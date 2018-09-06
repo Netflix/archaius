@@ -47,7 +47,7 @@ The strategy may also specify replacements from already loaded configurations (s
 
 One of the core differentiators between Archaius and other configuration libraries
 is its support for dynamically changing configuration.  Traditionally applications 
-require a restart whenever configuration changes.  This can result in unncessary 
+require a restart whenever configuration changes.  This can result in unnecessary 
 service interruption during minor configuration changes, such as timeout values.  Through
 Archaius, code can have direct access to the most recent configuration without the need to 
 restart.  In addition, code can react to configuration changes by registering a change
