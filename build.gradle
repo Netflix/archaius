@@ -112,6 +112,26 @@ project(':archaius-etcd') {
     }
 }
 
+project(':archaius-k8s') {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    dependencies {
+        compile project(':archaius-core')
+        compile 'com.google.guava:guava:19.0'
+        compile("io.fabric8:kubernetes-client:4.1.0") {
+            exclude group: 'com.fasterxml.jackson.core'
+            exclude group: 'com.fasterxml.jackson.dataformat'
+            exclude group: 'com.fasterxml.jackson.module'
+            exclude group: 'com.fasterxml.jackson.annotation'
+            exclude group: 'com.fasterxml.jackson.databind'
+        }
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.mockito:mockito-all:1.9.5'
+        testCompile 'org.slf4j:slf4j-simple:1.6.4'
+    }
+}
+
 project(':archaius-scala') {
     apply plugin: 'scala'
 
