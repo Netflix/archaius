@@ -192,4 +192,8 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
             }
         });
     }
+
+    public Object resolve(String value) {
+        return config.resolve(value);
+    }
 }
