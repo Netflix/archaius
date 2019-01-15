@@ -193,7 +193,7 @@ public abstract class DynamicListProperty<T> implements Property<List<T>> {
     protected abstract T from(String value);
     
     /**
-     * Getter for the property name
+     * {@inheritDoc}
      */
     @Override
     public String getName() {

@@ -194,7 +194,7 @@ public abstract class DynamicSetProperty<T> implements Property<Set<T>> {
     protected abstract T from(String value);
 
     /**
-     * Getter for the property name
+     * {@inheritDoc}
      */
     @Override
     public String getName(){
