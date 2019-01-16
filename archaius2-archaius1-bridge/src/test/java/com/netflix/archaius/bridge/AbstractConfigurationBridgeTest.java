@@ -244,4 +244,19 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
     	Mockito.verify(listener, Mockito.times(2)).configurationChanged(Mockito.any());
     	
     }
+
+    @Test
+    public void verifyValueInterpollation() {
+        AbstractConfiguration config = ConfigurationManager.getConfigInstance();
+        config.setProperty("foo", "${ABC:true}");
+        boolean value = config.getBoolean("foo");
+        Assert.assertTrue(value);
+    }
+
+    @Test
+    public void verifyMissingProperty() {
+        AbstractConfiguration config = ConfigurationManager.getConfigInstance();
+        Boolean value = config.getBoolean("foo", null);
+        Assert.assertNull(value);
+    }
 }

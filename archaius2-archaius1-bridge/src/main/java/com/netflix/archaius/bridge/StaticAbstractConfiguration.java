@@ -212,6 +212,16 @@ public class StaticAbstractConfiguration extends AbstractConfiguration implement
     }
 
     @Override
+    protected String interpolate(String base) {
+        return delegate.resolve(base).toString();
+    }
+
+    @Override
+    protected Object interpolate(Object value) {
+        return delegate.resolve(value.toString());
+    }
+
+    @Override
     protected void clearPropertyDirect(String key) {
         delegate.clearProperty(key);
     }
