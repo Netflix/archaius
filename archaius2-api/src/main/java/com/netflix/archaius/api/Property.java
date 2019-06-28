@@ -31,7 +31,7 @@ import java.util.function.Supplier;
  *     private final Property<String> prop;
  *     
  *     MyService(PropertyRepository repository) {
- *        prop = repository.get("foo.prop", String.class);
+ *        prop = repository.get("foo.prop", String.class).orElse("defaultValue");
  *     }
  *     
  *     public void doSomething() {
