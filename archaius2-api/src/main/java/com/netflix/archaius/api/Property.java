@@ -23,15 +23,15 @@ import java.util.function.Supplier;
  * API for composeable property access with optional chaining with default value support
  * as well as change notification.
  * 
- * A {@link PropertyFactory} implementation normally implements some level of caching
+ * A {@link PropertyRepository} implementation normally implements some level of caching
  * to reduce the overhead of interpolating and converting values.
  * 
  * {@code 
  * class MyService {
  *     private final Property<String> prop;
  *     
- *     MyService(PropertyFactory factory) {
- *        prop = factory.getProperty("foo.prop").orElse("defaultValue");
+ *     MyService(PropertyRepository repository) {
+ *        prop = repository.get("foo.prop", String.class).orElse("defaultValue");
  *     }
  *     
  *     public void doSomething() {
