@@ -210,11 +210,25 @@ public class ProxyFactoryTest {
         Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
         Assert.assertEquals("default", withArgs.getProperty("a", 2));
     }
-    
+
+    public interface ConfigWithEmptyMap {
+        Map<String, String> getMap();
+    }
+
+    @Test
+    public void testWithEmptyMap() {
+        SettableConfig config = new DefaultSettableConfig();
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        ConfigWithEmptyMap withArgs = proxy.newProxy(ConfigWithEmptyMap.class);
+
+        Assert.assertTrue(withArgs.getMap().isEmpty());
+    }
+
     public static interface ConfigWithLongMap {
         default Map<String, Long> getMap() { return Collections.singletonMap("default", 0L); }
     }
-    
+
     @Test
     public void testWithLongMap() {
         SettableConfig config = new DefaultSettableConfig();
