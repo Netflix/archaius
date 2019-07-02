@@ -382,6 +382,11 @@ public class ConfigProxyFactory {
     private <T extends Map> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, Supplier<T> mapFactory, Supplier<T> next) {
         final Class<?> keyType = (Class<?>)type.getActualTypeArguments()[0];
         final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
+
+        Map<?, ?> defaultValue = next.get();
+        if (defaultValue == null) {
+            defaultValue = Collections.emptyMap();
+        }
         
         final Property<T> prop = propertyRepository
                 .get(propName, String.class)
@@ -394,7 +399,7 @@ public class ConfigProxyFactory {
                         .forEach(kv -> result.put(decoder.decode(keyType, kv[0]), decoder.decode(valueType, kv[1])));
                     return (T)Collections.unmodifiableMap(result);
                 }
-                ).orElse((T) Collections.unmodifiableMap(next.get()));
+                ).orElse((T) Collections.unmodifiableMap(defaultValue));
 
         return args -> Optional.ofNullable(prop.get()).orElseGet(mapFactory);
     }
