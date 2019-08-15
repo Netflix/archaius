@@ -25,6 +25,7 @@ import com.netflix.archaius.exceptions.ParseException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public abstract class AbstractConfig implements Config {
     }
     
     public AbstractConfig(String name) {
-        this.decoder = new DefaultDecoder();
+        this.decoder = DefaultDecoder.INSTANCE;
         this.interpolator = CommonsStrInterpolator.INSTANCE;
         this.lookup = ConfigStrLookup.from(this);
         this.name = name == null ? generateUniqueName("unnamed-") : name;
@@ -238,7 +239,7 @@ public abstract class AbstractConfig implements Config {
         return null;
     }
 
-    protected <T> T getValue(Class<T> type, String key) {
+    protected <T> T getValue(Type type, String key) {
         T value = getValueWithDefault(type, key, null);
         if (value == null) {
             return notFound(key);
@@ -247,7 +248,7 @@ public abstract class AbstractConfig implements Config {
         }
     }
 
-    protected <T> T getValueWithDefault(Class<T> type, String key, T defaultValue) {
+    protected <T> T getValueWithDefault(Type type, String key, T defaultValue) {
         Object rawProp = getRawProperty(key);
         if (rawProp == null) {
             return defaultValue;
@@ -259,12 +260,15 @@ public abstract class AbstractConfig implements Config {
             } catch (NumberFormatException e) {
                 return parseError(key, rawProp.toString(), e);
             }
-        } else if (type.isInstance(rawProp) || type.isPrimitive()) {
-            return (T)rawProp;
-        } else {
-            return parseError(key, rawProp.toString(),
-                    new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getCanonicalName()));
+        } else if (type instanceof Class) {
+            Class cls = (Class)type;
+            if (cls.isInstance(rawProp) || cls.isPrimitive()) {
+                return (T) rawProp;
+            }
         }
+
+        return parseError(key, rawProp.toString(),
+                new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getTypeName()));
     }
 
     @Override
@@ -410,6 +414,17 @@ public abstract class AbstractConfig implements Config {
     public <T> T get(Class<T> type, String key, T defaultValue) {
         return getValueWithDefault(type, key, defaultValue);
     }
+
+    @Override
+    public <T> T get(Type type, String key) {
+        return getValue(type, key);
+    }
+
+    @Override
+    public <T> T get(Type type, String key, T defaultValue) {
+        return getValueWithDefault(type, key, defaultValue);
+    }
+
 
     private <T> T parseError(String key, String value, Exception e) {
         throw new ParseException("Error parsing value '" + value + "' for property '" + key + "'", e);

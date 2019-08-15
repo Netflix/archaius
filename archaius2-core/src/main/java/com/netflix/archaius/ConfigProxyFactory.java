@@ -16,11 +16,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
@@ -98,6 +102,7 @@ import org.apache.commons.lang3.text.StrSubstitutor;
  * @see {@literal }@Configuration
  */
 public class ConfigProxyFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(ConfigProxyFactory.class);
 
     /**
      * The decoder is used for the purpose of decoding any @DefaultValue annotation
@@ -165,7 +170,7 @@ public class ConfigProxyFactory {
      *
      * @param <T>
      */
-    static interface MethodInvoker<T> {
+    interface MethodInvoker<T> {
         /**
          * Invoke the method with the provided arguments
          * @param args
@@ -213,7 +218,17 @@ public class ConfigProxyFactory {
             return result;
         }
     }
-    
+
+    private static Map<Type, Supplier<?>> knownCollections = new HashMap<>();
+
+    static {
+        knownCollections.put(Map.class, Collections::emptyMap);
+        knownCollections.put(Set.class, Collections::emptySet);
+        knownCollections.put(SortedSet.class, Collections::emptySortedSet);
+        knownCollections.put(List.class, Collections::emptyList);
+        knownCollections.put(LinkedList.class, LinkedList::new);
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
         Configuration annot = type.getAnnotation(Configuration.class);
@@ -286,7 +301,7 @@ public class ConfigProxyFactory {
                 
                 final Class<?> returnType = m.getReturnType();
                 
-                Supplier defaultSupplier = () -> null;
+                Supplier defaultSupplier = knownCollections.getOrDefault(returnType, () -> null);
                 
                 if (m.getAnnotation(DefaultValue.class) != null) {
                     if (m.isDefault()) {
@@ -319,17 +334,7 @@ public class ConfigProxyFactory {
     
                 propertyNames.put(m, propName);
                 
-                if (returnType.equals(Map.class)) {
-                    invoker = createMapProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashMap::new, defaultSupplier);
-                } else if (returnType.equals(Set.class)) {
-                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedHashSet::new, defaultSupplier);
-                } else if (returnType.equals(SortedSet.class)) {
-                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), TreeSet::new, defaultSupplier);
-                } else if (returnType.equals(List.class)) {
-                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), ArrayList::new, defaultSupplier);
-                } else if (returnType.equals(LinkedList.class)) {
-                    invoker = createCollectionProperty(propName, (ParameterizedType)m.getGenericReturnType(), LinkedList::new, defaultSupplier);
-                } else if (returnType.isInterface()) {
+                if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
                     invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
                     if (nameAnnot == null) {
@@ -337,7 +342,7 @@ public class ConfigProxyFactory {
                     }
                     invoker = createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultSupplier);
                 } else {
-                    invoker = createScalarProperty(returnType, propName, defaultSupplier);
+                    invoker = createScalarProperty(m.getGenericReturnType(), propName, defaultSupplier);
                 }
                 
                 if (immutable) {
@@ -358,70 +363,19 @@ public class ConfigProxyFactory {
         return () -> value;
     }
     
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-	private <T> MethodInvoker<T> createCollectionProperty(String propName, ParameterizedType type, Supplier<Collection<T>> collectionFactory, Supplier<T> next) {
-        final Class valueType = (Class) type.getActualTypeArguments()[0];
-        final Property<T> prop = propertyRepository
-                .get(propName, String.class)
-                .map(s -> {
-                    Collection list = collectionFactory.get();
-                    if (!s.isEmpty()) {
-                        Arrays.asList(s.split("\\s*,\\s*")).forEach(v -> {
-                            if (!v.isEmpty() || valueType == String.class) {
-                                list.add(decoder.decode(valueType, v));
-                            }
-                        });
-                    }
-                    return (T) list;
-                })
-                .orElse(next.get());
-        
-        return args -> Optional.ofNullable(prop.get()).orElseGet((Supplier<? extends T>) collectionFactory);
-    }
-
-    private <T extends Map> MethodInvoker<T> createMapProperty(final String propName, final ParameterizedType type, Supplier<T> mapFactory, Supplier<T> next) {
-        final Class<?> keyType = (Class<?>)type.getActualTypeArguments()[0];
-        final Class<?> valueType = (Class<?>)type.getActualTypeArguments()[1];
-        
-        final Property<T> prop = propertyRepository
-                .get(propName, String.class)
-                .map(s -> {
-                    T result = mapFactory.get();
-                    Arrays
-                        .stream(s.split("\\s*,\\s*"))
-                        .filter(pair -> !pair.isEmpty())
-                        .map(pair -> pair.split("\\s*=\\s*"))
-                        .forEach(kv -> result.put(decoder.decode(keyType, kv[0]), decoder.decode(valueType, kv[1])));
-                    return (T)Collections.unmodifiableMap(result);
-                }
-                ).orElse((T) Collections.unmodifiableMap(next.get()));
-
-        return args -> Optional.ofNullable(prop.get()).orElseGet(mapFactory);
-    }
-    
-    protected <T> Supplier<T> defaultValueFromString(Class<T> type, String defaultValue) {
-        return () -> decoder.decode(type, defaultValue);
-    }
-    
-    protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy, Supplier<T> next) {
-        return new PropertyMethodInvoker<T>(propName, next) {
-            @Override
-            public T get() {
-                return proxy;
-            }
-        };
-    }
-    
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
+        LOG.debug("Creating interface property `{}` for type `{}`", propName, proxy.getClass());
         return (args) -> proxy;
     }
 
-    protected <T> MethodInvoker<T> createScalarProperty(final Class<T> type, final String propName, Supplier<T> next) {
+    protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Supplier<T> next) {
+        LOG.debug("Creating scalar property `{}` for type `{}`", propName, type.getClass());
         final Property<T> prop = propertyRepository.get(propName, type);
         return args -> Optional.ofNullable(prop.get()).orElseGet(next);
     }
     
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Supplier<T> next) {
+        LOG.debug("Creating parameterized property `{}` for type `{}`", propName, returnType);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {
