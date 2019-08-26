@@ -8,61 +8,53 @@ import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
  * instance.  Getter methods on the interface are mapped by naming convention
  * by the property name may be overridden using the @PropertyName annotation.
- * 
+ *
  * For example,
  * <pre>
- * {@code 
+ * {@code
  * {@literal @}Configuration(prefix="foo")
  * interface FooConfiguration {
  *    int getTimeout();     // maps to "foo.timeout"
- *    
+ *
  *    String getName();     // maps to "foo.name"
  * }
  * }
  * </pre>
- * 
+ *
  * Default values may be set by adding a {@literal @}DefaultValue with a default value string.  Note
- * that the default value type is a string to allow for interpolation.  Alternatively, methods can  
+ * that the default value type is a string to allow for interpolation.  Alternatively, methods can
  * provide a default method implementation.  Note that {@literal @}DefaultValue cannot be added to a default
  * method as it would introduce ambiguity as to which mechanism wins.
- * 
+ *
  * For example,
  * <pre>
  * {@code
@@ -178,25 +170,7 @@ public class ConfigProxyFactory {
          */
         T invoke(Object[] args);
     }
-    
-    static class DefaultMethodValueSupplier<T> implements Supplier<T> {
-        private final MethodHandle handle;
 
-        DefaultMethodValueSupplier(MethodHandle handle) {
-            this.handle = handle;
-        }
-        
-        @SuppressWarnings("unchecked")
-		@Override
-        public T get() {
-            try {
-                return (T) handle.invokeWithArguments();
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-    
     /**
      * Abstract method invoker that encapsulates a property
      * @param <T>
@@ -272,24 +246,15 @@ public class ConfigProxyFactory {
                 throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
             }
         };
-        
-        // Hack so that default interface methods may be called from a proxy
-        final MethodHandles.Lookup lookup;
-        try {
-            Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
-                    .getDeclaredConstructor(Class.class, int.class);
-            constructor.setAccessible(true);
-            lookup = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
-        }
+
+
 
         final T proxyObject = (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
 
         for (Method m : type.getMethods()) {
             try {
                 final MethodInvoker<?> invoker;
-                
+
                 final String verb;
                 if (m.getName().startsWith("get")) {
                     verb = "get";
@@ -314,26 +279,26 @@ public class ConfigProxyFactory {
                         throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
                                 + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
-                    
+
                     String value = m.getAnnotation(DefaultValue.class).value();
                     if (returnType == String.class) {
                         defaultSupplier = memoize((T) config.resolve(value));
                     } else {
                         defaultSupplier = memoize(decoder.decode(returnType, config.resolve(value)));
                     }
-                } 
-                
-                if (m.isDefault()) {
-                    defaultSupplier = new DefaultMethodValueSupplier<T>(lookup.unreflectSpecial(m, type).bindTo(proxyObject));
                 }
-                
-                final PropertyName nameAnnot = m.getAnnotation(PropertyName.class); 
+
+                if (m.isDefault()) {
+                    defaultSupplier = createDefaultMethodSupplier(m, type, proxyObject);
+                }
+
+                final PropertyName nameAnnot = m.getAnnotation(PropertyName.class);
                 final String propName = nameAnnot != null && nameAnnot.name() != null
                                 ? prefix + nameAnnot.name()
                                 : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
-    
+
                 propertyNames.put(m, propName);
-                
+
                 if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
                     invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
                 } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
@@ -355,14 +320,49 @@ public class ConfigProxyFactory {
                 throw new RuntimeException("Error proxying method " + m.getName(), e);
             }
         }
-        
+
         return proxyObject;
     }
-    
+
     private static <T> Supplier<T> memoize(T value) {
         return () -> value;
     }
-    
+
+    private static <T> Supplier<T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
+        final MethodHandle methodHandle;
+
+        try {
+            if (SystemUtils.IS_JAVA_1_8) {
+                Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
+                        .getDeclaredConstructor(Class.class, int.class);
+                constructor.setAccessible(true);
+                methodHandle = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE)
+                        .unreflectSpecial(method, type)
+                        .bindTo(proxyObject);
+            }
+            else {
+                // Java 9 onwards
+                methodHandle = MethodHandles.lookup()
+                        .findSpecial(type,
+                                method.getName(),
+                                MethodType.methodType(method.getReturnType(), new Class[0]),
+                                type)
+                        .bindTo(proxyObject);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
+        }
+
+        return () -> {
+            try {
+                //noinspection unchecked
+                return (T) methodHandle.invokeWithArguments();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
         LOG.debug("Creating interface property `{}` for type `{}`", propName, proxy.getClass());
         return (args) -> proxy;
