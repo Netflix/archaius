@@ -80,11 +80,11 @@ public abstract class AbstractPollingScheduler {
             checkPoint = result.getCheckPoint();
             try {
                 populateProperties(result, config);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Unable to load Properties", e);
             }
             fireEvent(EventType.POLL_SUCCESS, result, null);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             fireEvent(EventType.POLL_FAILURE, null, e);
             throw new RuntimeException("Unable to load Properties source from " + source, e);
         }
