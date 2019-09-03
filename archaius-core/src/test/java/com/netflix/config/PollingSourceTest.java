@@ -20,16 +20,27 @@ import static org.junit.Assert.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.event.ConfigurationErrorEvent;
+import org.apache.commons.configuration.event.ConfigurationErrorListener;
+import org.apache.commons.configuration.event.ConfigurationEvent;
+import org.apache.commons.configuration.event.ConfigurationListener;
+import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 public class PollingSourceTest {
     
     static class DummyPollingSource implements PolledConfigurationSource {
 
-        volatile boolean incremental;
-        volatile Map<String, Object> full, added, deleted, changed;
+        private boolean incremental;
+        private Map<String, Object> full, added, deleted, changed;
+        private Exception exception;
+
         public DummyPollingSource(boolean incremental) {
             this.incremental = incremental;
         }
@@ -38,42 +49,45 @@ public class PollingSourceTest {
             this.incremental = value;
         }
         
-        public synchronized void setContent(String content, Map<String, Object> map) {
-            String[] pairs = content.split(",");
+        public synchronized Map<String, Object> parse(String content) {
+            final Map<String, Object> map = new ConcurrentHashMap<String, Object>();
+            final String[] pairs = content.split(",");
             if (pairs != null) {
-                for (String pair: pairs) {
+                for (String pair : pairs) {
                     String[] nameValue = pair.trim().split("=");
                     if (nameValue.length == 2) {
-                       map.put(nameValue[0], nameValue[1]);
+                        map.put(nameValue[0], nameValue[1]);
                     }
                 }
             }
+            return map;
         }
         
         public synchronized void setFull(String content) {
-            full = new ConcurrentHashMap<String, Object>();
-            setContent(content, full);
+            full = parse(content);
         }
 
         public synchronized void setAdded(String content) {
-            added = new ConcurrentHashMap<String, Object>();
-            setContent(content, added);
+            added = parse(content);
         }
 
         public synchronized void setDeleted(String content) {
-            deleted = new ConcurrentHashMap<String, Object>();
-            setContent(content, deleted);
+            deleted = parse(content);
         }
 
         public synchronized void setChanged(String content) {
-            changed = new ConcurrentHashMap<String, Object>();
-            setContent(content, changed);
+            changed = parse(content);
         }
 
-        
+        public synchronized void setException(Exception e) {
+            this.exception = e;
+        }
+
         @Override
         public synchronized PollResult poll(boolean initial, Object checkPoint) throws Exception {
-            if (incremental) {
+            if (exception != null) {
+                throw exception;
+            } else if (incremental) {
                 return PollResult.createIncremental(added, changed, deleted, null);                
             } else {
                 return PollResult.createFull(full);
@@ -159,5 +173,65 @@ public class PollingSourceTest {
         assertEquals("changed", prop2.get());
     }
 
+    @Test
+    public void notificationOnSuccess() {
+        // Setup
+        DummyPollingSource source = new DummyPollingSource(true);
+        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 200, false);
+        DynamicConfiguration config = new DynamicConfiguration(source, scheduler);
+
+        ConfigurationListener configurationListener = Mockito.mock(ConfigurationListener.class);
+        ConfigurationErrorListener errorListener = Mockito.mock(ConfigurationErrorListener.class);
+
+        ArgumentCaptor<ConfigurationEvent> eventCapture = ArgumentCaptor.forClass(ConfigurationEvent.class);
+        ArgumentCaptor<ConfigurationErrorEvent> errorCapture = ArgumentCaptor.forClass(ConfigurationErrorEvent.class);
+
+        config.addConfigurationListener(configurationListener);
+        config.addErrorListener(errorListener);
+
+        // Run
+        Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
+
+        // Verify
+        Mockito.verify(configurationListener, Mockito.times(2)).configurationChanged(eventCapture.capture());
+        Mockito.verify(errorListener, Mockito.never()).configurationError(errorCapture.capture());
+
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(0).getType());
+        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(1).getType());
+        Assert.assertFalse(eventCapture.getAllValues().get(1).isBeforeUpdate());
+    }
+
+    @Test
+    public void notificationOnFetchFailure() {
+        // Setup
+        DummyPollingSource source = new DummyPollingSource(true);
+
+        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 200, false);
+        DynamicConfiguration config = new DynamicConfiguration(source, scheduler);
+
+        ConfigurationListener configurationListener = Mockito.mock(ConfigurationListener.class);
+        ConfigurationErrorListener errorListener = Mockito.mock(ConfigurationErrorListener.class);
+
+        ArgumentCaptor<ConfigurationEvent> eventCapture = ArgumentCaptor.forClass(ConfigurationEvent.class);
+        ArgumentCaptor<ConfigurationErrorEvent> errorCapture = ArgumentCaptor.forClass(ConfigurationErrorEvent.class);
+
+        config.addConfigurationListener(configurationListener);
+        config.addErrorListener(errorListener);
+
+        // Run
+        source.setException(new Exception("Failed to load"));
+        Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
+
+        // Verify
+        Mockito.verify(configurationListener, Mockito.times(1)).configurationChanged(eventCapture.capture());
+        Mockito.verify(errorListener, Mockito.times(1)).configurationError(errorCapture.capture());
+
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(0).getType());
+        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
+
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, errorCapture.getAllValues().get(0).getType());
+        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
+    }
 }
 

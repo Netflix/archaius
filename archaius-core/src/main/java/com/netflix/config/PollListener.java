@@ -23,8 +23,8 @@ package com.netflix.config;
  */
 public interface PollListener {
 
-    public enum EventType {
-        POLL_SUCCESS, POLL_FAILURE
+    enum EventType {
+        POLL_SUCCESS, POLL_FAILURE, POLL_BEGIN;
     }
     /**
      * This method is called when the listener is invoked after a polling.
@@ -33,5 +33,5 @@ public interface PollListener {
      * @param lastResult the last poll result, null if the poll fails or there is no result 
      * @param exception any Throwable caught in the last poll, null if the poll is successful
      */
-    public void handleEvent(EventType eventType, PollResult lastResult, Throwable exception);
+    void handleEvent(EventType eventType, PollResult lastResult, Throwable exception);
 }

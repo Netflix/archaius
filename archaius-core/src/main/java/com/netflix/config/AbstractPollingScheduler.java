@@ -75,16 +75,18 @@ public abstract class AbstractPollingScheduler {
     protected synchronized void initialLoad(final PolledConfigurationSource source, final Configuration config) {      
         PollResult result = null;
         try {
-            result = source.poll(true, null); 
+            fireEvent(EventType.POLL_BEGIN, null, null);
+            result = source.poll(true, null);
             checkPoint = result.getCheckPoint();
+            try {
+                populateProperties(result, config);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to load Properties", e);
+            }
             fireEvent(EventType.POLL_SUCCESS, result, null);
-        } catch (Throwable e) {
+        } catch (Exception e) {
+            fireEvent(EventType.POLL_FAILURE, null, e);
             throw new RuntimeException("Unable to load Properties source from " + source, e);
-        }
-        try {
-            populateProperties(result, config);
-        } catch (Throwable e) {                        
-            throw new RuntimeException("Unable to load Properties", e);            
         }
     }
     
@@ -160,19 +162,20 @@ public abstract class AbstractPollingScheduler {
                 log.debug("Polling started");
                 PollResult result = null;
                 try {
+                    fireEvent(EventType.POLL_BEGIN, null, null);
                     result = source.poll(false, getNextCheckPoint(checkPoint));
                     checkPoint = result.getCheckPoint();
+
+                    try {
+                        populateProperties(result, config);
+                    } catch (Exception e) {
+                        log.error("Error applying properties", e);
+                    }
                     fireEvent(EventType.POLL_SUCCESS, result, null);
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     log.error("Error getting result from polling source", e);
                     fireEvent(EventType.POLL_FAILURE, null, e);
-                    return;
                 }
-                try {
-                    populateProperties(result, config);
-                } catch (Throwable e) {
-                    log.error("Error occured applying properties", e);
-                }                 
             }
             
         };   
@@ -203,7 +206,7 @@ public abstract class AbstractPollingScheduler {
     }
     
     /**
-     * Add the PollLisetner 
+     * Add the PollListener
      * 
      * @param l
      */

@@ -29,7 +29,12 @@ package com.netflix.config;
 public class DynamicConfiguration extends ConcurrentMapConfiguration {
     private AbstractPollingScheduler scheduler;
     private PolledConfigurationSource source;
-        
+
+    /**
+     * Constant for the add property event type.
+     */
+    public static final int EVENT_RELOAD = 100;
+
     /**
      * Create an instance and start polling the configuration source.
      * 
@@ -57,7 +62,25 @@ public class DynamicConfiguration extends ConcurrentMapConfiguration {
         this.scheduler = scheduler;
         this.source = source;
         init(source, scheduler);
-        scheduler.startPolling(source, this);        
+
+        scheduler.addPollListener(new PollListener() {
+            @Override
+            public void handleEvent(EventType eventType, PollResult lastResult, Throwable exception) {
+                switch (eventType) {
+                    case POLL_SUCCESS:
+                        fireEvent(EVENT_RELOAD, null, null, false);
+                        break;
+                    case POLL_FAILURE:
+                        fireError(EVENT_RELOAD, null, null, exception);
+                        break;
+                    case POLL_BEGIN:
+                        fireEvent(EVENT_RELOAD, null, null, true);
+                        break;
+                }
+            }
+        });
+
+        scheduler.startPolling(source, this);
     }
     
     /**
