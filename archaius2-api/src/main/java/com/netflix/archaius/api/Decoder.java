@@ -27,7 +27,11 @@ public interface Decoder {
 	<T> T decode(Class<T> type, String encoded);
 
 	default <T> T decode(Type type, String value) {
-		return decode((Class<T>)type, value);
+		if (type instanceof Class) {
+			return decode((Class<T>)type, value);
+		} else {
+			throw new UnsupportedOperationException("This decoder " + getClass() + " does not support Type");
+		}
 	}
 
 }
