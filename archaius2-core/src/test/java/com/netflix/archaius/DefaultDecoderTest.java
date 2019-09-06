@@ -86,5 +86,4 @@ public class DefaultDecoderTest {
         Assert.assertEquals(BitSet.valueOf(DatatypeConverter.parseHexBinary("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
     }
-    
 }

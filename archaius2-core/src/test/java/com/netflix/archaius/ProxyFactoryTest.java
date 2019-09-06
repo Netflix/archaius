@@ -29,7 +29,7 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
 
 public class ProxyFactoryTest {
-    public static enum TestEnum {
+    public enum TestEnum {
         NONE,
         A, 
         B,
@@ -71,7 +71,10 @@ public class ProxyFactoryTest {
         
         @DefaultValue("default1:default2")
         SubConfigFromString getSubConfigFromString();
-        
+
+        @DefaultValue("")
+        Integer[] getIntArray();
+
         int getRequiredValue();
     }
     
@@ -113,7 +116,7 @@ public class ProxyFactoryTest {
         assertThat(c.getValueWithDefault(), equalTo("default"));
         assertThat(c.getValueWithoutDefault2(), equalTo("default2"));
         assertThat(c.getValueWithoutDefault1(), nullValue());
-        
+
         config.setProperty("valueWithDefault", "newValue");
         assertThat(c.getValueWithDefault(), equalTo("default"));
     }
@@ -134,7 +137,8 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
         assertThat(a.getNullable(),                     nullValue());
-        assertThat(a.getBaseBoolean(), nullValue());
+        assertThat(a.getBaseBoolean(),                  nullValue());
+        assertThat(a.getIntArray(),                     equalTo(new Integer[]{}));
     }
     
     @Test
@@ -153,7 +157,8 @@ public class ProxyFactoryTest {
         assertThat(a.getSubConfigFromString().part1(),  equalTo("default1"));
         assertThat(a.getSubConfigFromString().part2(),  equalTo("default2"));
         assertThat(a.getNullable(),                     nullValue());
-        assertThat(a.getBaseBoolean(), nullValue());
+        assertThat(a.getBaseBoolean(),                  nullValue());
+        assertThat(a.getIntArray(),                     equalTo(new Integer[]{}));
     }
     
     @Test
@@ -165,19 +170,21 @@ public class ProxyFactoryTest {
         config.setProperty("prefix.subConfigFromString", "a:b");
         config.setProperty("prefix.subConfig.str", "str2");
         config.setProperty("prefix.baseBoolean", true);
-        
+        config.setProperty("prefix.intArray", "0,1,2,3");
+
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         
         RootConfig a = proxy.newProxy(RootConfig.class, "prefix");
         
-        assertThat(a.getStr(),      equalTo("str1"));
-        assertThat(a.getInteger(),  equalTo(1));
-        assertThat(a.getEnum(),     equalTo(TestEnum.A));
-        assertThat(a.getSubConfig().str(),      equalTo("str2"));
-        assertThat(a.getSubConfigFromString().part1(), equalTo("a"));
-        assertThat(a.getSubConfigFromString().part2(), equalTo("b"));
-        assertThat(a.getBaseBoolean(), equalTo(true));
+        assertThat(a.getStr(),                          equalTo("str1"));
+        assertThat(a.getInteger(),                      equalTo(1));
+        assertThat(a.getEnum(),                         equalTo(TestEnum.A));
+        assertThat(a.getSubConfig().str(),              equalTo("str2"));
+        assertThat(a.getSubConfigFromString().part1(),  equalTo("a"));
+        assertThat(a.getSubConfigFromString().part2(),  equalTo("b"));
+        assertThat(a.getBaseBoolean(),                  equalTo(true));
+        assertThat(a.getIntArray(),                     equalTo(new Integer[]{0,1,2,3}));
 
         config.setProperty("prefix.subConfig.str", "str3");
         assertThat(a.getSubConfig().str(),      equalTo("str3"));
@@ -432,7 +439,6 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         FailingError c = proxy.newProxy(FailingError.class);
         c.getValue();
-        
     }
     
     @Test

@@ -25,6 +25,10 @@ public final class ArrayTypeConverterFactory implements TypeConverter.Factory {
 
     private static TypeConverter<?> create(TypeConverter elementConverter, Class type) {
         return value -> {
+            value = value.trim();
+            if (value.isEmpty()) {
+                return Array.newInstance(type, 0);
+            }
             String[] elements = value.split(",");
             Object[] ar = (Object[]) Array.newInstance(type, elements.length);
 
