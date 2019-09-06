@@ -15,11 +15,23 @@
  */
 package com.netflix.archaius.api;
 
+import java.lang.reflect.Type;
+
 /**
  * API for decoding properties to arbitrary types.
  *
  * @author spencergibb
  */
 public interface Decoder {
+	@Deprecated
 	<T> T decode(Class<T> type, String encoded);
+
+	default <T> T decode(Type type, String value) {
+		if (type instanceof Class) {
+			return decode((Class<T>)type, value);
+		} else {
+			throw new UnsupportedOperationException("This decoder " + getClass() + " does not support Type");
+		}
+	}
+
 }

@@ -43,7 +43,7 @@ import com.netflix.archaius.DefaultDecoder;
 public class DefaultDecoderTest {
     @Test
     public void testJavaNumbers() {
-        DefaultDecoder decoder = new DefaultDecoder();
+        DefaultDecoder decoder = DefaultDecoder.INSTANCE;
         
         boolean flag = decoder.decode(boolean.class, "true");
         Assert.assertEquals(true, flag);
@@ -64,7 +64,7 @@ public class DefaultDecoderTest {
     
     @Test
     public void testJavaDateTime() {
-        DefaultDecoder decoder = new DefaultDecoder();
+        DefaultDecoder decoder = DefaultDecoder.INSTANCE;
         
         Assert.assertEquals(Duration.parse("PT20M30S"), decoder.decode(Duration.class, "PT20M30S"));
         Assert.assertEquals(Period.of(1, 2, 25), decoder.decode(Period.class, "P1Y2M3W4D"));
@@ -81,10 +81,9 @@ public class DefaultDecoderTest {
     
     @Test
     public void testJavaMiscellaneous() {
-        DefaultDecoder decoder = new DefaultDecoder();
+        DefaultDecoder decoder = DefaultDecoder.INSTANCE;
         Assert.assertEquals(Currency.getInstance("USD"), decoder.decode(Currency.class, "USD"));
         Assert.assertEquals(BitSet.valueOf(DatatypeConverter.parseHexBinary("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
     }
-    
 }

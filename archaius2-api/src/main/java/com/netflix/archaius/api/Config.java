@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.api;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
@@ -25,7 +26,7 @@ import java.util.Optional;
  * Core API for reading a configuration.  The API is read only.
  */
 public interface Config extends PropertySource {
-    public interface Visitor<T> {
+    interface Visitor<T> {
         T visitKey(String key, Object value);
     }
     
@@ -115,7 +116,17 @@ public interface Config extends PropertySource {
      */
     <T> T get(Class<T> type, String key);
     <T> T get(Class<T> type, String key, T defaultValue);
-    
+
+    /**
+     * Get the property from the Decoder.  All basic data types as well any type
+     * will a valueOf or String contructor will be supported.
+     * @param type
+     * @param key
+     * @return
+     */
+    <T> T get(Type type, String key);
+    <T> T get(Type type, String key, T defaultValue);
+
     /**
      * @param key
      * @return True if the key is contained within this or any of it's child configurations

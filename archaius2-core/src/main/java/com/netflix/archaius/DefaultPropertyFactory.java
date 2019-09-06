@@ -1,5 +1,15 @@
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Property;
+import com.netflix.archaius.api.PropertyContainer;
+import com.netflix.archaius.api.PropertyFactory;
+import com.netflix.archaius.api.PropertyListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -12,16 +22,6 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.Property;
-import com.netflix.archaius.api.PropertyContainer;
-import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.PropertyListener;
 
 public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPropertyFactory.class);
@@ -57,7 +57,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
      * change in config.  
      */
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
-    
+
     public DefaultPropertyFactory(Config config) {
         this.config = config;
         this.config.addListener(this);
@@ -179,11 +179,16 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     public <T> Property<T> get(String key, Class<T> type) {
         return getFromSupplier(key, type, () -> config.get(type, key, null));
     }
-    
-    private <T> Property<T> getFromSupplier(String key, Class<T> type, Supplier<T> supplier) {
+
+    @Override
+    public <T> Property<T> get(String key, Type type) {
+        return getFromSupplier(key, type, () -> config.get(type, key, null));
+    }
+
+    private <T> Property<T> getFromSupplier(String key, Type type, Supplier<T> supplier) {
         return getFromSupplier(new KeyAndType<T>(key, type), supplier);
     }
-        
+
     @SuppressWarnings("unchecked")
     private <T> Property<T> getFromSupplier(KeyAndType<T> keyAndType, Supplier<T> supplier) {
         return (Property<T>) properties.computeIfAbsent(keyAndType, (ignore) -> new PropertyImpl<T>(keyAndType, supplier));
@@ -215,7 +220,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
                 }
                 
                 if (cache.compareAndSet(currentValue, newValue, cacheVersion, latestVersion)) {
-                    // Slight race condition here but not important enough to warrent locking
+                    // Possible race condition here but not important enough to warrant locking
                     return newValue;
                 }
             }
@@ -303,9 +308,9 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     
     private static final class KeyAndType<T> {
         private final String key;
-        private final Class<T> type;
+        private final Type type;
 
-        public KeyAndType(String key, Class<T> type) {
+        public KeyAndType(String key, Type type) {
             this.key = key;
             this.type = type;
         }

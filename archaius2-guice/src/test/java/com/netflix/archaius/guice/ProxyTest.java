@@ -107,9 +107,9 @@ public class ProxyTest {
     
     @Configuration(prefix="prefix-${env}", allowFields=true)
     @ConfigurationSource(value={"moduleTest"}, cascading=MyCascadingStrategy.class)
-    public static interface ModuleTestConfig {
-        public Boolean isLoaded();
-        public String getProp1();
+    public interface ModuleTestConfig {
+        Boolean isLoaded();
+        String getProp1();
     }
     
     @Test

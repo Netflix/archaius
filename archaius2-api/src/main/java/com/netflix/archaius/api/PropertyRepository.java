@@ -1,5 +1,7 @@
 package com.netflix.archaius.api;
 
+import java.lang.reflect.Type;
+
 public interface PropertyRepository {
     /**
      * Fetch a property of a specific type.  A {@link Property} object is returned regardless of
@@ -13,4 +15,6 @@ public interface PropertyRepository {
      * @return
      */
     <T> Property<T> get(String key, Class<T> type);
+
+    <T> Property<T> get(String key, Type type);
 }

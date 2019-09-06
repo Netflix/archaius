@@ -1,5 +1,6 @@
 package com.netflix.archaius.test;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -202,6 +203,16 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
+        return testCompositeConfig.get(type, key, defaultValue);
+    }
+
+    @Override
+    public <T> T get(Type type, String key) {
+        return testCompositeConfig.get(type, key);
+    }
+
+    @Override
+    public <T> T get(Type type, String key, T defaultValue) {
         return testCompositeConfig.get(type, key, defaultValue);
     }
 
