@@ -1,11 +1,11 @@
 package com.netflix.archaius.bridge;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.config.CompositeConfig;
@@ -129,12 +129,12 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
 
     @Override
     public Set<String> getConfigurationNames() {
-        return Sets.newHashSet(libraries.getConfigNames());
+        return new HashSet<>(libraries.getConfigNames());
     }
 
     @Override
     public List<String> getConfigurationNameList() {
-        return Lists.newArrayList(libraries.getConfigNames());
+        return new ArrayList<>(libraries.getConfigNames());
     }
 
     @Override
