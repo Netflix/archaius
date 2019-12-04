@@ -15,13 +15,16 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Sets;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -129,19 +132,27 @@ public class CompositeConfigTest {
         composite.addConfig("b", MapConfig.builder().put("b1", "A").put("b2",  "B").build());
         
         iter = composite.getKeys();
-        Assert.assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
+        Assert.assertEquals(set("b1", "b2"), set(iter));
         
         composite.addConfig("c", EmptyConfig.INSTANCE);
         
         iter = composite.getKeys();
-        Assert.assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
+        Assert.assertEquals(set("b1", "b2"), set(iter));
         
         composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
         composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
         
         iter = composite.getKeys();
-        Assert.assertEquals(Sets.newHashSet("b1", "b2", "d1", "d2", "e1", "e2"), Sets.newHashSet(iter));
-        
-        
+        Assert.assertEquals(set("b1", "b2", "d1", "d2", "e1", "e2"), set(iter));
+    }
+
+    private static Set<String> set(String ... values) {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(values)));
+    }
+
+    private static Set<String> set(Iterator<String> values) {
+        Set<String> vals = new LinkedHashSet<>();
+        values.forEachRemaining(e -> vals.add(e));
+        return Collections.unmodifiableSet(vals);
     }
 }
