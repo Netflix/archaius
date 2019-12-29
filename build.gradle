@@ -25,7 +25,6 @@ subprojects {
 
     tasks.withType(Test) { forkEvery = 1 }
     test {
-        jvmArgs += [ "-XX:MaxPermSize=512m" ] // for archaius-scala
         maxHeapSize = '2g' // or however much memory the tests need
         testLogging {
             events 'started', 'failed', 'passed', 'skipped'
@@ -40,9 +39,9 @@ project(':archaius-core') {
         compile 'commons-configuration:commons-configuration:1.8'
         compile 'org.slf4j:slf4j-api:1.6.4'
         compile 'com.google.guava:guava:16.0'
-        compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
-        compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
-        compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+        compile 'com.fasterxml.jackson.core:jackson-annotations:2.10.1'
+        compile 'com.fasterxml.jackson.core:jackson-core:2.10.1'
+        compile 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
         testCompile 'junit:junit:4.11'
         testCompile 'org.slf4j:slf4j-simple:1.7.5'
         testCompile 'org.apache.derby:derby:10.8.2.2'
