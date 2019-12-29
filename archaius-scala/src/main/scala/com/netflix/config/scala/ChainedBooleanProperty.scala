@@ -25,8 +25,11 @@ class ChainedBooleanProperty(
 extends ChainedProperty[Boolean]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean, callback: Option[() => Unit] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean, callback: Option[() => Unit]) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
+  }
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Boolean) = {
+    this(ChainMakers.fanPropertyName(prefix, name, suffix), default)
   }
 
   callback.foreach(addCallback)

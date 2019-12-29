@@ -17,10 +17,10 @@ package com.netflix.config.scala
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 @RunWith(classOf[JUnitRunner])
-class DynamicFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Float] {
+class DynamicFloatPropertyTest extends PropertiesTestHelp with Matchers with DynamicPropertyBehaviors[Float] {
 
   override def fixture(name: String) =
     DynamicFloatProperty(name, 1.0f)

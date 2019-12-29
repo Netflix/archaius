@@ -17,10 +17,10 @@ package com.netflix.config.scala
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 @RunWith(classOf[JUnitRunner])
-class DynamicStringListPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[List[String]] {
+class DynamicStringListPropertyTest extends PropertiesTestHelp with Matchers with DynamicPropertyBehaviors[List[String]] {
 
   override def fixture(name: String) =
     DynamicStringListProperty(name, List("a", "b", "c"), ",")

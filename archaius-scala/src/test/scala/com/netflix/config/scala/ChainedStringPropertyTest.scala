@@ -17,10 +17,10 @@ package com.netflix.config.scala
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedStringPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[String] {
+class ChainedStringPropertyTest extends PropertiesTestHelp with Matchers with ChainedPropertyBehaviors[String] {
 
   val defaultValue = "voo"
 

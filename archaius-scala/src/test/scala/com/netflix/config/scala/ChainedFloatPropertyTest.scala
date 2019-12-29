@@ -16,11 +16,11 @@
 package com.netflix.config.scala
 
 import org.junit.runner.RunWith
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
 
 @RunWith(classOf[JUnitRunner])
-class ChainedFloatPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Float] {
+class ChainedFloatPropertyTest extends PropertiesTestHelp with Matchers with ChainedPropertyBehaviors[Float] {
 
   val defaultValue = -1.1f
 

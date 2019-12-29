@@ -26,8 +26,11 @@ class ChainedLongProperty(
 extends ChainedProperty[Long]
 {
 
-  def this(prefix: Option[String], name: String, suffix: Option[String], default: Long, callback: Option[() => Unit] = None) = {
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Long, callback: Option[() => Unit]) = {
     this(ChainMakers.fanPropertyName(prefix, name, suffix), default, callback)
+  }
+  def this(prefix: Option[String], name: String, suffix: Option[String], default: Long) = {
+    this(ChainMakers.fanPropertyName(prefix, name, suffix), default)
   }
 
   callback.foreach(addCallback)

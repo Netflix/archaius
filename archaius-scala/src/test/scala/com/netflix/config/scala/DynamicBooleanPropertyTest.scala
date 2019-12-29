@@ -18,7 +18,7 @@ package com.netflix.config.scala
 import com.netflix.config.ConfigurationManager
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 /**
  * Date: 5/21/13
@@ -27,7 +27,7 @@ import org.scalatest.matchers.ShouldMatchers
  */
 
 @RunWith(classOf[JUnitRunner])
-class DynamicBooleanPropertyTest extends PropertiesTestHelp with ShouldMatchers with DynamicPropertyBehaviors[Boolean] {
+class DynamicBooleanPropertyTest extends PropertiesTestHelp with Matchers with DynamicPropertyBehaviors[Boolean] {
 
   override def fixture(name: String) =
     DynamicBooleanProperty(name, true)

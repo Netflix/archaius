@@ -17,11 +17,11 @@ package com.netflix.config.scala
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 @RunWith(classOf[JUnitRunner])
-class ChainedPropertyTest extends PropertiesTestHelp with ShouldMatchers with ChainedPropertyBehaviors[Duration] {
+class ChainedPropertyTest extends PropertiesTestHelp with Matchers with ChainedPropertyBehaviors[Duration] {
 
   val defaultUnmappedValue = -1L
   val defaultMappedValue = defaultUnmappedValue.millis

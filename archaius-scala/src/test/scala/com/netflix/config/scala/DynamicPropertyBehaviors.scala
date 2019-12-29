@@ -15,11 +15,11 @@
  */
 package com.netflix.config.scala
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.concurrent.{IntegrationPatience, Eventually}
 import org.scalatest.time.{Millis, Seconds, Span}
 
-trait DynamicPropertyBehaviors[TYPE] extends Eventually with IntegrationPatience { this: PropertiesTestHelp with ShouldMatchers =>
+trait DynamicPropertyBehaviors[TYPE] extends Eventually with IntegrationPatience { this: PropertiesTestHelp with Matchers =>
 
   override implicit val patienceConfig = PatienceConfig(
     timeout = scaled(Span(15, Seconds)),
