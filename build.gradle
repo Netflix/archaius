@@ -39,7 +39,7 @@ project(':archaius-core') {
     dependencies {
         compile 'commons-configuration:commons-configuration:1.8'
         compile 'org.slf4j:slf4j-api:1.6.4'
-        compile 'com.google.guava:guava:16.0'
+        compile 'com.google.guava:guava:25.1-jre'
         compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
         compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
@@ -91,11 +91,11 @@ project(':archaius-zookeeper') {
             exclude group: 'com.sun.jmx', module: 'jmxri'
             exclude group: 'javax.jms', module: 'jms'
         }
-        compile 'org.apache.curator:curator-client:2.3.0'
-        compile 'org.apache.curator:curator-recipes:2.3.0'
+        compile 'org.apache.curator:curator-client:4.0.1'
+        compile 'org.apache.curator:curator-recipes:4.0.1'
         testCompile 'junit:junit:4.11'
         testCompile 'org.slf4j:slf4j-simple:1.6.4'
-        testCompile 'org.apache.curator:curator-test:2.3.0'
+        testCompile 'org.apache.curator:curator-test:4.0.1'
     }
 }
 
@@ -105,7 +105,7 @@ project(':archaius-etcd') {
 
     dependencies {
         compile project(':archaius-core')
-        compile 'com.google.guava:guava:19.0'
+        compile 'com.google.guava:guava:25.1-jre'
         compile 'io.fastjson:etcd-client:0.33'
         testCompile 'junit:junit:4.11'
         testCompile 'org.mockito:mockito-all:1.9.5'
