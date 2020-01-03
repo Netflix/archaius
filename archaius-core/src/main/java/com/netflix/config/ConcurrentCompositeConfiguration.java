@@ -622,7 +622,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     @Override
     public boolean isEmpty()
     {
-        if (overrideProperties.isEmpty()) {
+        if (!overrideProperties.isEmpty()) {
             return false;
         }
         for (Configuration config : configList)
