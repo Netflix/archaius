@@ -140,14 +140,22 @@ public class EtcdConfigurationSourceTest {
      */
     @Test
     public void testUpdateEtcdProperty() throws Exception {
+        final String setProperty = "test.key6";
+        final String setKey = CONFIG_PATH + "/" + setProperty;
+        final String setValue = "test.value6-etcd-override-set";
+
         final String updateProperty = "test.key6";
         final String updateKey = CONFIG_PATH + "/" + updateProperty;
-        final String updateValue = "test.value6-etcd-override";
+        final String updateValue = "test.value6-etcd-override-update";
+
         final String initialValue = "test.value6-etcd";
 
-        assertEquals(initialValue, DynamicPropertyFactory.getInstance().getStringProperty(updateProperty, "default").get());
+        assertEquals(initialValue, DynamicPropertyFactory.getInstance().getStringProperty(setProperty, "default").get());
 
-        ETCD_UPDATE_HANDLER.handle(new Response("set", 200, new Node(updateKey, updateValue, 19444, 19444, 0, false, null)));
+        ETCD_UPDATE_HANDLER.handle(new Response("set", 200, new Node(setKey, setValue, 19444, 19444, 0, false, null)));
+        assertEquals(setValue, DynamicPropertyFactory.getInstance().getStringProperty(setProperty, "default").get());
+
+        ETCD_UPDATE_HANDLER.handle(new Response("update", 200, new Node(updateKey, updateValue, 19444, 19444, 0, false, null)));
         assertEquals(updateValue, DynamicPropertyFactory.getInstance().getStringProperty(updateProperty, "default").get());
     }
 
