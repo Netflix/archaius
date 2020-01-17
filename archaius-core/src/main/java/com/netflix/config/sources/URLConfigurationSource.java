@@ -18,6 +18,7 @@ package com.netflix.config.sources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -184,7 +185,10 @@ public class URLConfigurationSource implements PolledConfigurationSource {
         }
         Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
-            InputStream fin = url.openStream();
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            InputStream fin = conn.getInputStream();
             Properties props = ConfigurationUtils.loadPropertiesFromInputStream(fin);
             for (Entry<Object, Object> entry: props.entrySet()) {
                 map.put((String) entry.getKey(), entry.getValue());
