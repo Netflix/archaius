@@ -7,4 +7,5 @@ include 'archaius-scala'
 include 'archaius-zookeeper'
 include 'archaius-etcd'
 include 'archaius-typesafe'
+include 'archaius-k8s'
 
