@@ -38,13 +38,17 @@ public class DynamoDbMocks {
 
     public static final Collection<Map<String, AttributeValue>> basicResultValues1 = new LinkedList<Map<String, AttributeValue>>();
     public static final Collection<Map<String, AttributeValue>> basicResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static final Collection<Map<String, AttributeValue>> basicResultValues3 = new LinkedList<Map<String, AttributeValue>>();
     public static final ScanResult basicScanResult1;
     public static final ScanResult basicScanResult2;
+    public static final ScanResult basicScanResult3;
 
     public static final Collection<Map<String, AttributeValue>> contextResultValues1 = new LinkedList<Map<String, AttributeValue>>();
     public static final Collection<Map<String, AttributeValue>> contextResultValues2 = new LinkedList<Map<String, AttributeValue>>();
+    public static final Collection<Map<String, AttributeValue>> contextResultValues3 = new LinkedList<Map<String, AttributeValue>>();
     public static final ScanResult contextScanResult1;
     public static final ScanResult contextScanResult2;
+    public static final ScanResult contextScanResult3;
 
 
     static {
@@ -74,8 +78,17 @@ public class DynamoDbMocks {
         basicResultValues2.add(updatedBasicRow);
         basicResultValues2.add(basicRow3);
 
+
+        //Result3
+        Map<String, AttributeValue> basicRow4 = new HashMap<String, AttributeValue>();
+        basicRow4.put(defaultKeyAttribute, new AttributeValue().withS("meow"));
+        basicRow4.put(defaultValueAttribute, new AttributeValue().withS("grr"));
+        basicResultValues3.add(basicRow4);
+
+
         basicScanResult1 = new ScanResult().withItems(basicResultValues1).withLastEvaluatedKey(null);
         basicScanResult2 = new ScanResult().withItems(basicResultValues2).withLastEvaluatedKey(null);
+        basicScanResult3 = new ScanResult().withItems(basicResultValues3).withLastEvaluatedKey(null);
 
         //DeploymentContext results config
         Map<String, AttributeValue> contextRow1 = new HashMap<String, AttributeValue>();
@@ -121,8 +134,18 @@ public class DynamoDbMocks {
 
         contextResultValues2.add(basicRow1);
 
+
+        //Result3
+        Map<String, AttributeValue> contextRow5 = new HashMap<String, AttributeValue>();
+        contextRow5.put(defaultKeyAttribute, new AttributeValue().withS("meow"));
+        contextRow5.put(defaultValueAttribute, new AttributeValue().withS("grr"));
+        contextRow5.put(defaultContextKeyAttribute, new AttributeValue().withS("environment"));
+        contextRow5.put(defaultContextValueAttribute, new AttributeValue().withS("test"));
+        contextResultValues3.add(contextRow5);
+
         //Create results from initialized values
         contextScanResult1 = new ScanResult().withItems(contextResultValues1);
         contextScanResult2 = new ScanResult().withItems(contextResultValues2);
+        contextScanResult3 = new ScanResult().withItems(contextResultValues3);
     }
 }
