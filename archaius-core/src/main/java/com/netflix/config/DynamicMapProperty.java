@@ -80,7 +80,7 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
         for (String s : strings) {
             String kv[] = getKeyValue(s);
             if (kv.length == 2) {
-                map.put(getKey(kv[0]), getValue(kv[1]));
+                map.put(getKey(kv[0]), getValue(kv[1].replace("\\=", "=")));
             } else {
                 logger.warn("Ignoring illegal key value pair: " + s);
             }
@@ -89,7 +89,7 @@ public abstract class DynamicMapProperty<TKEY, TVAL> extends DynamicStringListPr
     }
     
     protected String[] getKeyValue(String keyValue) {
-        return keyValue.split("=");    
+        return keyValue.split("(?<!\\\\)=");
     }
     
     protected abstract TKEY getKey(String key);
