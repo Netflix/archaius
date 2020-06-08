@@ -1,8 +1,6 @@
 package com.netflix.config;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
@@ -48,5 +46,14 @@ public class DynamicMapPropertyTest {
         current = dp.getMap();
         
         Assert.assertEquals(Arrays.asList(1,2,3,4,5,6,7,8,9), Lists.newArrayList(current.keySet()));
+    }
+
+    @Test
+    public void testGetKeyValue() {
+
+        DynamicStringMapProperty dp = new DynamicStringMapProperty("testProperty", "");
+        List<String> list = Collections.singletonList("key=a\\=b");
+        Assert.assertEquals("a=b",dp.parseMapFromStringList(list).get("key"));
+
     }
 }
