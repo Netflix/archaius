@@ -2,7 +2,7 @@ Archaius
 =====
 [![NetflixOSS Lifecycle](https://img.shields.io/osslifecycle/Netflix/archaius.svg)]()
 
-[![Build Status](https://netflixoss.ci.cloudbees.com/buildStatus/icon?job=archaius-master)](https://netflixoss.ci.cloudbees.com/job/archaius-master/)
+[![Build Status](https://travis-ci.com/Netflix/archaius.svg)](https://travis-ci.com/Netflix/archaius)
 
 Features
 -------
