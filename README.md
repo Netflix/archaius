@@ -20,7 +20,7 @@ Archaius includes a set of configuration management APIs used by Netflix. It pro
 
 Documentation
 --------------
-Please see [wiki](https://github.com/Netflix/archaius/wiki) for detail documentation.
+Please see [wiki](https://github.com/Netflix/archaius/wiki) for detailed documentation.
 
 Origin
 ------
