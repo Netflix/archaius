@@ -585,7 +585,7 @@ public class DynamicProperty {
     }
 
     // return true iff the value actually changed
-    private static boolean updateProperty(String propName, Object value) {
+    public static boolean updateProperty(String propName, Object value) {
         DynamicProperty prop = ALL_PROPS.get(propName);
         if (prop != null && prop.updateValue(value)) {
             prop.notifyCallbacks();
@@ -595,7 +595,7 @@ public class DynamicProperty {
     }
 
     // return true iff _some_ value actually changed
-    private static boolean updateAllProperties() {
+    public static boolean updateAllProperties() {
         boolean changed = false;
         for (DynamicProperty prop : ALL_PROPS.values()) {
             if (prop.updateValue()) {
