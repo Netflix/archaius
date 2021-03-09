@@ -65,3 +65,6 @@ atlassian-ide-plugin.xml
 
 bin
 test-output
+
+# publishing secrets
+secrets/signing-key

@@ -1,14 +1,16 @@
 language: java
 jdk:
 - openjdk8
-install: ./installViaTravis.sh
-script: ./buildViaTravis.sh
+install: "./installViaTravis.sh"
+script: "./buildViaTravis.sh"
 env:
   global:
-  - secure: WvvNvknDnFrqQc9Dd/yDXvmE/C7nv++0UD+x5RwgyDOAVNqbKb9+hE458o7iO5GqcDn7t+xpqpCVmtl/I+ddAe3Mrju1LZ9wV+M3g3xMgKJRfn1Ny6g5JRIayoWp3BChFRIBRkA20CN7PeMyc2X81yBD8MY6gJWElUAg+JHWJhM=
-  - secure: LmNKk2cYzePjGZU8rkURiqvlUbJnL3zpQZZRIUzjGwx577H4VVr9CNNSm8zYnN+HOPn5HjQvaNovv3yi4ijbUaUaxPa5ZFho67HAhm6jzOMuk/oAFnELFacle02trkQYIlXAdG0Vj7RMBmfQ1WpIoxfAuGUcToSUFeqP2Skzspk=
-  - secure: s5ZJFQNozCsrFY2KTUuabi1HxsCniO5DbjV76/ham2UshONKzIqXkMlF/d6MPbiqdaHuT0Le6kwRMQiIauQes1b755sKcBBxDK1l1DX6P6aMxvKhtc7cO0f+xvGDpkP6hfLhKqpKT1XmeTW8DOaeCevQc62XgGWfSG/SfooEyNw=
-  - secure: pmAEB7RQmD9eseKrfV8veMHgfqZP2b10Rz0qBOEcl+g/1fV/Zhav4ePdww2XhDBKGx7vKb10luJjrodchsAoDTbAppMgHc4f8dMctQB4Bd0JLogY2O6NuU+4P/aG26zrKb18rUPlpuWMLDsAPTY/HkPQP00P1CGaqSgrYRO4Nx4=
+  - secure: S6ztt7KPWPiKiKyfFWyyvHCelxjtFownHzCH4PFM8LHLYPX78z5oCl7U5dl/fTthTt2Bd6QjDIttZcbypGw6/aGTx4spx5aIuK9kHf7NwbBTZq1UWik1f+IsvuO5gE+jf3u2DVCH+wvih0nG0LQcwiIdUlKBkdB+sXtiXhNjWew=
+  - secure: DTUaWoh1UkB6/4DucoSv6craD43NN7qNUZncT1DrIE0WQVWKrP8gGOBsFhO2HZNByN16CoMg3vjyfFwxMWGPr/YLDtMVvbdgjnP71qfUH8McOjo9cPk+g8qNCucWwLGDAzCWFxKdjss0vRN16183QtjvSSVAr/+Ji/rVSqpN8/4=
+  - secure: sQkX0R0FOfspunl7NMeiVE9vI7rqntHjZj3/SBZTPDZff4EL01q7sfSru6BusKsR/DqfZsN1k0/NgYBJ0746yqzok2kw/ghaVAyqM1WNbzpZFbEEtr+ehXp5P61NDSsv02+eRJHJrYmYSSWMivp6+YwO0ukFatSivNmIeZzE7Y0=
+  - secure: vlOojK3scTigU88nzk+xEU+7IJl934F0xa71clV5Tv2BCnR96V7y/SP0jEQ/RKCR6CTE/ngFt4sUazLVRbbflCntZNPlGuH6g2JgfBzLYgm86Zl+PjDH/umBx4EluaN0BoTYcagWkRp+EnXrBVQw/HScZLAzl1n9euW/rZUXVMQ=
+  - secure: N34hKuk+vxBUsC2KYcvKwsBYJkQQgXJGvQ4BQFybAg0BwMbYb7DPOWPvh49gfMWWK3TEnVE35mxPkbTjxOa/e5x6R4bLs8tMZ5ZU8SD2k0IISzL2fcWN8CmbhbWcYELk6YMg0ySF2rn10iA+AlkMR7EtunS+KGzZmS7U0nL+mHg=
+  - secure: cacmttTItFGBA2mQjR9uCmz9f/wTi3TaBs2m9nue3dn6C0oAHKonJcvMfXB6RvFLFfUo8jASJ/87uuwjuCnEFwiJo5U1lOQTwR0SIRqkLnLqDmQkBC7toLwMqVVAQkdESEXQCTiHEkAhe37ULqJ9sih/VWa9zbse+J+oM6oxkHo=
 cache:
   directories:
-  - $HOME/.gradle/caches
+  - "$HOME/.gradle/caches"
