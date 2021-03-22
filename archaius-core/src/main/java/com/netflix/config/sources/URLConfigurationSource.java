@@ -153,18 +153,31 @@ public class URLConfigurationSource implements PolledConfigurationSource {
     public List<URL> getConfigUrls() {
         return Collections.unmodifiableList(Arrays.asList(configUrls));
     }
-    
+
+    private static final String[] filterEmptyFileName(String [] arr) {
+        int len = arr.length;
+        ArrayList<String> filteredList = new ArrayList<String>(len);
+        for (int i = 0; i < len; i += 1) {
+            String s = arr[i];
+            if(!s.isEmpty()){
+                filteredList.add(s);
+            }
+        }
+        String[] ret = new String[filteredList.size()];
+        filteredList.toArray(ret);
+        return ret;
+    }
+
     private static final String[] getDefaultFileSources() {
         String name = System.getProperty(CONFIG_URL);
         String[] fileNames;
         if (name != null) {
-            fileNames = name.split(",");
+            fileNames = filterEmptyFileName(name.split(","));
         } else {
             fileNames = new String[0];
         }
         return fileNames;
     }
-    
     
     /**
      * Retrieve the content of the property files. For each poll, it always
