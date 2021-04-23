@@ -30,8 +30,8 @@ import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -49,7 +49,7 @@ import java.util.Set;
  */
 public class DefaultConfigLoader implements ConfigLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultConfigLoader.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(DefaultConfigLoader.class);
 
     private static final NoCascadeStrategy DEFAULT_CASCADE_STRATEGY = new NoCascadeStrategy();
     private static final Lookup DEFAULT_LOOKUP  = new Lookup() {

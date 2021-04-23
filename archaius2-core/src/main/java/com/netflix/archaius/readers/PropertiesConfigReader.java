@@ -24,8 +24,8 @@ import com.netflix.archaius.config.DefaultCompositeConfig;
 import com.netflix.archaius.config.DefaultCompositeConfig.Builder;
 import com.netflix.archaius.config.MapConfig;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ import java.util.Properties;
 import java.util.Set;
 
 public class PropertiesConfigReader implements ConfigReader {
-    private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(PropertiesConfigReader.class);
     
     private static final String[] INCLUDE_KEYS = { "@next", "netflixconfiguration.properties.nextLoad" };
     private static final String SUFFIX = ".properties";

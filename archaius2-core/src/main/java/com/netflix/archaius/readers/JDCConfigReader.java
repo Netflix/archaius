@@ -26,12 +26,12 @@ import java.util.concurrent.Callable;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 public class JDCConfigReader implements Callable<Map<String, Object>> {
 
-    private static Logger log = LoggerFactory.getLogger(JDCConfigReader.class);
+    private static ArchaiusLogger log = ArchaiusLoggerFactory.getLogger(JDCConfigReader.class);
 
     // The datasource to connect to the database.
     private DataSource datasource;

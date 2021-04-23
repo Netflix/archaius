@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -45,7 +45,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
 public class DefaultCompositeConfig extends AbstractConfig implements com.netflix.archaius.api.config.CompositeConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultCompositeConfig.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(DefaultCompositeConfig.class);
     
     /**
      * The builder provides a fluent style API to create a CompositeConfig

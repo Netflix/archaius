@@ -20,15 +20,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import com.netflix.archaius.api.config.PollingStrategy;
 import com.netflix.archaius.util.Futures;
 import com.netflix.archaius.util.ThreadFactories;
 
 public class FixedPollingStrategy implements PollingStrategy {
-    private static final Logger LOG = LoggerFactory.getLogger(FixedPollingStrategy.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(FixedPollingStrategy.class);
     private final ScheduledExecutorService executor;
     private final long interval;
     private final TimeUnit units;
