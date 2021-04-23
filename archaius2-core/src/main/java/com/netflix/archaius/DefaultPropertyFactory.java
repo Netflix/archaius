@@ -304,6 +304,11 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
                 }
             });
         }
+
+        @Override
+        public String toString() {
+            return "Property [Key=" + getKey() + "; value="+get() + "]";
+        }
     }
     
     private static final class KeyAndType<T> {
