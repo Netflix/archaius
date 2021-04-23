@@ -11,6 +11,21 @@ import org.mockito.Mockito;
 
 public class PrefixedViewTest {
     @Test
+    public void confirmNormalizedPrefixOperation() throws ConfigException {
+        com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
+                .withConfig("foo", MapConfig.builder().put("foo.bar", "value").build())
+                .build();
+        
+        // this prefix does not end with a '.'
+        Config prefixWithOutDotConfig = config.getPrefixedView("foo");
+        Assert.assertEquals("value", prefixWithOutDotConfig.getString("bar"));
+        
+        // this prefix does end with a '.'
+        Config prefixWithDotConfig = config.getPrefixedView("foo.");
+        Assert.assertEquals("value", prefixWithDotConfig.getString("bar"));
+    }
+	
+    @Test
     public void confirmNotifactionOnAnyChange() throws ConfigException {
         com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("foo", MapConfig.builder().put("foo.bar", "value").build())
