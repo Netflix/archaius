@@ -18,8 +18,8 @@ apply plugin: 'java'
 
 dependencies {
     compile  project(':archaius2-core')
-    compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.10.1'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
 
     testCompile project(':archaius2-guice')
 }
