@@ -66,8 +66,7 @@ directly for fine grained configuration sources, such as ZooKeeper, which suppor
 at the individual property granularity.
 
 ```java
-config.addConfig(new PollingDynamicConfg(
-            "REMOTE", 
+config.addConfig("REMOTE", new PollingDynamicConfg(
             new URLConfigReader("http://remoteconfigservice/snapshot"), 
             new FixedPollingStrategy(30, TimeUnit.SECONDS)) 
 ```
