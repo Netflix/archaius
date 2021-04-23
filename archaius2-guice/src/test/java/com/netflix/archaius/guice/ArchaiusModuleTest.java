@@ -15,15 +15,6 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.Properties;
-
-import javax.inject.Inject;
-
-import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.api.exceptions.ConfigException;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,6 +38,13 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Properties;
+
+import javax.inject.Inject;
 
 public class ArchaiusModuleTest {
     
@@ -357,5 +355,26 @@ public class ArchaiusModuleTest {
         Assert.assertEquals("b_value_no_override", config.getString("b"));
         Assert.assertEquals("a_value_override", config.getString("a"));
         Assert.assertEquals("c_value_override", config.getString("c"));
+    }
+    
+    @Test
+    public void testAnnotatedProvidesMethod() {
+        Injector injector = Guice.createInjector(new ArchaiusModule() {
+            @Override
+            protected void configureArchaius() {
+            }
+            
+            @Provides
+            @Singleton
+            @ConfigurationSource("moduleTest")
+            String getFoo() {
+                return "foo";
+            }
+        });
+        
+        String str = injector.getInstance(String.class);
+        Config config = injector.getInstance(Config.class);
+        Assert.assertEquals(config.getString("moduleTest.loaded"), "true");
+
     }
 }
