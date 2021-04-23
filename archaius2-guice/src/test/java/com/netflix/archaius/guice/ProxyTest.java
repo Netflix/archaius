@@ -36,13 +36,13 @@ public class ProxyTest {
         }
     }
     
-    public static interface MySubConfig {
+    public interface MySubConfig {
         @DefaultValue("0")
         int getInteger();
     }
     
     @Configuration(prefix="foo")
-    public static interface MyConfigWithPrefix {
+    public interface MyConfigWithPrefix {
         @DefaultValue("0")
         int getInteger();
         
@@ -130,7 +130,7 @@ public class ProxyTest {
         injector.getInstance(Config.class).accept(new PrintStreamVisitor());
     }
     
-    public static interface DefaultMethodWithAnnotation {
+    public interface DefaultMethodWithAnnotation {
         @DefaultValue("fromAnnotation")
         default String getValue() {
             return "fromDefault";
