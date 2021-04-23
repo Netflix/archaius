@@ -18,14 +18,17 @@ package com.netflix.archaius.guice;
 import java.util.Properties;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.readers.PropertiesConfigReader;
 
 /**
  * Guice Module for enabling archaius and making its components injectable.  Installing this
@@ -239,8 +242,33 @@ public class ArchaiusModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), String.class, ApplicationOverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
     }
 
+    /**
+     * Binding ConfigReaders has been removed from InternalArchaiusModule class which is locked for modification and it has been added to configure as overridable method.
+     * <br /><br />
+     * <b>For example to disable default PropertyConfigReader and add TypesafeConfigReader</b>
+     * <br />
+     * <code>
+     *     <pre>
+     * install(new ArchaiusModule() {
+     *    {@literal @}Override
+     *    protected void bindDefaultReaders() {}
+     *
+     *    {@literal @}Override
+     *    protected void configureArchaius() {
+     *          Multibinder.newSetBinder(this.binder(), ConfigReader.class).addBinding().to(TypesafeConfigReader.class).asEagerSingleton();
+     *    }
+     * });
+     * </pre>
+     * </code>
+     */
+    protected void bindDefaultReaders()  {
+        Multibinder.newSetBinder(binder(), ConfigReader.class)
+            .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
+    }
+
     @Override
     protected final void configure() {
+        bindDefaultReaders();
         install(new InternalArchaiusModule());
       
         configureArchaius();
