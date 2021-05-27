@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.junit.Assert;
@@ -178,5 +180,10 @@ public class MapConfigTest {
         Assert.assertEquals((long)123L, (long)config.getLong("value"));
     }
     
-
+    @Test
+    public void getListShouldWork() {
+        List<String> expected = Arrays.asList("foo", "bar");
+        Config config = MapConfig.builder().put("key", expected).build();
+        Assert.assertEquals(expected, config.getList("key", String.class));
+    }
 }

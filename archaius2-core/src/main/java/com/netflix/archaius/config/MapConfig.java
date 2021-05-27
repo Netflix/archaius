@@ -18,10 +18,12 @@ package com.netflix.archaius.config;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Config backed by an immutable map.
@@ -45,7 +47,7 @@ public class MapConfig extends AbstractConfig {
         String named;
         
         public <T> Builder put(String key, T value) {
-            map.put(key, value.toString());
+            map.put(key, valueToString(value));
             return this;
         }
         
@@ -55,7 +57,7 @@ public class MapConfig extends AbstractConfig {
         }
         
         public <T> Builder putAll(Properties props) {
-            props.forEach((k, v) -> map.put(k.toString(), v.toString()));
+            props.forEach((k, v) -> map.put(k.toString(), valueToString(v)));
             return this;
         }
         
@@ -91,7 +93,6 @@ public class MapConfig extends AbstractConfig {
     
     /**
      * Construct a MapConfig as a copy of the provided Map
-     * @param name
      * @param props
      */
     public MapConfig(Map<String, String> props) {
@@ -102,13 +103,12 @@ public class MapConfig extends AbstractConfig {
 
     /**
      * Construct a MapConfig as a copy of the provided properties
-     * @param name
      * @param props
      */
     public MapConfig(Properties props) {
         super(generateUniqueName("immutable-"));
         for (Entry<Object, Object> entry : props.entrySet()) {
-            this.props.put(entry.getKey().toString(), entry.getValue().toString());
+            this.props.put(entry.getKey().toString(), valueToString(entry.getValue()));
         }
         this.props = Collections.unmodifiableMap(this.props);
     }
@@ -136,5 +136,15 @@ public class MapConfig extends AbstractConfig {
     @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
         props.forEach(consumer);
+    }
+
+    /**
+     * Converts the value to a String, taking special care if it's a {@link List} to make sure we
+     * can read it out as a List later.
+     */
+    private static String valueToString(Object value) {
+        return value instanceof List
+                ? ((List<Object>) value).stream().map(Object::toString).collect(Collectors.joining(","))
+                : value.toString();
     }
 }
