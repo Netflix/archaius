@@ -127,24 +127,29 @@ public class DynamicPropertyUpdater {
              
                 if (newValue != null) {
                     Object newValueArray;
-                    if (oldValue instanceof CopyOnWriteArrayList && AbstractConfiguration.getDefaultListDelimiter() != '\0'){
-                        newValueArray = 
-                                        new CopyOnWriteArrayList();
-                        
-                      Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().trimResults().split((String)newValue);
-                      for(String s :stringiterator){
+                    if (oldValue instanceof CopyOnWriteArrayList && AbstractConfiguration.getDefaultListDelimiter() != '\0') {
+                        newValueArray =
+                                new CopyOnWriteArrayList();
+
+                        if (newValue != null && !(newValue instanceof String))
+                        {
+                            throw new ValidationException("Property " + name + " is expected to be a String, but "
+                                    + newValue.getClass().getName() + " was received");
+                        }
+                        Iterable<String> stringiterator = Splitter.on(AbstractConfiguration.getDefaultListDelimiter()).omitEmptyStrings().trimResults().split((String) newValue);
+                        for (String s : stringiterator) {
                             ((CopyOnWriteArrayList) newValueArray).add(s);
                         }
-                      } else {
-                          newValueArray = newValue;
-                      }
-                  
+                    } else {
+                        newValueArray = newValue;
+                    }
+
                     if (!newValueArray.equals(oldValue)) {
                         logger.debug("updating property key [{}], value [{}]", name, newValue);
     
                         config.setProperty(name, newValue);
                     }
-                   
+
                 } else if (oldValue != null) {
                     logger.debug("nulling out property key [{}]", name);
     
