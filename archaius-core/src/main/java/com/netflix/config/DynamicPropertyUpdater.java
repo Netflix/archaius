@@ -128,8 +128,7 @@ public class DynamicPropertyUpdater {
                 if (newValue != null) {
                     Object newValueArray;
                     if (oldValue instanceof CopyOnWriteArrayList && AbstractConfiguration.getDefaultListDelimiter() != '\0') {
-                        newValueArray =
-                                new CopyOnWriteArrayList();
+                        newValueArray = new CopyOnWriteArrayList();
 
                         if (newValue != null && !(newValue instanceof String))
                         {
