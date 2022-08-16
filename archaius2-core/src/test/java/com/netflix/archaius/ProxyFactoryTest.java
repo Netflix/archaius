@@ -217,7 +217,29 @@ public class ProxyFactoryTest {
         Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
         Assert.assertEquals("default", withArgs.getProperty("a", 2));
     }
-    
+
+    public interface WithArgumentsAndDefaultMethod {
+        @PropertyName(name="${0}.abc.${1}")
+        default String getProperty(String part0, int part1) {
+            return "default";
+        }
+    }
+
+    @Test
+    public void testWithArgumentsAndDefaultMethod() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("a.abc.1", "value1");
+        config.setProperty("b.abc.2", "value2");
+
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        WithArgumentsAndDefaultMethod withArgsAndDefM = proxy.newProxy(WithArgumentsAndDefaultMethod.class);
+
+        Assert.assertEquals("value1",  withArgsAndDefM.getProperty("a", 1));
+        Assert.assertEquals("value2",  withArgsAndDefM.getProperty("b", 2));
+        Assert.assertEquals("default", withArgsAndDefM.getProperty("a", 2));
+    }
+
     public interface ConfigWithMaps {
         @PropertyName(name="map")
         default Map<String, Long> getStringToLongMap() { return Collections.singletonMap("default", 0L); }
@@ -448,7 +470,21 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
-        Assert.assertEquals("WithArguments[${0}.abc.${1}='null']", withArgs.toString());
+        Assert.assertEquals("WithArguments[${0}.abc.${1}='default']", withArgs.toString());
+        Assert.assertNotNull(withArgs.hashCode());
+        Assert.assertTrue(withArgs.equals(withArgs));
+    }
+
+    @Test
+    public void testObjectMethods_ClassWithArgumentsAndDefaultMethod() {
+        SettableConfig config = new DefaultSettableConfig();
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        WithArgumentsAndDefaultMethod withArgs = proxy.newProxy(WithArgumentsAndDefaultMethod.class);
+
+        // Printing 'null' here is a compromise. The default method in the interface is being called with a bad signature.
+        // There's nothing the proxy could return here that isn't a lie, but at least this is a mostly harmless lie.
+        Assert.assertEquals("WithArgumentsAndDefaultMethod[${0}.abc.${1}='null']", withArgs.toString());
         Assert.assertNotNull(withArgs.hashCode());
         Assert.assertTrue(withArgs.equals(withArgs));
     }

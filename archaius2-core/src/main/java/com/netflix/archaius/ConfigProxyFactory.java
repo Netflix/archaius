@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -171,36 +171,14 @@ public class ConfigProxyFactory {
         T invoke(Object[] args);
     }
 
-    /**
-     * Abstract method invoker that encapsulates a property
-     * @param <T>
-     */
-    private static abstract class PropertyMethodInvoker<T> extends AbstractProperty<T> implements MethodInvoker<T> {
-        private final Supplier<T> next;
-
-        public PropertyMethodInvoker(String key, Supplier<T> next) {
-            super(key);
-            this.next = next;
-        }
-        
-        @Override
-        public T invoke(Object[] args) {
-            T result = get();
-            if (result == null) {
-                return next.get();
-            }
-            return result;
-        }
-    }
-
-    private static Map<Type, Supplier<?>> knownCollections = new HashMap<>();
+    private static Map<Type, Function<Object[], ?>> knownCollections = new HashMap<>();
 
     static {
-        knownCollections.put(Map.class, Collections::emptyMap);
-        knownCollections.put(Set.class, Collections::emptySet);
-        knownCollections.put(SortedSet.class, Collections::emptySortedSet);
-        knownCollections.put(List.class, Collections::emptyList);
-        knownCollections.put(LinkedList.class, LinkedList::new);
+        knownCollections.put(Map.class, (ignored) -> Collections.emptyMap());
+        knownCollections.put(Set.class, (ignored) -> Collections.emptySet());
+        knownCollections.put(SortedSet.class, (ignored) -> Collections.emptySortedSet());
+        knownCollections.put(List.class, (ignored) -> Collections.emptyList());
+        knownCollections.put(LinkedList.class, (ignored) -> new LinkedList());
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -266,7 +244,7 @@ public class ConfigProxyFactory {
                 
                 final Class<?> returnType = m.getReturnType();
                 
-                Supplier defaultSupplier = knownCollections.getOrDefault(returnType, () -> null);
+                Function defaultSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
                 
                 if (m.getAnnotation(DefaultValue.class) != null) {
                     if (m.isDefault()) {
@@ -324,11 +302,11 @@ public class ConfigProxyFactory {
         return proxyObject;
     }
 
-    private static <T> Supplier<T> memoize(T value) {
-        return () -> value;
+    private static <T> Function<Object[], T> memoize(T value) {
+        return (ignored) -> value;
     }
 
-    private static <T> Supplier<T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
+    private static <T> Function<Object[], T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
         final MethodHandle methodHandle;
 
         try {
@@ -345,7 +323,7 @@ public class ConfigProxyFactory {
                 methodHandle = MethodHandles.lookup()
                         .findSpecial(type,
                                 method.getName(),
-                                MethodType.methodType(method.getReturnType(), new Class[0]),
+                                MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
                                 type)
                         .bindTo(proxyObject);
             }
@@ -353,10 +331,20 @@ public class ConfigProxyFactory {
             throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
         }
 
-        return () -> {
+        return (args) -> {
             try {
-                //noinspection unchecked
-                return (T) methodHandle.invokeWithArguments();
+                if (methodHandle.type().parameterCount() == 0) {
+                    //noinspection unchecked
+                    return (T) methodHandle.invokeWithArguments();
+                } else if (args != null) {
+                    //noinspection unchecked
+                    return (T) methodHandle.invokeWithArguments(args);
+                } else {
+                    // This is a handle to a method WITH arguments, being called with none. This happens when toString()
+                    // is trying to build a representation of a proxy that has a parametrized property AND the interface
+                    // provides a default method for it. There's no good default to return here, so we'll just use null
+                    return null;
+                }
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -368,17 +356,26 @@ public class ConfigProxyFactory {
         return (args) -> proxy;
     }
 
-    protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Supplier<T> next) {
+    protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Function<Object[], T> next) {
         LOG.debug("Creating scalar property `{}` for type `{}`", propName, type.getClass());
         final Property<T> prop = propertyRepository.get(propName, type);
-        return args -> Optional.ofNullable(prop.get()).orElseGet(next);
+        return args -> Optional.ofNullable(prop.get()).orElseGet(() -> next.apply(null));
     }
     
-    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Supplier<T> next) {
+    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Function<Object[], T> next) {
         LOG.debug("Creating parameterized property `{}` for type `{}`", propName, returnType);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {
+                if (args == null) {
+                    // Why would args be null if this is a parametrized property? Because toString() abuses its
+                    // access to this internal representation :-/
+                    // We'll fall back to trying to call the provider for the default value. That works properly if
+                    // it comes from an annotation or the known collections. Our wrapper for default interface methods
+                    // catches this case and just returns a null, which is probably the least bad response.
+                    return next.apply(null);
+                }
+
                 // Determine the actual property name by replacing with arguments using the argument index
                 // to the method.  For example,
                 //      @PropertyName(name="foo.${1}.${0}")
@@ -392,7 +389,7 @@ public class ConfigProxyFactory {
                 String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
                 T result = getPropertyWithDefault(returnType, propName);
                 if (result == null) {
-                    result = next.get();
+                    result = next.apply(args);
                 }
                 return result;
             }
