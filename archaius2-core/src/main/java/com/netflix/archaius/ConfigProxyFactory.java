@@ -171,14 +171,14 @@ public class ConfigProxyFactory {
         T invoke(Object[] args);
     }
 
-    private static Map<Type, Function<Object[], ?>> knownCollections = new HashMap<>();
+    private static final Map<Type, Function<Object[], ?>> knownCollections = new HashMap<>();
 
     static {
         knownCollections.put(Map.class, (ignored) -> Collections.emptyMap());
         knownCollections.put(Set.class, (ignored) -> Collections.emptySet());
         knownCollections.put(SortedSet.class, (ignored) -> Collections.emptySortedSet());
         knownCollections.put(List.class, (ignored) -> Collections.emptyList());
-        knownCollections.put(LinkedList.class, (ignored) -> new LinkedList());
+        knownCollections.put(LinkedList.class, (ignored) -> new LinkedList<>());
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -359,9 +359,12 @@ public class ConfigProxyFactory {
     protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Function<Object[], T> next) {
         LOG.debug("Creating scalar property `{}` for type `{}`", propName, type.getClass());
         final Property<T> prop = propertyRepository.get(propName, type);
-        return args -> Optional.ofNullable(prop.get()).orElseGet(() -> next.apply(null));
+        return args -> {
+            T value = prop.get();
+            return value != null ? value : next.apply(null);
+        };
     }
-    
+
     protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Function<Object[], T> next) {
         LOG.debug("Creating parameterized property `{}` for type `{}`", propName, returnType);
         return new MethodInvoker<T>() {
