@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile project(':archaius2-core')
-    compile 'com.typesafe:config:1.3.3'
-    testCompile project(':archaius2-test')
+    api project(':archaius2-core')
+    api 'com.typesafe:config:1.3.3'
+    testImplementation project(':archaius2-test')
 }
 
 eclipse {

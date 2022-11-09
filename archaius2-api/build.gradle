@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile     'javax.inject:javax.inject:1'
+    api     'javax.inject:javax.inject:1'
 }
 
 eclipse {

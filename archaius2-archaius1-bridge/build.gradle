@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile  project(':archaius2-core')
+    api  project(':archaius2-core')
     compileOnly  project(':archaius2-guice')
-    compile  project(':archaius2-commons-configuration')
-    compile  'com.netflix.archaius:archaius-core:0.7.5'
+    api  project(':archaius2-commons-configuration')
+    api  'com.netflix.archaius:archaius-core:0.7.5'
 	
-    testCompile project(':archaius2-guice')
+    testImplementation project(':archaius2-guice')
 }
 
 eclipse {

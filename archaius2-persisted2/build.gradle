@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile  project(':archaius2-core')
-    compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+    api  project(':archaius2-core')
+    api 'com.fasterxml.jackson.core:jackson-core:2.4.3'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
 
-    testCompile project(':archaius2-guice')
+    testImplementation project(':archaius2-guice')
 }
 
 eclipse {
