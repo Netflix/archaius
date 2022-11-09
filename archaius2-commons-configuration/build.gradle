@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile  project(':archaius2-core')
-    compile  'commons-configuration:commons-configuration:1.8'
+    api  project(':archaius2-core')
+    api  'commons-configuration:commons-configuration:1.8'
 }
 
 eclipse {

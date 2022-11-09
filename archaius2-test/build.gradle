@@ -1,9 +1,9 @@
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile  project(':archaius2-core')
-    compile  'junit:junit:4.11'
+    api  project(':archaius2-core')
+    api  'junit:junit:4.11'
 }
 
 eclipse {

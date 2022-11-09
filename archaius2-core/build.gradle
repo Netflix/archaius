@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-    compile     project(':archaius2-api')
-    compile     'org.slf4j:slf4j-api:1.7.2'
-    compile     'org.apache.commons:commons-lang3:3.3.2'
-    testCompile 'com.google.code.findbugs:jsr305:3.0.1'
+    api     project(':archaius2-api')
+    api     'org.slf4j:slf4j-api:1.7.2'
+    api     'org.apache.commons:commons-lang3:3.3.2'
+    testImplementation 'com.google.code.findbugs:jsr305:3.0.1'
 }
 
 eclipse {
