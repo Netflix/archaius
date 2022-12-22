@@ -145,13 +145,25 @@ public interface Config extends PropertySource {
     
     /**
      * @param prefix
-     * @return Return a subset of the configuration prefixed by a key.
+     * @return Return a subset of the configuration prefixed by a key. A prefixed view is NOT independent of its parent
+     * config. In particular, setting the decoder or the string interpolator is not supported and causes unspecified
+     * behavior.
+     * @see #getPrivateView()
      */
     Config getPrefixedView(String prefix);
-    
+
+    /**
+     * @return A "private view" of this config. The returned object can have its own {@link Decoder},
+     * {@link StrInterpolator}, and {@link ConfigListener}s that will NOT be shared with the original config. Updates to
+     * the underlying config's entries WILL be visible and will generate events on any registered listener.
+     */
+    Config getPrivateView();
+
     /**
      * Set the interpolator to be used.  The interpolator is normally created from the top level
-     * configuration object and is passed down to any children as they are added.
+     * configuration object and is passed down to any children as they are added. Setting the interpolator on a child
+     * config is not supported and causes unspecified behavior.
+     * @see #getPrivateView()
      * @param interpolator
      */
     void setStrInterpolator(StrInterpolator interpolator);
@@ -159,7 +171,10 @@ public interface Config extends PropertySource {
     StrInterpolator getStrInterpolator();
     
     /**
-     * Set the Decoder used by get() to parse any type
+     * Set the Decoder used by get() to parse any type. The decoder is normally created from the top level
+     * configuration object and is passed down to children as they are added. Setting the decoder on a child
+     * config is not supported and causes unspecified behavior.
+     * @see #getPrivateView()
      * @param decoder
      */
     void setDecoder(Decoder decoder);
