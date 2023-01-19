@@ -233,6 +233,11 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
+    public Config getPrivateView() {
+        return new PrivateViewConfig(this);
+    }
+
+    @Override
     public <T> T accept(Visitor<T> visitor) {
         T result = null;
         forEachProperty((k, v) -> visitor.visitKey(k, v));

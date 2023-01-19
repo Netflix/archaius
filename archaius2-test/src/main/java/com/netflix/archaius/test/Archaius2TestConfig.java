@@ -242,6 +242,11 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     }
 
     @Override
+    public Config getPrivateView() {
+        return testCompositeConfig.getPrivateView();
+    }
+
+    @Override
     public void setStrInterpolator(StrInterpolator interpolator) {
         testCompositeConfig.setStrInterpolator(interpolator);
     }
