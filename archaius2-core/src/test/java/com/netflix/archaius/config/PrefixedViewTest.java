@@ -5,6 +5,9 @@ import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -56,5 +59,16 @@ public class PrefixedViewTest {
         config.addConfig("new", MapConfig.builder().put("foo.bar", "new2").build());
         Mockito.verify(listener, Mockito.times(1)).onConfigAdded(Mockito.any());
         Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());
+    }
+
+    @Test
+    public void unusedPrefixedViewIsGarbageCollected() {
+        Config prefix = new DefaultSettableConfig().getPrefixedView("foo.");
+        Reference<Config> weakReference = new WeakReference<>(prefix);
+
+        // No more pointers to prefix means this should be garbage collected and any additional listeners on it
+        prefix = null;
+        System.gc();
+        Assert.assertNull(weakReference.get());
     }
 }

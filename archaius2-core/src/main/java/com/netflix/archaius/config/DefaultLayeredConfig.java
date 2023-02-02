@@ -33,6 +33,39 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
     
     private final ConfigListener listener;
     private volatile ImmutableCompositeState state = new ImmutableCompositeState(Collections.emptyList());
+
+    /**
+     * Listener to be added to any component configs which updates the config map and triggers updates on all listeners
+     * when any of the components are updated.
+     */
+    private static class LayeredConfigListener extends DependentConfigListener<DefaultLayeredConfig> {
+        private LayeredConfigListener(DefaultLayeredConfig config) {
+            super(config);
+        }
+
+        @Override
+        public void onSourceConfigAdded(DefaultLayeredConfig dlc, Config config) {
+            dlc.refreshState();
+            dlc.notifyConfigUpdated(dlc);
+        }
+
+        @Override
+        public void onSourceConfigRemoved(DefaultLayeredConfig dlc, Config config) {
+            dlc.refreshState();
+            dlc.notifyConfigUpdated(dlc);
+        }
+
+        @Override
+        public void onSourceConfigUpdated(DefaultLayeredConfig dlc, Config config) {
+            dlc.refreshState();
+            dlc.notifyConfigUpdated(dlc);
+        }
+
+        @Override
+        public void onSourceError(Throwable error, DefaultLayeredConfig dlc, Config config) {
+            dlc.notifyError(error, dlc);
+        }
+    }
     
     public DefaultLayeredConfig() {
         this(generateUniqueName("layered-"));
@@ -40,30 +73,7 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
     
     public DefaultLayeredConfig(String name) {
         super(name);
-        listener = new ConfigListener() {
-            @Override
-            public void onConfigAdded(Config config) {
-                refreshState();
-                notifyConfigUpdated(DefaultLayeredConfig.this);
-            }
-
-            @Override
-            public void onConfigRemoved(Config config) {
-                refreshState();
-                notifyConfigUpdated(DefaultLayeredConfig.this);
-            }
-
-            @Override
-            public void onConfigUpdated(Config config) {
-                refreshState();
-                notifyConfigUpdated(DefaultLayeredConfig.this);
-            }
-
-            @Override
-            public void onError(Throwable error, Config config) {
-                notifyError(error, DefaultLayeredConfig.this);
-            }
-        };
+        this.listener = new LayeredConfigListener(this);
     }
     
     private void refreshState() {

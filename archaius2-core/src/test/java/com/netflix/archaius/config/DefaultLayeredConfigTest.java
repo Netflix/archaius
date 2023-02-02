@@ -1,13 +1,18 @@
 package com.netflix.archaius.config;
 
 import com.netflix.archaius.Layers;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.config.LayeredConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 
+import com.netflix.archaius.api.exceptions.ConfigException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 public class DefaultLayeredConfigTest {
     @Test
@@ -127,5 +132,17 @@ public class DefaultLayeredConfigTest {
         
         config.removeConfig(Layers.RUNTIME, runtimeConfig.getName());
         Assert.assertEquals(appConfig.getName(), config.getRawProperty("propname"));
+    }
+
+    @Test
+    public void unusedLayeredConfigIsGarbageCollected() {
+        LayeredConfig config = new DefaultLayeredConfig();
+        config.addConfig(Layers.LIBRARY, new DefaultSettableConfig());
+        Reference<Config> weakReference = new WeakReference<>(config);
+
+        // No more pointers to prefix means this should be garbage collected and any additional listeners on it
+        config = null;
+        System.gc();
+        Assert.assertNull(weakReference.get());
     }
 }
