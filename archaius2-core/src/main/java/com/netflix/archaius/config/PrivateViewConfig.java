@@ -50,19 +50,19 @@ public class PrivateViewConfig extends AbstractConfig {
 
         @Override
         public void onSourceConfigAdded(PrivateViewConfig pvc, Config config) {
-            pvc.state = new State(config);
+            pvc.updateState(config);
             pvc.notifyConfigAdded(pvc);
         }
 
         @Override
         public void onSourceConfigRemoved(PrivateViewConfig pvc, Config config) {
-            pvc.state = new State(config);
+            pvc.updateState(config);
             pvc.notifyConfigRemoved(pvc);
         }
 
         @Override
         public void onSourceConfigUpdated(PrivateViewConfig pvc, Config config) {
-            pvc.state = new State(config);
+            pvc.updateState(config);
             pvc.notifyConfigUpdated(pvc);
         }
 
@@ -72,6 +72,10 @@ public class PrivateViewConfig extends AbstractConfig {
     }
 
     private volatile State state;
+
+    private void updateState(Config config) {
+        this.state = new State(config);
+    }
 
     public PrivateViewConfig(final Config wrappedConfig) {
         this.state = new State(wrappedConfig);

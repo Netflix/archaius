@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * ConfigListener for the dependent/wrapper config paradigm. Most notably makes the reference to the dependent config
  * a weak reference and removes this listener from the source config so that any abandoned dependent configs can be
- * properly garbage collected
+ * properly garbage collected.
  *
  * @param <T> The type of the dependent config
  */

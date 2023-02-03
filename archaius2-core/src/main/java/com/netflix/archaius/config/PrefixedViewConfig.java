@@ -46,8 +46,8 @@ public class PrefixedViewConfig extends AbstractConfig {
         public State(Config config, String prefix) {
             data = new LinkedHashMap<String, Object>();
             config.forEachProperty((k, v) -> {
-                if (k.startsWith(prefix)) {
-                    data.put(k.substring(prefix.length()), v);
+                    if (k.startsWith(prefix)) {
+                        data.put(k.substring(prefix.length()), v);
                 }
             });
         }
@@ -58,6 +58,7 @@ public class PrefixedViewConfig extends AbstractConfig {
         private PrefixedViewConfigListener(PrefixedViewConfig pvc) {
             super(pvc);
         }
+
         @Override
         public void onSourceConfigAdded(PrefixedViewConfig pvc, Config config) {
             pvc.updateState(config);

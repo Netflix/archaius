@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
-
 import java.util.Set;
 
 import com.netflix.archaius.api.Config;
@@ -33,7 +32,6 @@ import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
-import org.mockito.Mockito;
 
 public class CompositeConfigTest {
     @Test

@@ -6,7 +6,6 @@ import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.config.LayeredConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 
-import com.netflix.archaius.api.exceptions.ConfigException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
