@@ -47,7 +47,7 @@ public class PrefixedViewConfig extends AbstractConfig {
             data = new LinkedHashMap<String, Object>();
             config.forEachProperty((k, v) -> {
                     if (k.startsWith(prefix)) {
-                        data.put(k.substring(prefix.length()), v);
+                        data.put(k.substring(prefix.length() + 1), v);
                 }
             });
         }
@@ -81,7 +81,10 @@ public class PrefixedViewConfig extends AbstractConfig {
     
     public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
-        this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
+        // TODO: Change this line back to prefix.endsWith(".") ? prefix : prefix + "."
+        //       As is, an input of "foo." would require configs of form "foo..bar" which is odd.
+        //       In case anyone is relying on this behavior, we will fix this separately.
+        this.prefix = prefix;
         this.nonPrefixedLookup = ConfigStrLookup.from(config);
         this.state = new State(config, this.prefix);
         this.config.addListener(new PrefixedViewConfigListener(this));
