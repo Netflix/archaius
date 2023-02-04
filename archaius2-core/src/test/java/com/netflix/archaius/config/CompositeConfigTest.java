@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.SettableConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -151,8 +152,9 @@ public class CompositeConfigTest {
 
     @Test
     public void unusedCompositeConfigIsGarbageCollected() throws ConfigException {
+        SettableConfig sourceConfig = new DefaultSettableConfig();
         com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
-                .withConfig("settable", new DefaultSettableConfig())
+                .withConfig("settable", sourceConfig)
                 .build();
         Reference<Config> weakReference = new WeakReference<>(config);
 

@@ -63,7 +63,8 @@ public class PrefixedViewTest {
 
     @Test
     public void unusedPrefixedViewIsGarbageCollected() {
-        Config prefix = new DefaultSettableConfig().getPrefixedView("foo.");
+        SettableConfig sourceConfig = new DefaultSettableConfig();
+        Config prefix = sourceConfig.getPrefixedView("foo.");
         Reference<Config> weakReference = new WeakReference<>(prefix);
 
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it

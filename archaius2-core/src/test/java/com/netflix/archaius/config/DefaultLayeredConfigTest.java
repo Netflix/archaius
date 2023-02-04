@@ -135,8 +135,9 @@ public class DefaultLayeredConfigTest {
 
     @Test
     public void unusedLayeredConfigIsGarbageCollected() {
+        SettableConfig sourceConfig = new DefaultSettableConfig();
         LayeredConfig config = new DefaultLayeredConfig();
-        config.addConfig(Layers.LIBRARY, new DefaultSettableConfig());
+        config.addConfig(Layers.LIBRARY, sourceConfig);
         Reference<Config> weakReference = new WeakReference<>(config);
 
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it

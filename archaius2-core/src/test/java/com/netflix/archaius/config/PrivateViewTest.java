@@ -87,7 +87,8 @@ public class PrivateViewTest {
     }
     @Test
     public void unusedPrivateViewIsGarbageCollected() {
-        Config privateView = new DefaultSettableConfig().getPrivateView();
+        SettableConfig sourceConfig = new DefaultSettableConfig();
+        Config privateView = sourceConfig.getPrivateView();
         Reference<Config> weakReference = new WeakReference<>(privateView);
 
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it

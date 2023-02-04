@@ -14,7 +14,7 @@ import java.util.Optional;
  *
  * @param <T> The type of the dependent config
  */
-public abstract class DependentConfigListener<T extends AbstractConfig> implements ConfigListener {
+abstract class DependentConfigListener<T extends AbstractConfig> implements ConfigListener {
     private final Reference<T> dependentConfigRef;
 
     DependentConfigListener(T dependentConfig) {
@@ -23,22 +23,22 @@ public abstract class DependentConfigListener<T extends AbstractConfig> implemen
 
     @Override
     public void onConfigAdded(Config config) {
-        updateState(config).ifPresent(vc -> onSourceConfigAdded(vc, config));
+        updateState(config).ifPresent(depConfig -> onSourceConfigAdded(depConfig, config));
     }
 
     @Override
     public void onConfigRemoved(Config config) {
-        updateState(config).ifPresent(vc -> onSourceConfigRemoved(vc, config));
+        updateState(config).ifPresent(depConfig -> onSourceConfigRemoved(depConfig, config));
     }
 
     @Override
     public void onConfigUpdated(Config config) {
-        updateState(config).ifPresent(vc -> onSourceConfigUpdated(vc, config));
+        updateState(config).ifPresent(depConfig -> onSourceConfigUpdated(depConfig, config));
     }
 
     @Override
     public void onError(Throwable error, Config config) {
-        updateState(config).ifPresent(vc -> onSourceError(error, vc, config));
+        updateState(config).ifPresent(depConfig -> onSourceError(error, depConfig, config));
     }
 
     public abstract void onSourceConfigAdded(T dependentConfig, Config sourceConfig);
