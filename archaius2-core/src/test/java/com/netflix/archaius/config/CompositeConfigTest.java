@@ -15,13 +15,17 @@
  */
 package com.netflix.archaius.config;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
-
 import java.util.Set;
+
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.config.SettableConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -144,6 +148,20 @@ public class CompositeConfigTest {
         
         iter = composite.getKeys();
         Assert.assertEquals(set("b1", "b2", "d1", "d2", "e1", "e2"), set(iter));
+    }
+
+    @Test
+    public void unusedCompositeConfigIsGarbageCollected() throws ConfigException {
+        SettableConfig sourceConfig = new DefaultSettableConfig();
+        com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
+                .withConfig("settable", sourceConfig)
+                .build();
+        Reference<Config> weakReference = new WeakReference<>(config);
+
+        // No more pointers to prefix means this should be garbage collected and any additional listeners on it
+        config = null;
+        System.gc();
+        Assert.assertNull(weakReference.get());
     }
 
     private static Set<String> set(String ... values) {

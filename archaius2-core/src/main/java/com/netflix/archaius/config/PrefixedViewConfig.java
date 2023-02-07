@@ -30,7 +30,7 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
 
 /**
  * View into another Config for properties starting with a specified prefix.
- * 
+ *
  * This class is meant to work with dynamic Config object that may have properties
  * added and removed.
  */
@@ -52,33 +52,46 @@ public class PrefixedViewConfig extends AbstractConfig {
             });
         }
     }
+
+    /** Listener to update the state of the PrefixedViewConfig on any changes in the source config. */
+    private static class PrefixedViewConfigListener extends DependentConfigListener<PrefixedViewConfig> {
+        private PrefixedViewConfigListener(PrefixedViewConfig pvc) {
+            super(pvc);
+        }
+
+        @Override
+        public void onSourceConfigAdded(PrefixedViewConfig pvc, Config config) {
+            pvc.updateState(config);
+        }
+
+        @Override
+        public void onSourceConfigRemoved(PrefixedViewConfig pvc, Config config) {
+            pvc.updateState(config);
+        }
+
+        @Override
+        public void onSourceConfigUpdated(PrefixedViewConfig pvc, Config config) {
+            pvc.updateState(config);
+        }
+
+        @Override
+        public void onSourceError(Throwable error, PrefixedViewConfig pvc, Config config) {
+        }
+    }
     
     public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
-        this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
+        // TODO: Change this line back to prefix.endsWith(".") ? prefix : prefix + "."
+        //       As is, an input of "foo." would require configs of form "foo..bar" which is odd.
+        //       In case anyone is relying on this behavior, we will fix this separately.
+        this.prefix = prefix;
         this.nonPrefixedLookup = ConfigStrLookup.from(config);
+        this.state = new State(config, this.prefix);
+        this.config.addListener(new PrefixedViewConfigListener(this));
+    }
+
+    private void updateState(Config config) {
         this.state = new State(config, prefix);
-        
-        this.config.addListener(new ConfigListener() {
-            @Override
-            public void onConfigAdded(Config config) {
-                state = new State(config, prefix);
-            }
-
-            @Override
-            public void onConfigRemoved(Config config) {
-                state = new State(config, prefix);
-            }
-
-            @Override
-            public void onConfigUpdated(Config config) {
-                state = new State(config, prefix);
-            }
-
-            @Override
-            public void onError(Throwable error, Config config) {
-            }
-        });
     }
 
     @Override

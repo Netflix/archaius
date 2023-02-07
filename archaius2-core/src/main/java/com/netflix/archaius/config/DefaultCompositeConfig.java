@@ -119,6 +119,39 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
             return getConfig(name) != null;
         }
     }
+
+    /**
+     * Listener to be added to any component configs which updates the config map and triggers updates on all listeners
+     * when any of the components are updated.
+     */
+    private static class CompositeConfigListener extends DependentConfigListener<DefaultCompositeConfig> {
+        private CompositeConfigListener(DefaultCompositeConfig config) {
+            super(config);
+        }
+
+        @Override
+        public void onSourceConfigAdded(DefaultCompositeConfig dcc, Config config) {
+            dcc.refreshState();
+            dcc.notifyConfigAdded(dcc);
+        }
+
+        @Override
+        public void onSourceConfigRemoved(DefaultCompositeConfig dcc, Config config) {
+            dcc.refreshState();
+            dcc.notifyConfigRemoved(dcc);
+        }
+
+        @Override
+        public void onSourceConfigUpdated(DefaultCompositeConfig dcc, Config config) {
+            dcc.refreshState();
+            dcc.notifyConfigUpdated(dcc);
+        }
+
+        @Override
+        public void onSourceError(Throwable error, DefaultCompositeConfig dcc, Config config) {
+            dcc.notifyError(error, dcc);
+        }
+    }
     
     private final ConfigListener listener;
     private final boolean reversed;
@@ -130,30 +163,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     
     public DefaultCompositeConfig(boolean reversed) {
         this.reversed = reversed;
-        listener = new ConfigListener() {
-            @Override
-            public void onConfigAdded(Config config) {
-                refreshState();
-                notifyConfigAdded(DefaultCompositeConfig.this);
-            }
-
-            @Override
-            public void onConfigRemoved(Config config) {
-                refreshState();
-                notifyConfigRemoved(DefaultCompositeConfig.this);
-            }
-
-            @Override
-            public void onConfigUpdated(Config config) {
-                refreshState();
-                notifyConfigUpdated(DefaultCompositeConfig.this);
-            }
-
-            @Override
-            public void onError(Throwable error, Config config) {
-                notifyError(error, DefaultCompositeConfig.this);
-            }
-        };
+        this.listener = new CompositeConfigListener(this);
         
         this.state = new State(Collections.emptyMap(), 0);
     }

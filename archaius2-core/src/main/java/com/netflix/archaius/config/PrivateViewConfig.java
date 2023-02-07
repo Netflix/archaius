@@ -15,13 +15,10 @@
  */
 package com.netflix.archaius.config;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -46,52 +43,39 @@ public class PrivateViewConfig extends AbstractConfig {
     }
 
     /** Listener to update our own state on upstream changes and then propagate the even to our own listeners. */
-    private static class ViewConfigListener implements ConfigListener {
-        private final Reference<PrivateViewConfig> vcRef;
-
-        private ViewConfigListener(PrivateViewConfig pvc) {
-            this.vcRef = new WeakReference<>(pvc);
+    private static class ViewConfigListener extends DependentConfigListener<PrivateViewConfig> {
+        private ViewConfigListener(PrivateViewConfig dependentConfig) {
+            super(dependentConfig);
         }
 
         @Override
-        public void onConfigAdded(Config config) {
-            updateState(config).ifPresent(vc -> vc.notifyConfigAdded(vc));
+        public void onSourceConfigAdded(PrivateViewConfig pvc, Config config) {
+            pvc.updateState(config);
+            pvc.notifyConfigAdded(pvc);
         }
 
         @Override
-        public void onConfigRemoved(Config config) {
-            updateState(config).ifPresent(vc -> vc.notifyConfigRemoved(vc));
+        public void onSourceConfigRemoved(PrivateViewConfig pvc, Config config) {
+            pvc.updateState(config);
+            pvc.notifyConfigRemoved(pvc);
         }
 
         @Override
-        public void onConfigUpdated(Config config) {
-            updateState(config).ifPresent(vc -> vc.notifyConfigUpdated(vc));
+        public void onSourceConfigUpdated(PrivateViewConfig pvc, Config config) {
+            pvc.updateState(config);
+            pvc.notifyConfigUpdated(pvc);
         }
 
         @Override
-        public void onError(Throwable error, Config config) {
-        }
-
-        /**
-         * Checks that the PrivateViewConfig object is still alive, and if so it updates its local state from the wrapped
-         * source.
-         *
-         * @return An Optional with the PrivateViewConfig object IFF the weak reference to it is still alive, empty otherwise.
-         */
-        private Optional<PrivateViewConfig> updateState(Config updatedWrappedConfig) {
-            PrivateViewConfig pvc = vcRef.get();
-            if (pvc != null) {
-                pvc.state = new State(updatedWrappedConfig);
-                return Optional.of(pvc);
-            } else {
-                // The view is gone, cleanup time!
-                updatedWrappedConfig.removeListener(this);
-                return Optional.empty();
-            }
+        public void onSourceError(Throwable error, PrivateViewConfig pvc, Config config) {
         }
     }
 
     private volatile State state;
+
+    private void updateState(Config config) {
+        this.state = new State(config);
+    }
 
     public PrivateViewConfig(final Config wrappedConfig) {
         this.state = new State(wrappedConfig);

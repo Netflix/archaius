@@ -9,6 +9,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
@@ -81,5 +84,16 @@ public class PrivateViewTest {
         config.addConfig("new", MapConfig.builder().put("foo.bar", "new2").build());
         Mockito.verify(listener, Mockito.times(1)).onConfigAdded(Mockito.any());
         Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());
+    }
+    @Test
+    public void unusedPrivateViewIsGarbageCollected() {
+        SettableConfig sourceConfig = new DefaultSettableConfig();
+        Config privateView = sourceConfig.getPrivateView();
+        Reference<Config> weakReference = new WeakReference<>(privateView);
+
+        // No more pointers to prefix means this should be garbage collected and any additional listeners on it
+        privateView = null;
+        System.gc();
+        Assert.assertNull(weakReference.get());
     }
 }
