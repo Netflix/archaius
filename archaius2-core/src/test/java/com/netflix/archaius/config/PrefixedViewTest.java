@@ -62,6 +62,18 @@ public class PrefixedViewTest {
     }
 
     @Test
+    public void trailingDotAllowed() {
+        SettableConfig settable = new DefaultSettableConfig();
+        settable.setProperty("foo.bar", "value");
+
+        Config prefixNoDot = settable.getPrefixedView("foo");
+        Config prefixWithDot = settable.getPrefixedView("foo.");
+
+        Assert.assertEquals(prefixNoDot.getString("bar"), "value");
+        Assert.assertEquals(prefixWithDot.getString("bar"), "value");
+    }
+
+    @Test
     public void unusedPrefixedViewIsGarbageCollected() {
         SettableConfig sourceConfig = new DefaultSettableConfig();
         Config prefix = sourceConfig.getPrefixedView("foo.");
