@@ -3,7 +3,8 @@ apply plugin: 'java-library'
 
 dependencies {
     api  project(':archaius2-core')
-    api  'junit:junit:4.11'
+    api  'junit:junit:4.13.2'
+    implementation  'org.apache.commons:commons-lang3:3.3.2'
 }
 
 eclipse {

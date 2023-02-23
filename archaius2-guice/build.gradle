@@ -19,8 +19,10 @@ apply plugin: 'java-library'
 dependencies {
     api  project(':archaius2-core')
     api  'javax.inject:javax.inject:1'
-    api  'com.google.inject:guice:4.0'
-    api  'com.google.inject.extensions:guice-multibindings:4.0'
+    api  'com.google.inject:guice:4.1.0'
+    api  'com.google.inject.extensions:guice-multibindings:4.1.0'
+
+    implementation  'org.slf4j:slf4j-api:1.7.36'
 }
 
 eclipse {
