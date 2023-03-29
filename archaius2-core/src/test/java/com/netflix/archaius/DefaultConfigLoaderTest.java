@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class DefaultConfigLoaderTest {
         when(mockContext.resolve(anyString())).thenReturn("resolved");
         StrInterpolator mockStrInterpolator = mock(StrInterpolator.class);
         when(mockStrInterpolator.create(any(StrInterpolator.Lookup.class))).thenReturn(mockContext);
-        Set<ConfigReader> readers = new HashSet();
+        Set<ConfigReader> readers = new HashSet<>();
         ConfigReader reader1 = new PropertiesConfigReader();
         ConfigReader reader2 = new PropertiesConfigReader();
         readers.add(reader1);
@@ -58,9 +59,9 @@ public class DefaultConfigLoaderTest {
 
     @Test
     public void testDefaultLoaderBehavior() throws ConfigException {
-        Config applicationConfig = DefaultConfigLoader.builder().build().newLoader().load("application");
+        CompositeConfig applicationConfig = DefaultConfigLoader.builder().build().newLoader().load("application");
         Config applicationProdConfig = DefaultConfigLoader.builder().build().newLoader().load("application-prod");
-        ((CompositeConfig) applicationConfig).addConfig("prod", applicationProdConfig);
+        applicationConfig.addConfig("prod", applicationProdConfig);
         Assert.assertEquals(applicationConfig.getString("application.list2"), "a,b");
         Assert.assertEquals(applicationConfig.getBoolean("application-prod.loaded"), true);
     }

@@ -11,6 +11,9 @@ import org.mockito.Mockito;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
@@ -95,5 +98,36 @@ public class PrivateViewTest {
         privateView = null;
         System.gc();
         Assert.assertNull(weakReference.get());
+    }
+
+    @Test
+    public void testGetKeys() {
+        Config config = MapConfig.builder()
+                .put("foo", "foo-value")
+                .put("bar", "bar-value")
+                .build()
+                .getPrivateView();
+
+        Iterator<String> keys = config.getKeys();
+        Set<String> keySet = new HashSet<>();
+        while (keys.hasNext()) {
+            keySet.add(keys.next());
+        }
+        Assert.assertEquals(2, keySet.size());
+        Assert.assertTrue(keySet.contains("foo"));
+        Assert.assertTrue(keySet.contains("bar"));
+    }
+
+    @Test
+    public void testGetKeysIteratorRemoveThrows() {
+        Config config = MapConfig.builder()
+                .put("foo", "foo-value")
+                .put("bar", "bar-value")
+                .build()
+                .getPrivateView();
+
+        Iterator<String> keys = config.getKeys();
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 }

@@ -151,6 +151,20 @@ public class CompositeConfigTest {
     }
 
     @Test
+    public void testGetKeysIteratorRemoveThrows() throws ConfigException {
+        com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
+
+
+        composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
+        composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
+
+        Iterator<String> keys = composite.getKeys();
+        Assert.assertTrue(keys.hasNext());
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
+
+    @Test
     public void unusedCompositeConfigIsGarbageCollected() throws ConfigException {
         SettableConfig sourceConfig = new DefaultSettableConfig();
         com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
@@ -170,7 +184,7 @@ public class CompositeConfigTest {
 
     private static Set<String> set(Iterator<String> values) {
         Set<String> vals = new LinkedHashSet<>();
-        values.forEachRemaining(e -> vals.add(e));
+        values.forEachRemaining(vals::add);
         return Collections.unmodifiableSet(vals);
     }
 }

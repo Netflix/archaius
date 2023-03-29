@@ -81,8 +81,9 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         
         public State(Map<String, Config> children, int size) {
             this.children = children;
-            this.data = new HashMap<>(size);
+            Map<String, Object> data = new HashMap<>(size);
             children.values().forEach(child -> child.forEachProperty(data::putIfAbsent));
+            this.data = Collections.unmodifiableMap(data);
         }
         
         State addConfig(String name, Config config) {
@@ -269,7 +270,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     public Iterator<String> getKeys() {
         return state.data.keySet().iterator();
     }
-    
+
     @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
         AtomicReference<T> result = new AtomicReference<>(null);
@@ -309,6 +310,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public String toString() {
-        return "[" + state.children.keySet().stream().collect(Collectors.joining(" ")) + "]";
+        return "[" + String.join(" ", state.children.keySet()) + "]";
     }
 }

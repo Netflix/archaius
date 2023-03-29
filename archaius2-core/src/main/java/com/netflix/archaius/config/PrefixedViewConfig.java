@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -44,12 +45,13 @@ public class PrefixedViewConfig extends AbstractConfig {
         final Map<String, Object> data;
         
         public State(Config config, String prefix) {
-            data = new LinkedHashMap<String, Object>();
+            Map<String, Object> data = new LinkedHashMap<>();
             config.forEachProperty((k, v) -> {
                 if (k.startsWith(prefix)) {
                     data.put(k.substring(prefix.length()), v);
                 }
             });
+            this.data = Collections.unmodifiableMap(data);
         }
     }
 

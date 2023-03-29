@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,8 +38,9 @@ public class PrivateViewConfig extends AbstractConfig {
         final Map<String, Object> data;
 
         public State(Config config) {
-            data = new LinkedHashMap<>();
+            Map<String, Object> data = new LinkedHashMap<>();
             config.forEachProperty(data::put);
+            this.data = Collections.unmodifiableMap(data);
         }
     }
 

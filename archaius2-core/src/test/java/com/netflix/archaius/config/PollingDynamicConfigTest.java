@@ -16,9 +16,15 @@
 package com.netflix.archaius.config;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.netflix.archaius.config.polling.PollingResponse;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,10 +35,13 @@ import com.netflix.archaius.junit.TestHttpServer;
 import com.netflix.archaius.property.PropertiesServerHandler;
 import com.netflix.archaius.readers.URLConfigReader;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 public class PollingDynamicConfigTest {
     
-    private PropertiesServerHandler prop1 = new PropertiesServerHandler();
-    private PropertiesServerHandler prop2 = new PropertiesServerHandler();
+    private final PropertiesServerHandler prop1 = new PropertiesServerHandler();
+    private final PropertiesServerHandler prop2 = new PropertiesServerHandler();
     
     @Rule
     public TestHttpServer server = new TestHttpServer()
@@ -51,12 +60,12 @@ public class PollingDynamicConfigTest {
         prop1.setProperty("a", "a_value");
         result = reader.call().getToAdd();
         Assert.assertFalse(result.isEmpty());
-        Assert.assertEquals("a_value", result.get("a"));
+        assertEquals("a_value", result.get("a"));
         
         prop1.setProperty("a", "b_value");
         result = reader.call().getToAdd();
         Assert.assertFalse(result.isEmpty());
-        Assert.assertEquals("b_value", result.get("a"));
+        assertEquals("b_value", result.get("a"));
     }
 
     @Test(timeout=1000)
@@ -66,17 +75,17 @@ public class PollingDynamicConfigTest {
                 server.getServerPathURI("/prop2").toURL()
                 );
         
-        Assert.assertTrue(prop1.isEmpty());
-        Assert.assertTrue(prop2.isEmpty());
+        assertTrue(prop1.isEmpty());
+        assertTrue(prop2.isEmpty());
         
         prop1.setProperty("a", "A");
         prop2.setProperty("b", "B");
         
         Map<String, String> result = reader.call().getToAdd();
 
-        Assert.assertEquals(2, result.size());
-        Assert.assertEquals("A", result.get("a"));
-        Assert.assertEquals("B", result.get("b"));
+        assertEquals(2, result.size());
+        assertEquals("A", result.get("a"));
+        assertEquals("B", result.get("b"));
     }
     
     @Test(timeout=1000, expected=IOException.class)
@@ -112,27 +121,27 @@ public class PollingDynamicConfigTest {
         //  a=ANew
         //  b=BNew
         Assert.assertFalse(config.isEmpty());
-        Assert.assertEquals("A", config.getString("a"));
-        Assert.assertEquals("B", config.getString("b"));
+        assertEquals("A", config.getString("a"));
+        assertEquals("B", config.getString("b"));
         
         prop1.setProperty("a", "ANew");
         prop2.setProperty("b", "BNew");
-        Assert.assertEquals("A", config.getString("a"));
-        Assert.assertEquals("B", config.getString("b"));
+        assertEquals("A", config.getString("a"));
+        assertEquals("B", config.getString("b"));
         
         // Delete 1
         //  a deleted
         //  b=BNew
         strategy.fire();
-        Assert.assertEquals("ANew", config.getString("a"));
-        Assert.assertEquals("BNew", config.getString("b"));
+        assertEquals("ANew", config.getString("a"));
+        assertEquals("BNew", config.getString("b"));
 
         prop1.remove("a");
         prop2.setProperty("b", "BNew");
         
         strategy.fire();
         Assert.assertNull(config.getString("a", null));
-        Assert.assertEquals("BNew", config.getString("b"));
+        assertEquals("BNew", config.getString("b"));
     }
     
     @Test(timeout=1000)
@@ -165,9 +174,9 @@ public class PollingDynamicConfigTest {
         
         strategy.fire();
         
-        Assert.assertEquals("A", config.getString("a"));
-        Assert.assertEquals(0, errorCount.get());
-        Assert.assertEquals(1, updateCount.get());
+        assertEquals("A", config.getString("a"));
+        assertEquals(0, errorCount.get());
+        assertEquals(1, updateCount.get());
 
         // Confirm failure does not modify state of Config
         prop1.setProperty("a", "ANew");
@@ -181,17 +190,61 @@ public class PollingDynamicConfigTest {
             
         }
         
-        Assert.assertEquals(1, errorCount.get());
-        Assert.assertEquals(1, updateCount.get());
-        Assert.assertEquals("A", config.getString("a"));
+        assertEquals(1, errorCount.get());
+        assertEquals(1, updateCount.get());
+        assertEquals("A", config.getString("a"));
 
         // Confim state updates after failure
         prop1.setResponseCode(200);
         
         strategy.fire();
         
-        Assert.assertEquals(1, errorCount.get());
-        Assert.assertEquals(2, updateCount.get());
-        Assert.assertEquals("ANew", config.getString("a"));
+        assertEquals(1, errorCount.get());
+        assertEquals(2, updateCount.get());
+        assertEquals("ANew", config.getString("a"));
+    }
+
+    @Test
+    public void testGetKeys() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo", "foo-value");
+            props.put("bar", "bar-value");
+            return PollingResponse.forSnapshot(props);
+        };
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
+        Iterator<String> emptyKeys = config.getKeys();
+        Assert.assertFalse(emptyKeys.hasNext());
+
+        strategy.fire();
+
+        Iterator<String> keys = config.getKeys();
+        Set<String> keySet = new HashSet<>();
+        while (keys.hasNext()) {
+            keySet.add(keys.next());
+        }
+
+        Assert.assertEquals(2, keySet.size());
+        Assert.assertTrue(keySet.contains("foo"));
+        Assert.assertTrue(keySet.contains("bar"));
+    }
+
+    @Test
+    public void testGetKeysIteratorRemoveThrows() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo", "foo-value");
+            props.put("bar", "bar-value");
+            return PollingResponse.forSnapshot(props);
+        };
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
+        strategy.fire();
+        Iterator<String> keys = config.getKeys();
+
+        Assert.assertTrue(keys.hasNext());
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 }

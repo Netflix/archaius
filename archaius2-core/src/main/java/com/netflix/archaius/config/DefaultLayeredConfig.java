@@ -212,8 +212,9 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
         ImmutableCompositeState(List<LayerAndConfig> entries) {
             this.children = entries;
             this.children.sort(ByPriorityAndInsertionOrder);
-            this.data = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             this.children.forEach(child -> child.config.forEachProperty(data::putIfAbsent));
+            this.data = Collections.unmodifiableMap(data);
         }
         
         public ImmutableCompositeState addChild(LayerAndConfig layerAndConfig) {
