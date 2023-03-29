@@ -7,6 +7,9 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -83,5 +86,36 @@ public class PrefixedViewTest {
         prefix = null;
         System.gc();
         Assert.assertNull(weakReference.get());
+    }
+
+    @Test
+    public void testGetKeys() {
+        Config config = MapConfig.builder()
+                .put("foo.prop1", "value1")
+                .put("foo.prop2", "value2")
+                .build()
+                .getPrefixedView("foo");
+
+        Iterator<String> keys = config.getKeys();
+        Set<String> keySet = new HashSet<>();
+        while (keys.hasNext()) {
+            keySet.add(keys.next());
+        }
+        Assert.assertEquals(2, keySet.size());
+        Assert.assertTrue(keySet.contains("prop1"));
+        Assert.assertTrue(keySet.contains("prop2"));
+    }
+
+    @Test
+    public void testGetKeysIteratorRemoveThrows() {
+        Config config = MapConfig.builder()
+                .put("foo.prop1", "value1")
+                .put("foo.prop2", "value2")
+                .build()
+                .getPrefixedView("foo");
+
+        Iterator<String> keys = config.getKeys();
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 }

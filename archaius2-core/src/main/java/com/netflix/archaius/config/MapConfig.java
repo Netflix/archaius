@@ -41,7 +41,7 @@ public class MapConfig extends AbstractConfig {
      * }
      */
     public static class Builder {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         String named;
         
         public <T> Builder put(String key, T value) {
@@ -81,14 +81,13 @@ public class MapConfig extends AbstractConfig {
         return new MapConfig(props);
     }
     
-    private Map<String, String> props = new HashMap<String, String>();
+    private final Map<String, String> props;
     
     public MapConfig(String name, Map<String, String> props) {
         super(name);
-        this.props.putAll(props);
-        this.props = Collections.unmodifiableMap(this.props);
+        this.props = Collections.unmodifiableMap(new HashMap<>(props));
     }
-    
+
     /**
      * Construct a MapConfig as a copy of the provided Map
      * @param name
@@ -96,8 +95,7 @@ public class MapConfig extends AbstractConfig {
      */
     public MapConfig(Map<String, String> props) {
         super(generateUniqueName("immutable-"));
-        this.props.putAll(props);
-        this.props = Collections.unmodifiableMap(this.props);
+        this.props = Collections.unmodifiableMap(new HashMap<>(props));
     }
 
     /**
@@ -107,10 +105,11 @@ public class MapConfig extends AbstractConfig {
      */
     public MapConfig(Properties props) {
         super(generateUniqueName("immutable-"));
+        Map<String, String> properties = new HashMap<>();
         for (Entry<Object, Object> entry : props.entrySet()) {
-            this.props.put(entry.getKey().toString(), entry.getValue().toString());
+            properties.put(entry.getKey().toString(), entry.getValue().toString());
         }
-        this.props = Collections.unmodifiableMap(this.props);
+        this.props = Collections.unmodifiableMap(properties);
     }
     
     @Override

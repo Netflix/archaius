@@ -15,7 +15,7 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -37,7 +37,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
 public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
-    private volatile Map<String, String> current = new HashMap<String, String>();
+    private volatile Map<String, String> current = Collections.emptyMap();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<PollingResponse> reader;
     private final AtomicLong updateCounter = new AtomicLong();
@@ -81,7 +81,7 @@ public class PollingDynamicConfig extends AbstractConfig {
             try {
                 PollingResponse response = reader.call();
                 if (response.hasData()) {
-                    current = response.getToAdd();
+                    current = Collections.unmodifiableMap(response.getToAdd());
                     notifyConfigUpdated(this);
                 }
             }

@@ -15,7 +15,12 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -26,7 +31,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
 
 public class MapConfigTest {
-    private MapConfig config = MapConfig.builder()
+    private final MapConfig config = MapConfig.builder()
             .put("str", "value")
             .put("badnumber", "badnumber")
             .build();
@@ -177,6 +182,37 @@ public class MapConfigTest {
         
         Assert.assertEquals((long)123L, (long)config.getLong("value"));
     }
-    
 
+    @Test
+    public void getKeys() {
+        Map<String, String> props = new HashMap<>();
+        props.put("key1", "value1");
+        props.put("key2", "value2");
+
+        Config config = MapConfig.from(props);
+
+        Iterator<String> keys = config.getKeys();
+        Assert.assertTrue(keys.hasNext());
+
+        Set<String> keySet = new HashSet<>();
+        while (keys.hasNext()) {
+            keySet.add(keys.next());
+        }
+
+        Assert.assertEquals(2, keySet.size());
+        Assert.assertEquals(props.keySet(), keySet);
+    }
+
+    @Test
+    public void getKeysIteratorRemoveThrows() {
+        Config config = MapConfig.builder()
+                .put("key1", "value1")
+                .put("key2", "value2")
+                .build();
+        Iterator<String> keys = config.getKeys();
+
+        Assert.assertTrue(keys.hasNext());
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
 }

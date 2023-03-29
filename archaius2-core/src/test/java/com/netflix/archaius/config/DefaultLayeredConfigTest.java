@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Iterator;
 
 public class DefaultLayeredConfigTest {
     @Test
@@ -144,5 +145,47 @@ public class DefaultLayeredConfigTest {
         config = null;
         System.gc();
         Assert.assertNull(weakReference.get());
+    }
+
+    @Test
+    public void testGetKeys() {
+        LayeredConfig config = new DefaultLayeredConfig();
+        MapConfig appConfig = MapConfig.builder()
+                .put("propname", Layers.APPLICATION.getName())
+                .name(Layers.APPLICATION.getName())
+                .build();
+
+        MapConfig libConfig = MapConfig.builder()
+                .put("propname", Layers.LIBRARY.getName() + "1")
+                .name(Layers.LIBRARY.getName() + "1")
+                .build();
+        config.addConfig(Layers.APPLICATION, appConfig);
+        config.addConfig(Layers.LIBRARY, libConfig);
+
+        Iterator<String> keys = config.getKeys();
+        Assert.assertTrue(keys.hasNext());
+        Assert.assertEquals("propname", keys.next());
+        Assert.assertFalse(keys.hasNext());
+    }
+
+    @Test
+    public void testGetKeysIteratorRemoveThrows() {
+        LayeredConfig config = new DefaultLayeredConfig();
+        MapConfig appConfig = MapConfig.builder()
+                .put("propname", Layers.APPLICATION.getName())
+                .name(Layers.APPLICATION.getName())
+                .build();
+
+        MapConfig libConfig = MapConfig.builder()
+                .put("propname", Layers.LIBRARY.getName() + "1")
+                .name(Layers.LIBRARY.getName() + "1")
+                .build();
+        config.addConfig(Layers.APPLICATION, appConfig);
+        config.addConfig(Layers.LIBRARY, libConfig);
+
+        Iterator<String> keys = config.getKeys();
+        Assert.assertTrue(keys.hasNext());
+        keys.next();
+        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 }
