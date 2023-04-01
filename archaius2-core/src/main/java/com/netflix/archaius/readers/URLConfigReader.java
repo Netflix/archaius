@@ -18,7 +18,9 @@ package com.netflix.archaius.readers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +51,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
      * @param urls list of URLs to be used
      */
     public URLConfigReader(URL... urls) {
-        configUrls = urls;
+        configUrls = Arrays.copyOf(urls, urls.length);
     }
 
     private static URL[] createUrls(String... urlStrings) {
@@ -66,33 +68,25 @@ public class URLConfigReader implements Callable<PollingResponse> {
         }
         return urls;        
     }
-    
+
     @Override
     public PollingResponse call() throws IOException {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
+        Properties props = new Properties();
         for (URL url: configUrls) {
-            Properties props = new Properties();
-            InputStream fin = url.openStream();
-            InputStreamReader reader;
-            try {
-                reader = new InputStreamReader(fin, "UTF-8");
-                try {
+            try (InputStream fin = url.openStream()) {
+                try (Reader reader = new InputStreamReader(fin, StandardCharsets.UTF_8)) {
                     props.load(reader);
                 }
-                finally {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                }
             }
-            finally {
-                fin.close();
-            }
-            
+
             for (Entry<Object, Object> entry: props.entrySet()) {
                 map.put((String) entry.getKey(), entry.getValue().toString());
             }
+
+            props.clear();
         }
+
         return new PollingResponse() {
             @Override
             public Map<String, String> getToAdd() {
