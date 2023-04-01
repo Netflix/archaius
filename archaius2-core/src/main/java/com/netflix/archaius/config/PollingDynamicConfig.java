@@ -121,6 +121,11 @@ public class PollingDynamicConfig extends AbstractConfig {
     }
 
     @Override
+    public Iterable<String> keys() {
+        return current.keySet();
+    }
+
+    @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
         current.forEach(consumer);
     }

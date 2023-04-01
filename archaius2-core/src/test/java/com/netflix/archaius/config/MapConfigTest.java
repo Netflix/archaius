@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.config;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,6 +30,9 @@ import org.junit.Test;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
+
+import static com.netflix.archaius.TestUtils.set;
+import static com.netflix.archaius.TestUtils.size;
 
 public class MapConfigTest {
     private final MapConfig config = MapConfig.builder()
@@ -214,5 +218,28 @@ public class MapConfigTest {
         Assert.assertTrue(keys.hasNext());
         keys.next();
         Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
+
+    @Test
+    public void testKeysIterable() {
+        Config config = MapConfig.builder()
+                .put("key1", "value1")
+                .put("key2", "value2")
+                .build();
+        Iterable<String> keys = config.keys();
+
+        Assert.assertEquals(2, size(keys));
+        Assert.assertEquals(set("key1", "key2"), set(keys));
+    }
+
+    @Test
+    public void testKeysIterableModificationThrows() {
+        Config config = MapConfig.builder()
+                .put("key1", "value1")
+                .put("key2", "value2")
+                .build();
+
+        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 }

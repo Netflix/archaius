@@ -17,12 +17,9 @@ package com.netflix.archaius.config;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Properties;
-import java.util.Set;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
@@ -33,6 +30,9 @@ import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+
+import static com.netflix.archaius.TestUtils.set;
+import static com.netflix.archaius.TestUtils.size;
 
 public class CompositeConfigTest {
     @Test
@@ -165,6 +165,30 @@ public class CompositeConfigTest {
     }
 
     @Test
+    public void testKeysIterable() throws ConfigException {
+        com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
+
+        composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
+        composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
+
+        Iterable<String> keys = composite.keys();
+
+        Assert.assertEquals(4, size(keys));
+        Assert.assertEquals(set("d1", "d2", "e1", "e2"), set(keys));
+    }
+
+    @Test
+    public void testKeysIterableModificationThrows() throws ConfigException {
+        com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
+
+        composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
+        composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
+
+        Assert.assertThrows(UnsupportedOperationException.class, composite.keys().iterator()::remove);
+        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) composite.keys())::clear);
+    }
+
+    @Test
     public void unusedCompositeConfigIsGarbageCollected() throws ConfigException {
         SettableConfig sourceConfig = new DefaultSettableConfig();
         com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
@@ -176,15 +200,5 @@ public class CompositeConfigTest {
         config = null;
         System.gc();
         Assert.assertNull(weakReference.get());
-    }
-
-    private static Set<String> set(String ... values) {
-        return Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(values)));
-    }
-
-    private static Set<String> set(Iterator<String> values) {
-        Set<String> vals = new LinkedHashSet<>();
-        values.forEachRemaining(vals::add);
-        return Collections.unmodifiableSet(vals);
     }
 }
