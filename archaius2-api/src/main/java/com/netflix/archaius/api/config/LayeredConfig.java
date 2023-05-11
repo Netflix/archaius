@@ -30,7 +30,6 @@ public interface LayeredConfig extends Config {
      *
      * @param layer
      * @param child
-     * @throws ConfigException
      */
     void addConfig(Layer layer, Config config);
     

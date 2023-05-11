@@ -42,6 +42,7 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     private TestCompositeConfig testCompositeConfig;
     private final TestPropertyOverrideAnnotationReader annotationReader = new TestPropertyOverrideAnnotationReader();
 
+    @Override
     public Statement apply(final Statement base, final Description description) {
         return new Statement() {
             @Override

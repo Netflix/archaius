@@ -53,6 +53,7 @@ public class TypesafeConfig extends AbstractConfig {
         }
     }
 
+    @Override
     public List getList(String key) {
         throw new UnsupportedOperationException("Not supported yet");
     }

@@ -154,7 +154,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
         
         public void addListener(final PropertyListener<T> listener) {
             listeners.add(listener, new ListenerUpdater() {
-                private AtomicReference<T> last = new AtomicReference<T>(null);
+                private final AtomicReference<T> last = new AtomicReference<T>(null);
                 
                 @Override
                 public void update() {
@@ -190,11 +190,12 @@ public class DefaultPropertyContainer implements PropertyContainer {
         /**
          * Fetch the latest version of the property.  If not up to date then resolve to the latest
          * value, inline.
-         * 
+         *
          * TODO: Make resolving property value an offline task
-         * 
+         *
          * @return
          */
+        @Override
         public T get() {
             int cacheVersion = cache.getStamp();
             int latestVersion  = masterVersion.get();
@@ -230,10 +231,6 @@ public class DefaultPropertyContainer implements PropertyContainer {
          * @throws Exception
          */
         protected abstract T resolveCurrent() throws Exception;
-
-        private DefaultPropertyContainer getOuterType() {
-            return DefaultPropertyContainer.this;
-        }
     }
 
     /**

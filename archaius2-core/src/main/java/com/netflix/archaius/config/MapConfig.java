@@ -100,7 +100,6 @@ public class MapConfig extends AbstractConfig {
 
     /**
      * Construct a MapConfig as a copy of the provided properties
-     * @param name
      * @param props
      */
     public MapConfig(Properties props) {
