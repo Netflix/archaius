@@ -36,23 +36,23 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     public DefaultSettableConfig() {
         super(generateUniqueName("settable-"));
     }
-    
+
     @Override
     public synchronized <T> void setProperty(String propName, T propValue) {
         Map<String, Object> copy = new HashMap<>(props.size() + 1);
         copy.putAll(props);
         copy.put(propName, propValue);
-        props = copy;
+        props = Collections.unmodifiableMap(copy);
         notifyConfigUpdated(this);
     }
-    
+
     @Override
     public void clearProperty(String propName) {
         if (props.containsKey(propName)) {
             synchronized (this) {
                 Map<String, Object> copy = new HashMap<>(props);
                 copy.remove(propName);
-                props = copy;
+                props = Collections.unmodifiableMap(copy);
                 notifyConfigUpdated(this);
             }
         }
@@ -79,6 +79,11 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     }
 
     @Override
+    public Iterable<String> keys() {
+        return props.keySet();
+    }
+
+    @Override
     public void setProperties(Properties src) {
         if (null != src) {
             synchronized (this) {
@@ -87,7 +92,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
                 for (Entry<Object, Object> prop : src.entrySet()) {
                     copy.put(prop.getKey().toString(), prop.getValue());
                 }
-                props = copy;
+                props = Collections.unmodifiableMap(copy);
                 notifyConfigUpdated(this);
             }
         }
@@ -99,7 +104,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
             synchronized (this) {
                 Map<String, Object> copy = new HashMap<>(props);
                 src.forEachProperty(copy::put);
-                props = copy;
+                props = Collections.unmodifiableMap(copy);
                 notifyConfigUpdated(this);
             }
         }

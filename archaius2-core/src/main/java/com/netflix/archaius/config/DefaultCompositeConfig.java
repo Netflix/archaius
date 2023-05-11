@@ -272,6 +272,11 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     }
 
     @Override
+    public Iterable<String> keys() {
+        return state.data.keySet();
+    }
+
+    @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
         AtomicReference<T> result = new AtomicReference<>(null);
         if (visitor instanceof CompositeVisitor) {

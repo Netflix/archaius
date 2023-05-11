@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public final class EmptyConfig extends AbstractConfig {
@@ -39,6 +40,16 @@ public final class EmptyConfig extends AbstractConfig {
     @Override
     public Iterator<String> getKeys() {
         return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterable<String> keys() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Optional<Object> getProperty(String key) {
+        return Optional.empty();
     }
 
     @Override

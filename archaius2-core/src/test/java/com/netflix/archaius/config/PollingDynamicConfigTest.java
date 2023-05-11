@@ -16,6 +16,7 @@
 package com.netflix.archaius.config;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +38,9 @@ import com.netflix.archaius.readers.URLConfigReader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import static com.netflix.archaius.TestUtils.set;
+import static com.netflix.archaius.TestUtils.size;
 
 public class PollingDynamicConfigTest {
     
@@ -246,5 +250,38 @@ public class PollingDynamicConfigTest {
         Assert.assertTrue(keys.hasNext());
         keys.next();
         Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
+
+    @Test
+    public void testKeysIterable() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo", "foo-value");
+            props.put("bar", "bar-value");
+            return PollingResponse.forSnapshot(props);
+        };
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
+        strategy.fire();
+
+        Iterable<String> keys = config.keys();
+        Assert.assertEquals(2, size(keys));
+        Assert.assertEquals(set("foo", "bar"), set(keys));
+    }
+
+    @Test
+    public void testKeysIterableModificationThrows() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo", "foo-value");
+            props.put("bar", "bar-value");
+            return PollingResponse.forSnapshot(props);
+        };
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
+        strategy.fire();
+
+        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 }

@@ -50,6 +50,11 @@ public class EnvironmentConfig extends AbstractConfig {
     }
 
     @Override
+    public Iterable<String> keys() {
+        return properties.keySet();
+    }
+
+    @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
         properties.forEach(consumer);
     }

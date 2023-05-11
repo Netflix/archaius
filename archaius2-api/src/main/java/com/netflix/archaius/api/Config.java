@@ -135,9 +135,16 @@ public interface Config extends PropertySource {
     boolean containsKey(String key);
     
     /**
-     * @return Return an iterator to all property names owned by this config
+     * @return Return an unmodifiable Iterator to all property names owned by this config
      */
     Iterator<String> getKeys();
+
+    /**
+     * @return Return an unmodifiable Iterable of all property names owned by this config.
+     */
+    default Iterable<String> keys() {
+        return this::getKeys;
+    }
     
     /**
      * @return Return an interator to all prefixed property names owned by this config

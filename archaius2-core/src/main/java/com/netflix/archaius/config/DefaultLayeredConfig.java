@@ -263,4 +263,9 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
     public Iterator<String> getKeys() {
         return state.data.keySet().iterator();
     }
+
+    @Override
+    public Iterable<String> keys() {
+        return state.data.keySet();
+    }
 }

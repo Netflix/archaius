@@ -12,7 +12,11 @@ import org.mockito.Mockito;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.Iterator;
+
+import static com.netflix.archaius.TestUtils.set;
+import static com.netflix.archaius.TestUtils.size;
 
 public class DefaultLayeredConfigTest {
     @Test
@@ -187,5 +191,44 @@ public class DefaultLayeredConfigTest {
         Assert.assertTrue(keys.hasNext());
         keys.next();
         Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
+
+    @Test
+    public void testKeysIterable() {
+        LayeredConfig config = new DefaultLayeredConfig();
+        MapConfig appConfig = MapConfig.builder()
+                .put("propname", Layers.APPLICATION.getName())
+                .name(Layers.APPLICATION.getName())
+                .build();
+
+        MapConfig libConfig = MapConfig.builder()
+                .put("propname", Layers.LIBRARY.getName() + "1")
+                .name(Layers.LIBRARY.getName() + "1")
+                .build();
+        config.addConfig(Layers.APPLICATION, appConfig);
+        config.addConfig(Layers.LIBRARY, libConfig);
+
+        Iterable<String> keys = config.keys();
+        Assert.assertEquals(1, size(keys));
+        Assert.assertEquals(set("propname"), set(keys));
+    }
+
+    @Test
+    public void testKeysIterableModificationThrows() {
+        LayeredConfig config = new DefaultLayeredConfig();
+        MapConfig appConfig = MapConfig.builder()
+                .put("propname", Layers.APPLICATION.getName())
+                .name(Layers.APPLICATION.getName())
+                .build();
+
+        MapConfig libConfig = MapConfig.builder()
+                .put("propname", Layers.LIBRARY.getName() + "1")
+                .name(Layers.LIBRARY.getName() + "1")
+                .build();
+        config.addConfig(Layers.APPLICATION, appConfig);
+        config.addConfig(Layers.LIBRARY, libConfig);
+
+        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 }

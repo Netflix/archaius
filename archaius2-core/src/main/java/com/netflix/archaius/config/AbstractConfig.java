@@ -436,9 +436,7 @@ public abstract class AbstractConfig implements Config {
     
     @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
-        Iterator<String> keys = getKeys();
-        while (keys.hasNext()) {
-            String key = keys.next();
+        for (String key : keys()) {
             Object value = this.getRawProperty(key);
             if (value != null) {
                 consumer.accept(key, value);

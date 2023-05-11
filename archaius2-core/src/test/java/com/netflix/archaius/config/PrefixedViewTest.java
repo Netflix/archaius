@@ -7,6 +7,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -14,6 +15,9 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import static com.netflix.archaius.TestUtils.set;
+import static com.netflix.archaius.TestUtils.size;
 
 public class PrefixedViewTest {
     @Test
@@ -117,5 +121,30 @@ public class PrefixedViewTest {
         Iterator<String> keys = config.getKeys();
         keys.next();
         Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+    }
+
+    @Test
+    public void testKeysIterable() {
+        Config config = MapConfig.builder()
+                .put("foo.prop1", "value1")
+                .put("foo.prop2", "value2")
+                .build()
+                .getPrefixedView("foo");
+
+        Iterable<String> keys = config.keys();
+        Assert.assertEquals(2, size(keys));
+        Assert.assertEquals(set("prop1", "prop2"), set(keys));
+    }
+
+    @Test
+    public void testKeysIterableModificationThrows() {
+        Config config = MapConfig.builder()
+                .put("foo.prop1", "value1")
+                .put("foo.prop2", "value2")
+                .build()
+                .getPrefixedView("foo");
+
+        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 }

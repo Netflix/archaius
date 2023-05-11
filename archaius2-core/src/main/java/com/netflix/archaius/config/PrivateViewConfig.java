@@ -90,6 +90,11 @@ public class PrivateViewConfig extends AbstractConfig {
     }
 
     @Override
+    public Iterable<String> keys() {
+        return state.data.keySet();
+    }
+
+    @Override
     public boolean containsKey(String key) {
         return state.data.containsKey(key);
     }

@@ -132,6 +132,11 @@ public class MapConfig extends AbstractConfig {
     }
 
     @Override
+    public Iterable<String> keys() {
+        return props.keySet();
+    }
+
+    @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
         props.forEach(consumer);
     }
