@@ -50,7 +50,8 @@ public interface Config extends PropertySource {
      * @param key
      */
     Object getRawProperty(String key);
-    
+
+    @Override
     default Optional<Object> getProperty(String key) { return Optional.ofNullable(getRawProperty(key)); }
     
     /**

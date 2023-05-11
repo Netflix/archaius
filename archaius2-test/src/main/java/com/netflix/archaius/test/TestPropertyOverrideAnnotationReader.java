@@ -3,6 +3,7 @@ package com.netflix.archaius.test;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -34,7 +35,7 @@ public class TestPropertyOverrideAnnotationReader {
         for (String override : annotation.value()) {
             String[] parts = override.split("=", 2);
             if (parts.length < 2) {
-                throw new TestConfigException("Error parsing TestPropertyOverride for: " + annotation.value()
+                throw new TestConfigException("Error parsing TestPropertyOverride for: " + Arrays.toString(annotation.value())
                         + " Please ensure you are specifying overrides in the form \"key=value\"");
             }
             properties.put(parts[0], parts[1]);

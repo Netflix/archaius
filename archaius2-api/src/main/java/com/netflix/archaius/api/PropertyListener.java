@@ -31,7 +31,8 @@ public interface PropertyListener<T> extends Consumer<T> {
      */
     @Deprecated
     void onChange(T value);
-    
+
+    @Override
     default void accept(T value) {
         onChange(value);
     }

@@ -148,8 +148,7 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = 1;
-            result = 31 + ((config == null) ? 0 : config.hashCode());
+            int result = 31 + ((config == null) ? 0 : config.hashCode());
             result = prime * result + ((layer == null) ? 0 : layer.hashCode());
             return result;
         }
@@ -205,7 +204,7 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
      * Immutable composite state of the DefaultLayeredConfig.  A new instance of this
      * will be created whenever a new Config is added or removed
      */
-    private class ImmutableCompositeState {
+    private static final class ImmutableCompositeState {
         private final List<LayerAndConfig> children;
         private final Map<String, Object> data;
         

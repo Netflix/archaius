@@ -56,6 +56,7 @@ public interface Property<T> extends Supplier<T> {
      * 
      * @return  Most recent value for the property
      */
+    @Override
     T get();
 
     /**
@@ -124,7 +125,7 @@ public interface Property<T> extends Supplier<T> {
      * Create a new Property object that will fetch the property backed by the provided
      * key.  The return value of the supplier will be cached until the configuration has changed
      * 
-     * @param delegate
+     * @param key
      * @return Newly constructed Property object
      */
     default Property<T> orElseGet(String key) {

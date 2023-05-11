@@ -39,7 +39,7 @@ import java.util.function.BiConsumer;
 
 public abstract class AbstractConfig implements Config {
 
-    private final CopyOnWriteArrayList<ConfigListener> listeners = new CopyOnWriteArrayList<ConfigListener>();
+    private final CopyOnWriteArrayList<ConfigListener> listeners = new CopyOnWriteArrayList<>();
     private final Lookup lookup;
     private Decoder decoder;
     private StrInterpolator interpolator;
@@ -177,7 +177,7 @@ public abstract class AbstractConfig implements Config {
     @Deprecated
     public Iterator<String> getKeys(final String prefix) {
         return new Iterator<String>() {
-            Iterator<String> iter = getKeys();
+            final Iterator<String> iter = getKeys();
             String next;
 
             {
@@ -239,8 +239,7 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
-        T result = null;
-        forEachProperty((k, v) -> visitor.visitKey(k, v));
+        forEachProperty(visitor::visitKey);
         return null;
     }
 
@@ -266,7 +265,7 @@ public abstract class AbstractConfig implements Config {
                 return parseError(key, rawProp.toString(), e);
             }
         } else if (type instanceof Class) {
-            Class cls = (Class)type;
+            Class<?> cls = (Class<?>) type;
             if (cls.isInstance(rawProp) || cls.isPrimitive()) {
                 return (T) rawProp;
             }

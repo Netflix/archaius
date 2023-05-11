@@ -19,15 +19,15 @@ import java.lang.reflect.Method;
 
 public class MethodInvoker<T> extends DefaultPropertyListener<T> {
     
-    private Method method;
-    private Object obj;
+    private final Method method;
+    private final Object obj;
     
     public MethodInvoker(Object obj, String methodName) {
-        this.method = getMethodWithOneParameter(obj, methodName);
+        this.method = getMethodWithOneParameter(obj);
         this.obj    = obj;
     }
     
-    private static Method getMethodWithOneParameter(Object obj, String methodName) {
+    private static Method getMethodWithOneParameter(Object obj) {
         Method[] methods = obj.getClass().getMethods();
         if (methods != null && methods.length > 0) {
             for (Method method : methods) {
