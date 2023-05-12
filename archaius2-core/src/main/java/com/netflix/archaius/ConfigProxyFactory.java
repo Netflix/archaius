@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Function;
@@ -279,7 +278,7 @@ public class ConfigProxyFactory {
 
                 if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
                     invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
-                } else if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
+                } else if (m.getParameterCount() > 0) {
                     if (nameAnnot == null) {
                         throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
