@@ -316,7 +316,7 @@ public class PollingDynamicConfigTest {
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo", "1", "foo-value")));
         verify(accessMonitorUtil, times(1)).registerUsage(any());
 
-        config.getPropertyUninstrumented("bar");
+        config.getRawPropertyUninstrumented("bar");
         verify(accessMonitorUtil, times(1)).registerUsage(any());
 
         config.forEachProperty((k, v) -> {});

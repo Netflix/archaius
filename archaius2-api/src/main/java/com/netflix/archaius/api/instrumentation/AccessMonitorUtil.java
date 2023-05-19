@@ -35,6 +35,8 @@ public class AccessMonitorUtil {
     public static class Builder {
         private Consumer<PropertiesInstrumentationData> dataFlushConsumer = null;
         private boolean recordStackTrace = false;
+        private int initialFlushDelaySeconds = 30;
+        private int flushPeriodSeconds = 120;
 
         public Builder setDataFlushConsumer(Consumer<PropertiesInstrumentationData> dataFlushConsumer) {
             this.dataFlushConsumer = dataFlushConsumer;
@@ -46,8 +48,19 @@ public class AccessMonitorUtil {
             return this;
         }
 
+        public Builder setInitialFlushDelaySeconds(int initialFlushDelaySeconds) {
+            this.initialFlushDelaySeconds = initialFlushDelaySeconds;
+            return this;
+        }
+
+        public Builder setFlushPeriodSeconds(int flushPeriodSeconds) {
+            this.flushPeriodSeconds = flushPeriodSeconds;
+            return this;
+        }
+
         public AccessMonitorUtil build() {
-            return new AccessMonitorUtil(dataFlushConsumer, recordStackTrace);
+            return new AccessMonitorUtil(
+                    dataFlushConsumer, recordStackTrace, initialFlushDelaySeconds, flushPeriodSeconds);
         }
     }
 
@@ -55,7 +68,11 @@ public class AccessMonitorUtil {
         return new Builder();
     }
 
-    private AccessMonitorUtil(Consumer<PropertiesInstrumentationData> dataFlushConsumer, boolean recordStackTrace) {
+    private AccessMonitorUtil(
+            Consumer<PropertiesInstrumentationData> dataFlushConsumer,
+            boolean recordStackTrace,
+            int initialFlushDelaySeconds,
+            int flushPeriodSeconds) {
         this.propertyUsageMap = new ConcurrentHashMap<>();
         this.stackTrace = new ConcurrentHashMap<>();
         this.dataFlushConsumer = dataFlushConsumer;
@@ -67,12 +84,12 @@ public class AccessMonitorUtil {
                     thread.setName(String.format("Archaius-Instrumentation-Flusher-%d", counter.incrementAndGet()));
                     return thread;
                 });
-        startFlushing();
+        startFlushing(initialFlushDelaySeconds, flushPeriodSeconds);
     }
 
-    private void startFlushing() {
+    private void startFlushing(int initialDelay, int period) {
         if (!flushingEnabled()) {
-            LOG.warn("Failed to start flushing Archaius instrumentation because flushing is not enabled.");
+            LOG.info("Property usage data is being captured, but not flushed as there is no consumer specified.");
         } else {
             executor.scheduleWithFixedDelay(() -> {
                 try {
@@ -82,7 +99,7 @@ public class AccessMonitorUtil {
                 } catch (Exception e) {
                     LOG.warn("Failed to flush property instrumentation data", e);
                 }
-            }, 30, 120, TimeUnit.SECONDS);
+            }, initialDelay, period, TimeUnit.SECONDS);
         }
     }
 

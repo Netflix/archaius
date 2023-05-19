@@ -12,5 +12,4 @@ public class PropertyUsageData {
     public List<PropertyUsageEvent> getPropertyUsageEvents() {
         return propertyUsageEvents;
     }
-
 }
