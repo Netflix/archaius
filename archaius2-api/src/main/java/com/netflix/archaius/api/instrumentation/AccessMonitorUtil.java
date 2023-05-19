@@ -20,9 +20,10 @@ import java.util.function.Consumer;
 public class AccessMonitorUtil {
     private static final Logger LOG = LoggerFactory.getLogger(AccessMonitorUtil.class);
 
+    // Map from property id to property usage data
     private final ConcurrentHashMap<String, PropertyUsageData> propertyUsageMap;
 
-    // A map from stack trace to how many times that stack trace appeared
+    // Map from stack trace to how many times that stack trace appeared
     private final ConcurrentHashMap<String, Integer> stackTrace;
 
     private static final AtomicInteger counter = new AtomicInteger();
