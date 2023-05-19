@@ -17,6 +17,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
     private boolean isEnabled = true;
+    private boolean instrumentationEnabled = false;
     
     public DefaultPersisted2ClientConfig withRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;
@@ -95,6 +96,16 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
         return isEnabled;
     }
 
+//    public DefaultPersisted2ClientConfig setInstrumentationEnabled(boolean instrumentationEnabled) {
+//        this.instrumentationEnabled = instrumentationEnabled;
+//        return this;
+//    }
+//
+//    @Override
+//    public boolean getInstrumentationEnabled() {
+//        return instrumentationEnabled;
+//    }
+
     @Override
     public String toString() {
         return new StringBuilder()
@@ -104,6 +115,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
           .append(" priority=" + prioritizedScopes)
           .append(" queryScopes=" + queryScopes)
           .append(" enabled=" + isEnabled)
+//          .append(" instrumentationEnabled=" + instrumentationEnabled)
           .append("]")
           .toString();
     }
