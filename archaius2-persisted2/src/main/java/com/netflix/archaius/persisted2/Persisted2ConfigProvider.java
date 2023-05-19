@@ -138,10 +138,7 @@ public class Persisted2ConfigProvider implements Provider<Config> {
                     new PollingDynamicConfig(
                             reader,
                             new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
-            if (accessMonitorUtilOptional.isPresent()) {
-//                dynamicConfig.setInstrumentationEnabled(true);
-                dynamicConfig.setAccessMonitorUtil(accessMonitorUtilOptional.get());
-            }
+            accessMonitorUtilOptional.ifPresent(dynamicConfig::setAccessMonitorUtil);
             return dynamicConfig;
         } catch (Exception e1) {
             throw new RuntimeException(e1);

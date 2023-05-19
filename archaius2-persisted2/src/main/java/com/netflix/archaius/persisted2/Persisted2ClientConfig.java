@@ -46,11 +46,4 @@ public interface Persisted2ClientConfig {
      * @return
      */
     String getServiceUrl();
-
-    /**
-     * When set to true, the last called times to persisted fast properties will be kept in memory
-     * in the AccessMonitorUtil. This may have runtime implications and should be rolled out with care.
-     * @return
-     */
-//    boolean getInstrumentationEnabled();
 }

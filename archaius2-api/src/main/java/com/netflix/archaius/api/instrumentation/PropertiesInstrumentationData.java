@@ -2,6 +2,7 @@ package com.netflix.archaius.api.instrumentation;
 
 import java.util.Map;
 
+/** Instrumentation data snapshot for usages captured since the last flush. */
 public class PropertiesInstrumentationData {
     private final Map<String, PropertyUsageData> idToUsageDataMap;
 
