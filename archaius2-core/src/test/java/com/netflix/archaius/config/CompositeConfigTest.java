@@ -37,7 +37,6 @@ import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
-import org.mockito.Mockito;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;

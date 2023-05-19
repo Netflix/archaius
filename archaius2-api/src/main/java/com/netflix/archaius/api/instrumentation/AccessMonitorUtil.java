@@ -25,7 +25,6 @@ public class AccessMonitorUtil {
     // A map from stack trace to how many times that stack trace appeared
     private final ConcurrentHashMap<String, Integer> stackTrace;
 
-
     private static final AtomicInteger counter = new AtomicInteger();
 
     private final ScheduledExecutorService executor;
@@ -71,8 +70,6 @@ public class AccessMonitorUtil {
         startFlushing();
     }
 
-
-    // TODO: handle disabling logic, warnings and such if this is running / should we terminate it, etc.
     private void startFlushing() {
         if (!flushingEnabled()) {
             LOG.warn("Failed to start flushing Archaius instrumentation because flushing is not enabled.");

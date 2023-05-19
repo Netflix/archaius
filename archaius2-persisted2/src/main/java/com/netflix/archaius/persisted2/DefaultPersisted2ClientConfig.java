@@ -96,16 +96,6 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
         return isEnabled;
     }
 
-//    public DefaultPersisted2ClientConfig setInstrumentationEnabled(boolean instrumentationEnabled) {
-//        this.instrumentationEnabled = instrumentationEnabled;
-//        return this;
-//    }
-//
-//    @Override
-//    public boolean getInstrumentationEnabled() {
-//        return instrumentationEnabled;
-//    }
-
     @Override
     public String toString() {
         return new StringBuilder()
@@ -115,7 +105,6 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
           .append(" priority=" + prioritizedScopes)
           .append(" queryScopes=" + queryScopes)
           .append(" enabled=" + isEnabled)
-//          .append(" instrumentationEnabled=" + instrumentationEnabled)
           .append("]")
           .toString();
     }

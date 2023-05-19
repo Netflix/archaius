@@ -161,11 +161,6 @@ public class PollingDynamicConfig extends AbstractConfig {
         instrumentationEnabled = true;
     }
 
-    // TODO: sdf
-    public void disableInstrumentation() {
-        this.instrumentationEnabled = false;
-    }
-
     @Override
     public void recordUsage(PropertyDetails propertyDetails) {
         if (instrumentationEnabled()) {

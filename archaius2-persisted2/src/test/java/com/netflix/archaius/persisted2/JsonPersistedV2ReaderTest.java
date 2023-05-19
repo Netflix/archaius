@@ -29,7 +29,7 @@ public class JsonPersistedV2ReaderTest {
                         () -> new ByteArrayInputStream(
                                 new ObjectMapper().writeValueAsBytes(properties)))
                 .withPath("propertiesList")
-                .withIdField("propertyId")
+                .withReadIdField(true)
                 .build();
 
         PollingResponse response = reader.call();

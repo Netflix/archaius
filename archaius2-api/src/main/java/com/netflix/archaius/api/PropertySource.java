@@ -13,7 +13,6 @@ public interface PropertySource {
      */
     default Optional<Object> getProperty(String key) { return Optional.empty(); }
 
-
     /**
      * Get the raw property value, but do not record any usage data.
      * @param key
