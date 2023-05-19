@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.api.instrumentation.PropertyDetails;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 
@@ -78,12 +78,34 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     private class State {
         private final Map<String, Config> children;
         private final Map<String, Object> data;
+        private final Map<String, Config> instrumentedKeys;
         
         public State(Map<String, Config> children, int size) {
             this.children = children;
             Map<String, Object> data = new HashMap<>(size);
-            children.values().forEach(child -> child.forEachProperty(data::putIfAbsent));
+            Map<String, Config> instrumentedKeys = new HashMap<>();
+            for (Config child : children.values()) {
+                boolean instrumented = child.instrumentationEnabled();
+                child.forEachPropertyUninstrumented(
+                        (k, v) -> updateData(data, instrumentedKeys, k, v, child, instrumented));
+            }
             this.data = Collections.unmodifiableMap(data);
+            this.instrumentedKeys = Collections.unmodifiableMap(instrumentedKeys);
+        }
+
+        private void updateData(
+                Map<String, Object> data,
+                Map<String, Config> instrumentedKeys,
+                String key,
+                Object value,
+                Config childConfig,
+                boolean instrumented) {
+            if (!data.containsKey(key)) {
+                if (instrumented) {
+                    instrumentedKeys.put(key, childConfig);
+                }
+                data.put(key, value);
+            }
         }
         
         State addConfig(String name, Config config) {
@@ -157,7 +179,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     private final ConfigListener listener;
     private final boolean reversed;
     private volatile State state;
-    
     public DefaultCompositeConfig() {
         this(false);
     }
@@ -256,6 +277,15 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public Object getRawProperty(String key) {
+        Object value = state.data.get(key);
+        if (this.state.instrumentedKeys.containsKey(key)) {
+            this.state.instrumentedKeys.get(key).recordUsage(new PropertyDetails(key, null, value));
+        }
+        return value;
+    }
+
+    @Override
+    public Object getRawPropertyUninstrumented(String key) {
         return state.data.get(key);
     }
 
@@ -310,7 +340,31 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public void forEachProperty(BiConsumer<String, Object> consumer) {
+        this.state.data.forEach((k, v) -> {
+            if (this.state.instrumentedKeys.containsKey(k)) {
+                this.state.instrumentedKeys.get(k).recordUsage(new PropertyDetails(k, null, v));
+            }
+            consumer.accept(k, v);
+        });
+    }
+
+    @Override
+    public void forEachPropertyUninstrumented(BiConsumer<String, Object> consumer) {
         this.state.data.forEach(consumer);
+    }
+
+    @Override
+    public void recordUsage(PropertyDetails propertyDetails) {
+        if (this.state.instrumentedKeys.containsKey(propertyDetails.getKey())) {
+            this.state.instrumentedKeys.get(propertyDetails.getKey()).recordUsage(propertyDetails);
+        }
+    }
+
+    @Override
+    public boolean instrumentationEnabled() {
+        // In the case of nested compositeConfigs (or other dependent configs), instrumentation needs to be propagated.
+        // So, if any of the component configs are instrumented, we mark this config as instrumented as well.
+        return !this.state.instrumentedKeys.isEmpty();
     }
 
     @Override

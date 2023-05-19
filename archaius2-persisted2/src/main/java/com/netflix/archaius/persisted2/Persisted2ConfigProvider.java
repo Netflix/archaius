@@ -4,6 +4,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
@@ -60,11 +62,15 @@ public class Persisted2ConfigProvider implements Provider<Config> {
     private final Logger LOG = LoggerFactory.getLogger(Persisted2ConfigProvider.class);
     
     private final Provider<Persisted2ClientConfig>  config;
+    private final Optional<AccessMonitorUtil> accessMonitorUtilOptional;
     private volatile PollingDynamicConfig dynamicConfig;
-    
+
     @Inject
-    public Persisted2ConfigProvider(Provider<Persisted2ClientConfig> config) throws Exception {
+    public Persisted2ConfigProvider(
+            Provider<Persisted2ClientConfig> config,
+            Optional<AccessMonitorUtil> accessMonitorUtilOptional) throws Exception {
         this.config = config;
+        this.accessMonitorUtilOptional = accessMonitorUtilOptional;
     }
     
     public static String getFilterString(Map<String, Set<String>> scopes) {
@@ -123,9 +129,20 @@ public class Persisted2ConfigProvider implements Provider<Config> {
                     .withPath("propertiesList")
                     .withScopes(clientConfig.getPrioritizedScopes())
                     .withPredicate(ScopePredicates.fromMap(clientConfig.getScopes()))
+                    // If instrumentation flushing is enabled, we need to read the id fields as well to uniquely
+                    // identify the property being used.
+                    .withReadIdField(accessMonitorUtilOptional.isPresent())
                     .build();
             
-            return dynamicConfig = new PollingDynamicConfig(reader, new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
+            dynamicConfig =
+                    new PollingDynamicConfig(
+                            reader,
+                            new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
+            if (accessMonitorUtilOptional.isPresent()) {
+//                dynamicConfig.setInstrumentationEnabled(true);
+                dynamicConfig.setAccessMonitorUtil(accessMonitorUtilOptional.get());
+            }
+            return dynamicConfig;
         } catch (Exception e1) {
             throw new RuntimeException(e1);
         }

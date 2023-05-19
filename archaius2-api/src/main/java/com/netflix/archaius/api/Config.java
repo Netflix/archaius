@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.api;
 
+import com.netflix.archaius.api.instrumentation.PropertyDetails;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,9 +53,31 @@ public interface Config extends PropertySource {
      */
     Object getRawProperty(String key);
 
+    /**
+     * Returns the raw object associated with a key, but without reporting on its usage. Only relevant for configs that
+     * support property instrumentation.
+     * @param key
+     */
+    default Object getRawPropertyUninstrumented(String key) { return getRawProperty(key); }
+
+
     @Override
     default Optional<Object> getProperty(String key) { return Optional.ofNullable(getRawProperty(key)); }
-    
+
+    @Override
+    default Optional<Object> getPropertyUninstrumented(String key) {
+        return Optional.ofNullable(getRawPropertyUninstrumented(key));
+    }
+
+    default void recordUsage(PropertyDetails propertyDetails) {
+        throw new UnsupportedOperationException("Property usage instrumentation not supported for this config type.");
+    }
+
+    /** Returns whether a config is recording usage on the standard property endpoints. */
+    default boolean instrumentationEnabled() {
+        return false;
+    }
+
     /**
      * Parse the property as a long.
      * @param key
@@ -145,7 +169,7 @@ public interface Config extends PropertySource {
     default Iterable<String> keys() {
         return this::getKeys;
     }
-    
+
     /**
      * @return Return an interator to all prefixed property names owned by this config
      */
