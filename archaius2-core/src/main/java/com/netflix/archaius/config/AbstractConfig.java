@@ -240,7 +240,6 @@ public abstract class AbstractConfig implements Config {
     @Override
     public <T> T accept(Visitor<T> visitor) {
         forEachPropertyUninstrumented(visitor::visitKey);
-//        forEachPropertyUninstrumented(visitor::visitKey);
         return null;
     }
 

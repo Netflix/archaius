@@ -16,11 +16,10 @@ public class JsonPersistedV2ReaderTest {
     public void idFieldReturnedWhenPresent() throws Exception {
         List<TestProperty> propertyList = new ArrayList<>();
         propertyList.add(new TestProperty("key1", "value3", "id3", "app1", ""));
-        // prop1 overrides the above property due to the region being specified.
-        TestProperty prop1 = new TestProperty("key1", "value1", "id1", "app1", "region1");
-        TestProperty prop2 = new TestProperty("key2", "value2", "id2", "app1", "region1");
-        propertyList.add(prop1);
-        propertyList.add(prop2);
+        // The next two properties are the only two that are actually resolved, as the other two are overridden due to
+        // the presence of the region field.
+        propertyList.add(new TestProperty("key1", "value1", "id1", "app1", "region1"));
+        propertyList.add(new TestProperty("key2", "value2", "id2", "app1", "region1"));
         propertyList.add(new TestProperty("key2", "value4", "id4", "app1", ""));
         TestPropertyList properties = new TestPropertyList(propertyList);
 
@@ -46,12 +45,10 @@ public class JsonPersistedV2ReaderTest {
     public void idFieldAbsent() throws Exception {
         List<TestProperty> propertyList = new ArrayList<>();
         propertyList.add(new TestProperty("key1", "value3", "id3", "app1", ""));
-        // prop1 overrides the above property due to the region being specified.
-        TestProperty prop1 = new TestProperty("key1", "value1", "id1", "app1", "region1");
-        TestProperty prop2 = new TestProperty("key2", "value2", "id2", "app1", "region1");
-        propertyList.add(prop1);
-        propertyList.add(prop2);
-        // this is ignored since prop2 has a region when this doesn't.
+        // The next two properties are the only two that are actually resolved, as the other two are overridden due to
+        // the presence of the region field.
+        propertyList.add(new TestProperty("key1", "value1", "id1", "app1", "region1"));
+        propertyList.add(new TestProperty("key2", "value2", "id2", "app1", "region1"));
         propertyList.add(new TestProperty("key2", "value4", "id4", "app1", ""));
         TestPropertyList properties = new TestPropertyList(propertyList);
 
