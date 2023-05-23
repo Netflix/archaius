@@ -1,4 +1,4 @@
-package com.netflix.archaius.api.instrumentation;
+package com.netflix.archaius.instrumentation;
 
 import java.util.Objects;
 
