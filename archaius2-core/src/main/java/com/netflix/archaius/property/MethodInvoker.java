@@ -29,9 +29,9 @@ public class MethodInvoker<T> extends DefaultPropertyListener<T> {
     
     private static Method getMethodWithOneParameter(Object obj) {
         Method[] methods = obj.getClass().getMethods();
-        if (methods != null && methods.length > 0) {
+        if (methods.length > 0) {
             for (Method method : methods) {
-                if (method.getParameterTypes().length == 1) {
+                if (method.getParameterCount() == 1) {
                     return method;
                 }
             }
