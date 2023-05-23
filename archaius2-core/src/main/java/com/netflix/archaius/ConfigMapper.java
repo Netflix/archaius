@@ -43,7 +43,6 @@ public class ConfigMapper {
      * 
      * @param injectee
      * @param config
-     * @param ioc
      * @throws MappingException
      */
     public <T> void mapConfig(T injectee, Config config) throws MappingException {
@@ -139,7 +138,7 @@ public class ConfigMapper {
             for (Method method : injectee.getClass().getDeclaredMethods()) {
                 // Only support methods with one parameter 
                 //  Ex.  setTimeout(int timeout);
-                if (method.getParameterTypes().length != 1) {
+                if (method.getParameterCount() != 1) {
                     continue;
                 }
                 
