@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.instrumentation.PropertyDetails;
+import com.netflix.archaius.api.PropertyDetails;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 

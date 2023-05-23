@@ -1,4 +1,6 @@
-package com.netflix.archaius.api.instrumentation;
+package com.netflix.archaius.instrumentation;
+
+import com.netflix.archaius.api.PropertyDetails;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /** Tracks property usage data and flushes the data periodically to a sink. */
-public class AccessMonitorUtil {
+public class AccessMonitorUtil implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AccessMonitorUtil.class);
 
     // Map from property id to property usage data
@@ -60,8 +62,9 @@ public class AccessMonitorUtil {
         }
 
         public AccessMonitorUtil build() {
-            return new AccessMonitorUtil(
-                    dataFlushConsumer, recordStackTrace, initialFlushDelaySeconds, flushPeriodSeconds);
+            AccessMonitorUtil accessMonitorUtil = new AccessMonitorUtil(dataFlushConsumer, recordStackTrace);
+            accessMonitorUtil.startFlushing(initialFlushDelaySeconds, flushPeriodSeconds);
+            return accessMonitorUtil;
         }
     }
 
@@ -71,9 +74,7 @@ public class AccessMonitorUtil {
 
     private AccessMonitorUtil(
             Consumer<PropertiesInstrumentationData> dataFlushConsumer,
-            boolean recordStackTrace,
-            int initialFlushDelaySeconds,
-            int flushPeriodSeconds) {
+            boolean recordStackTrace) {
         this.propertyUsageMap = new ConcurrentHashMap<>();
         this.stackTrace = new ConcurrentHashMap<>();
         this.dataFlushConsumer = dataFlushConsumer;
@@ -85,22 +86,23 @@ public class AccessMonitorUtil {
                     thread.setName(String.format("Archaius-Instrumentation-Flusher-%d", counter.incrementAndGet()));
                     return thread;
                 });
-        startFlushing(initialFlushDelaySeconds, flushPeriodSeconds);
     }
 
     private void startFlushing(int initialDelay, int period) {
         if (!flushingEnabled()) {
             LOG.info("Property usage data is being captured, but not flushed as there is no consumer specified.");
         } else {
-            executor.scheduleWithFixedDelay(() -> {
-                try {
-                    if (flushingEnabled()) {
-                        dataFlushConsumer.accept(new PropertiesInstrumentationData(getAndClearUsageMap()));
-                    }
-                } catch (Exception e) {
-                    LOG.warn("Failed to flush property instrumentation data", e);
-                }
-            }, initialDelay, period, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(this::flushUsageData, initialDelay, period, TimeUnit.SECONDS);
+        }
+    }
+
+    private void flushUsageData() {
+        try {
+            if (flushingEnabled()) {
+                dataFlushConsumer.accept(new PropertiesInstrumentationData(getAndClearUsageMap()));
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to flush property instrumentation data", e);
         }
     }
 
@@ -153,5 +155,11 @@ public class AccessMonitorUtil {
 
     public boolean flushingEnabled() {
         return dataFlushConsumer != null;
+    }
+
+    @Override
+    public void close() {
+        executor.shutdown();
+        flushUsageData();
     }
 }

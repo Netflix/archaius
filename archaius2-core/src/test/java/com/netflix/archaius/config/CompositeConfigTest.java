@@ -26,10 +26,10 @@ import java.util.concurrent.Callable;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
-import com.netflix.archaius.api.instrumentation.PropertyDetails;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
+import com.netflix.archaius.api.PropertyDetails;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -218,7 +218,7 @@ public class CompositeConfigTest {
     public void instrumentationNotEnabled() throws Exception {
         com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
 
-        composite.addConfig("polling", createPollingDynamicConfig("a1", "1", "b1", "2"));
+        composite.addConfig("polling", createPollingDynamicConfig("a1", "1", "b1", "2", null));
 
         Assert.assertFalse(composite.instrumentationEnabled());
         Assert.assertEquals(composite.getRawProperty("a1"), "1");
@@ -230,13 +230,11 @@ public class CompositeConfigTest {
         com.netflix.archaius.api.config.CompositeConfig composite = new DefaultCompositeConfig();
         AccessMonitorUtil accessMonitorUtil = spy(AccessMonitorUtil.builder().build());
 
-        PollingDynamicConfig outerPollingDynamicConfig = createPollingDynamicConfig("a1", "1", "b1", "2");
-        outerPollingDynamicConfig.setAccessMonitorUtil(accessMonitorUtil);
+        PollingDynamicConfig outerPollingDynamicConfig = createPollingDynamicConfig("a1", "1", "b1", "2", accessMonitorUtil);
         composite.addConfig("outer", outerPollingDynamicConfig);
 
         com.netflix.archaius.api.config.CompositeConfig innerComposite = new DefaultCompositeConfig();
-        PollingDynamicConfig nestedPollingDynamicConfig = createPollingDynamicConfig("b1", "1", "c1", "3");
-        nestedPollingDynamicConfig.setAccessMonitorUtil(accessMonitorUtil);
+        PollingDynamicConfig nestedPollingDynamicConfig = createPollingDynamicConfig("b1", "1", "c1", "3", accessMonitorUtil);
         innerComposite.addConfig("polling", nestedPollingDynamicConfig);
         composite.addConfig("innerComposite", innerComposite);
 
@@ -282,7 +280,7 @@ public class CompositeConfigTest {
     }
 
     private PollingDynamicConfig createPollingDynamicConfig(
-            String key1, String value1, String key2, String value2) throws Exception {
+            String key1, String value1, String key2, String value2, AccessMonitorUtil accessMonitorUtil) throws Exception {
         ManualPollingStrategy strategy = new ManualPollingStrategy();
         Map<String, String> props = new HashMap<>();
         props.put(key1, value1);
@@ -291,7 +289,7 @@ public class CompositeConfigTest {
         propIds.put(key1, key1);
         propIds.put(key2, key2);
         Callable<PollingResponse> reader = () -> PollingResponse.forSnapshot(props, propIds);
-        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
         strategy.fire();
         return config;
     }

@@ -1,4 +1,4 @@
-package com.netflix.archaius.api.instrumentation;
+package com.netflix.archaius.instrumentation;
 
 /** Container for data about a single property usage event. */
 public class PropertyUsageEvent {
