@@ -15,8 +15,6 @@
  */
 package com.netflix.archaius.api;
 
-import com.netflix.archaius.api.instrumentation.PropertyDetails;
-
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;

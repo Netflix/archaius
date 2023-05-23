@@ -26,8 +26,8 @@ import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
-import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 
 /**
  * Guice Module for enabling archaius and making its components injectable.  Installing this

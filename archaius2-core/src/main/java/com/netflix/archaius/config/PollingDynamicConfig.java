@@ -27,9 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.api.config.PollingStrategy;
-import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
-import com.netflix.archaius.api.instrumentation.PropertyDetails;
+import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 
 /**
  * Special DynamicConfig that reads an entire snapshot of the configuration
@@ -46,12 +46,19 @@ public class PollingDynamicConfig extends AbstractConfig {
     private final AtomicLong updateCounter = new AtomicLong();
     private final AtomicLong errorCounter = new AtomicLong();
     private final PollingStrategy strategy;
-    private AccessMonitorUtil accessMonitorUtil;
-    private boolean instrumentationEnabled = false;
+    // Holds the AccessMonitorUtil and whether instrumentation is enabled. This is encapsulated to avoid
+    // race conditions while also allowing for on-the-fly enabling and disabling of instrumentation.
+    private volatile Instrumentation instrumentation;
 
     public PollingDynamicConfig(Callable<PollingResponse> reader, PollingStrategy strategy) {
+        this(reader, strategy, null);
+    }
+
+    public PollingDynamicConfig(
+            Callable<PollingResponse> reader, PollingStrategy strategy, AccessMonitorUtil accessMonitorUtil) {
         this.reader = reader;
         this.strategy = strategy;
+        this.instrumentation = new Instrumentation(accessMonitorUtil, accessMonitorUtil != null);
         strategy.execute(new Runnable() {
             @Override
             public void run() {
@@ -156,11 +163,6 @@ public class PollingDynamicConfig extends AbstractConfig {
         current.forEach(consumer);
     }
 
-    public void setAccessMonitorUtil(AccessMonitorUtil accessMonitorUtil) {
-        this.accessMonitorUtil = accessMonitorUtil;
-        instrumentationEnabled = true;
-    }
-
     @Override
     public void recordUsage(PropertyDetails propertyDetails) {
         if (instrumentationEnabled()) {
@@ -172,12 +174,30 @@ public class PollingDynamicConfig extends AbstractConfig {
                         currentIds.get(propertyDetails.getKey()),
                         propertyDetails.getValue());
             }
-            accessMonitorUtil.registerUsage(propertyDetails);
+            instrumentation.getAccessMonitorUtil().registerUsage(propertyDetails);
         }
     }
 
     @Override
     public boolean instrumentationEnabled() {
-        return instrumentationEnabled && accessMonitorUtil != null;
+        return instrumentation.getEnabled() && instrumentation.getAccessMonitorUtil() != null;
+    }
+
+    private static class Instrumentation {
+        private final AccessMonitorUtil accessMonitorUtil;
+        private final boolean enabled;
+
+        Instrumentation(AccessMonitorUtil accessMonitorUtil, boolean enabled) {
+            this.accessMonitorUtil = accessMonitorUtil;
+            this.enabled = enabled;
+        }
+
+        private AccessMonitorUtil getAccessMonitorUtil() {
+            return accessMonitorUtil;
+        }
+
+        private boolean getEnabled() {
+            return enabled;
+        }
     }
 }

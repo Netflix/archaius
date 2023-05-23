@@ -25,9 +25,9 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
-import com.netflix.archaius.api.instrumentation.PropertyDetails;
+import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,7 +39,6 @@ import com.netflix.archaius.property.PropertiesServerHandler;
 import com.netflix.archaius.readers.URLConfigReader;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import static com.netflix.archaius.TestUtils.set;
@@ -305,10 +304,9 @@ public class PollingDynamicConfigTest {
             propIds.put("bar", "2");
             return PollingResponse.forSnapshot(props, propIds);
         };
-        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
-        strategy.fire();
         AccessMonitorUtil accessMonitorUtil = spy(AccessMonitorUtil.builder().build());
-        config.setAccessMonitorUtil(accessMonitorUtil);
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
+        strategy.fire();
 
         Assert.assertTrue(config.instrumentationEnabled());
 

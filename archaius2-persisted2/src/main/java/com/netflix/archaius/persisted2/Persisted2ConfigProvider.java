@@ -16,10 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.instrumentation.AccessMonitorUtil;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.PollingDynamicConfig;
 import com.netflix.archaius.config.polling.FixedPollingStrategy;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import com.netflix.archaius.persisted2.loader.HTTPStreamLoader;
 
 /**
@@ -137,8 +137,8 @@ public class Persisted2ConfigProvider implements Provider<Config> {
             dynamicConfig =
                     new PollingDynamicConfig(
                             reader,
-                            new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS));
-            accessMonitorUtilOptional.ifPresent(dynamicConfig::setAccessMonitorUtil);
+                            new FixedPollingStrategy(clientConfig.getRefreshRate(), TimeUnit.SECONDS),
+                            accessMonitorUtilOptional.orElse(null));
             return dynamicConfig;
         } catch (Exception e1) {
             throw new RuntimeException(e1);
