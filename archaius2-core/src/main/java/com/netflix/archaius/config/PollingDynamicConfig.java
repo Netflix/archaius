@@ -165,6 +165,8 @@ public class PollingDynamicConfig extends AbstractConfig {
 
     @Override
     public void recordUsage(PropertyDetails propertyDetails) {
+        // Once the instrumentation object is being actively changed (i.e. we have a runtime-disabling mechanism),
+        // there is a potential race condition here. Ensure that this is addressed when this is being changed.
         if (instrumentationEnabled()) {
             // Instrumentation calls from outside PollingDynamicConfig may not have ids populated, so we replace the id
             // here if the id isn't present.

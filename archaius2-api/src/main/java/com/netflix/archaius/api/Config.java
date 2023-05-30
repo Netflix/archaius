@@ -26,6 +26,20 @@ import java.util.Optional;
  * Core API for reading a configuration.  The API is read only.
  */
 public interface Config extends PropertySource {
+
+    /**
+     * Interface for a visitor visiting all key, value pairs.
+     * <p>
+     * Visitors should not have consequences based on specific key-value pairs and in general
+     * should be used primarily for logging purposes.
+     * <p>
+     * Notably, instrumentation is by default disabled on visitors, meaning that if there are
+     * visitors that result in consequences based on specific key-value pairs, it is possible
+     * that they are still registered as unused and cleaned up, resulting in an unintended
+     * code behavior change.
+     *
+     * @param <T>
+     */
     interface Visitor<T> {
         T visitKey(String key, Object value);
     }
