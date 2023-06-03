@@ -1,13 +1,13 @@
 package com.netflix.archaius.visitor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.CompositeConfig;
 
 public class SLF4JConfigVisitor implements CompositeConfig.CompositeVisitor<Void> {
-    private static final Logger LOG = LoggerFactory.getLogger(SLF4JConfigVisitor.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(SLF4JConfigVisitor.class);
     private final String INDENT_STR = "  ";
     
     private String currentIndent = "";

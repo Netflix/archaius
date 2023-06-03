@@ -21,8 +21,8 @@ import com.netflix.archaius.api.PropertyContainer;
 import com.netflix.archaius.api.PropertyListener;
 import com.netflix.archaius.property.ListenerManager.ListenerUpdater;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,7 +45,7 @@ import java.util.function.Function;
  */
 @Deprecated
 public class DefaultPropertyContainer implements PropertyContainer {
-    private final Logger LOG = LoggerFactory.getLogger(DefaultPropertyContainer.class);
+    private final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(DefaultPropertyContainer.class);
     
     enum Type {
         INTEGER     (int.class,     Integer.class),

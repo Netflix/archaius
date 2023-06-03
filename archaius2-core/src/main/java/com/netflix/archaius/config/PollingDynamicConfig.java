@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.netflix.archaius.log.ArchaiusLogger;
+import com.netflix.archaius.log.ArchaiusLoggerFactory;
 
 import com.netflix.archaius.api.config.PollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
@@ -35,7 +35,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
  * the new immutable Map backing this config.  
  */
 public class PollingDynamicConfig extends AbstractConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
+    private static final ArchaiusLogger LOG = ArchaiusLoggerFactory.getLogger(PollingDynamicConfig.class);
     
     private volatile Map<String, String> current = Collections.emptyMap();
     private final AtomicBoolean busy = new AtomicBoolean();
