@@ -15,16 +15,14 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BiConsumer;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.StrInterpolator.Lookup;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
@@ -35,25 +33,11 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
  * This class is meant to work with dynamic Config object that may have properties
  * added and removed.
  */
-public class PrefixedViewConfig extends AbstractConfig {
+public class PrefixedViewConfig extends AbstractDependentConfig {
     private final Config config;
     private final String prefix;
     private final Lookup nonPrefixedLookup;
-    private volatile State state;
-
-    private static class State {
-        final Map<String, Object> data;
-        
-        public State(Config config, String prefix) {
-            Map<String, Object> data = new LinkedHashMap<>();
-            config.forEachProperty((k, v) -> {
-                if (k.startsWith(prefix)) {
-                    data.put(k.substring(prefix.length()), v);
-                }
-            });
-            this.data = Collections.unmodifiableMap(data);
-        }
-    }
+    private volatile CachedState state;
 
     /** Listener to update the state of the PrefixedViewConfig on any changes in the source config. */
     private static class PrefixedViewConfigListener extends DependentConfigListener<PrefixedViewConfig> {
@@ -85,46 +69,42 @@ public class PrefixedViewConfig extends AbstractConfig {
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
         this.nonPrefixedLookup = ConfigStrLookup.from(config);
-        this.state = new State(config, this.prefix);
+        this.state = createState(config);
         this.config.addListener(new PrefixedViewConfigListener(this));
     }
 
     private void updateState(Config config) {
-        this.state = new State(config, prefix);
+        this.state = createState(config);
+    }
+
+    private CachedState createState(Config config) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        Map<String, Config> instrumentedKeys = new LinkedHashMap<>();
+        boolean instrumented = config.instrumentationEnabled();
+        config.forEachPropertyUninstrumented((k, v) -> {
+            if (k.startsWith(prefix)) {
+                String key = k.substring(prefix.length());
+                data.put(key, v);
+                if (instrumented) {
+                    instrumentedKeys.put(key, config);
+                }
+            }
+        });
+        return new CachedState(data, instrumentedKeys);
     }
 
     @Override
-    public Iterator<String> getKeys() {
-        return state.data.keySet().iterator();
-    }
-
-    @Override
-    public Iterable<String> keys() {
-        return state.data.keySet();
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        return state.data.containsKey(key);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return state.data.isEmpty();
+    public CachedState getState() {
+        return state;
     }
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
         T t = null;
-        for (Entry<String, Object> entry : state.data.entrySet()) {
+        for (Entry<String, Object> entry : state.getData().entrySet()) {
             t = visitor.visitKey(entry.getKey(), entry.getValue());
         }
         return t;
-    }
-
-    @Override
-    public Object getRawProperty(String key) {
-        return state.data.get(key);
     }
     
     @Override
@@ -157,7 +137,7 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public void forEachProperty(BiConsumer<String, Object> consumer) {
-        this.state.data.forEach(consumer);
+    public PropertyDetails createPropertyDetails(String key, Object value) {
+        return new PropertyDetails(prefix + key, null, value);
     }
 }

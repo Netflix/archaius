@@ -18,12 +18,10 @@ package com.netflix.archaius.config;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.PropertyDetails;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 
@@ -44,7 +41,7 @@ import com.netflix.archaius.api.PropertyDetails;
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
-public class DefaultCompositeConfig extends AbstractConfig implements com.netflix.archaius.api.config.CompositeConfig {
+public class DefaultCompositeConfig extends AbstractDependentConfig implements com.netflix.archaius.api.config.CompositeConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCompositeConfig.class);
     
     /**
@@ -77,8 +74,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
     
     private class State {
         private final Map<String, Config> children;
-        private final Map<String, Object> data;
-        private final Map<String, Config> instrumentedKeys;
+        private final CachedState cachedState;
         
         public State(Map<String, Config> children, int size) {
             this.children = children;
@@ -89,8 +85,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
                 child.forEachPropertyUninstrumented(
                         (k, v) -> updateData(data, instrumentedKeys, k, v, child, instrumented));
             }
-            this.data = Collections.unmodifiableMap(data);
-            this.instrumentedKeys = Collections.unmodifiableMap(instrumentedKeys);
+            this.cachedState = new CachedState(data, instrumentedKeys);
         }
 
         private void updateData(
@@ -117,20 +112,20 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
                 children.putAll(this.children);
                 children.put(name, config);
             }
-            return new State(children, data.size() + 16);
+            return new State(children, cachedState.getData().size() + 16);
         }
         
         State removeConfig(String name) {
             if (children.containsKey(name)) {
                 LinkedHashMap<String, Config> children = new LinkedHashMap<>(this.children);
                 children.remove(name);
-                return new State(children, data.size());
+                return new State(children, cachedState.getData().size());
             }
             return this;
         }
         
         public State refresh() {
-            return new State(children, data.size());
+            return new State(children, cachedState.getData().size());
         }
 
 
@@ -188,6 +183,11 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         this.listener = new CompositeConfigListener(this);
         
         this.state = new State(Collections.emptyMap(), 0);
+    }
+
+    @Override
+    CachedState getState() {
+        return state.cachedState;
     }
 
     private void refreshState() {
@@ -274,38 +274,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         return state.children.get(name);
     }
 
-
-    @Override
-    public Object getRawProperty(String key) {
-        Object value = state.data.get(key);
-        if (this.state.instrumentedKeys.containsKey(key)) {
-            this.state.instrumentedKeys.get(key).recordUsage(new PropertyDetails(key, null, value));
-        }
-        return value;
-    }
-
-    @Override
-    public Object getRawPropertyUninstrumented(String key) {
-        return state.data.get(key);
-    }
-
-    /**
-     * Return a set of all unique keys tracked by any child of this composite.
-     * This can be an expensive operations as it requires iterating through all of
-     * the children.
-     * 
-     * TODO: Cache keys
-     */
-    @Override
-    public Iterator<String> getKeys() {
-        return state.data.keySet().iterator();
-    }
-
-    @Override
-    public Iterable<String> keys() {
-        return state.data.keySet();
-    }
-
     @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
         AtomicReference<T> result = new AtomicReference<>(null);
@@ -315,7 +283,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
                 result.set(cv.visitChild(key, config));
             });
         } else {
-            state.data.forEach(visitor::visitKey);
+            state.cachedState.getData().forEach(visitor::visitKey);
         }
         return result.get();
     }
@@ -326,45 +294,6 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
             builder.withConfig(config.getKey(), config.getValue());
         }
         return builder.build();
-    }
-    
-    @Override
-    public boolean containsKey(String key) {
-        return state.data.containsKey(key);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return state.data.isEmpty();
-    }
-
-    @Override
-    public void forEachProperty(BiConsumer<String, Object> consumer) {
-        this.state.data.forEach((k, v) -> {
-            if (this.state.instrumentedKeys.containsKey(k)) {
-                this.state.instrumentedKeys.get(k).recordUsage(new PropertyDetails(k, null, v));
-            }
-            consumer.accept(k, v);
-        });
-    }
-
-    @Override
-    public void forEachPropertyUninstrumented(BiConsumer<String, Object> consumer) {
-        this.state.data.forEach(consumer);
-    }
-
-    @Override
-    public void recordUsage(PropertyDetails propertyDetails) {
-        if (this.state.instrumentedKeys.containsKey(propertyDetails.getKey())) {
-            this.state.instrumentedKeys.get(propertyDetails.getKey()).recordUsage(propertyDetails);
-        }
-    }
-
-    @Override
-    public boolean instrumentationEnabled() {
-        // In the case of nested compositeConfigs (or other dependent configs), instrumentation needs to be propagated.
-        // So, if any of the component configs are instrumented, we mark this config as instrumented as well.
-        return !this.state.instrumentedKeys.isEmpty();
     }
 
     @Override

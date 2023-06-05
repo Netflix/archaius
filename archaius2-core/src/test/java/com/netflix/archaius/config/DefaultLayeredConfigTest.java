@@ -3,9 +3,13 @@ package com.netflix.archaius.config;
 import com.netflix.archaius.Layers;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.api.config.LayeredConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 
+import com.netflix.archaius.config.polling.ManualPollingStrategy;
+import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -13,10 +17,18 @@ import org.mockito.Mockito;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class DefaultLayeredConfigTest {
     @Test
@@ -230,5 +242,85 @@ public class DefaultLayeredConfigTest {
 
         Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
         Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+    }
+
+    @Test
+    public void instrumentationNotEnabled() throws Exception {
+        LayeredConfig config = new DefaultLayeredConfig();
+
+        config.addConfig(Layers.DEFAULT, createPollingDynamicConfig("a1", "1", "b1", "2", null));
+
+        Assert.assertFalse(config.instrumentationEnabled());
+        Assert.assertEquals(config.getRawProperty("a1"), "1");
+        Assert.assertEquals(config.getRawProperty("b1"), "2");
+    }
+
+    @Test
+    public void instrumentationPropagation() throws Exception {
+        com.netflix.archaius.api.config.LayeredConfig layered = new DefaultLayeredConfig();
+        AccessMonitorUtil accessMonitorUtil = spy(AccessMonitorUtil.builder().build());
+
+        PollingDynamicConfig outerPollingDynamicConfig = createPollingDynamicConfig("a1", "1", "b1", "2", accessMonitorUtil);
+        layered.addConfig(Layers.RUNTIME, outerPollingDynamicConfig);
+
+        com.netflix.archaius.api.config.CompositeConfig innerComposite = new DefaultCompositeConfig();
+        PollingDynamicConfig nestedPollingDynamicConfig = createPollingDynamicConfig("b1", "1", "c1", "3", accessMonitorUtil);
+        innerComposite.addConfig("polling", nestedPollingDynamicConfig);
+        layered.addConfig(Layers.SYSTEM, innerComposite);
+
+        layered.addConfig(Layers.ENVIRONMENT, MapConfig.builder().put("c1", "4").put("d1",  "5").build());
+
+        // Properties (a1: 1) and (b1: 2) are covered by the first polling config
+        Assert.assertEquals(layered.getRawProperty("a1"), "1");
+        verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("a1", "a1", "1")));
+
+        Assert.assertEquals(layered.getRawPropertyUninstrumented("a1"), "1");
+        verify(accessMonitorUtil, times(1)).registerUsage(any());
+
+        Assert.assertEquals(layered.getRawProperty("b1"), "2");
+        verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("b1", "b1", "2")));
+
+        Assert.assertEquals(layered.getRawPropertyUninstrumented("b1"), "2");
+        verify(accessMonitorUtil, times(2)).registerUsage(any());
+
+        // Property (c1: 3) is covered by the composite config over the polling config
+        Assert.assertEquals(layered.getRawProperty("c1"), "3");
+        verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("c1", "c1", "3")));
+
+        Assert.assertEquals(layered.getRawPropertyUninstrumented("c1"), "3");
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
+
+        // Property (d1: 5) is covered by the final, uninstrumented MapConfig
+        Assert.assertEquals(layered.getRawProperty("d1"), "5");
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
+
+        Assert.assertEquals(layered.getRawPropertyUninstrumented("d1"), "5");
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
+
+        // The instrumented forEachProperty endpoint updates the counts for every property
+        layered.forEachProperty((k, v) -> {});
+        verify(accessMonitorUtil, times(2)).registerUsage(eq(new PropertyDetails("a1", "a1", "1")));
+        verify(accessMonitorUtil, times(2)).registerUsage(eq(new PropertyDetails("b1", "b1", "2")));
+        verify(accessMonitorUtil, times(2)).registerUsage(eq(new PropertyDetails("c1", "c1", "3")));
+        verify(accessMonitorUtil, times(6)).registerUsage((any()));
+
+        // The uninstrumented forEachProperty leaves the counts unchanged
+        layered.forEachPropertyUninstrumented((k, v) -> {});
+        verify(accessMonitorUtil, times(6)).registerUsage((any()));
+    }
+
+    private PollingDynamicConfig createPollingDynamicConfig(
+            String key1, String value1, String key2, String value2, AccessMonitorUtil accessMonitorUtil) throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Map<String, String> props = new HashMap<>();
+        props.put(key1, value1);
+        props.put(key2, value2);
+        Map<String, String> propIds = new HashMap<>();
+        propIds.put(key1, key1);
+        propIds.put(key2, key2);
+        Callable<PollingResponse> reader = () -> PollingResponse.forSnapshot(props, propIds);
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
+        strategy.fire();
+        return config;
     }
 }

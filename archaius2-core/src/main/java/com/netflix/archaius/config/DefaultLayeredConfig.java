@@ -13,12 +13,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +26,7 @@ import java.util.stream.Collectors;
  * 
  *  Runtime -> Environment -> System -> Application -> Library -> Defaults
  */
-public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfig {
+public class DefaultLayeredConfig extends AbstractDependentConfig implements LayeredConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultLayeredConfig.class);
     
     private final ConfigListener listener;
@@ -81,11 +79,6 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
     }
 
     @Override
-    public boolean isEmpty() {
-        return state.data.isEmpty();
-    }
-
-    @Override
     public synchronized void addConfig(Layer layer, Config config) {
         addConfig(layer, config, insertionOrderCounter.incrementAndGet());
     }
@@ -122,11 +115,6 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
             this.notifyConfigUpdated(this);
         }
         return previous;
-    }
-
-    @Override
-    public void forEachProperty(BiConsumer<String, Object> consumer) {
-        this.state.data.forEach(consumer);
     }
     
     private static final AtomicInteger insertionOrderCounter = new AtomicInteger(1);
@@ -206,14 +194,34 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
      */
     private static final class ImmutableCompositeState {
         private final List<LayerAndConfig> children;
-        private final Map<String, Object> data;
+        private final CachedState cachedState;
         
         ImmutableCompositeState(List<LayerAndConfig> entries) {
             this.children = entries;
             this.children.sort(ByPriorityAndInsertionOrder);
             Map<String, Object> data = new HashMap<>();
-            this.children.forEach(child -> child.config.forEachProperty(data::putIfAbsent));
-            this.data = Collections.unmodifiableMap(data);
+            Map<String, Config> instrumentedKeys = new HashMap<>();
+            for (LayerAndConfig child : children) {
+                boolean instrumented = child.config.instrumentationEnabled();
+                child.config.forEachPropertyUninstrumented(
+                        (k, v) -> updateData(data, instrumentedKeys, k, v, child.config, instrumented));
+            }
+            this.cachedState = new CachedState(data, instrumentedKeys);
+        }
+
+        private void updateData(
+                Map<String, Object> data,
+                Map<String, Config> instrumentedKeys,
+                String key,
+                Object value,
+                Config childConfig,
+                boolean instrumented) {
+            if (!data.containsKey(key)) {
+                if (instrumented) {
+                    instrumentedKeys.put(key, childConfig);
+                }
+                data.put(key, value);
+            }
         }
         
         public ImmutableCompositeState addChild(LayerAndConfig layerAndConfig) {
@@ -245,27 +253,7 @@ public class DefaultLayeredConfig extends AbstractConfig implements LayeredConfi
     }
 
     @Override
-    public Optional<Object> getProperty(String key) {
-        return Optional.ofNullable(state.data.get(key));
-    }
-
-    @Override
-    public Object getRawProperty(String key) {
-        return state.data.get(key);
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        return state.data.containsKey(key);
-    }
-
-    @Override
-    public Iterator<String> getKeys() {
-        return state.data.keySet().iterator();
-    }
-
-    @Override
-    public Iterable<String> keys() {
-        return state.data.keySet();
+    public CachedState getState() {
+        return state.cachedState;
     }
 }

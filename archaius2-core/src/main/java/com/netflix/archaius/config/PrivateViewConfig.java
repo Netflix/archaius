@@ -15,8 +15,6 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,17 +30,7 @@ import com.netflix.archaius.api.StrInterpolator;
  * <p>
  * This class is meant to work with dynamic Config object that may have properties added and removed.
  */
-public class PrivateViewConfig extends AbstractConfig {
-
-    private static class State {
-        final Map<String, Object> data;
-
-        public State(Config config) {
-            Map<String, Object> data = new LinkedHashMap<>();
-            config.forEachProperty(data::put);
-            this.data = Collections.unmodifiableMap(data);
-        }
-    }
+public class PrivateViewConfig extends AbstractDependentConfig {
 
     /** Listener to update our own state on upstream changes and then propagate the even to our own listeners. */
     private static class ViewConfigListener extends DependentConfigListener<PrivateViewConfig> {
@@ -73,48 +61,41 @@ public class PrivateViewConfig extends AbstractConfig {
         }
     }
 
-    private volatile State state;
+    private volatile CachedState state;
 
     private void updateState(Config config) {
-        this.state = new State(config);
+        this.state = createState(config);
+    }
+
+    private CachedState createState(Config config) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        Map<String, Config> instrumentedKeys = new LinkedHashMap<>();
+        boolean instrumented = config.instrumentationEnabled();
+        config.forEachPropertyUninstrumented((k, v) -> {
+            data.put(k, v);
+            if (instrumented) {
+                instrumentedKeys.put(k, config);
+            }
+        });
+        return new CachedState(data, instrumentedKeys);
+    }
+
+    @Override
+    public CachedState getState() {
+        return state;
     }
 
     public PrivateViewConfig(final Config wrappedConfig) {
-        this.state = new State(wrappedConfig);
+        this.state = createState(wrappedConfig);
         wrappedConfig.addListener(new ViewConfigListener(this));
-    }
-
-    @Override
-    public Iterator<String> getKeys() {
-        return state.data.keySet().iterator();
-    }
-
-    @Override
-    public Iterable<String> keys() {
-        return state.data.keySet();
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        return state.data.containsKey(key);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return state.data.isEmpty();
     }
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
         T t = null;
-        for (Entry<String, Object> entry : state.data.entrySet()) {
+        for (Entry<String, Object> entry : state.getData().entrySet()) {
             t = visitor.visitKey(entry.getKey(), entry.getValue());
         }
         return t;
-    }
-
-    @Override
-    public Object getRawProperty(String key) {
-        return state.data.get(key);
     }
 }
