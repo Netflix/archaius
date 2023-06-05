@@ -89,7 +89,7 @@ public abstract class AbstractDependentConfig extends AbstractConfig {
         return !getState().getInstrumentedKeys().isEmpty();
     }
     
-    public PropertyDetails createPropertyDetails(String key, Object value) {
+    protected PropertyDetails createPropertyDetails(String key, Object value) {
         return new PropertyDetails(key, null, value);
     }
 }

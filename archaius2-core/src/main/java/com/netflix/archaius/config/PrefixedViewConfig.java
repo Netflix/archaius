@@ -137,7 +137,7 @@ public class PrefixedViewConfig extends AbstractDependentConfig {
     }
 
     @Override
-    public PropertyDetails createPropertyDetails(String key, Object value) {
+    protected PropertyDetails createPropertyDetails(String key, Object value) {
         return new PropertyDetails(prefix + key, null, value);
     }
 }
