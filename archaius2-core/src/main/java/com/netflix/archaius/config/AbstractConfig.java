@@ -239,7 +239,9 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
-        forEachProperty(visitor::visitKey);
+        // The general visitor pattern is not expected to have consequences at the individual key-value pair level,
+        // so we choose to leave visitors uninstrumented as they otherwise represent a large source of noisy data.
+        forEachPropertyUninstrumented(visitor::visitKey);
         return null;
     }
 

@@ -17,6 +17,7 @@ public class DefaultPersisted2ClientConfig implements Persisted2ClientConfig {
     private Map<String, String> scopes = new HashMap<>();
     private boolean skipPropsWithExtraScopes = false;
     private boolean isEnabled = true;
+    private boolean instrumentationEnabled = false;
     
     public DefaultPersisted2ClientConfig withRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;

@@ -20,12 +20,14 @@ import java.util.Properties;
 import com.google.inject.AbstractModule;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.multibindings.OptionalBinder;
 import com.google.inject.name.Names;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.config.MapConfig;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 
 /**
  * Guice Module for enabling archaius and making its components injectable.  Installing this
@@ -242,7 +244,8 @@ public class ArchaiusModule extends AbstractModule {
     @Override
     protected final void configure() {
         install(new InternalArchaiusModule());
-      
+        OptionalBinder.newOptionalBinder(binder(), AccessMonitorUtil.class);
+
         configureArchaius();
 
         // TODO: Remove in next release

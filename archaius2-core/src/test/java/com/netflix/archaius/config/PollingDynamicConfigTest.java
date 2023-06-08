@@ -25,7 +25,9 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +43,11 @@ import static org.junit.Assert.assertTrue;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class PollingDynamicConfigTest {
     
@@ -283,5 +290,39 @@ public class PollingDynamicConfigTest {
 
         Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
         Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+    }
+
+    @Test
+    public void testInstrumentation() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo", "foo-value");
+            props.put("bar", "bar-value");
+            Map<String, String> propIds = new HashMap<>();
+            propIds.put("foo", "1");
+            propIds.put("bar", "2");
+            return PollingResponse.forSnapshot(props, propIds);
+        };
+        AccessMonitorUtil accessMonitorUtil = spy(AccessMonitorUtil.builder().build());
+        PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
+        strategy.fire();
+
+        Assert.assertTrue(config.instrumentationEnabled());
+
+        config.getRawProperty("foo");
+        verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo", "1", "foo-value")));
+        verify(accessMonitorUtil, times(1)).registerUsage(any());
+
+        config.getRawPropertyUninstrumented("bar");
+        verify(accessMonitorUtil, times(1)).registerUsage(any());
+
+        config.forEachProperty((k, v) -> {});
+        verify(accessMonitorUtil, times(2)).registerUsage(eq(new PropertyDetails("foo", "1", "foo-value")));
+        verify(accessMonitorUtil, times(1)).registerUsage(eq(new PropertyDetails("bar", "2", "bar-value")));
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
+
+        config.forEachPropertyUninstrumented((k, v) -> {});
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
     }
 }

@@ -1,23 +1,37 @@
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.Layers;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.PropertyDetails;
+import com.netflix.archaius.api.config.LayeredConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
+import com.netflix.archaius.config.polling.ManualPollingStrategy;
+import com.netflix.archaius.config.polling.PollingResponse;
+import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class PrefixedViewTest {
     @Test
@@ -146,5 +160,54 @@ public class PrefixedViewTest {
 
         Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
         Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+    }
+
+    @Test
+    public void instrumentationNotEnabled() throws Exception {
+        Config config = MapConfig.builder()
+                .put("foo.prop1", "value1")
+                .put("foo.prop2", "value2")
+                .build()
+                .getPrefixedView("foo");
+
+        Assert.assertFalse(config.instrumentationEnabled());
+        Assert.assertEquals(config.getRawProperty("prop1"), "value1");
+        Assert.assertEquals(config.getRawProperty("prop2"), "value2");
+    }
+
+    @Test
+    public void instrumentation() throws Exception {
+        ManualPollingStrategy strategy = new ManualPollingStrategy();
+        Callable<PollingResponse> reader = () -> {
+            Map<String, String> props = new HashMap<>();
+            props.put("foo.prop1", "foo-value");
+            props.put("foo.prop2", "bar-value");
+            Map<String, String> propIds = new HashMap<>();
+            propIds.put("foo.prop1", "1");
+            propIds.put("foo.prop2", "2");
+            return PollingResponse.forSnapshot(props, propIds);
+        };
+        AccessMonitorUtil accessMonitorUtil = spy(AccessMonitorUtil.builder().build());
+        PollingDynamicConfig baseConfig = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
+        strategy.fire();
+
+        Config config = baseConfig.getPrefixedView("foo");
+
+        Assert.assertTrue(config.instrumentationEnabled());
+
+        config.getRawProperty("prop1");
+        verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo.prop1", "1", "foo-value")));
+        verify(accessMonitorUtil, times(1)).registerUsage(any());
+
+        config.getRawPropertyUninstrumented("prop2");
+        verify(accessMonitorUtil, times(1)).registerUsage(any());
+
+        config.forEachProperty((k, v) -> {});
+        verify(accessMonitorUtil, times(2)).registerUsage(eq(new PropertyDetails("foo.prop1", "1", "foo-value")));
+        verify(accessMonitorUtil, times(1)).registerUsage(eq(new PropertyDetails("foo.prop2", "2", "bar-value")));
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
+
+        config.forEachPropertyUninstrumented((k, v) -> {});
+        verify(accessMonitorUtil, times(3)).registerUsage(any());
     }
 }

@@ -51,7 +51,8 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private final static List<String> DEFAULT_ORDERED_SCOPES = Arrays.asList("serverId", "asg", "ami", "cluster", "appId", "env", "countries", "stack", "zone", "region");
     private final static String DEFAULT_KEY_FIELD   = "key";
     private final static String DEFAULT_VALUE_FIELD = "value";
-    private final static List<String> DEFAULT_PATH  = Arrays.asList("persistedproperties", "properties", "property");
+    private final static String DEFAULT_ID_FIELD = "propertyId";
+    private final static List<String>   DEFAULT_PATH  = Arrays.asList("persistedproperties", "properties", "property");
             
     public static class Builder {
         private final Callable<InputStream> reader;
@@ -59,8 +60,10 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         private List<String> scopeFields = DEFAULT_ORDERED_SCOPES;
         private String       keyField    = DEFAULT_KEY_FIELD;
         private String       valueField  = DEFAULT_VALUE_FIELD;
+        private String       idField = DEFAULT_ID_FIELD;
         private ScopePredicate predicate = ScopePredicates.alwaysTrue();
         private ScopedValueResolver resolver = new ScopePriorityPropertyValueResolver();
+        private boolean readIdField = false;
                 
         public Builder(Callable<InputStream> reader) {
             this.reader = reader;
@@ -96,9 +99,19 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
             this.valueField = valueField;
             return this;
         }
+
+        public Builder withIdField(String idField) {
+            this.idField = idField;
+            return this;
+        }
         
         public Builder withValueResolver(ScopedValueResolver resolver) {
             this.resolver = resolver;
+            return this;
+        }
+
+        public Builder withReadIdField(boolean readIdField) {
+            this.readIdField = readIdField;
             return this;
         }
         
@@ -118,8 +131,10 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
     private final ObjectMapper            mapper         = new ObjectMapper();
     private final List<String>            scopeFields;
     private final String                  keyField;
+    private final String                  idField;
     private final String                  valueField;
     private final List<String>            path;
+    private final boolean       readIdField;
 
     private JsonPersistedV2Reader(Builder builder) {
         this.reader        = builder.reader;
@@ -127,13 +142,16 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         this.valueResolver = builder.resolver;
         this.keyField      = builder.keyField;
         this.valueField    = builder.valueField;
+        this.idField       = builder.idField;
         this.scopeFields   = builder.scopeFields;
         this.path          = builder.path;
+        this.readIdField   = builder.readIdField;
     }
     
     @Override
     public PollingResponse call() throws Exception {
         Map<String, List<ScopedValue>> props = new HashMap<String, List<ScopedValue>>();
+        Map<String, List<ScopedValue>> propIds = new HashMap<>();
         
         InputStream is = reader.call();
         if (is == null) {
@@ -171,6 +189,11 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
                         props.put(key, variations);
                     }
                     variations.add(new ScopedValue(value, scopes));
+                    if (readIdField) {
+                        propIds.putIfAbsent(key, new ArrayList<>());
+                        propIds.get(key).add(
+                                new ScopedValue(property.has(idField) ? property.get(idField).asText() : "", scopes));
+                    }
                 }
                 catch (Exception e) {
                     LOG.warn("Unable to process property '{}'", key);
@@ -190,6 +213,14 @@ public class JsonPersistedV2Reader implements Callable<PollingResponse> {
         final Map<String, String> result = new HashMap<String, String>();
         for (Entry<String, List<ScopedValue>> entry : props.entrySet()) {
             result.put(entry.getKey(), valueResolver.resolve(entry.getKey(), entry.getValue()));
+        }
+
+        if (readIdField) {
+            final Map<String, String> idResult = new HashMap<>();
+            for (Entry<String, List<ScopedValue>> entry : propIds.entrySet()) {
+                idResult.put(entry.getKey(), valueResolver.resolve(entry.getKey(), entry.getValue()));
+            }
+            return PollingResponse.forSnapshot(result, idResult);
         }
         
         return PollingResponse.forSnapshot(result);
