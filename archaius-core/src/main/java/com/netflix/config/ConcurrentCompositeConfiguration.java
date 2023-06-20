@@ -15,6 +15,8 @@
  */
 package com.netflix.config;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -47,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * For example, if you add Configuration1, and then Configuration2,
  * {@link #getProperty(String)} will return any properties defined by Configuration1.
  * Only if Configuration1 doesn't have the property, then
- * Configuration2 will be checked. </p>
+ * Configuration2 will be checked.
  * There are two internal configurations for properties that are programmatically set:
  * <ul>
  * <li>Configuration to hold any property introduced by {@link #addProperty(String, Object)} or {@link #setProperty(String, Object)}
@@ -65,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * {@link ConcurrentMapConfiguration} or ConcurrentCompositeConfiguration using 
  * {@link com.netflix.config.util.ConfigurationUtils} to achieve
  * maximal performance and thread safety.
- * 
+ *
  * <p>
  * Example:
  * <pre>
@@ -102,7 +105,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
-    
+
+    private Map<String, Integer> stackTraces = new HashMap<>();
+    private Set<String> usedProperties = new HashSet<>();
+
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentCompositeConfiguration.class);
@@ -529,6 +535,29 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         {
             if (config.containsKey(key))
             {
+                String trace = Arrays.toString(Thread.currentThread().getStackTrace());
+//                if (!trace.contains("Uninstrumented")
+//                        && !trace.contains("addConfiguration")
+//                        && !trace.contains("getFinalizedPropertiesForConfig")
+//                        && !trace.contains("copyProperties")
+//                        && !trace.contains("getProperties")) {
+                if (
+                        // LoggingConfiguration for blitz4j appears to make a copy of the initial properties, and then
+                        // use its own set of overrides.
+                        !trace.contains("LoggingConfiguration.configSourceLoaded")
+                        // Also pulls NetflixConfiguration.getProperties
+                        && !trace.contains("NFMessagingManager.initialize")
+                        && !trace.contains("ANFMessagingManager.start")
+                        // This calls NetflixConfiguration.getFinalizedPropertiesForConfig
+                        && !trace.contains("LoggingModule.getNFLogger")
+                        // This appears to be related to the remote load. I thought the remote load was done elsewhere,
+                        // but maybe this is just another one..? confused.
+                        && !trace.contains("PropertiesLoadUtil.getConfigFromPropertiesFile")
+                        // These are for cases from Archaius2 with forEach: PrefixedView, CompositeConfig, etc.
+                        && !trace.contains("PropertySource.forEachPropertyUninstrumented")) {
+                    usedProperties.add(key);
+                    stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                }
                 firstMatchingConfiguration = config;
                 break;
             }

@@ -59,9 +59,9 @@ import com.google.common.collect.Lists;
  * 
  * This blob means that
 
-<li>If "@enviornment" is "prod" <b>and</b> "@region" is "us-east-1",  value of the property is integer 5; (<b>Note:</b> if you use ConfigurationManager, "@enviornment" and "@region" are automatically exported as properties from DeploymentContext)
-<li>Else if "@environment" is either "test" or "dev", the value is 10;
-<li>Otherwise, the default value of the property is 2
+If "@enviornment" is "prod" <b>and</b> "@region" is "us-east-1",  value of the property is integer 5; (<b>Note:</b> if you use ConfigurationManager, "@enviornment" and "@region" are automatically exported as properties from DeploymentContext)
+Else if "@environment" is either "test" or "dev", the value is 10;
+Otherwise, the default value of the property is 2
  * <p>
  * In order to make this work, a Predicate is needed to determine if the current runtime context matches any of the conditions
  * described in the JSON blob. The predicate can be passed in as a parameter of the constructor, otherwise the default one

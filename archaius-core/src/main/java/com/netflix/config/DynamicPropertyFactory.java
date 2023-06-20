@@ -25,24 +25,22 @@ import org.slf4j.LoggerFactory;
 /**
  * A factory that creates instances of dynamic properties and associates them with an underlying configuration
  * or {@link DynamicPropertySupport} where the properties could be changed dynamically at runtime.
- * <p/>
+ * <p>
  * It is recommended to initialize this class with a configuration or DynamicPropertySupport before the first call to
  * {@link #getInstance()}. Otherwise, it will be lazily initialized with a {@link ConcurrentCompositeConfiguration},
  * where a SystemConfiguration and {@link DynamicURLConfiguration} will be added. You can also disable installing the default configuration
  * by setting system property {@value #DISABLE_DEFAULT_CONFIG} to be <code>true</code>.
- * <p/>
+ * <p>
  * If system property {@value #ENABLE_JMX} is set to <code>true</code>, when this class is initialized with a configuration,
  * the configuration will also be exposed to JMX via an instance of {@link BaseConfigMBean}, where you can update the properties
  * via jconsole.
- * <p/>
+ * <p>
  * Example:<pre>
  *    import com.netflix.config.DynamicProperty;
- * <p/>
  *    class MyClass {
  *        private static DynamicIntProperty maxWaitMillis
  *            = DynamicPropertyFactory.getInstance().getIntProperty("myclass.sleepMillis", 250);
  *           // ...
- * <p/>
  *           // add a callback when this property is changed
  *           maxWaitMillis.addCallback(new Runnable() {
  *               public void run() {
@@ -54,14 +52,13 @@ import org.slf4j.LoggerFactory;
  *           // Wait for a configurable amount of time for condition to become true.
  *           // Note that the time can be changed on-the-fly.
  *           someCondition.wait(maxWaitMillis.get());
- * <p/>
  *        // ...
  *    }
  * </pre>
- * <p/>
+ * <p>
  * Please note that you should not cache the property value if you expect the value to change on-the-fly. For example,
  * in the following code the change of the value is ineffective:
- * <p/>
+ * <p>
  * <pre>
  *    int maxWaitMillis = DynamicPropertyFactory.getInstance().getIntProperty("myclass.sleepMillis", 250).get();
  *    // ...
@@ -125,10 +122,10 @@ public class DynamicPropertyFactory {
 
     /**
      * Initialize the factory with an AbstractConfiguration.
-     * <p/>
+     * <p>
      * The initialization will register a ConfigurationListener with the configuration so that {@link DynamicProperty}
      * will receives a callback and refresh its value when a property is changed in the configuration.
-     * <p/>
+     * <p>
      * If the factory is already initialized with a default configuration source (see {@link #getInstance()}), it will re-register
      * itself with the new configuration source passed to this method. Otherwise, this method will throw IllegalArgumentException
      * if it has been initialized with a different and non-default configuration source. This method should be only called once.
@@ -205,10 +202,10 @@ public class DynamicPropertyFactory {
 
     /**
      * Initialize the factory with a {@link DynamicPropertySupport}.
-     * <p/>
+     * <p>
      * The initialization will register a {@link PropertyListener} with the DynamicPropertySupport so that DynamicProperty
      * will receives a callback and refresh its value when a property is changed.
-     * <p/>
+     * <p>
      * If the factory is already initialized with a default configuration source (see {@link #getInstance()}), it will re-register
      * itself with the new configuration source passed to this method. Otherwise, this method will throw IllegalArgumentException
      * if it has been initialized with a non-default configuration source. This method should be only called once.
@@ -267,7 +264,7 @@ public class DynamicPropertyFactory {
      * (see {@link URLConfigurationSource#CONFIG_URL}).
      * </ul>
      * Between the two sub-configurations, the SystemConfiguration will take the precedence when determining property values.
-     * <p/>
+     * <p>
      * You can disable the initialization with the default configuration by setting system property {@value #DISABLE_DEFAULT_CONFIG} to "true".
      */
     public static DynamicPropertyFactory getInstance() {

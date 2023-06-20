@@ -22,7 +22,7 @@ import java.util.Map;
  * content of the configuration source - or an incremental one.
  * 
  * @author cfregly
- * @author awang {@link PollResult)
+ * @author awang {@link PollResult}
  */
 public class WatchedUpdateResult {
     protected final Map<String, Object> complete, added, changed, deleted;
