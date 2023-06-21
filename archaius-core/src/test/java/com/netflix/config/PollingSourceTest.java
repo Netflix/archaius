@@ -221,7 +221,7 @@ public class PollingSourceTest {
 
         // Run
         source.setException(new Exception("Failed to load"));
-        Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
+        Uninterruptibles.sleepUninterruptibly(400, TimeUnit.MILLISECONDS);
 
         // Verify
         Mockito.verify(configurationListener, Mockito.times(1)).configurationChanged(eventCapture.capture());
