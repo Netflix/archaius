@@ -149,11 +149,12 @@ public abstract class AbstractPollingScheduler {
     
     /**
      * Gets the runnable to be scheduled. The implementation does the following
+     * <ul>
      * <li>Gets the next check point
      * <li>call source.poll(fase, checkpoint)
      * <li>fire event for poll listeners
      * <li>If success, update the configuration with the polled result
-     * 
+     * </ul>
      * @return Runnable to be scheduled in {@link #schedule(Runnable)}
      */
     protected Runnable getPollingRunnable(final PolledConfigurationSource source, final Configuration config) {
