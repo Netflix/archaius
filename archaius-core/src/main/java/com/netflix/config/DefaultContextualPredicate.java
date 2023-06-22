@@ -48,10 +48,10 @@ public class DefaultContextualPredicate implements Predicate<Map<String, Collect
     
     /**
      * For each key in the passed in map, this function returns true if
-     * 
+     * <ul>
      * <li> the value derived from the key using the function (passed in from the constructor) matches <b>any</b> of the value included for the same key in the map
      * <li> the above holds true for <b>all</b> keys in the map 
-     * 
+     * </ul>
      */
     @Override
     public boolean apply(@Nullable Map<String, Collection<String>> input) {
