@@ -1,15 +1,11 @@
-apply plugin: 'nebula'
-
 buildscript {
   repositories {
-    maven {
-      url = uri("https://plugins.gradle.org/m2/")
-    }
+    mavenCentral()
   }
-  dependencies {
-    classpath("com.netflix.nebula:gradle-netflixoss-project-plugin:11.2.0")
-    classpath("com.netflix.nebula:gradle-extra-configurations-plugin:7.0.0")
-  }
+}
+
+plugins {
+    id 'com.netflix.nebula.netflixoss' version '11.1.1'
 }
 
 // Establish version and status
@@ -26,19 +22,18 @@ allprojects {
         }
     }
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
     repositories {
-        jcenter()
+        mavenCentral()
     }
+
     dependencies {
         api 'com.google.code.findbugs:jsr305:3.0.1'
         api 'org.slf4j:slf4j-api:1.7.36'
         api 'commons-configuration:commons-configuration:1.10'
-        testImplementation('ch.qos.reload4j:reload4j:1.2.25')
+        testImplementation 'org.slf4j:slf4j-reload4j:1.7.36'
     }
-    group = "com.netflix.${githubProjectName}" 
+
+    group = "com.netflix.${githubProjectName}"
 
     tasks.withType(Test) { forkEvery = 1 }
     test {
@@ -48,12 +43,6 @@ allprojects {
             showStandardStreams  = true
         }
 
-    }
-
-
-    gradleLint {
-        alwaysRun = false
-        excludedRules = ['ospackage-remove-jdk11-configuration']
     }
 
     tasks.withType(ScalaCompile) {
@@ -76,7 +65,6 @@ project(':archaius-core') {
         api 'com.fasterxml.jackson.core:jackson-core:2.4.3'
         api 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
         testImplementation 'junit:junit:4.11'
-        testImplementation 'org.slf4j:slf4j-simple:1.7.5'
         testImplementation 'org.apache.derby:derby:10.8.2.2'
         testImplementation 'org.apache.commons:commons-io:1.3.2'
         testImplementation 'org.mockito:mockito-all:1.9.5'
@@ -93,7 +81,6 @@ project(':archaius-aws') {
         api 'com.amazonaws:aws-java-sdk-s3:1.9.3'
         testImplementation 'junit:junit:4.11'
         testImplementation 'org.mockito:mockito-all:1.9.5'
-        testImplementation 'org.slf4j:slf4j-simple:1.6.4'
     }
 }
 
@@ -102,7 +89,6 @@ project(':archaius-aws') {
 //        compile project(':archaius-core')
 //        compile 'org.jclouds:jclouds-blobstore:1.6.0'
 //        testCompile 'junit:junit:4.11'
-//        testCompile 'org.slf4j:slf4j-simple:1.6.4'
 //    }
 //}
 
@@ -111,7 +97,6 @@ project(':archaius-typesafe') {
         api project(':archaius-core')
         api 'com.typesafe:config:1.2.1'
         testImplementation 'junit:junit:4.11'
-        testImplementation 'org.slf4j:slf4j-simple:1.6.4'
     }
 }
 
@@ -126,7 +111,6 @@ project(':archaius-zookeeper') {
         api 'org.apache.curator:curator-client:2.3.0'
         api 'org.apache.curator:curator-recipes:2.3.0'
         testImplementation 'junit:junit:4.11'
-        testImplementation 'org.slf4j:slf4j-simple:1.6.4'
         testImplementation 'org.apache.curator:curator-test:2.3.0'
     }
 }
@@ -139,7 +123,6 @@ project(':archaius-etcd') {
         api 'io.fastjson:etcd-client:0.33'
         testImplementation 'junit:junit:4.11'
         testImplementation 'org.mockito:mockito-all:1.9.5'
-        testImplementation 'org.slf4j:slf4j-simple:1.6.4'
     }
 }
 
@@ -165,7 +148,6 @@ project(':archaius-etcd') {
 //    dependencies {
 //        implementation project(':archaius-scala')
 //
-//        implementation 'org.slf4j:slf4j-api:1.6.4'
 //        implementation 'org.scala-lang:scala-library:2.10.1'
 //
 //        testImplementation 'org.scalatest:scalatest_2.10.0:1.8'
