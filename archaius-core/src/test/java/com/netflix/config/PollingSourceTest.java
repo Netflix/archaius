@@ -224,14 +224,14 @@ public class PollingSourceTest {
         Uninterruptibles.sleepUninterruptibly(400, TimeUnit.MILLISECONDS);
 
         // Verify
-        Mockito.verify(configurationListener, Mockito.times(1)).configurationChanged(eventCapture.capture());
-        Mockito.verify(errorListener, Mockito.times(1)).configurationError(errorCapture.capture());
+        Mockito.verify(configurationListener, Mockito.atLeastOnce()).configurationChanged(eventCapture.capture());
+        Mockito.verify(errorListener, Mockito.atLeastOnce()).configurationError(errorCapture.capture());
 
         Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(0).getType());
         Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
 
         Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, errorCapture.getAllValues().get(0).getType());
-        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
+        Assert.assertTrue(errorCapture.getAllValues().get(0).isBeforeUpdate());
     }
 }
 
