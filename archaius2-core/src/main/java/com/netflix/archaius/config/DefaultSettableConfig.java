@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
+import com.netflix.archaius.util.Maps;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
 
     @Override
     public synchronized <T> void setProperty(String propName, T propValue) {
-        Map<String, Object> copy = new HashMap<>(props.size() + 1);
+        Map<String, Object> copy = Maps.newHashMap(props.size() + 1);
         copy.putAll(props);
         copy.put(propName, propValue);
         props = Collections.unmodifiableMap(copy);
@@ -87,7 +88,7 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     public void setProperties(Properties src) {
         if (null != src) {
             synchronized (this) {
-                Map<String, Object> copy = new HashMap<>(props.size() + src.size());
+                Map<String, Object> copy = Maps.newHashMap(props.size() + src.size());
                 copy.putAll(props);
                 for (Entry<Object, Object> prop : src.entrySet()) {
                     copy.put(prop.getKey().toString(), prop.getValue());
