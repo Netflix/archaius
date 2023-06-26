@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.netflix.archaius.util.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
         
         public State(Map<String, Config> children, int size) {
             this.children = children;
-            Map<String, Object> data = new HashMap<>(size);
+            Map<String, Object> data = Maps.newHashMap(size);
             Map<String, Config> instrumentedKeys = new HashMap<>();
             for (Config child : children.values()) {
                 boolean instrumented = child.instrumentationEnabled();
@@ -104,7 +105,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
         }
         
         State addConfig(String name, Config config) {
-            LinkedHashMap<String, Config> children = new LinkedHashMap<>(this.children.size() + 1);
+            LinkedHashMap<String, Config> children = Maps.newLinkedHashMap(this.children.size() + 1);
             if (reversed) {
                 children.put(name, config);
                 children.putAll(this.children);
@@ -112,7 +113,9 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
                 children.putAll(this.children);
                 children.put(name, config);
             }
-            return new State(children, cachedState.getData().size() + 16);
+            Iterable<String> keysIterable = config.keys();
+            int size = keysIterable instanceof Collection<?> ? ((Collection<String>) keysIterable).size() : 16;
+            return new State(children, cachedState.getData().size() + size);
         }
         
         State removeConfig(String name) {
@@ -123,7 +126,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
             }
             return this;
         }
-        
+
         public State refresh() {
             return new State(children, cachedState.getData().size());
         }
