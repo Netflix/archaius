@@ -29,8 +29,8 @@ import static com.netflix.config.WatchedUpdateResult.createIncremental;
  * This implementation requires the path to the Etcd directory that contains
  * nodes that represent each managed configuration property.
  * 
- * An example Etcd configuration path is config
- * An example Etcd property node path is config/com.fluxcapacitor.my.property
+ * An example Etcd configuration path is {@code /<my-app>/config}
+ * An example Etcd property node path is {@code /<my-app>/config/com.fluxcapacitor.my.property}
  * 
  * When a property is mutated via Etcd a callback will be notified and the value managed
  * by EtcdConfigurationSource will be updated. Similar to other dynamic configuration

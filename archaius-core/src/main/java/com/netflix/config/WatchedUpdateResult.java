@@ -20,9 +20,10 @@ import java.util.Map;
 /**
  * This class represents the result of a callback from the WatchedConfigurationSource. The result may be the complete
  * content of the configuration source - or an incremental one.
- * 
+ *
+ * @see  PollResult
  * @author cfregly
- * @author awang {@link PollResult}
+ * @author awang
  */
 public class WatchedUpdateResult {
     protected final Map<String, Object> complete, added, changed, deleted;

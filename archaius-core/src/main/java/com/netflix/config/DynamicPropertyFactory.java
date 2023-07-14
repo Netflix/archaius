@@ -37,10 +37,12 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Example:<pre>
  *    import com.netflix.config.DynamicProperty;
+ *
  *    class MyClass {
  *        private static DynamicIntProperty maxWaitMillis
  *            = DynamicPropertyFactory.getInstance().getIntProperty("myclass.sleepMillis", 250);
  *           // ...
+ *
  *           // add a callback when this property is changed
  *           maxWaitMillis.addCallback(new Runnable() {
  *               public void run() {
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
  *           // Wait for a configurable amount of time for condition to become true.
  *           // Note that the time can be changed on-the-fly.
  *           someCondition.wait(maxWaitMillis.get());
+ *
  *        // ...
  *    }
  * </pre>

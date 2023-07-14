@@ -202,36 +202,36 @@ public class PollingSourceTest {
         Assert.assertFalse(eventCapture.getAllValues().get(1).isBeforeUpdate());
     }
 
-//    @Test
-//    public void notificationOnFetchFailure() {
-//        // Setup
-//        DummyPollingSource source = new DummyPollingSource(true);
-//
-//        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 200, false);
-//        DynamicConfiguration config = new DynamicConfiguration(source, scheduler);
-//
-//        ConfigurationListener configurationListener = Mockito.mock(ConfigurationListener.class);
-//        ConfigurationErrorListener errorListener = Mockito.mock(ConfigurationErrorListener.class);
-//
-//        ArgumentCaptor<ConfigurationEvent> eventCapture = ArgumentCaptor.forClass(ConfigurationEvent.class);
-//        ArgumentCaptor<ConfigurationErrorEvent> errorCapture = ArgumentCaptor.forClass(ConfigurationErrorEvent.class);
-//
-//        config.addConfigurationListener(configurationListener);
-//        config.addErrorListener(errorListener);
-//
-//        // Run
-//        source.setException(new Exception("Failed to load"));
-//        Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
-//
-//        // Verify
-//        Mockito.verify(configurationListener, Mockito.times(1)).configurationChanged(eventCapture.capture());
-//        Mockito.verify(errorListener, Mockito.times(1)).configurationError(errorCapture.capture());
-//
-//        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(0).getType());
-//        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
-//
-//        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, errorCapture.getAllValues().get(0).getType());
-//        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
-//    }
+    @Test
+    public void notificationOnFetchFailure() {
+        // Setup
+        DummyPollingSource source = new DummyPollingSource(true);
+
+        FixedDelayPollingScheduler scheduler = new FixedDelayPollingScheduler(0, 200, false);
+        DynamicConfiguration config = new DynamicConfiguration(source, scheduler);
+
+        ConfigurationListener configurationListener = Mockito.mock(ConfigurationListener.class);
+        ConfigurationErrorListener errorListener = Mockito.mock(ConfigurationErrorListener.class);
+
+        ArgumentCaptor<ConfigurationEvent> eventCapture = ArgumentCaptor.forClass(ConfigurationEvent.class);
+        ArgumentCaptor<ConfigurationErrorEvent> errorCapture = ArgumentCaptor.forClass(ConfigurationErrorEvent.class);
+
+        config.addConfigurationListener(configurationListener);
+        config.addErrorListener(errorListener);
+
+        // Run
+        source.setException(new Exception("Failed to load"));
+        Uninterruptibles.sleepUninterruptibly(400, TimeUnit.MILLISECONDS);
+
+        // Verify
+        Mockito.verify(configurationListener, Mockito.atLeastOnce()).configurationChanged(eventCapture.capture());
+        Mockito.verify(errorListener, Mockito.atLeastOnce()).configurationError(errorCapture.capture());
+
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, eventCapture.getAllValues().get(0).getType());
+        Assert.assertTrue(eventCapture.getAllValues().get(0).isBeforeUpdate());
+
+        Assert.assertEquals(DynamicConfiguration.EVENT_RELOAD, errorCapture.getAllValues().get(0).getType());
+        Assert.assertTrue(errorCapture.getAllValues().get(0).isBeforeUpdate());
+    }
 }
 

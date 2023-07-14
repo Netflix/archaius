@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
  * {@link #getProperty(String)} will return any properties defined by Configuration1.
  * Only if Configuration1 doesn't have the property, then
  * Configuration2 will be checked.
+ * <p>
  * There are two internal configurations for properties that are programmatically set:
  * <ul>
  * <li>Configuration to hold any property introduced by {@link #addProperty(String, Object)} or {@link #setProperty(String, Object)}
