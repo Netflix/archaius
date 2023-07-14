@@ -16,7 +16,6 @@
 package com.netflix.config;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,9 +104,17 @@ import org.slf4j.LoggerFactory;
 public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration 
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
+    private static final String ENABLE_STACK_TRACE = "archaius.enable_stack_trace";
+    private final boolean enableStackTrace = System.getProperty(ENABLE_STACK_TRACE) != null;
+
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
 
-    private Map<String, Integer> stackTraces = new HashMap<>();
+    private Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+
+    public Set<String> getUsedProperties() {
+        return usedProperties;
+    }
+
     private Set<String> usedProperties = new HashSet<>();
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
@@ -515,6 +522,14 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void clearProperty(String key) {
         containerConfiguration.clearProperty(key);
     }
+
+    public Object getProperty(String key) {
+        return getProperty(key, true);
+    }
+
+    public Object getPropertyUninstrumented(String key) {
+        return getProperty(key, false);
+    }
     /**
      * Read property from underlying composite. It first checks if the property has been overridden
      * by {@link #setOverrideProperty(String, Object)} and if so return the overriding value.
@@ -526,46 +541,31 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      *
      * @return object associated with the given configuration key. null if it does not exist.
      */
-    public Object getProperty(String key)
+    public Object getProperty(String key, boolean instrument)
     {
         if (overrideProperties.containsKey(key)) {
             return overrideProperties.getProperty(key);
         }
         Configuration firstMatchingConfiguration = null;
-        for (Configuration config : configList)
-        {
-            if (config.containsKey(key))
-            {
-                String trace = Arrays.toString(Thread.currentThread().getStackTrace());
-//                if (!trace.contains("Uninstrumented")
-//                        && !trace.contains("addConfiguration")
-//                        && !trace.contains("getFinalizedPropertiesForConfig")
-//                        && !trace.contains("copyProperties")
-//                        && !trace.contains("getProperties")) {
-                if (
-                        // LoggingConfiguration for blitz4j appears to make a copy of the initial properties, and then
-                        // use its own set of overrides.
-                        !trace.contains("LoggingConfiguration.configSourceLoaded")
-                        // Also pulls NetflixConfiguration.getProperties
-                        && !trace.contains("NFMessagingManager.initialize")
-                        && !trace.contains("ANFMessagingManager.start")
-                        // This calls NetflixConfiguration.getFinalizedPropertiesForConfig
-                        && !trace.contains("LoggingModule.getNFLogger")
-                        // This appears to be related to the remote load. I thought the remote load was done elsewhere,
-                        // but maybe this is just another one..? confused.
-                        && !trace.contains("PropertiesLoadUtil.getConfigFromPropertiesFile")
-                        // These are for cases from Archaius2 with forEach: PrefixedView, CompositeConfig, etc.
-                        && !trace.contains("PropertySource.forEachPropertyUninstrumented")) {
+        for (Configuration config : configList) {
+            if (config.containsKey(key)) {
+                if (instrument) {
                     usedProperties.add(key);
-                    stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                    if (enableStackTrace) {
+                        String trace = Arrays.toString(Thread.currentThread().getStackTrace());
+                        stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                    }
                 }
                 firstMatchingConfiguration = config;
                 break;
             }
         }
 
-        if (firstMatchingConfiguration != null)
-        {
+        if (firstMatchingConfiguration != null) {
+            // Propagate uninstrumented call if necessary
+            if (!instrument && firstMatchingConfiguration instanceof ConcurrentCompositeConfiguration) {
+                return ((ConcurrentCompositeConfiguration) firstMatchingConfiguration).getPropertyUninstrumented(key);
+            }
             return firstMatchingConfiguration.getProperty(key);
         }
         else
