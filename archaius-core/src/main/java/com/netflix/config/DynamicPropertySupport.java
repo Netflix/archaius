@@ -15,9 +15,6 @@
  */
 package com.netflix.config;
 
-import java.util.Set;
-import java.util.function.Consumer;
-
 /**
  * The interface that defines the contract between DynamicProperty and its
  * underlying support system.

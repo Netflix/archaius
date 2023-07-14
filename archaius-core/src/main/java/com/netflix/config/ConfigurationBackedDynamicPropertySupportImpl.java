@@ -17,8 +17,6 @@ package com.netflix.config;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 
-import java.util.Set;
-
 public class ConfigurationBackedDynamicPropertySupportImpl implements DynamicPropertySupport {
 
     private final AbstractConfiguration config;
@@ -30,19 +28,6 @@ public class ConfigurationBackedDynamicPropertySupportImpl implements DynamicPro
         this.config = config;
     }
 
-//    @Override
-//    public Set<String> getUsedProperties() {
-//        System.out.println("!!!!! getUsedProperties in ConfigurationBackedDynamicPropertySupportImpl");
-//        System.out.println("!!!!!" + config);
-//        if (config != null) {
-//            System.out.println("!!!!!" + config.getClass());
-//        }
-//        if (!(config instanceof  ConcurrentCompositeConfiguration)) {
-//            System.out.println("!!!!! the cast is going to fail...");
-//        }
-//        return ((ConcurrentCompositeConfiguration) config).getUsedProperties();
-//    }
-    
     @Override
     public String getString(String key) {
         try {

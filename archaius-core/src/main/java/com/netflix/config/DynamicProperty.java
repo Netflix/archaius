@@ -79,14 +79,6 @@ public class DynamicProperty {
     private CopyOnWriteArraySet<Runnable> callbacks = new CopyOnWriteArraySet<Runnable>();
     private CopyOnWriteArraySet<PropertyChangeValidator> validators = new CopyOnWriteArraySet<PropertyChangeValidator>();
 
-//    public static Set<String> getUsedProperties() {
-//        System.out.println("!!!!! Trying to return usedProperties: " + dynamicPropertySupportImpl);
-//        if (dynamicPropertySupportImpl != null) {
-//            System.out.println("!!!!!?? " + dynamicPropertySupportImpl.getClass());
-//        }
-//        return dynamicPropertySupportImpl.getUsedProperties();
-//    }
-
     /**
      * A cached value of a particular type.
      * @param <T> the type of the cached value
