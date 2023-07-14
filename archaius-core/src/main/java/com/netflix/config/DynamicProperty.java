@@ -79,6 +79,7 @@ public class DynamicProperty {
     private CopyOnWriteArraySet<Runnable> callbacks = new CopyOnWriteArraySet<Runnable>();
     private CopyOnWriteArraySet<PropertyChangeValidator> validators = new CopyOnWriteArraySet<PropertyChangeValidator>();
 
+
     /**
      * A cached value of a particular type.
      * @param <T> the type of the cached value

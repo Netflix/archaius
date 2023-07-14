@@ -27,7 +27,6 @@ public class ConfigurationBackedDynamicPropertySupportImpl implements DynamicPro
         }
         this.config = config;
     }
-
     @Override
     public String getString(String key) {
         try {
