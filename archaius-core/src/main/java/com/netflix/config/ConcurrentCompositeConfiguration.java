@@ -104,8 +104,8 @@ import org.slf4j.LoggerFactory;
 public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration 
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
-    private static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
-    private static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
+    public static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
+    public static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
     private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
     private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
 
@@ -543,7 +543,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      *
      * @return object associated with the given configuration key. null if it does not exist.
      */
-    public Object getProperty(String key, boolean instrument)
+    private Object getProperty(String key, boolean instrument)
     {
         if (overrideProperties.containsKey(key)) {
             return overrideProperties.getProperty(key);

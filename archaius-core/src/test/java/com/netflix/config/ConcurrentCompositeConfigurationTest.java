@@ -70,6 +70,23 @@ public class ConcurrentCompositeConfigurationTest {
         config.clearProperty("prop3");
         assertEquals("prop3", prop3.get());
         assertEquals("prop3", config.getProperty("prop3"));
+        assertTrue(config.getUsedProperties().isEmpty());
+    }
+
+    @Test
+    public void testInstrumentation() {
+        System.setProperty(ConcurrentCompositeConfiguration.ENABLE_INSTRUMENTATION, "true");
+        ConcurrentCompositeConfiguration config = new ConcurrentCompositeConfiguration();
+        config.addProperty("prop1", "val1");
+        config.addProperty("prop2", "val2");
+        assertEquals(config.getProperty("prop1"), "val1");
+        assertEquals(config.getUsedProperties().size(), 1);
+        assertEquals(config.getUsedProperties().iterator().next(), "prop1");
+        assertEquals(config.getPropertyUninstrumented("prop2"), "val2");
+        assertEquals(config.getUsedProperties().size(), 1);
+        assertEquals(config.getUsedProperties().iterator().next(), "prop1");
+
+        System.clearProperty(ConcurrentCompositeConfiguration.ENABLE_INSTRUMENTATION);
     }
     
     @Test
