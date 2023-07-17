@@ -104,8 +104,10 @@ import org.slf4j.LoggerFactory;
 public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration 
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
-    private static final String ENABLE_STACK_TRACE = "archaius.enable_stack_trace";
-    private final boolean enableStackTrace = System.getProperty(ENABLE_STACK_TRACE) != null;
+    private static final String ENABLE_STACK_TRACE = "archaiusenablestacktrace";
+    private static final String ENABLE_INSTRUMENTATION = "archaiusenableinstrumentation";
+    private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
+    private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
 
@@ -549,7 +551,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         Configuration firstMatchingConfiguration = null;
         for (Configuration config : configList) {
             if (config.containsKey(key)) {
-                if (instrument) {
+                if (instrument && enableInstrumentation) {
                     usedProperties.add(key);
                     if (enableStackTrace) {
                         String trace = Arrays.toString(Thread.currentThread().getStackTrace());
@@ -563,7 +565,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
         if (firstMatchingConfiguration != null) {
             // Propagate uninstrumented call if necessary
-            if (!instrument && firstMatchingConfiguration instanceof ConcurrentCompositeConfiguration) {
+            if (enableInstrumentation
+                    && !instrument
+                    && firstMatchingConfiguration instanceof ConcurrentCompositeConfiguration) {
                 return ((ConcurrentCompositeConfiguration) firstMatchingConfiguration).getPropertyUninstrumented(key);
             }
             return firstMatchingConfiguration.getProperty(key);
