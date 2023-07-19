@@ -111,13 +111,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
 
-    private Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+    private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+    private final Set<String> usedProperties = ConcurrentHashMap.newKeySet();
 
     public Set<String> getUsedProperties() {
         return usedProperties;
     }
 
-    private Set<String> usedProperties = ConcurrentHashMap.newKeySet();
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
