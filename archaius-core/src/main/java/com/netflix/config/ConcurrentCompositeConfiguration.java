@@ -15,6 +15,7 @@
  */
 package com.netflix.config;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -66,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * {@link ConcurrentMapConfiguration} or ConcurrentCompositeConfiguration using 
  * {@link com.netflix.config.util.ConfigurationUtils} to achieve
  * maximal performance and thread safety.
- * 
+ *
  * <p>
  * Example:
  * <pre>
@@ -102,8 +104,21 @@ import org.slf4j.LoggerFactory;
 public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration 
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
+    public static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
+    public static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
+    private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
+    private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
+
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
-    
+
+    private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+    private final Set<String> usedProperties = ConcurrentHashMap.newKeySet();
+
+    public Set<String> getUsedProperties() {
+        return usedProperties;
+    }
+
+
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentCompositeConfiguration.class);
@@ -509,6 +524,14 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void clearProperty(String key) {
         containerConfiguration.clearProperty(key);
     }
+
+    public Object getProperty(String key) {
+        return getProperty(key, true);
+    }
+
+    public Object getPropertyUninstrumented(String key) {
+        return getProperty(key, false);
+    }
     /**
      * Read property from underlying composite. It first checks if the property has been overridden
      * by {@link #setOverrideProperty(String, Object)} and if so return the overriding value.
@@ -520,23 +543,33 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      *
      * @return object associated with the given configuration key. null if it does not exist.
      */
-    public Object getProperty(String key)
+    private Object getProperty(String key, boolean instrument)
     {
         if (overrideProperties.containsKey(key)) {
             return overrideProperties.getProperty(key);
         }
         Configuration firstMatchingConfiguration = null;
-        for (Configuration config : configList)
-        {
-            if (config.containsKey(key))
-            {
+        for (Configuration config : configList) {
+            if (config.containsKey(key)) {
+                if (instrument && enableInstrumentation) {
+                    usedProperties.add(key);
+                    if (enableStackTrace) {
+                        String trace = Arrays.toString(Thread.currentThread().getStackTrace());
+                        stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                    }
+                }
                 firstMatchingConfiguration = config;
                 break;
             }
         }
 
-        if (firstMatchingConfiguration != null)
-        {
+        if (firstMatchingConfiguration != null) {
+            // Propagate uninstrumented call if necessary
+            if (enableInstrumentation
+                    && !instrument
+                    && firstMatchingConfiguration instanceof ConcurrentCompositeConfiguration) {
+                return ((ConcurrentCompositeConfiguration) firstMatchingConfiguration).getPropertyUninstrumented(key);
+            }
             return firstMatchingConfiguration.getProperty(key);
         }
         else
