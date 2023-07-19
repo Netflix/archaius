@@ -117,7 +117,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         return usedProperties;
     }
 
-    private Set<String> usedProperties = new HashSet<>();
+    private Set<String> usedProperties = ConcurrentHashMap.newKeySet();
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
