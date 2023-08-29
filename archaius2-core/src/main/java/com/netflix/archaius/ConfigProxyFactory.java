@@ -8,16 +8,12 @@ import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.util.Maps;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaConversionException;
-import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -33,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -196,7 +191,7 @@ public class ConfigProxyFactory {
         //      prefix + lowerCamelCaseDerivedPropertyName
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
         final Map<Method, String> propertyNames = new HashMap<>();
-
+        
         final InvocationHandler handler = (proxy, method, args) -> {
             MethodInvoker<?> invoker = invokers.get(method);
             if (invoker != null) {
@@ -249,7 +244,7 @@ public class ConfigProxyFactory {
                 final Class<?> returnType = m.getReturnType();
                 
                 Function defaultSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
-
+                
                 if (m.getAnnotation(DefaultValue.class) != null) {
                     if (m.isDefault()) {
                         throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
@@ -313,52 +308,36 @@ public class ConfigProxyFactory {
     private static <T> Function<Object[], T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
         final MethodHandle methodHandle;
 
-        final MethodHandles.Lookup lookup;
-
         try {
             if (SystemUtils.IS_JAVA_1_8) {
                 Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
                         .getDeclaredConstructor(Class.class, int.class);
                 constructor.setAccessible(true);
-                lookup = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE);
-                methodHandle = lookup.unreflectSpecial(method, type);
+                methodHandle = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE)
+                        .unreflectSpecial(method, type)
+                        .bindTo(proxyObject);
             }
             else {
                 // Java 9 onwards
-                lookup = MethodHandles.lookup();
-                methodHandle = lookup
+                methodHandle = MethodHandles.lookup()
                         .findSpecial(type,
                                 method.getName(),
                                 MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                                type);
+                                type)
+                        .bindTo(proxyObject);
             }
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
         }
 
-        if (methodHandle.type().parameterCount() == 1) {
-            Function<Object, Object> getter = asFunction(lookup, methodHandle, method);
-            //noinspection unchecked
-            return (args) -> (T) getter.apply(proxyObject);
-        } else if (methodHandle.type().parameterCount() == 2) {
-            BiFunction<Object, Object, Object> getter = asBiFunction(lookup, methodHandle, method);
-            return (args) -> {
-                if (args == null) {
-                    return null;
-                }
-                //noinspection unchecked
-                return (T) getter.apply(proxyObject, args[0]);
-            };
-        }
-
-        // Fall back to calling the MethodHandle directly
-        MethodHandle boundHandle = methodHandle.bindTo(proxyObject);
-
         return (args) -> {
             try {
-                if (args != null) {
+                if (methodHandle.type().parameterCount() == 0) {
                     //noinspection unchecked
-                    return (T) boundHandle.invokeWithArguments(args);
+                    return (T) methodHandle.invokeWithArguments();
+                } else if (args != null) {
+                    //noinspection unchecked
+                    return (T) methodHandle.invokeWithArguments(args);
                 } else {
                     // This is a handle to a method WITH arguments, being called with none. This happens when toString()
                     // is trying to build a representation of a proxy that has a parametrized property AND the interface
@@ -366,12 +345,6 @@ public class ConfigProxyFactory {
                     return null;
                 }
             } catch (Throwable e) {
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                if (e instanceof Error) {
-                    throw (Error) e;
-                }
                 throw new RuntimeException(e);
             }
         };
@@ -411,9 +384,9 @@ public class ConfigProxyFactory {
                 //      String getFooValue(String arg0, Integer arg1) 
                 // 
                 // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
-                Map<String, Object> values = Maps.newHashMap(args.length);
+                Map<String, Object> values = new HashMap<>();
                 for (int i = 0; i < args.length; i++) {
-                    values.put(String.valueOf(i), args[i]);
+                    values.put("" + i, args[i]);
                 }
                 String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
                 T result = getPropertyWithDefault(returnType, propName);
@@ -427,55 +400,5 @@ public class ConfigProxyFactory {
                 return propertyRepository.get(propName, type).get();
             }
         }; 
-    }
-
-    /**
-     * For a given no-args method or default method, build a Function instance that takes the instance and invokes
-     * the underlying method on it.
-     */
-    @SuppressWarnings("unchecked")
-    private static Function<Object, Object> asFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle, Method method) {
-        try {
-            CallSite site = LambdaMetafactory.metafactory(lookup,
-                    "apply",
-                    MethodType.methodType(Function.class),
-                    MethodType.methodType(Object.class, Object.class),
-                    methodHandle,
-                    MethodType.methodType(method.getReturnType(), method.getDeclaringClass()));
-            return (Function<Object, Object>) site.getTarget().invokeExact();
-        } catch (Throwable t) {
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            }
-            if (t instanceof Error) {
-                throw (Error) t;
-            }
-            throw new RuntimeException(t);
-        }
-    }
-
-    /**
-     * For a given single-arg method or default method, build a Function instance that takes the instance and invokes
-     * the underlying method on it.
-     */
-    @SuppressWarnings("unchecked")
-    private static BiFunction<Object, Object, Object> asBiFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle, Method method) {
-        try {
-            CallSite site = LambdaMetafactory.metafactory(lookup,
-                    "apply",
-                    MethodType.methodType(Function.class),
-                    MethodType.methodType(Object.class, Object.class, Object.class),
-                    methodHandle,
-                    MethodType.methodType(method.getReturnType(), method.getDeclaringClass()));
-            return (BiFunction<Object, Object, Object>) site.getTarget().invokeExact();
-        } catch (Throwable t) {
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            }
-            if (t instanceof Error) {
-                throw (Error) t;
-            }
-            throw new RuntimeException(t);
-        }
     }
 }
