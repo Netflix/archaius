@@ -51,9 +51,13 @@ public class ProxyFactoryTest {
         String getStr();
         
         Boolean getBaseBoolean();
-        
+
         @Nullable
         Integer getNullable();
+
+        default long getLongValueWithDefault() {
+            return 42L;
+        }
     }
     
     public interface RootConfig extends BaseConfig {
@@ -76,6 +80,10 @@ public class ProxyFactoryTest {
         Integer[] getIntArray();
 
         int getRequiredValue();
+
+        default long getOtherLongValueWithDefault() {
+            return 43L;
+        }
     }
     
     public interface SubConfig {
@@ -139,6 +147,8 @@ public class ProxyFactoryTest {
         assertThat(a.getNullable(),                     nullValue());
         assertThat(a.getBaseBoolean(),                  nullValue());
         assertThat(a.getIntArray(),                     equalTo(new Integer[]{}));
+        assertThat(a.getLongValueWithDefault(),         equalTo(42L));
+        assertThat(a.getOtherLongValueWithDefault(),    equalTo(43L));
     }
     
     @Test
