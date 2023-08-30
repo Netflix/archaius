@@ -337,11 +337,11 @@ public class ConfigProxyFactory {
         }
 
         if (methodHandle.type().parameterCount() == 1) {
-            Function<Object, Object> getter = asFunction(lookup, methodHandle, method);
+            Function<Object, Object> getter = asFunction(lookup, methodHandle);
             //noinspection unchecked
             return (args) -> (T) getter.apply(proxyObject);
         } else if (methodHandle.type().parameterCount() == 2) {
-            BiFunction<Object, Object, Object> getter = asBiFunction(lookup, methodHandle, method);
+            BiFunction<Object, Object, Object> getter = asBiFunction(lookup, methodHandle);
             return (args) -> {
                 if (args == null) {
                     return null;
@@ -434,14 +434,14 @@ public class ConfigProxyFactory {
      * the underlying method on it.
      */
     @SuppressWarnings("unchecked")
-    private static Function<Object, Object> asFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle, Method method) {
+    private static Function<Object, Object> asFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle) {
         try {
             CallSite site = LambdaMetafactory.metafactory(lookup,
                     "apply",
                     MethodType.methodType(Function.class),
                     MethodType.methodType(Object.class, Object.class),
                     methodHandle,
-                    MethodType.methodType(method.getReturnType(), method.getDeclaringClass()));
+                    methodHandle.type());
             return (Function<Object, Object>) site.getTarget().invokeExact();
         } catch (Throwable t) {
             if (t instanceof RuntimeException) {
@@ -459,14 +459,14 @@ public class ConfigProxyFactory {
      * the underlying method on it.
      */
     @SuppressWarnings("unchecked")
-    private static BiFunction<Object, Object, Object> asBiFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle, Method method) {
+    private static BiFunction<Object, Object, Object> asBiFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle) {
         try {
             CallSite site = LambdaMetafactory.metafactory(lookup,
                     "apply",
                     MethodType.methodType(Function.class),
                     MethodType.methodType(Object.class, Object.class, Object.class),
                     methodHandle,
-                    MethodType.methodType(method.getReturnType(), method.getDeclaringClass()));
+                    methodHandle.type());
             return (BiFunction<Object, Object, Object>) site.getTarget().invokeExact();
         } catch (Throwable t) {
             if (t instanceof RuntimeException) {
