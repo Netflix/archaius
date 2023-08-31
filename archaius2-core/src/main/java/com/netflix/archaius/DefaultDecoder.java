@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 
 @Singleton
 public class DefaultDecoder implements Decoder, TypeConverter.Registry {
-    private Map<Type, TypeConverter> cache = new ConcurrentHashMap<>();
+    private final Map<Type, TypeConverter> cache = new ConcurrentHashMap<>();
 
     private final List<TypeConverter.Factory> factories = new ArrayList<>();
 
@@ -92,7 +92,7 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
         return factories.stream()
                 .flatMap(factory -> factory.get(type, this).map(Stream::of).orElseGet(Stream::empty))
                 .findFirst()
-                .orElseGet(() -> findValueOfTypeConverter((Class)type));
+                .orElseGet(() -> findValueOfTypeConverter(type));
     }
 
     /**
