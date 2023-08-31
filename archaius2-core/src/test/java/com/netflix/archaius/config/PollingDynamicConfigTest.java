@@ -43,8 +43,8 @@ import static org.junit.Assert.assertTrue;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -197,7 +197,7 @@ public class PollingDynamicConfigTest {
             strategy.fire();
             Assert.fail("Should have thrown an exception");
         }
-        catch (Exception e) {
+        catch (Exception expected) {
             
         }
         

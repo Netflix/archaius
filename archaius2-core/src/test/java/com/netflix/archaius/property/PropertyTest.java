@@ -37,6 +37,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.MapConfig;
 
+@SuppressWarnings("deprecation")
 public class PropertyTest {
     static class MyService {
         private Property<Integer> value;

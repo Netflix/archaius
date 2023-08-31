@@ -24,8 +24,8 @@ import java.util.concurrent.Callable;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,8 +40,8 @@ public class DefaultLayeredConfigTest {
         
         LayeredConfig.LayeredVisitor<String> visitor = Mockito.mock(LayeredConfig.LayeredVisitor.class);
         config.accept(visitor);
-        Mockito.verify(visitor, Mockito.never()).visitConfig(Mockito.any(), Mockito.any());
-        Mockito.verify(visitor, Mockito.never()).visitKey(Mockito.any(), Mockito.any());
+        Mockito.verify(visitor, Mockito.never()).visitConfig(any(), any());
+        Mockito.verify(visitor, Mockito.never()).visitKey(any(), any());
     }
     
     @Test
@@ -54,7 +54,7 @@ public class DefaultLayeredConfigTest {
         // Add a child
         config.addConfig(Layers.APPLICATION, new DefaultSettableConfig());
         
-        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());
+        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
     }
     
     @Test
@@ -80,7 +80,7 @@ public class DefaultLayeredConfigTest {
         Assert.assertEquals("propvalue2", config.getProperty("propname").get());
         Assert.assertEquals("propvalue2", config.getRawProperty("propname"));
         
-        Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(Mockito.any());
+        Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(any());
     }
     
     @Test
@@ -94,7 +94,7 @@ public class DefaultLayeredConfigTest {
         SettableConfig child = new DefaultSettableConfig();
         child.setProperty("propname", "propvalue");
         config.addConfig(Layers.APPLICATION, child);
-        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());        
+        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
         
         // Validate initial state
         Assert.assertEquals("propvalue", config.getProperty("propname").get());
@@ -107,7 +107,7 @@ public class DefaultLayeredConfigTest {
         Assert.assertFalse(config.getProperty("propname").isPresent());
         Assert.assertNull(config.getRawProperty("propname"));
         
-        Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(Mockito.any());        
+        Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(any());
     }
     
     @Test
