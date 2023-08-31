@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaConversionException;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -282,7 +281,7 @@ public class ConfigProxyFactory {
                 propertyNames.put(m, propName);
 
                 if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
-                    invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
+                    invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable), type);
                 } else if (m.getParameterCount() > 0) {
                     if (nameAnnot == null) {
                         throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
@@ -377,13 +376,13 @@ public class ConfigProxyFactory {
         };
     }
 
-    protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
-        LOG.debug("Creating interface property `{}` for type `{}`", propName, proxy.getClass());
+    protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy, Class<?> targetClass) {
+        LOG.debug("Creating interface property `{}` for type `{}`", propName, targetClass);
         return (args) -> proxy;
     }
 
     protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Function<Object[], T> next) {
-        LOG.debug("Creating scalar property `{}` for type `{}`", propName, type.getClass());
+        LOG.debug("Creating scalar property `{}` for type `{}`", propName, type);
         final Property<T> prop = propertyRepository.get(propName, type);
         return args -> {
             T value = prop.get();
