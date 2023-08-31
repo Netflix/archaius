@@ -33,12 +33,11 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.xml.bind.DatatypeConverter;
-
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.DefaultDecoder;
 
 public class DefaultDecoderTest {
     @Test
@@ -46,7 +45,7 @@ public class DefaultDecoderTest {
         DefaultDecoder decoder = DefaultDecoder.INSTANCE;
         
         boolean flag = decoder.decode(boolean.class, "true");
-        Assert.assertEquals(true, flag);
+        Assert.assertTrue(flag);
         int int_value = decoder.decode(int.class, "123");
         Assert.assertEquals(123, int_value);
 
@@ -80,10 +79,10 @@ public class DefaultDecoderTest {
     }
     
     @Test
-    public void testJavaMiscellaneous() {
+    public void testJavaMiscellaneous() throws DecoderException {
         DefaultDecoder decoder = DefaultDecoder.INSTANCE;
         Assert.assertEquals(Currency.getInstance("USD"), decoder.decode(Currency.class, "USD"));
-        Assert.assertEquals(BitSet.valueOf(DatatypeConverter.parseHexBinary("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
+        Assert.assertEquals(BitSet.valueOf(Hex.decodeHex("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
     }
 }
