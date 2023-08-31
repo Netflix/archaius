@@ -17,10 +17,12 @@ import java.time.OffsetTime;
 import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,51 +41,48 @@ public final class DefaultTypeConverterFactory implements TypeConverter.Factory 
         throw new ParseException("Error parsing value '" + value + "'", new Exception("Expected one of [true, yes, on, false, no, off]"));
     };
 
-    private Map<Type, TypeConverter<?>> converters = new HashMap<>();
+    private final Map<Type, TypeConverter<?>> converters;
 
     private DefaultTypeConverterFactory() {
-        converters.put(String.class, create(Function.identity()));
-        converters.put(boolean.class, create(DefaultTypeConverterFactory::convertBoolean));
-        converters.put(Boolean.class, create(DefaultTypeConverterFactory::convertBoolean));
-        converters.put(Integer.class, create(Integer::valueOf));
-        converters.put(int.class, create(Integer::valueOf));
-        converters.put(long.class, create(Long::valueOf));
-        converters.put(Long.class, create(Long::valueOf));
-        converters.put(short.class, create(Short::valueOf));
-        converters.put(Short.class, create(Short::valueOf));
-        converters.put(byte.class, create(Byte::valueOf));
-        converters.put(Byte.class, create(Byte::valueOf));
-        converters.put(double.class, create(Double::valueOf));
-        converters.put(Double.class, create(Double::valueOf));
-        converters.put(float.class, create(Float::valueOf));
-        converters.put(Float.class, create(Float::valueOf));
-        converters.put(BigInteger.class, create(BigInteger::new));
-        converters.put(BigDecimal.class, create(BigDecimal::new));
-        converters.put(AtomicInteger.class, create(v -> new AtomicInteger(Integer.parseInt(v))));
-        converters.put(AtomicLong.class, create(v -> new AtomicLong(Long.parseLong(v))));
-        converters.put(Duration.class, create(Duration::parse));
-        converters.put(Period.class, create(Period::parse));
-        converters.put(LocalDateTime.class, create(LocalDateTime::parse));
-        converters.put(LocalDate.class, create(LocalDate::parse));
-        converters.put(LocalTime.class, create(LocalTime::parse));
-        converters.put(OffsetDateTime.class, create(OffsetDateTime::parse));
-        converters.put(OffsetTime.class, create(OffsetTime::parse));
-        converters.put(ZonedDateTime.class, create(ZonedDateTime::parse));
-        converters.put(Instant.class, create(v -> Instant.from(OffsetDateTime.parse(v))));
-        converters.put(Date.class, create(v -> new Date(Long.parseLong(v))));
-        converters.put(Currency.class, create(Currency::getInstance));
-        converters.put(BitSet.class, create(v -> BitSet.valueOf(DatatypeConverter.parseHexBinary(v))));
-    }
-
-    private static <T> TypeConverter<T> create(Function<String, T> func) {
-        assert func != null;
-        return s -> func.apply(s);
+        Map<Type, TypeConverter<?>> converters = new HashMap<>();
+        converters.put(String.class, Function.identity()::apply);
+        converters.put(boolean.class, DefaultTypeConverterFactory::convertBoolean);
+        converters.put(Boolean.class, DefaultTypeConverterFactory::convertBoolean);
+        converters.put(Integer.class, Integer::valueOf);
+        converters.put(int.class, Integer::valueOf);
+        converters.put(long.class, Long::valueOf);
+        converters.put(Long.class, Long::valueOf);
+        converters.put(short.class, Short::valueOf);
+        converters.put(Short.class, Short::valueOf);
+        converters.put(byte.class, Byte::valueOf);
+        converters.put(Byte.class, Byte::valueOf);
+        converters.put(double.class, Double::valueOf);
+        converters.put(Double.class, Double::valueOf);
+        converters.put(float.class, Float::valueOf);
+        converters.put(Float.class, Float::valueOf);
+        converters.put(BigInteger.class, BigInteger::new);
+        converters.put(BigDecimal.class, BigDecimal::new);
+        converters.put(AtomicInteger.class, v -> new AtomicInteger(Integer.parseInt(v)));
+        converters.put(AtomicLong.class, v -> new AtomicLong(Long.parseLong(v)));
+        converters.put(Duration.class, Duration::parse);
+        converters.put(Period.class, Period::parse);
+        converters.put(LocalDateTime.class, LocalDateTime::parse);
+        converters.put(LocalDate.class, LocalDate::parse);
+        converters.put(LocalTime.class, LocalTime::parse);
+        converters.put(OffsetDateTime.class, OffsetDateTime::parse);
+        converters.put(OffsetTime.class, OffsetTime::parse);
+        converters.put(ZonedDateTime.class, ZonedDateTime::parse);
+        converters.put(Instant.class, v -> Instant.from(OffsetDateTime.parse(v)));
+        converters.put(Date.class, v -> new Date(Long.parseLong(v)));
+        converters.put(Currency.class, Currency::getInstance);
+        converters.put(BitSet.class, v -> BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
+        this.converters = Collections.unmodifiableMap(converters);
     }
 
     @Override
     public Optional<TypeConverter<?>> get(Type type, TypeConverter.Registry registry) {
-        assert type != null;
-        assert registry != null;
+        Objects.requireNonNull(type, "type == null");
+        Objects.requireNonNull(registry, "registry == null");
         for (Map.Entry<Type, TypeConverter<?>> entry : converters.entrySet()) {
             if (entry.getKey().equals(type)) {
                 return Optional.of(entry.getValue());
