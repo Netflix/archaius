@@ -28,8 +28,8 @@ import static org.junit.Assert.assertSame;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,13 +68,13 @@ public class PrivateViewTest {
         
         privateView.addListener(listener);
         
-        Mockito.verify(listener, Mockito.times(0)).onConfigAdded(Mockito.any());
+        Mockito.verify(listener, Mockito.times(0)).onConfigAdded(any());
         
         config.addConfig("bar", DefaultCompositeConfig.builder()
                 .withConfig("foo", MapConfig.builder().put("foo.bar", "value").build())
                 .build());
         
-        Mockito.verify(listener, Mockito.times(1)).onConfigAdded(Mockito.any());
+        Mockito.verify(listener, Mockito.times(1)).onConfigAdded(any());
     }
     
     @Test
@@ -92,17 +92,17 @@ public class PrivateViewTest {
         
         // Confirm original state
         Assert.assertEquals("original", privateView.getString("foo.bar"));
-        Mockito.verify(listener, Mockito.times(0)).onConfigAdded(Mockito.any());
+        Mockito.verify(listener, Mockito.times(0)).onConfigAdded(any());
 
         // Update the property and confirm onConfigUpdated notification
         settable.setProperty("foo.bar", "new");
-        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());
+        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
         Assert.assertEquals("new", privateView.getString("foo.bar"));
         
         // Add a new config and confirm onConfigAdded notification
         config.addConfig("new", MapConfig.builder().put("foo.bar", "new2").build());
-        Mockito.verify(listener, Mockito.times(1)).onConfigAdded(Mockito.any());
-        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(Mockito.any());
+        Mockito.verify(listener, Mockito.times(1)).onConfigAdded(any());
+        Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
     }
     @Test
     public void unusedPrivateViewIsGarbageCollected() {

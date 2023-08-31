@@ -40,8 +40,8 @@ import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
