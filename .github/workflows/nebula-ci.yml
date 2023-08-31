@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - '*'
-    tags-ignore:
-      - '*'
   pull_request:
 
 jobs:
@@ -12,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # test against JDK 8
-        java: [ 8 ]
+        # test against JDK 8, 17 and 19. We should add 22 soon, too.
+        java: [ 8, 17, 19]
     name: CI with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v3
@@ -22,7 +20,10 @@ jobs:
       - name: Setup jdk
         uses: actions/setup-java@v3
         with:
-          java-version: ${{ matrix.java }}
+          # Install both the version we'll test with AND 8, which goes later so that it's the default for gradle to run with.
+          java-version: |
+            ${{ matrix.java }}
+            8
           distribution: 'zulu'
       - uses: actions/cache@v3
         id: gradle-cache
@@ -39,7 +40,7 @@ jobs:
           restore-keys: |
             - ${{ runner.os }}-gradlewrapper-
       - name: Build with Gradle
-        run: ./gradlew --info --stacktrace build
+        run: ./gradlew --info --stacktrace -DtestJdk=${{matrix.java}} build
         env:
           CI_NAME: github_actions
           CI_BUILD_NUMBER: ${{ github.sha }}
