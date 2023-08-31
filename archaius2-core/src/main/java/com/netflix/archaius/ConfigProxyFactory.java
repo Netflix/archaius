@@ -326,11 +326,11 @@ public class ConfigProxyFactory {
             else {
                 // Java 9 onwards
                 lookup = MethodHandles.lookup();
-                methodHandle = lookup
-                        .findSpecial(type,
-                                method.getName(),
-                                MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                                type);
+                methodHandle = lookup.findSpecial(
+                        method.getDeclaringClass(),
+                        method.getName(),
+                        MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
+                        method.getDeclaringClass());
             }
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
