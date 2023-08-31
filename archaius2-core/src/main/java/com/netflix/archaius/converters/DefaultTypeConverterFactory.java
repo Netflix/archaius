@@ -2,8 +2,9 @@ package com.netflix.archaius.converters;
 
 import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.exceptions.ParseException;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
-import javax.xml.bind.DatatypeConverter;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,7 +40,7 @@ public final class DefaultTypeConverterFactory implements TypeConverter.Factory 
             return Boolean.FALSE;
         }
         throw new ParseException("Error parsing value '" + value + "'", new Exception("Expected one of [true, yes, on, false, no, off]"));
-    };
+    }
 
     private final Map<Type, TypeConverter<?>> converters;
 
@@ -75,7 +76,15 @@ public final class DefaultTypeConverterFactory implements TypeConverter.Factory 
         converters.put(Instant.class, v -> Instant.from(OffsetDateTime.parse(v)));
         converters.put(Date.class, v -> new Date(Long.parseLong(v)));
         converters.put(Currency.class, Currency::getInstance);
-        converters.put(BitSet.class, v -> BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
+
+        converters.put(BitSet.class, v -> {
+            try {
+                return BitSet.valueOf(Hex.decodeHex(v));
+            } catch (DecoderException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         this.converters = Collections.unmodifiableMap(converters);
     }
 

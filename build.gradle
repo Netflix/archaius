@@ -37,4 +37,12 @@ subprojects {
     tasks.withType(Javadoc) {
       options.addStringOption('Xdoclint:none', '-quiet')
     }
+
+    tasks.withType(Test) {
+        var testJdk = System.getProperty("testJdk", "8")
+        System.console().printf("Launching tests using JDK %s%n", testJdk)
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(testJdk)
+        }
+    }
 }
