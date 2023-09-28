@@ -1,9 +1,5 @@
 name: "Publish candidate/release to NetflixOSS and Maven Central"
 on:
-  push:
-    tags:
-      - v*.*.*
-      - v*.*.*-rc.*
   release:
     types:
       - published
@@ -33,7 +29,7 @@ jobs:
           restore-keys: |
             - ${{ runner.os }}-gradlewrapper-
       - name: Publish candidate
-        if: contains(github.ref, '-rc.')
+        if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-rc.')
         run: ./gradlew --info --stacktrace -Prelease.useLastTag=true candidate
         env:
           NETFLIX_OSS_SIGNING_KEY: ${{ secrets.ORG_SIGNING_KEY }}
@@ -41,7 +37,7 @@ jobs:
           NETFLIX_OSS_REPO_USERNAME: ${{ secrets.ORG_NETFLIXOSS_USERNAME }}
           NETFLIX_OSS_REPO_PASSWORD: ${{ secrets.ORG_NETFLIXOSS_PASSWORD }}
       - name: Publish release
-        if: (!contains(github.ref, '-rc.'))
+        if: startsWith(github.ref, 'refs/tags/v') && (!contains(github.ref, '-rc.'))
         run: ./gradlew --info -Prelease.useLastTag=true final
         env:
           NETFLIX_OSS_SONATYPE_USERNAME: ${{ secrets.ORG_SONATYPE_USERNAME }}
