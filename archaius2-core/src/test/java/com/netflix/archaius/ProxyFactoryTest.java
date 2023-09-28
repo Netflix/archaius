@@ -228,6 +228,37 @@ public class ProxyFactoryTest {
         Assert.assertEquals("default", withArgs.getProperty("a", 2));
     }
 
+    @Configuration(prefix = "foo.bar")
+    static interface WithArgumentsAndPrefix {
+        @PropertyName(name="baz.${0}.abc.${1}")
+        @DefaultValue("default")
+        String getPropertyWithoutPrefix(String part0, int part1);
+
+        // For backward compatibility, we need to accept PropertyNames that also include the prefix.
+        @PropertyName(name="foo.bar.baz.${0}.abc.${1}")
+        @DefaultValue("default")
+        String getPropertyWithPrefix(String part0, int part1);
+    }
+
+    @Test
+    public void testWithArgumentsAndPrefix() {
+        SettableConfig config = new DefaultSettableConfig();
+        config.setProperty("foo.bar.baz.a.abc.1", "value1");
+        config.setProperty("foo.bar.baz.b.abc.2", "value2");
+
+        PropertyFactory factory = DefaultPropertyFactory.from(config);
+        ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
+        WithArgumentsAndPrefix withArgs = proxy.newProxy(WithArgumentsAndPrefix.class);
+
+        Assert.assertEquals("value1",  withArgs.getPropertyWithPrefix("a", 1));
+        Assert.assertEquals("value1",  withArgs.getPropertyWithoutPrefix("a", 1));
+        Assert.assertEquals("value2",  withArgs.getPropertyWithPrefix("b", 2));
+        Assert.assertEquals("value2",  withArgs.getPropertyWithoutPrefix("b", 2));
+        Assert.assertEquals("default", withArgs.getPropertyWithPrefix("a", 2));
+        Assert.assertEquals("default", withArgs.getPropertyWithoutPrefix("a", 2));
+    }
+
+
     public interface WithArgumentsAndDefaultMethod {
         @PropertyName(name="${0}.abc.${1}")
         default String getProperty(String part0, int part1) {

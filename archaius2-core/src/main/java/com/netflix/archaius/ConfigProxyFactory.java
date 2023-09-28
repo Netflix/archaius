@@ -9,6 +9,7 @@ import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.util.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
@@ -287,7 +288,7 @@ public class ConfigProxyFactory {
                     if (nameAnnot == null) {
                         throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
-                    invoker = createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultSupplier);
+                    invoker = createParameterizedProperty(returnType, prefix, nameAnnot.name(), defaultSupplier);
                 } else {
                     invoker = createScalarProperty(m.getGenericReturnType(), propName, defaultSupplier);
                 }
@@ -391,8 +392,8 @@ public class ConfigProxyFactory {
         };
     }
 
-    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Function<Object[], T> next) {
-        LOG.debug("Creating parameterized property `{}` for type `{}`", propName, returnType);
+    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String prefix, final String nameAnnot, Function<Object[], T> next) {
+        LOG.debug("Creating parameterized property `{}` for type `{}`", prefix + nameAnnot, returnType);
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object[] args) {
@@ -405,6 +406,13 @@ public class ConfigProxyFactory {
                     return next.apply(null);
                 }
 
+                // A previous version allowed the full name to be specified, even if the prefix was specified. So, for
+                // backwards compatibility, we allow both including or excluding the prefix for parameterized names.
+                String propName = nameAnnot;
+                if (!StringUtils.isBlank(prefix) && !nameAnnot.startsWith(prefix)) {
+                    propName = prefix + nameAnnot;
+                }
+
                 // Determine the actual property name by replacing with arguments using the argument index
                 // to the method.  For example,
                 //      @PropertyName(name="foo.${1}.${0}")
@@ -415,7 +423,7 @@ public class ConfigProxyFactory {
                 for (int i = 0; i < args.length; i++) {
                     values.put(String.valueOf(i), args[i]);
                 }
-                String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
+                propName = new StrSubstitutor(values, "${", "}", '$').replace(propName);
                 T result = getPropertyWithDefault(returnType, propName);
                 if (result == null) {
                     result = next.apply(args);
