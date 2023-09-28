@@ -1,8 +1,9 @@
 name: "Publish candidate/release to NetflixOSS and Maven Central"
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - v*.*.*
+      - v*.*.*-rc.*
 
 jobs:
   build:
