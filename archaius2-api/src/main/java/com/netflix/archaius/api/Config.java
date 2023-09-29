@@ -25,6 +25,7 @@ import java.util.Optional;
 /**
  * Core API for reading a configuration.  The API is read only.
  */
+@SuppressWarnings("JavadocDeclaration") // TODO: Fix up all the javadocs and remove this suppression
 public interface Config extends PropertySource {
 
     /**
@@ -60,7 +61,7 @@ public interface Config extends PropertySource {
     void removeListener(ConfigListener listener);
 
     /**
-     * Return the raw, uninterpolated, object associated with a key.
+     * Return the raw, un-interpolated, object associated with a key.
      * @param key
      */
     Object getRawProperty(String key);
@@ -146,7 +147,7 @@ public interface Config extends PropertySource {
 
     /**
      * Get the property from the Decoder.  All basic data types as well any type
-     * will a valueOf or String contructor will be supported.
+     * will a valueOf or String constructor will be supported.
      * @param type
      * @param key
      * @return
@@ -156,7 +157,7 @@ public interface Config extends PropertySource {
 
     /**
      * Get the property from the Decoder.  All basic data types as well any type
-     * will a valueOf or String contructor will be supported.
+     * will a valueOf or String constructor will be supported.
      * @param type
      * @param key
      * @return
@@ -166,24 +167,31 @@ public interface Config extends PropertySource {
 
     /**
      * @param key
-     * @return True if the key is contained within this or any of it's child configurations
+     * @return True if the key is contained within this or any of its child configurations
      */
     boolean containsKey(String key);
     
     /**
-     * @return Return an unmodifiable Iterator to all property names owned by this config
+     * @return An unmodifiable Iterator over all property names owned by this config
+     * @deprecated Use {@link #keys()} instead.
      */
+    @Deprecated
     Iterator<String> getKeys();
 
     /**
-     * @return Return an unmodifiable Iterable of all property names owned by this config.
+     * Returns an unmodifiable Iterable of all property names owned by this config.
+     * <p>
+     * The default in this interface simply returns a thunk call to {@link #getKeys()}. Implementations are
+     * encouraged to provide their own version. The simplest approach, if the implementation has a {@link java.util.Map}
+     * or similar as its backing store, is to return an equivalent to
+     * <code>Collections.unmodifiableSet(map.keySet())</code>.
      */
     default Iterable<String> keys() {
         return this::getKeys;
     }
 
     /**
-     * @return Return an interator to all prefixed property names owned by this config
+     * @return Return an iterator over all prefixed property names owned by this config
      */
     Iterator<String> getKeys(String prefix);
     
