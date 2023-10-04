@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # test against JDK 8, 17 and 21.
-        java: [ 8, 17, 21]
+        # test against may JDKs. Only 8, 17 and 21 are officially supported, fixes for others are on a best effort basis.
+        java: [ 8, 9, 11, 17, 21]
     name: CI with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v3
