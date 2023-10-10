@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -313,52 +310,36 @@ public class ConfigProxyFactory {
     private static <T> Function<Object[], T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
         final MethodHandle methodHandle;
 
-        final MethodHandles.Lookup lookup;
-
         try {
             if (SystemUtils.IS_JAVA_1_8) {
                 Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
                         .getDeclaredConstructor(Class.class, int.class);
                 constructor.setAccessible(true);
-                lookup = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE);
-                methodHandle = lookup.unreflectSpecial(method, type);
+                methodHandle = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE)
+                        .unreflectSpecial(method, type)
+                        .bindTo(proxyObject);
             }
             else {
                 // Java 9 onwards
-                lookup = MethodHandles.lookup();
-                methodHandle = lookup.findSpecial(
-                        method.getDeclaringClass(),
-                        method.getName(),
-                        MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                        method.getDeclaringClass());
+                methodHandle = MethodHandles.lookup()
+                        .findSpecial(type,
+                                method.getName(),
+                                MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
+                                type)
+                        .bindTo(proxyObject);
             }
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
         }
 
-        if (methodHandle.type().parameterCount() == 1) {
-            Function<Object, Object> getter = asFunction(lookup, methodHandle);
-            //noinspection unchecked
-            return (args) -> (T) getter.apply(proxyObject);
-        } else if (methodHandle.type().parameterCount() == 2) {
-            BiFunction<Object, Object, Object> getter = asBiFunction(lookup, methodHandle);
-            return (args) -> {
-                if (args == null) {
-                    return null;
-                }
-                //noinspection unchecked
-                return (T) getter.apply(proxyObject, args[0]);
-            };
-        }
-
-        // Fall back to calling the MethodHandle directly
-        MethodHandle boundHandle = methodHandle.bindTo(proxyObject);
-
         return (args) -> {
             try {
-                if (args != null) {
+                if (methodHandle.type().parameterCount() == 0) {
                     //noinspection unchecked
-                    return (T) boundHandle.invokeWithArguments(args);
+                    return (T) methodHandle.invokeWithArguments();
+                } else if (args != null) {
+                    //noinspection unchecked
+                    return (T) methodHandle.invokeWithArguments(args);
                 } else {
                     // This is a handle to a method WITH arguments, being called with none. This happens when toString()
                     // is trying to build a representation of a proxy that has a parametrized property AND the interface
@@ -366,13 +347,8 @@ public class ConfigProxyFactory {
                     return null;
                 }
             } catch (Throwable e) {
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                if (e instanceof Error) {
-                    throw (Error) e;
-                }
-                throw new RuntimeException(e);
+                maybeWrapThenRethrow(e);
+                return null; // Unreachable, but the compiler doesn't know
             }
         };
     }
@@ -434,70 +410,6 @@ public class ConfigProxyFactory {
                 return propertyRepository.get(propName, type).get();
             }
         }; 
-    }
-
-    /**
-     * For a given no-args method or default method, build a Function instance that takes the instance and invokes
-     * the underlying method on it.
-     */
-    @SuppressWarnings("unchecked")
-    private static Function<Object, Object> asFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle) {
-        try {
-            CallSite site = LambdaMetafactory.metafactory(lookup,
-                    "apply",
-                    MethodType.methodType(Function.class),
-                    MethodType.methodType(Object.class, Object.class),
-                    methodHandle,
-                    methodHandle.type());
-            return (Function<Object, Object>) site.getTarget().invokeExact();
-        } catch (VerifyError ve) {
-            // This happens in java 9 and 11 (maybe others, we haven't checked. 8 and 17 onwards are known good)
-            // The generated bytecode for the CallSite has bad bytecode and can't be loaded as a class.
-            // For this case, we'll just fall back to calling the method handle. It's slower but works.
-            return o -> {
-                try {
-                    return methodHandle.invoke(o);
-                } catch (Throwable t) {
-                    maybeWrapThenRethrow(t);
-                    return null; // Unreachable, but the compiler can't know
-                }
-            };
-        } catch (Throwable t) {
-            maybeWrapThenRethrow(t);
-            return null; // Unreachable, but the compiler can't know
-        }
-    }
-
-    /**
-     * For a given single-arg method or default method, build a Function instance that takes the instance and invokes
-     * the underlying method on it.
-     */
-    @SuppressWarnings("unchecked")
-    private static BiFunction<Object, Object, Object> asBiFunction(MethodHandles.Lookup lookup, MethodHandle methodHandle) {
-        try {
-            CallSite site = LambdaMetafactory.metafactory(lookup,
-                    "apply",
-                    MethodType.methodType(Function.class),
-                    MethodType.methodType(Object.class, Object.class, Object.class),
-                    methodHandle,
-                    methodHandle.type());
-            return (BiFunction<Object, Object, Object>) site.getTarget().invokeExact();
-        } catch (VerifyError ve) {
-        // This happens in java 9 and 11 (maybe others, we haven't checked. 8 and 17 onwards are known good)
-        // The generated bytecode for the CallSite has bad bytecode and can't be loaded as a class.
-        // For this case, we'll just fall back to calling the method handle. It's slower but works.
-        return (o1, o2) -> {
-            try {
-                return methodHandle.invoke(o1, o2);
-            } catch (Throwable t) {
-                maybeWrapThenRethrow(t);
-                return null; // Unreachable, but the compiler can't know
-            }
-        };
-    } catch (Throwable t) {
-            maybeWrapThenRethrow(t);
-            return null; // Unreachable, but the compiler can't know
-        }
     }
 
     private static void maybeWrapThenRethrow(Throwable t) {
