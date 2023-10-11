@@ -261,8 +261,13 @@ public class ProxyFactoryTest {
 
     public interface WithArgumentsAndDefaultMethod {
         @PropertyName(name="${0}.abc.${1}")
-        default String getProperty(String part0, int part1) {
-            return "default";
+        default String getPropertyWith2Placeholders(String part0, int part1) {
+            return "defaultFor2";
+        }
+
+        @PropertyName(name="${0}.def")
+        default String getPropertyWith1Placeholder(String part0) {
+            return "defaultFor1";
         }
     }
 
@@ -271,14 +276,18 @@ public class ProxyFactoryTest {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("a.abc.1", "value1");
         config.setProperty("b.abc.2", "value2");
+        config.setProperty("c.def",   "value_c");
 
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArgumentsAndDefaultMethod withArgsAndDefM = proxy.newProxy(WithArgumentsAndDefaultMethod.class);
 
-        Assert.assertEquals("value1",  withArgsAndDefM.getProperty("a", 1));
-        Assert.assertEquals("value2",  withArgsAndDefM.getProperty("b", 2));
-        Assert.assertEquals("default", withArgsAndDefM.getProperty("a", 2));
+        Assert.assertEquals("value1",  withArgsAndDefM.getPropertyWith2Placeholders("a", 1));
+        Assert.assertEquals("value2",  withArgsAndDefM.getPropertyWith2Placeholders("b", 2));
+        Assert.assertEquals("defaultFor2", withArgsAndDefM.getPropertyWith2Placeholders("a", 2));
+        
+        Assert.assertEquals("value_c", withArgsAndDefM.getPropertyWith1Placeholder("c"));
+        Assert.assertEquals("defaultFor1", withArgsAndDefM.getPropertyWith1Placeholder("q"));
     }
 
     public interface ConfigWithMaps {
@@ -525,8 +534,10 @@ public class ProxyFactoryTest {
 
         // Printing 'null' here is a compromise. The default method in the interface is being called with a bad signature.
         // There's nothing the proxy could return here that isn't a lie, but at least this is a mostly harmless lie.
-        Assert.assertEquals("WithArgumentsAndDefaultMethod[${0}.abc.${1}='null']", withArgs.toString());
+        Assert.assertEquals("WithArgumentsAndDefaultMethod[${0}.def='null',${0}.abc.${1}='null']", withArgs.toString());
+        //noinspection ObviousNullCheck
         Assert.assertNotNull(withArgs.hashCode());
-        Assert.assertTrue(withArgs.equals(withArgs));
+        //noinspection EqualsWithItself
+        Assert.assertEquals(withArgs, withArgs);
     }
 }

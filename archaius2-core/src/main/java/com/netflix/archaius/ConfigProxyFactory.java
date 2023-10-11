@@ -10,16 +10,11 @@ import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.util.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -244,32 +239,17 @@ public class ConfigProxyFactory {
                 }
                 
                 final Class<?> returnType = m.getReturnType();
-                
-                Function defaultSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
 
+                // The proper type for this would be Function<Object[], returnType> but we can't express that in Java.
+                final Function defaultSupplier;
                 if (m.getAnnotation(DefaultValue.class) != null) {
-                    if (m.isDefault()) {
-                        throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
-                                + m.getDeclaringClass().getName() + "#" + m.getName());
-                    } else if (
-                            Map.class.isAssignableFrom(returnType) ||
-                            List.class.isAssignableFrom(returnType) ||
-                            Set.class.isAssignableFrom(returnType) ) {
-                        throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
-                                + m.getDeclaringClass().getName() + "#" + m.getName());
-                    }
-
-                    String value = m.getAnnotation(DefaultValue.class).value();
-                    if (returnType == String.class) {
-                        defaultSupplier = memoize((T) config.resolve(value));
-                    } else {
-                        defaultSupplier = memoize(decoder.decode(returnType, config.resolve(value)));
-                    }
-                }
-
-                if (m.isDefault()) {
+                    defaultSupplier = createAnnotatedMethodSupplier(m, returnType, config, decoder);
+                } else if (m.isDefault()) {
                     defaultSupplier = createDefaultMethodSupplier(m, type, proxyObject);
+                } else {
+                    defaultSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
                 }
+
 
                 final PropertyName nameAnnot = m.getAnnotation(PropertyName.class);
                 final String propName = nameAnnot != null && nameAnnot.name() != null
@@ -303,54 +283,33 @@ public class ConfigProxyFactory {
         return proxyObject;
     }
 
+    private static <T> Function<Object[], T> createAnnotatedMethodSupplier(Method m, Class<T> returnType, Config config, Decoder decoder) {
+        if (m.isDefault()) {
+            throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
+                                               + m.getDeclaringClass().getName() + "#" + m.getName());
+        } else if (
+                Map.class.isAssignableFrom(returnType) ||
+                List.class.isAssignableFrom(returnType) ||
+                Set.class.isAssignableFrom(returnType) ) {
+            throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
+                                               + m.getDeclaringClass().getName() + "#" + m.getName());
+        }
+
+        String value = m.getAnnotation(DefaultValue.class).value();
+        if (returnType == String.class) {
+            return memoize((T) config.resolve(value));
+        } else {
+            return memoize(decoder.decode(returnType, config.resolve(value)));
+        }
+    }
+
     private static <T> Function<Object[], T> memoize(T value) {
         return (ignored) -> value;
     }
 
-    private static <T> Function<Object[], T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
-        final MethodHandle methodHandle;
-
-        try {
-            if (SystemUtils.IS_JAVA_1_8) {
-                Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
-                        .getDeclaredConstructor(Class.class, int.class);
-                constructor.setAccessible(true);
-                methodHandle = constructor.newInstance(type, MethodHandles.Lookup.PRIVATE)
-                        .unreflectSpecial(method, type)
-                        .bindTo(proxyObject);
-            }
-            else {
-                // Java 9 onwards
-                methodHandle = MethodHandles.lookup()
-                        .findSpecial(type,
-                                method.getName(),
-                                MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                                type)
-                        .bindTo(proxyObject);
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to create temporary object for " + type.getName(), e);
-        }
-
-        return (args) -> {
-            try {
-                if (methodHandle.type().parameterCount() == 0) {
-                    //noinspection unchecked
-                    return (T) methodHandle.invokeWithArguments();
-                } else if (args != null) {
-                    //noinspection unchecked
-                    return (T) methodHandle.invokeWithArguments(args);
-                } else {
-                    // This is a handle to a method WITH arguments, being called with none. This happens when toString()
-                    // is trying to build a representation of a proxy that has a parametrized property AND the interface
-                    // provides a default method for it. There's no good default to return here, so we'll just use null
-                    return null;
-                }
-            } catch (Throwable e) {
-                maybeWrapThenRethrow(e);
-                return null; // Unreachable, but the compiler doesn't know
-            }
-        };
+    // type param ? is the return type for the METHOD, but we can't express that in Java
+    private static <T> Function<Object[], ?> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
+        return DefaultMethodInvokerFactory.getFactory().findOrCreateDefaultMethodInvoker(type, method, proxyObject);
     }
 
     protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
@@ -410,15 +369,5 @@ public class ConfigProxyFactory {
                 return propertyRepository.get(propName, type).get();
             }
         }; 
-    }
-
-    private static void maybeWrapThenRethrow(Throwable t) {
-        if (t instanceof RuntimeException) {
-            throw (RuntimeException) t;
-        }
-        if (t instanceof Error) {
-            throw (Error) t;
-        }
-        throw new RuntimeException(t);
     }
 }
