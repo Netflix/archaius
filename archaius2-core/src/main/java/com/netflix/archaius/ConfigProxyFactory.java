@@ -8,9 +8,9 @@ import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.util.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +38,11 @@ import java.util.stream.Collectors;
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
  * instance.  Getter methods on the interface are mapped by naming convention
  * by the property name may be overridden using the @PropertyName annotation.
- *
+ * <p>
  * For example,
  * <pre>
  * {@code
- * {@literal @}Configuration(prefix="foo")
+ * @Configuration(prefix="foo")
  * interface FooConfiguration {
  *    int getTimeout();     // maps to "foo.timeout"
  *
@@ -55,11 +55,11 @@ import java.util.stream.Collectors;
  * that the default value type is a string to allow for interpolation.  Alternatively, methods can
  * provide a default method implementation.  Note that {@literal @}DefaultValue cannot be added to a default
  * method as it would introduce ambiguity as to which mechanism wins.
- *
+ * <p>
  * For example,
  * <pre>
  * {@code
- * {@literal @}Configuration(prefix="foo")
+ * @Configuration(prefix="foo")
  * interface FooConfiguration {
  *    @DefaultValue("1000")
  *    int getReadTimeout();     // maps to "foo.timeout"
@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
  * </pre>
  * 
  * To override the prefix in {@literal @}Configuration or provide a prefix when there is no 
- * @Configuration annotation simply pass in a prefix in the call to newProxy.
+ * {@literal @}Configuration annotation simply pass in a prefix in the call to newProxy.
  * 
  * <pre>
  * {@code 
@@ -86,14 +86,15 @@ import java.util.stream.Collectors;
  * }
  * </pre>
  * 
- * By default all properties are dynamic and can therefore change from call to call.  To make the
+ * By default, all properties are dynamic and can therefore change from call to call.  To make the
  * configuration static set the immutable attributes of @Configuration to true.
- * 
+ * <p>
  * Note that an application should normally have just one instance of ConfigProxyFactory
  * and PropertyFactory since PropertyFactory caches {@link com.netflix.archaius.api.Property} objects.
  * 
- * @see {@literal }@Configuration
+ * @see Configuration
  */
+@SuppressWarnings("deprecation")
 public class ConfigProxyFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigProxyFactory.class);
 
@@ -104,6 +105,7 @@ public class ConfigProxyFactory {
     private final PropertyRepository propertyRepository;
     private final Config config;
     
+    @SuppressWarnings("DIAnnotationInspectionTool")
     @Inject
     public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
@@ -128,10 +130,6 @@ public class ConfigProxyFactory {
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property.
-     * 
-     * @param type
-     * @param config
-     * @return
      */
     public <T> T newProxy(final Class<T> type) {
         return newProxy(type, null);
@@ -152,22 +150,22 @@ public class ConfigProxyFactory {
         
         return prefix + ".";
     }
-    
+
+    /**
+     * Create a proxy for the provided interface type for which all getter methods are bound
+     * to a Property. The proxy uses the provided prefix, even if there is a {@link Configuration} annotation in TYPE.
+     */
     public <T> T newProxy(final Class<T> type, final String initialPrefix) {
         Configuration annot = type.getAnnotation(Configuration.class);
-        return newProxy(type, initialPrefix, annot == null ? false : annot.immutable());
+        return newProxy(type, initialPrefix, annot != null && annot.immutable());
     }
     
     /**
-     * Encapsulated the invocation of a single method of the interface
-     *
-     * @param <T>
+     * Encapsulate the invocation of a single method of the interface
      */
-    interface MethodInvoker<T> {
+    interface PropertyValueGetter<T> {
         /**
          * Invoke the method with the provided arguments
-         * @param args
-         * @return
          */
         T invoke(Object[] args);
     }
@@ -182,131 +180,145 @@ public class ConfigProxyFactory {
         knownCollections.put(LinkedList.class, (ignored) -> new LinkedList<>());
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
         Configuration annot = type.getAnnotation(Configuration.class);
         
         final String prefix = derivePrefix(annot, initialPrefix);
-        
-        // Iterate through all declared methods of the class looking for setter methods.
-        // Each setter will be mapped to a Property<T> for the property name:
-        //      prefix + lowerCamelCaseDerivedPropertyName
-        final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
+
+        // There's a circular dependency between these maps and the proxy object. They must be created first because the
+        // proxy's invocation handler needs to keep a reference to them, but the proxy must be created before they get
+        // filled because we may need to call methods on the interface in order to fill the maps :-|
+        final Map<Method, PropertyValueGetter<?>> invokers = new HashMap<>();
         final Map<Method, String> propertyNames = new HashMap<>();
 
-        final InvocationHandler handler = (proxy, method, args) -> {
-            MethodInvoker<?> invoker = invokers.get(method);
-            if (invoker != null) {
-                return invoker.invoke(args);
-            }
-            if ("equals".equals(method.getName())) {
-            	return proxy == args[0];
-            }
-            else if ("hashCode".equals(method.getName())) {
-            	return System.identityHashCode(proxy);
-            }
-            else if ("toString".equals(method.getName())) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(type.getSimpleName()).append("[");
-                sb.append(invokers.entrySet().stream().map(entry -> {
-                	StringBuilder sbProperty = new StringBuilder();
-                	sbProperty.append(propertyNames.get(entry.getKey()).substring(prefix.length())).append("='");
-                    try {
-                    	sbProperty.append(entry.getValue().invoke(null));
-                    } catch (Exception e) {
-                    	sbProperty.append(e.getMessage());
-                    }
-                    sbProperty.append("'");
-                    return sbProperty.toString();
-                }).collect(Collectors.joining(",")));
-                sb.append("]");
-                return sb.toString();
-            } else {
-                throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
-            }
-        };
-
-
+        final InvocationHandler handler = new ConfigProxyInvocationHandler<>(type, prefix, invokers, propertyNames);
 
         final T proxyObject = (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
 
-        for (Method m : type.getMethods()) {
-            try {
-                final MethodInvoker<?> invoker;
+        // Iterate through all declared methods of the class looking for setter methods.
+        // Each setter will be mapped to a Property<T> for the property name:
+        //      prefix + lowerCamelCaseDerivedPropertyName
+        for (Method method : type.getMethods()) {
+            MethodInvokerHolder methodInvokerHolder = buildInvokerForMethod(type, prefix, method, proxyObject, immutable);
 
-                final String verb;
-                if (m.getName().startsWith("get")) {
-                    verb = "get";
-                } else if (m.getName().startsWith("is")) {
-                    verb = "is";
-                } else {
-                    verb = "";
-                }
-                
-                final Class<?> returnType = m.getReturnType();
-                
-                Function defaultSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
+            propertyNames.put(method, methodInvokerHolder.propertyName);
 
-                if (m.getAnnotation(DefaultValue.class) != null) {
-                    if (m.isDefault()) {
-                        throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
-                                + m.getDeclaringClass().getName() + "#" + m.getName());
-                    } else if (
-                            Map.class.isAssignableFrom(returnType) ||
-                            List.class.isAssignableFrom(returnType) ||
-                            Set.class.isAssignableFrom(returnType) ) {
-                        throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
-                                + m.getDeclaringClass().getName() + "#" + m.getName());
-                    }
-
-                    String value = m.getAnnotation(DefaultValue.class).value();
-                    if (returnType == String.class) {
-                        defaultSupplier = memoize((T) config.resolve(value));
-                    } else {
-                        defaultSupplier = memoize(decoder.decode(returnType, config.resolve(value)));
-                    }
-                }
-
-                if (m.isDefault()) {
-                    defaultSupplier = createDefaultMethodSupplier(m, type, proxyObject);
-                }
-
-                final PropertyName nameAnnot = m.getAnnotation(PropertyName.class);
-                final String propName = nameAnnot != null && nameAnnot.name() != null
-                                ? prefix + nameAnnot.name()
-                                : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
-
-                propertyNames.put(m, propName);
-
-                if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
-                    invoker = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
-                } else if (m.getParameterCount() > 0) {
-                    if (nameAnnot == null) {
-                        throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
-                    }
-                    invoker = createParameterizedProperty(returnType, prefix, nameAnnot.name(), defaultSupplier);
-                } else {
-                    invoker = createScalarProperty(m.getGenericReturnType(), propName, defaultSupplier);
-                }
-                
-                if (immutable) {
-                    Object value = invoker.invoke(new Object[]{});
-                    invokers.put(m, (args) -> value);
-                } else {
-                    invokers.put(m, invoker);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Error proxying method " + m.getName(), e);
+            if (immutable) {
+                // Cache the current value of the property and always return that.
+                // Note that this will fail for parametrized properties!
+                Object value = methodInvokerHolder.invoker.invoke(new Object[]{});
+                invokers.put(method, (args) -> value);
+            } else {
+                invokers.put(method, methodInvokerHolder.invoker);
             }
         }
 
         return proxyObject;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <T> MethodInvokerHolder buildInvokerForMethod(Class<T> type, String prefix, Method m, T proxyObject, boolean immutable) {
+        try {
+
+            final Class<?> returnType = m.getReturnType();
+            final PropertyName nameAnnot = m.getAnnotation(PropertyName.class);
+            final String propName = getPropertyName(prefix, m, nameAnnot);
+
+            // A supplier for the value to be returned when the method's associated property is not set
+            final Function defaultValueSupplier;
+
+            if (m.getAnnotation(DefaultValue.class) != null) {
+                defaultValueSupplier = createAnnotatedMethodSupplier(m, returnType, config, decoder);
+            } else if (m.isDefault()) {
+                defaultValueSupplier = createDefaultMethodSupplier(m, type, proxyObject);
+            } else {
+                // No default specified in proxied interface. Return "empty" for collection types, null for any other type.
+                defaultValueSupplier = knownCollections.getOrDefault(returnType, (ignored) -> null);
+            }
+
+            // This object encapsulates the way to get the value for the current property.
+            final PropertyValueGetter propertyValueGetter;
+
+            if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
+                // Our return type is an interface but not a known collection. We treat it as a nested Config proxy
+                // interface and create a proxy with it, with the current property name as the initial prefix for nesting.
+                propertyValueGetter = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
+
+            } else if (m.getParameterCount() > 0) {
+                // A parametrized property. Note that this requires a @PropertyName annotation to extract the interpolation positions!
+                if (nameAnnot == null) {
+                    throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
+                }
+
+                // A previous version allowed the full name to be specified, even if the prefix was specified. So, for
+                // backwards compatibility, we allow both including or excluding the prefix for parameterized names.
+                String propertyNameTemplate;
+                if (!StringUtils.isBlank(prefix) && !nameAnnot.name().startsWith(prefix)) {
+                    propertyNameTemplate = prefix + nameAnnot.name();
+                } else {
+                    propertyNameTemplate = nameAnnot.name();
+                }
+
+                propertyValueGetter = createParameterizedProperty(returnType, propertyNameTemplate, defaultValueSupplier);
+
+            } else {
+                // Anything else.
+                propertyValueGetter = createScalarProperty(m.getGenericReturnType(), propName, defaultValueSupplier);
+            }
+
+            return new MethodInvokerHolder(propertyValueGetter, propName);
+        } catch (Exception e) {
+            throw new RuntimeException("Error proxying method " + m.getName(), e);
+        }
+    }
+
+    /**
+     * Compute the name of the property that will be returned by this method.
+     */
+    private static String getPropertyName(String prefix, Method m, PropertyName nameAnnot) {
+        final String verb;
+        if (m.getName().startsWith("get")) {
+            verb = "get";
+        } else if (m.getName().startsWith("is")) {
+            verb = "is";
+        } else {
+            verb = "";
+        }
+        return nameAnnot != null && nameAnnot.name() != null
+                        ? prefix + nameAnnot.name()
+                        : prefix + Character.toLowerCase(m.getName().charAt(verb.length())) + m.getName().substring(verb.length() + 1);
+    }
+
+
+    /** Build a supplier that returns the (interpolated and decoded) value from the method's @DefaultValue annotation */
+    private static <T> Function<Object[], T> createAnnotatedMethodSupplier(Method m, Class<T> returnType, Config config, Decoder decoder) {
+        if (m.isDefault()) {
+            throw new IllegalArgumentException("@DefaultValue cannot be defined on a method with a default implementation for method "
+                                               + m.getDeclaringClass().getName() + "#" + m.getName());
+        } else if (
+                Map.class.isAssignableFrom(returnType) ||
+                List.class.isAssignableFrom(returnType) ||
+                Set.class.isAssignableFrom(returnType) ) {
+            throw new IllegalArgumentException("@DefaultValue cannot be used with collections.  Use default method implemenation instead "
+                                               + m.getDeclaringClass().getName() + "#" + m.getName());
+        }
+
+        String value = m.getAnnotation(DefaultValue.class).value();
+        if (returnType == String.class) {
+            //noinspection unchecked
+            return memoize((T) config.resolve(value)); // The cast is actually a no-op, T == String here!
+        } else {
+            return memoize(decoder.decode(returnType, config.resolve(value)));
+        }
+    }
+
+    /** Build a supplier that always returns VALUE */
     private static <T> Function<Object[], T> memoize(T value) {
         return (ignored) -> value;
     }
 
+    /** A supplier that calls a default method in the proxied interface and returns its output */
     private static <T> Function<Object[], T> createDefaultMethodSupplier(Method method, Class<T> type, T proxyObject) {
         final MethodHandle methodHandle;
 
@@ -353,63 +365,58 @@ public class ConfigProxyFactory {
         };
     }
 
-    protected <T> MethodInvoker<T> createInterfaceProperty(String propName, final T proxy) {
+    /** A value getter for a nested Config proxy */
+    protected <T> PropertyValueGetter<T> createInterfaceProperty(String propName, final T proxy) {
         LOG.debug("Creating interface property `{}` for type `{}`", propName, proxy.getClass());
         return (args) -> proxy;
     }
 
-    protected <T> MethodInvoker<T> createScalarProperty(final Type type, final String propName, Function<Object[], T> next) {
+    /**
+     * A value getter for a "simple" property. Returns the value set in config for the given propName,
+     * or calls the defaultValueSupplier if the property is not set.
+     */
+    protected <T> PropertyValueGetter<T> createScalarProperty(final Type type, final String propName, Function<Object[], T> defaultValueSupplier) {
         LOG.debug("Creating scalar property `{}` for type `{}`", propName, type.getClass());
         final Property<T> prop = propertyRepository.get(propName, type);
         return args -> {
             T value = prop.get();
-            return value != null ? value : next.apply(null);
+            return value != null ? value : defaultValueSupplier.apply(null);
         };
     }
 
-    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String prefix, final String nameAnnot, Function<Object[], T> next) {
-        LOG.debug("Creating parameterized property `{}` for type `{}`", prefix + nameAnnot, returnType);
-        return new MethodInvoker<T>() {
-            @Override
-            public T invoke(Object[] args) {
-                if (args == null) {
-                    // Why would args be null if this is a parametrized property? Because toString() abuses its
-                    // access to this internal representation :-/
-                    // We'll fall back to trying to call the provider for the default value. That works properly if
-                    // it comes from an annotation or the known collections. Our wrapper for default interface methods
-                    // catches this case and just returns a null, which is probably the least bad response.
-                    return next.apply(null);
-                }
+    /**
+     * A value getter for a parametrized property. Takes the arguments passed to the method call and interpolates them
+     * into the property name from the method's @PropertyName annotation, then returns the value set in config for the
+     * computed property name. If not set, it forwards the call with the same parameters to the defaultValueSupplier.
+     */
+    protected <T> PropertyValueGetter<T> createParameterizedProperty(final Class<T> returnType, final String propertyNameTemplate, Function<Object[], T> defaultValueSupplier) {
+        LOG.debug("Creating parameterized property `{}` for type `{}`", propertyNameTemplate, returnType);
 
-                // A previous version allowed the full name to be specified, even if the prefix was specified. So, for
-                // backwards compatibility, we allow both including or excluding the prefix for parameterized names.
-                String propName = nameAnnot;
-                if (!StringUtils.isBlank(prefix) && !nameAnnot.startsWith(prefix)) {
-                    propName = prefix + nameAnnot;
-                }
-
-                // Determine the actual property name by replacing with arguments using the argument index
-                // to the method.  For example,
-                //      @PropertyName(name="foo.${1}.${0}")
-                //      String getFooValue(String arg0, Integer arg1) 
-                // 
-                // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
-                Map<String, Object> values = Maps.newHashMap(args.length);
-                for (int i = 0; i < args.length; i++) {
-                    values.put(String.valueOf(i), args[i]);
-                }
-                propName = new StrSubstitutor(values, "${", "}", '$').replace(propName);
-                T result = getPropertyWithDefault(returnType, propName);
-                if (result == null) {
-                    result = next.apply(args);
-                }
-                return result;
+        return args -> {
+            if (args == null) {
+                // Why would args be null if this is a parametrized property? Because toString() abuses its
+                // access to this internal representation :-/
+                // We'll fall back to trying to call the provider for the default value. That works properly if
+                // it comes from an annotation or the known collections. Our wrapper for default interface methods
+                // catches this case and just returns a null, which is probably the least bad response.
+                return defaultValueSupplier.apply(null);
             }
 
-            <R> R getPropertyWithDefault(Class<R> type, String propName) {
-                return propertyRepository.get(propName, type).get();
+            // Determine the actual property name by replacing with arguments using the argument index
+            // to the method.  For example,
+            //      @PropertyName(name="foo.${1}.${0}")
+            //      String getFooValue(String arg0, Integer arg1)
+            //
+            // called as getFooValue("bar", 1) would look for the property 'foo.1.bar'
+            String interpolatedPropertyName = new StrSubstitutor(new ArrayLookup<>(args), "${", "}", '$')
+                    .replace(propertyNameTemplate);
+
+            T result = propertyRepository.get(interpolatedPropertyName, returnType).get();
+            if (result == null) {
+                result = defaultValueSupplier.apply(args);
             }
-        }; 
+            return result;
+        };
     }
 
     private static void maybeWrapThenRethrow(Throwable t) {
@@ -420,5 +427,109 @@ public class ConfigProxyFactory {
             throw (Error) t;
         }
         throw new RuntimeException(t);
+    }
+
+
+    /** InvocationHandler for config proxies. */
+    private static class ConfigProxyInvocationHandler<P> implements InvocationHandler {
+        private final Map<Method, PropertyValueGetter<?>> invokers;
+        private final Class<P> type;
+        private final String prefix;
+        private final Map<Method, String> propertyNames;
+
+        public ConfigProxyInvocationHandler(Class<P> proxiedClass, String prefix, Map<Method, PropertyValueGetter<?>> invokers, Map<Method, String> propertyNames) {
+            this.invokers = invokers;
+            this.type = proxiedClass;
+            this.prefix = prefix;
+            this.propertyNames = propertyNames;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws NoSuchMethodError{
+            PropertyValueGetter<?> invoker = invokers.get(method);
+            if (invoker != null) {
+                return invoker.invoke(args);
+            }
+
+            switch (method.getName()) {
+                case "equals":
+                    return proxy == args[0];
+                case "hashCode":
+                    return System.identityHashCode(proxy);
+                case "toString":
+                    return proxyToString();
+                default:
+                    throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
+            }
+        }
+
+        /**
+         * Create a reasonable string representation of the proxy object: "InterfaceName[propName=currentValue, ...]".
+         * For the case of parametrized properties, fudges it and just uses "null" as the value.
+         */
+        private String proxyToString() {
+            String propertyNamesAndValues = invokers.entrySet().stream()
+                    .map(this::toNameAndValue)
+                    .collect(Collectors.joining(","));
+
+            return String.format("%s[%s]", type.getSimpleName(), propertyNamesAndValues);
+        }
+
+        /** Maps one (method, valueGetter) entry to a "propertyName=value" string */
+        private String toNameAndValue(Map.Entry<Method, PropertyValueGetter<?>> entry) {
+            String propertyName = propertyNames.get(entry.getKey()).substring(prefix.length());
+            Object propertyValue;
+            try {
+                // This call should fail for parametrized properties, because the PropertyValueGetter has a non-empty
+                // argument list. Fortunately, the implementation there cooperates with us and returns a null instead :-)
+                propertyValue = entry.getValue().invoke(null);
+            } catch (Exception e) {
+                // Just in case
+                propertyValue = e.getMessage();
+            }
+
+            return String.format("%s='%s'", propertyName, propertyValue);
+        }
+    }
+
+    /**
+     * A holder for the two pieces of information we compute for each method: Its invoker and the property's name.
+     * This would just be a record in Java 17 :-)
+     */
+    private static class MethodInvokerHolder<T> {
+        final PropertyValueGetter<T> invoker;
+        final String propertyName;
+
+        private MethodInvokerHolder(PropertyValueGetter<T> invoker, String propertyName) {
+            this.invoker = invoker;
+            this.propertyName = propertyName;
+        }
+    }
+
+    /** Implement apache-commons StrLookup by interpreting the key as an index into an array */
+    private static class ArrayLookup<V> extends StrLookup<V> {
+        private final V[] elements;
+
+        private ArrayLookup(V[] elements) {
+            super();
+            this.elements = elements;
+        }
+
+        @Override
+        public String lookup(String key) {
+            if (elements == null || elements.length == 0 || StringUtils.isBlank(key)) {
+                return null;
+            }
+
+            try {
+                int index = Integer.parseInt(key);
+                if (index < 0 || index >= elements.length || elements[index] == null) {
+                    return null;
+                }
+                return elements[index].toString();
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
     }
 }
