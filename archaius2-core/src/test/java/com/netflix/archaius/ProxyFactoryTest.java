@@ -28,6 +28,7 @@ import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
 
+@SuppressWarnings("deprecation")
 public class ProxyFactoryTest {
     public enum TestEnum {
         NONE,
@@ -46,6 +47,7 @@ public class ProxyFactoryTest {
         String getValueWithoutDefault2();
     }
     
+    @SuppressWarnings("unused")
     public interface BaseConfig {
         @DefaultValue("basedefault")
         String getStr();
@@ -60,6 +62,7 @@ public class ProxyFactoryTest {
         }
     }
     
+    @SuppressWarnings("UnusedReturnValue")
     public interface RootConfig extends BaseConfig {
         @DefaultValue("default")
         @Override
@@ -92,7 +95,7 @@ public class ProxyFactoryTest {
     }
     
     public static class SubConfigFromString {
-        private String[] parts;
+        private final String[] parts;
 
         public SubConfigFromString(String value) {
             this.parts = value.split(":");
@@ -203,11 +206,11 @@ public class ProxyFactoryTest {
             a.getRequiredValue();
             Assert.fail("should have failed with no value for requiredValue");
         }
-        catch (Exception e) {
+        catch (Exception expected) {
         }
     }
     
-    static interface WithArguments {
+    interface WithArguments {
         @PropertyName(name="${0}.abc.${1}")
         @DefaultValue("default")
         String getProperty(String part0, int part1);
@@ -229,7 +232,7 @@ public class ProxyFactoryTest {
     }
 
     @Configuration(prefix = "foo.bar")
-    static interface WithArgumentsAndPrefix {
+    interface WithArgumentsAndPrefix {
         @PropertyName(name="baz.${0}.abc.${1}")
         @DefaultValue("default")
         String getPropertyWithoutPrefix(String part0, int part1);
@@ -259,6 +262,7 @@ public class ProxyFactoryTest {
     }
 
 
+    @SuppressWarnings("unused")
     public interface WithArgumentsAndDefaultMethod {
         @PropertyName(name="${0}.abc.${1}")
         default String getPropertyWith2Placeholders(String part0, int part1) {
@@ -407,7 +411,7 @@ public class ProxyFactoryTest {
         Assert.assertEquals(Arrays.asList(1,2,4), new ArrayList<>(withCollections.getSortedSet()));
     }
     
-    public static interface ConfigWithStringCollections {
+    public interface ConfigWithStringCollections {
         List<String> getList();
         
         Set<String> getSet();
@@ -464,6 +468,7 @@ public class ProxyFactoryTest {
         Assert.assertTrue(withCollections.getSortedSet().isEmpty());
     }
     
+    @SuppressWarnings("unused")
     public interface ConfigWithCollectionsWithDefaultValueAnnotation {
         @DefaultValue("")
         LinkedList<Integer> getLinkedList();
@@ -494,12 +499,13 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithDefaultStringCollections withCollections = proxy.newProxy(ConfigWithDefaultStringCollections.class);
         
-        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Arrays.asList("default"), new ArrayList<>(withCollections.getSortedSet()));
+        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getList()));
+        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSet()));
+        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSortedSet()));
     }
 
-    public static interface FailingError {
+    @SuppressWarnings("UnusedReturnValue")
+    public interface FailingError {
         default String getValue() { throw new IllegalStateException("error"); }
     }
     
@@ -515,18 +521,22 @@ public class ProxyFactoryTest {
     
     @Test
     public void testObjectMethods() {
+        // These tests just ensure that toString, equals and hashCode have implementations that don't fail.
         SettableConfig config = new DefaultSettableConfig();
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
         Assert.assertEquals("WithArguments[${0}.abc.${1}='default']", withArgs.toString());
+        //noinspection ObviousNullCheck
         Assert.assertNotNull(withArgs.hashCode());
-        Assert.assertTrue(withArgs.equals(withArgs));
+        //noinspection EqualsWithItself
+        Assert.assertEquals(withArgs, withArgs);
     }
 
     @Test
     public void testObjectMethods_ClassWithArgumentsAndDefaultMethod() {
+        // These tests just ensure that toString, equals and hashCode have implementations that don't fail.
         SettableConfig config = new DefaultSettableConfig();
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
@@ -534,6 +544,7 @@ public class ProxyFactoryTest {
 
         // Printing 'null' here is a compromise. The default method in the interface is being called with a bad signature.
         // There's nothing the proxy could return here that isn't a lie, but at least this is a mostly harmless lie.
+        // This test depends implicitly on the iteration order for HashMap, which could change on future Java releases.
         Assert.assertEquals("WithArgumentsAndDefaultMethod[${0}.def='null',${0}.abc.${1}='null']", withArgs.toString());
         //noinspection ObviousNullCheck
         Assert.assertNotNull(withArgs.hashCode());

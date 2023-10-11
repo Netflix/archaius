@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
  * instance.  Getter methods on the interface are mapped by naming convention
  * by the property name may be overridden using the @PropertyName annotation.
- *
+ * <p>
  * For example,
  * <pre>
  * {@code
- * {@literal @}Configuration(prefix="foo")
+ * @Configuration(prefix="foo")
  * interface FooConfiguration {
  *    int getTimeout();     // maps to "foo.timeout"
  *
@@ -50,11 +50,11 @@ import java.util.stream.Collectors;
  * that the default value type is a string to allow for interpolation.  Alternatively, methods can
  * provide a default method implementation.  Note that {@literal @}DefaultValue cannot be added to a default
  * method as it would introduce ambiguity as to which mechanism wins.
- *
+ * <p>
  * For example,
  * <pre>
  * {@code
- * {@literal @}Configuration(prefix="foo")
+ * @Configuration(prefix="foo")
  * interface FooConfiguration {
  *    @DefaultValue("1000")
  *    int getReadTimeout();     // maps to "foo.timeout"
@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
  * </pre>
  * 
  * To override the prefix in {@literal @}Configuration or provide a prefix when there is no 
- * @Configuration annotation simply pass in a prefix in the call to newProxy.
+ * {@literal @}Configuration annotation simply pass in a prefix in the call to newProxy.
  * 
  * <pre>
  * {@code 
@@ -81,14 +81,15 @@ import java.util.stream.Collectors;
  * }
  * </pre>
  * 
- * By default all properties are dynamic and can therefore change from call to call.  To make the
+ * By default, all properties are dynamic and can therefore change from call to call.  To make the
  * configuration static set the immutable attributes of @Configuration to true.
  * 
  * Note that an application should normally have just one instance of ConfigProxyFactory
  * and PropertyFactory since PropertyFactory caches {@link com.netflix.archaius.api.Property} objects.
  * 
- * @see {@literal }@Configuration
+ * @see Configuration
  */
+@SuppressWarnings("deprecation")
 public class ConfigProxyFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigProxyFactory.class);
 
@@ -99,6 +100,7 @@ public class ConfigProxyFactory {
     private final PropertyRepository propertyRepository;
     private final Config config;
     
+    @SuppressWarnings("DIAnnotationInspectionTool")
     @Inject
     public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         this.decoder = decoder;
@@ -123,10 +125,6 @@ public class ConfigProxyFactory {
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property.
-     * 
-     * @param type
-     * @param config
-     * @return
      */
     public <T> T newProxy(final Class<T> type) {
         return newProxy(type, null);
@@ -147,22 +145,22 @@ public class ConfigProxyFactory {
         
         return prefix + ".";
     }
-    
+
+    /**
+     * Create a proxy for the provided interface type for which all getter methods are bound
+     * to a Property. The proxy uses the provided prefix, even if there is a {@link Configuration} annotation in TYPE.
+     */
     public <T> T newProxy(final Class<T> type, final String initialPrefix) {
         Configuration annot = type.getAnnotation(Configuration.class);
-        return newProxy(type, initialPrefix, annot == null ? false : annot.immutable());
+        return newProxy(type, initialPrefix, annot != null && annot.immutable());
     }
     
     /**
-     * Encapsulated the invocation of a single method of the interface
-     *
-     * @param <T>
+     * Encapsulate the invocation of a single method of the interface
      */
     interface MethodInvoker<T> {
         /**
          * Invoke the method with the provided arguments
-         * @param args
-         * @return
          */
         T invoke(Object[] args);
     }
@@ -194,30 +192,16 @@ public class ConfigProxyFactory {
             if (invoker != null) {
                 return invoker.invoke(args);
             }
-            if ("equals".equals(method.getName())) {
-            	return proxy == args[0];
-            }
-            else if ("hashCode".equals(method.getName())) {
-            	return System.identityHashCode(proxy);
-            }
-            else if ("toString".equals(method.getName())) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(type.getSimpleName()).append("[");
-                sb.append(invokers.entrySet().stream().map(entry -> {
-                	StringBuilder sbProperty = new StringBuilder();
-                	sbProperty.append(propertyNames.get(entry.getKey()).substring(prefix.length())).append("='");
-                    try {
-                    	sbProperty.append(entry.getValue().invoke(null));
-                    } catch (Exception e) {
-                    	sbProperty.append(e.getMessage());
-                    }
-                    sbProperty.append("'");
-                    return sbProperty.toString();
-                }).collect(Collectors.joining(",")));
-                sb.append("]");
-                return sb.toString();
-            } else {
-                throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
+
+            switch (method.getName()) {
+                case "equals":
+                    return proxy == args[0];
+                case "hashCode":
+                    return System.identityHashCode(proxy);
+                case "toString":
+                    return proxyToString(type, prefix, invokers, propertyNames);
+                default:
+                    throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
             }
         };
 
@@ -297,7 +281,8 @@ public class ConfigProxyFactory {
 
         String value = m.getAnnotation(DefaultValue.class).value();
         if (returnType == String.class) {
-            return memoize((T) config.resolve(value));
+            //noinspection unchecked
+            return memoize((T) config.resolve(value)); // The cast is actually a no-op, T == String here!
         } else {
             return memoize(decoder.decode(returnType, config.resolve(value)));
         }
@@ -369,5 +354,29 @@ public class ConfigProxyFactory {
                 return propertyRepository.get(propName, type).get();
             }
         }; 
+    }
+
+    /** Compute a reasonable toString() for a proxy object */
+    private static <T> String proxyToString(Class<T> type, String prefix, Map<Method, MethodInvoker<?>> invokers, Map<Method, String> propertyNames) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(type.getSimpleName()).append("[");
+
+        sb.append(invokers.entrySet().stream().map(entry -> {
+            StringBuilder sbProperty = new StringBuilder();
+            sbProperty.append(propertyNames.get(entry.getKey()).substring(prefix.length())).append("='");
+
+            try {
+                sbProperty.append(entry.getValue().invoke(null));
+            } catch (Exception e) {
+                sbProperty.append(e.getMessage());
+            }
+
+            sbProperty.append("'");
+            return sbProperty.toString();
+
+        }).collect(Collectors.joining(",")));
+
+        sb.append("]");
+        return sb.toString();
     }
 }
