@@ -17,6 +17,13 @@ package com.netflix.archaius.property;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -40,19 +47,20 @@ import com.netflix.archaius.config.MapConfig;
 @SuppressWarnings("deprecation")
 public class PropertyTest {
     static class MyService {
-        private Property<Integer> value;
-        private Property<Integer> value2;
+        private final Property<Integer> value;
+        private final Property<Integer> value2;
         
         AtomicInteger setValueCallsCounter;
 
         MyService(PropertyFactory config) {
             setValueCallsCounter = new AtomicInteger(0);
             value  = config.getProperty("foo").asInteger(1);
-            value.addListener(new MethodInvoker<Integer>(this, "setValue"));
+            value.addListener(new MethodInvoker<>(this, "setValue"));
             value2 = config.getProperty("foo").asInteger(2);
         }
 
         // Called by the config listener.
+        @SuppressWarnings("unused")
         public void setValue(Integer value) {
             setValueCallsCounter.incrementAndGet();
         }
@@ -63,8 +71,8 @@ public class PropertyTest {
         static CustomType DEFAULT = new CustomType(1,1);
         static CustomType ONE_TWO = new CustomType(1,2);
 
-        private int x;
-        private int y;
+        private final int x;
+        private final int y;
 
         CustomType(int x, int y) {
             this.x = x;
@@ -96,7 +104,7 @@ public class PropertyTest {
     }
 
     @Test
-    public void testAllTypes() {
+    public void testBasicTypes() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
         config.setProperty("foo", "10");
@@ -121,17 +129,48 @@ public class PropertyTest {
         Assert.assertEquals(BigInteger.TEN, bigIntegerProp.get());
         Assert.assertEquals(true, booleanProp.get());
         Assert.assertEquals(10, byteProp.get().byteValue());
-        Assert.assertEquals(10.0, doubleProp.get().doubleValue(), 0.0001);
-        Assert.assertEquals(10.0f, floatProp.get().floatValue(), 0.0001f);
+        Assert.assertEquals(10.0, doubleProp.get(), 0.0001);
+        Assert.assertEquals(10.0f, floatProp.get(), 0.0001f);
         Assert.assertEquals(10, intProp.get().intValue());
         Assert.assertEquals(10L, longProp.get().longValue());
         Assert.assertEquals((short) 10, shortProp.get().shortValue());
         Assert.assertEquals("10", stringProp.get());
         Assert.assertEquals(CustomType.ONE_TWO, customTypeProp.get());
     }
-    
+
     @Test
-    public void testUpdateDynamicChild() throws ConfigException {
+    public void testCollectionTypes() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("foo", "10,13,13,20");
+        config.setProperty("shmoo", "1=PT15M,0=PT0S");
+
+        // Test array decoding
+        Property<Byte[]> byteArray = factory.get("foo", Byte[].class);
+        Assert.assertEquals(new Byte[] {10, 13, 13, 20}, byteArray.get());
+
+        // Tests list creation and parsing, decoding of list elements, proper handling if user gives us a primitive type
+        Property<List<Integer>> intList = factory.getList("foo", int.class);
+        Assert.assertEquals(Arrays.asList(10, 13, 13, 20), intList.get());
+
+        // Tests set creation, parsing non-int elements
+        Property<Set<Double>> doubleSet = factory.getSet("foo", Double.class);
+        Assert.assertEquals(new HashSet<>(Arrays.asList(10.0, 13.0, 20.0)), doubleSet.get());
+
+        // Test map creation and parsing, keys and values of less-common types
+        Property<Map<Short, Duration>> mapProp = factory.getMap("shmoo", Short.class, Duration.class);
+        Map<Short, Duration> expectedMap = new HashMap<>();
+        expectedMap.put((short) 1, Duration.ofMinutes(15));
+        expectedMap.put((short) 0, Duration.ZERO);
+        Assert.assertEquals(expectedMap, mapProp.get());
+
+        // Test proper handling of unset properties
+        Property<Map<CustomType, CustomType>> emptyProperty = factory.getMap("fubar", CustomType.class, CustomType.class);
+        Assert.assertNull(emptyProperty.get());
+    }
+
+    @Test
+    public void testUpdateDynamicChild() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
@@ -225,6 +264,7 @@ public class PropertyTest {
 
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
+        //noinspection unchecked
         PropertyListener<Integer> listener = Mockito.mock(PropertyListener.class);
         
         Property<Integer> prop = factory.getProperty("foo").asInteger(1);
@@ -266,6 +306,7 @@ public class PropertyTest {
 
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
+        //noinspection unchecked
         Consumer<Integer> consumer = Mockito.mock(Consumer.class);
         
         Property<Integer> prop = factory.getProperty("foo").asInteger(1);
@@ -339,6 +380,7 @@ public class PropertyTest {
         config.setProperty("first", 1);
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
+        //noinspection unchecked
         Consumer<Integer> consumer = Mockito.mock(Consumer.class);
         
         Property<Integer> prop = factory
@@ -377,7 +419,9 @@ public class PropertyTest {
         SettableConfig config = new DefaultSettableConfig();
         config.setProperty("foo", "1");
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
+        // This can't be a lambda because then mockito can't subclass it to spy on it :-P
+        //noinspection Convert2Lambda,Anonymous2MethodRef
         Function<String, Integer> mapper = Mockito.spy(new Function<String, Integer>() {
             @Override
             public Integer apply(String t) {
@@ -412,7 +456,8 @@ public class PropertyTest {
     public void mapDiscardsType() {
         MapConfig config = MapConfig.builder().build();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
-        
+
+        //noinspection unused
         Property<Integer> prop = factory
                 .get("first", String.class)
                 .orElseGet("second")

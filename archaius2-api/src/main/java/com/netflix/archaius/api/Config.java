@@ -153,8 +153,6 @@ public interface Config extends PropertySource {
      * @return
      */
     <T> T get(Class<T> type, String key);
-    <T> T get(Class<T> type, String key, T defaultValue);
-
     /**
      * Get the property from the Decoder.  All basic data types as well any type
      * will a valueOf or String constructor will be supported.
@@ -162,7 +160,27 @@ public interface Config extends PropertySource {
      * @param key
      * @return
      */
+    <T> T get(Class<T> type, String key, T defaultValue);
+
+    /**
+     * Get the property from the Decoder.  Use this method for polymorphic types such as collections.
+     * <p>
+     * Use the utility methods in {@link ArchaiusType} to get the types for lists, sets and maps.
+     *
+     * @see ArchaiusType#forListOf(Class)
+     * @see ArchaiusType#forSetOf(Class)
+     * @see ArchaiusType#forMapOf(Class, Class)
+     */
     <T> T get(Type type, String key);
+    /**
+     * Get the property from the Decoder.  Use this method for polymorphic types such as collections.
+     * <p>
+     * Use the utility methods in {@link ArchaiusType} to get the types for lists, sets and maps.
+     *
+     * @see ArchaiusType#forListOf(Class)
+     * @see ArchaiusType#forSetOf(Class)
+     * @see ArchaiusType#forMapOf(Class, Class)
+     */
     <T> T get(Type type, String key, T defaultValue);
 
     /**
