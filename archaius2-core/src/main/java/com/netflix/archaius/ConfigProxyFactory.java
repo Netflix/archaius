@@ -206,7 +206,7 @@ public class ConfigProxyFactory {
 
             if (immutable) {
                 // Cache the current value of the property and always return that.
-                // Note that this will fail for parametrized properties!
+                // Note that this will fail for parameterized properties!
                 Object value = methodInvokerHolder.invoker.invoke(new Object[]{});
                 invokers.put(method, (args) -> value);
             } else {
@@ -246,7 +246,7 @@ public class ConfigProxyFactory {
                 propertyValueGetter = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
 
             } else if (m.getParameterCount() > 0) {
-                // A parametrized property. Note that this requires a @PropertyName annotation to extract the interpolation positions!
+                // A parameterized property. Note that this requires a @PropertyName annotation to extract the interpolation positions!
                 if (nameAnnot == null) {
                     throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                 }
@@ -354,7 +354,7 @@ public class ConfigProxyFactory {
                     return (T) methodHandle.invokeWithArguments(args);
                 } else {
                     // This is a handle to a method WITH arguments, being called with none. This happens when toString()
-                    // is trying to build a representation of a proxy that has a parametrized property AND the interface
+                    // is trying to build a representation of a proxy that has a parameterized property AND the interface
                     // provides a default method for it. There's no good default to return here, so we'll just use null
                     return null;
                 }
@@ -385,7 +385,7 @@ public class ConfigProxyFactory {
     }
 
     /**
-     * A value getter for a parametrized property. Takes the arguments passed to the method call and interpolates them
+     * A value getter for a parameterized property. Takes the arguments passed to the method call and interpolates them
      * into the property name from the method's @PropertyName annotation, then returns the value set in config for the
      * computed property name. If not set, it forwards the call with the same parameters to the defaultValueSupplier.
      */
@@ -394,7 +394,7 @@ public class ConfigProxyFactory {
 
         return args -> {
             if (args == null) {
-                // Why would args be null if this is a parametrized property? Because toString() abuses its
+                // Why would args be null if this is a parameterized property? Because toString() abuses its
                 // access to this internal representation :-/
                 // We'll fall back to trying to call the provider for the default value. That works properly if
                 // it comes from an annotation or the known collections. Our wrapper for default interface methods
@@ -465,7 +465,7 @@ public class ConfigProxyFactory {
 
         /**
          * Create a reasonable string representation of the proxy object: "InterfaceName[propName=currentValue, ...]".
-         * For the case of parametrized properties, fudges it and just uses "null" as the value.
+         * For the case of parameterized properties, fudges it and just uses "null" as the value.
          */
         private String proxyToString() {
             String propertyNamesAndValues = invokers.entrySet().stream()
@@ -480,7 +480,7 @@ public class ConfigProxyFactory {
             String propertyName = propertyNames.get(entry.getKey()).substring(prefix.length());
             Object propertyValue;
             try {
-                // This call should fail for parametrized properties, because the PropertyValueGetter has a non-empty
+                // This call should fail for parameterized properties, because the PropertyValueGetter has a non-empty
                 // argument list. Fortunately, the implementation there cooperates with us and returns a null instead :-)
                 propertyValue = entry.getValue().invoke(null);
             } catch (Exception e) {

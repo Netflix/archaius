@@ -23,19 +23,19 @@ import java.util.stream.Collectors;
  */
 public class ArchaiusType implements ParameterizedType {
 
-    /** Return a ParametrizedType to represent a {@code List<listValuesType>} */
+    /** Return a parameterizedType to represent a {@code List<listValuesType>} */
     public static ParameterizedType forListOf(Class<?> listValuesType) {
         Class<?> maybeWrappedType = PRIMITIVE_WRAPPERS.getOrDefault(listValuesType, listValuesType);
         return new ArchaiusType(List.class, new Class<?>[] { maybeWrappedType });
     }
 
-    /** Return a ParametrizedType to represent a {@code Set<setValuesType>} */
+    /** Return a parameterizedType to represent a {@code Set<setValuesType>} */
     public static ParameterizedType forSetOf(Class<?> setValuesType) {
         Class<?> maybeWrappedType = PRIMITIVE_WRAPPERS.getOrDefault(setValuesType, setValuesType);
         return new ArchaiusType(Set.class, new Class<?>[] { maybeWrappedType });
     }
 
-    /** Return a ParametrizedType to represent a {@code Map<mapKeysType, mapValuesType>} */
+    /** Return a parameterizedType to represent a {@code Map<mapKeysType, mapValuesType>} */
     public static ParameterizedType forMapOf(Class<?> mapKeysTpe, Class<?> mapValuesType) {
         Class<?> maybeWrappedKeyType = PRIMITIVE_WRAPPERS.getOrDefault(mapKeysTpe, mapKeysTpe);
         Class<?> maybeWrappedValuesType = PRIMITIVE_WRAPPERS.getOrDefault(mapValuesType, mapValuesType);
@@ -68,7 +68,7 @@ public class ArchaiusType implements ParameterizedType {
         if (rawType.isArray()
             || rawType.isPrimitive()
             || rawType.getTypeParameters().length != typeArguments.length) {
-            throw new IllegalArgumentException("The provided rawType and arguments don't look like a supported parametrized type");
+            throw new IllegalArgumentException("The provided rawType and arguments don't look like a supported parameterized type");
         }
     }
 
@@ -90,6 +90,6 @@ public class ArchaiusType implements ParameterizedType {
     @Override
     public String toString() {
         String typeArgumentNames = Arrays.stream(typeArguments).map(Class::getSimpleName).collect(Collectors.joining(","));
-        return String.format("ParametrizedType for %s<%s>", rawType.getSimpleName(), typeArgumentNames);
+        return String.format("parameterizedType for %s<%s>", rawType.getSimpleName(), typeArgumentNames);
     }
 }
