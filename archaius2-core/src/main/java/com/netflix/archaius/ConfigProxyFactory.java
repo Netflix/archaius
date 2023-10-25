@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -24,6 +27,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.WeakHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -98,6 +103,12 @@ import java.util.stream.Collectors;
 public class ConfigProxyFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigProxyFactory.class);
 
+    // Users sometimes leak both factories and proxies, leading to memory problems that get blamed on us ;-)
+    // We'll use these maps to keep track of how many instances of each are created and make log noise to help them
+    // track down the actual culprits. WeakHashMaps to avoid holding onto objects ourselves.
+    private static final Map<Config, Integer> FACTORIES_COUNT = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Class<?>, Integer> PROXIES_COUNT = Collections.synchronizedMap(new WeakHashMap<>());
+
     /**
      * The decoder is used for the purpose of decoding any @DefaultValue annotation
      */
@@ -121,6 +132,8 @@ public class ConfigProxyFactory {
         this.decoder = decoder;
         this.config = config;
         this.propertyRepository = factory;
+
+        warnWhenTooMany(FACTORIES_COUNT, config, 5, String.format("ProxyFactory(Config:%s)", config.hashCode()));
     }
 
     /**
@@ -189,6 +202,8 @@ public class ConfigProxyFactory {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
+        warnWhenTooMany(PROXIES_COUNT, type, 50, String.format("Proxy(%s)", type));
+
         Configuration annot = type.getAnnotation(Configuration.class);
         
         final String prefix = derivePrefix(annot, initialPrefix);
@@ -460,6 +475,29 @@ public class ConfigProxyFactory {
         throw new RuntimeException(t);
     }
 
+    private static <T> void warnWhenTooMany(Map<T, Integer> counters, T countKey, int limit, String objectDescription) {
+        int currentCount = counters.merge(countKey, 1, Integer::sum);
+
+        // Emit warning if we're over the limit BUT only when the current count is a multiple of the limit :-)
+        // This is to avoid being *too* noisy
+        if (LOG.isWarnEnabled() &&
+            currentCount >= limit &&
+            (currentCount % limit == 0 )) {
+
+                String stackTraceForDebuggint;
+                try (ByteArrayOutputStream os = new ByteArrayOutputStream(4000);
+                     PrintWriter pw = new PrintWriter(os)) {
+                    new RuntimeException().printStackTrace(pw);
+                    pw.flush();
+                    stackTraceForDebuggint = os.toString(StandardCharsets.UTF_8.name());
+                } catch (IOException e) {
+                    stackTraceForDebuggint = "<MISSING>";
+                }
+
+                LOG.warn("Too many {} are being created. Please review the calling code to prevent memory leaks. Stack trace for debugging follows {}",
+                        objectDescription, stackTraceForDebuggint);
+        }
+    }
 
     /** InvocationHandler for config proxies. */
     private static class ConfigProxyInvocationHandler<P> implements InvocationHandler {
