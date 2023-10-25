@@ -104,7 +104,17 @@ public class ConfigProxyFactory {
     private final Decoder decoder;
     private final PropertyRepository propertyRepository;
     private final Config config;
-    
+
+
+    /**
+     * Build a proxy factory from the provided config, decoder and PropertyFactory. Normal usage from most applications
+     * is to just set up injection bindings for those 3 objects and let your DI framework find this constructor.
+     *
+     * @param config Used to perform string interpolation in values from {@link DefaultValue} annotations. Weird things
+     *               will happen if this is not the same Config that the PropertyFactory exposes!
+     * @param decoder Used to parse strings from {@link DefaultValue} annotations into the proper types.
+     * @param factory Used to access the config values that are returned by proxies created by this factory.
+     */
     @SuppressWarnings("DIAnnotationInspectionTool")
     @Inject
     public ConfigProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
@@ -112,21 +122,31 @@ public class ConfigProxyFactory {
         this.config = config;
         this.propertyRepository = factory;
     }
-    
-    @Deprecated
-    public ConfigProxyFactory(Config config, PropertyFactory factory) {
-        this.decoder = config.getDecoder();
-        this.config = config;
-        this.propertyRepository = factory;
-    }
-    
+
+    /**
+     * Build a proxy factory for a given Config. Use this ONLY if you need proxies associated with a different Config
+     * that your DI framework would normally give you.
+     * <p>
+     * The constructed factory will use the Config's Decoder and a {@link DefaultPropertyFactory} built from that same
+     * Config object.
+     * @see #ConfigProxyFactory(Config, Decoder, PropertyFactory)
+     */
     @Deprecated
     public ConfigProxyFactory(Config config) {
-        this.decoder = config.getDecoder();
-        this.config = config;
-        this.propertyRepository = DefaultPropertyFactory.from(config);
+        this(config, config.getDecoder(), DefaultPropertyFactory.from(config));
+    }
+
+    /**
+     * Build a proxy factory for a given Config and PropertyFactory. Use ONLY if you need to use a specialized
+     * PropertyFactory in your proxies. The constructed proxy factory will use the Config's Decoder.
+     * @see #ConfigProxyFactory(Config, Decoder, PropertyFactory)
+     */
+    @Deprecated
+    public ConfigProxyFactory(Config config, PropertyFactory factory) {
+        this(config, config.getDecoder(), factory);
     }
     
+
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property.
@@ -135,22 +155,6 @@ public class ConfigProxyFactory {
         return newProxy(type, null);
     }
     
-    private String derivePrefix(Configuration annot, String prefix) {
-        if (prefix == null && annot != null) {
-            prefix = annot.prefix();
-            if (prefix == null) {
-                prefix = "";
-            }
-        }
-        if (prefix == null) 
-            return "";
-        
-        if (prefix.endsWith(".") || prefix.isEmpty())
-            return prefix;
-        
-        return prefix + ".";
-    }
-
     /**
      * Create a proxy for the provided interface type for which all getter methods are bound
      * to a Property. The proxy uses the provided prefix, even if there is a {@link Configuration} annotation in TYPE.
@@ -170,6 +174,9 @@ public class ConfigProxyFactory {
         T invoke(Object[] args);
     }
 
+    /**
+     * Providers of "empty" defaults for the known collection types that we support as proxy method return types.
+     */
     private static final Map<Type, Function<Object[], ?>> knownCollections = new HashMap<>();
 
     static {
@@ -215,6 +222,30 @@ public class ConfigProxyFactory {
         }
 
         return proxyObject;
+    }
+
+    /**
+     * Build the actual prefix to use for config values read by a proxy.
+     * @param annot The (possibly null) annotation from the proxied interface.
+     * @param prefix A (possibly null) explicit prefix being passed by the user (or by an upper level proxy,
+     *               in the case of nested interfaces). If present, it always overrides the annotation.
+     * @return A prefix to be prepended to all the config keys read by the methods in the proxy. If not empty, it will
+     *         always end in a period <code>.</code>
+     */
+    private String derivePrefix(Configuration annot, String prefix) {
+        if (prefix == null && annot != null) {
+            prefix = annot.prefix();
+            if (prefix == null) {
+                prefix = "";
+            }
+        }
+        if (prefix == null)
+            return "";
+
+        if (prefix.endsWith(".") || prefix.isEmpty())
+            return prefix;
+
+        return prefix + ".";
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
