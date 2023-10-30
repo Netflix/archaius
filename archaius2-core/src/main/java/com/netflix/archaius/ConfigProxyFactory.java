@@ -29,9 +29,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.WeakHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -98,12 +101,29 @@ import java.util.stream.Collectors;
 public class ConfigProxyFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigProxyFactory.class);
 
+    // Users sometimes leak both factories and proxies, leading to hard-to-track-down memory problems.
+    // We use these maps to keep track of how many instances of each are created and make log noise to help them
+    // track down the culprits. WeakHashMaps to avoid holding onto objects ourselves.
+    /**
+     * Global count of proxy factories, indexed by Config object. An application could legitimately have more
+     * than one proxy factory per config, if they want to use different Decoders or PropertyFactories.
+      */
+    private static final Map<Config, Integer> FACTORIES_COUNT = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final String EXCESSIVE_PROXIES_LIMIT = "archaius.excessiveProxiesLogging.limit";
+
+    /**
+     * Per-factory count of proxies, indexed by implemented interface and prefix. Because this count is kept per-proxy,
+     * it's also implicitly indexed by Config object :-)
+     */
+    private final Map<InterfaceAndPrefix, Integer> PROXIES_COUNT = Collections.synchronizedMap(new WeakHashMap<>());
+
     /**
      * The decoder is used for the purpose of decoding any @DefaultValue annotation
      */
     private final Decoder decoder;
     private final PropertyRepository propertyRepository;
     private final Config config;
+    private final int excessiveProxyLimit;
 
 
     /**
@@ -121,6 +141,9 @@ public class ConfigProxyFactory {
         this.decoder = decoder;
         this.config = config;
         this.propertyRepository = factory;
+        excessiveProxyLimit = config.getInteger(EXCESSIVE_PROXIES_LIMIT, 5);
+
+        warnWhenTooMany(FACTORIES_COUNT, config, excessiveProxyLimit, () -> String.format("ProxyFactory(Config:%s)", config.hashCode()));
     }
 
     /**
@@ -190,8 +213,10 @@ public class ConfigProxyFactory {
     @SuppressWarnings({"unchecked", "rawtypes"})
     <T> T newProxy(final Class<T> type, final String initialPrefix, boolean immutable) {
         Configuration annot = type.getAnnotation(Configuration.class);
-        
         final String prefix = derivePrefix(annot, initialPrefix);
+
+        warnWhenTooMany(PROXIES_COUNT, new InterfaceAndPrefix(type, prefix), excessiveProxyLimit, () -> String.format("Proxy(%s, %s)", type, prefix));
+
 
         // There's a circular dependency between these maps and the proxy object. They must be created first because the
         // proxy's invocation handler needs to keep a reference to them, but the proxy must be created before they get
@@ -460,6 +485,24 @@ public class ConfigProxyFactory {
         throw new RuntimeException(t);
     }
 
+    private static <T> void warnWhenTooMany(Map<T, Integer> counters, T countKey, int limit, Supplier<String> objectDescription) {
+        int currentCount = counters.merge(countKey, 1, Integer::sum);
+
+        // Emit warning if we're over the limit BUT only when the current count is a multiple of the limit :-)
+        // This is to avoid being *too* noisy
+        if (LOG.isWarnEnabled() &&
+            currentCount >= limit &&
+            (currentCount % limit == 0 )) {
+
+                LOG.warn(
+                        "Too many {} objects are being created ({} so far).\n" +
+                        "Please review the calling code to prevent memory leaks.\n" +
+                        "Normal usage for ConfigProxyFactory is to create singletons via your DI mechanism.\n" +
+                        "For special use cases that *require* creating multiple instances you can tune reporting\n" +
+                        "by setting the `{}` config key to a higher threshold.\nStack trace for debugging follows:",
+                        objectDescription.get(), currentCount, EXCESSIVE_PROXIES_LIMIT, new Throwable());
+        }
+    }
 
     /** InvocationHandler for config proxies. */
     private static class ConfigProxyInvocationHandler<P> implements InvocationHandler {
@@ -534,6 +577,35 @@ public class ConfigProxyFactory {
         private MethodInvokerHolder(PropertyValueGetter<T> invoker, String propertyName) {
             this.invoker = invoker;
             this.propertyName = propertyName;
+        }
+    }
+
+    /** Key to index counts of created proxies */
+    private static final class InterfaceAndPrefix {
+        final Class<?> configInterface;
+        final String prefix;
+
+        private InterfaceAndPrefix(Class<?> configInterface, String prefix) {
+            this.configInterface = configInterface;
+            this.prefix = prefix;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            InterfaceAndPrefix that = (InterfaceAndPrefix) o;
+            return Objects.equals(configInterface, that.configInterface) &&
+                   Objects.equals(prefix, that.prefix);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(configInterface, prefix);
         }
     }
 
