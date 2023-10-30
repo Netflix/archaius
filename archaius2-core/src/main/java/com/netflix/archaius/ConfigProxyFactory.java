@@ -494,8 +494,13 @@ public class ConfigProxyFactory {
             currentCount >= limit &&
             (currentCount % limit == 0 )) {
 
-                LOG.warn("Too many {} objects are being created. Please review the calling code to prevent memory leaks. Stack trace for debugging follows:",
-                        objectDescription.get(), new Throwable());
+                LOG.warn(
+                        "Too many {} objects are being created ({} so far).\n" +
+                        "Please review the calling code to prevent memory leaks.\n" +
+                        "Normal usage for ConfigProxyFactory is to create singletons via your DI mechanism.\n" +
+                        "For special use cases that *require* creating multiple instances you can tune reporting\n" +
+                        "by setting the `{}` config key to a higher threshold.\nStack trace for debugging follows:",
+                        objectDescription.get(), currentCount, EXCESSIVE_PROXIES_LIMIT, new Throwable());
         }
     }
 
