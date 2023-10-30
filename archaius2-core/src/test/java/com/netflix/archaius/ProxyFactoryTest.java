@@ -17,6 +17,7 @@ import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
@@ -550,5 +551,27 @@ public class ProxyFactoryTest {
         Assert.assertNotNull(withArgs.hashCode());
         //noinspection EqualsWithItself
         Assert.assertEquals(withArgs, withArgs);
+    }
+
+    @Ignore("Manual test. Output is just log entries, can't be verified by CI")
+    @Test
+    public void testLogExcessiveUse() {
+        SettableConfig config = new DefaultSettableConfig();
+        PropertyFactory propertyFactory = DefaultPropertyFactory.from(config);
+
+        for (int i = 0; i < 5; i++) {
+            new ConfigProxyFactory(config, config.getDecoder(), propertyFactory); // Last one should emit a log!
+        }
+
+        SettableConfig otherConfig = new DefaultSettableConfig();
+        for (int i = 0; i < 4; i++) {
+            new ConfigProxyFactory(otherConfig, config.getDecoder(), propertyFactory); // Should not log! It's only 4 and on a different config.
+        }
+
+        ConfigProxyFactory factory = new ConfigProxyFactory(config, config.getDecoder(), propertyFactory); // Should not log, because we only log every 5.
+        for (int i = 0; i < 5; i++) {
+            factory.newProxy(WithArguments.class, "aPrefix"); // Last one should emit a log
+        }
+        factory.newProxy(WithArguments.class, "somePrefix"); // This one should not log, because it's a new prefix.
     }
 }
