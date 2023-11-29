@@ -60,7 +60,12 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
             if (encoded == null) {
                 return null;
             }
-            return (T)getOrCreateConverter(type).convert(encoded);
+            @SuppressWarnings("unchecked")
+            TypeConverter<T> converter = (TypeConverter<T>) getOrCreateConverter(type);
+            if (converter == null) {
+                throw new RuntimeException("No converter found for type '" + type + "'");
+            }
+            return converter.convert(encoded);
         } catch (Exception e) {
             throw new ParseException("Error decoding type `" + type.getTypeName() + "`", e);
         }
@@ -76,7 +81,7 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
         if (converter == null) {
             converter = resolve(type);
             if (converter == null) {
-                throw new RuntimeException("No converter found for type '" + type + "'");
+                return null;
             }
             cache.put(type, converter);
         }

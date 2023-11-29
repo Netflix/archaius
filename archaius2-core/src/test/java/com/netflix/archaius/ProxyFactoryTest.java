@@ -4,18 +4,23 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.TypeConverter;
+import com.netflix.archaius.config.MapConfig;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -573,5 +578,50 @@ public class ProxyFactoryTest {
             factory.newProxy(WithArguments.class, "aPrefix"); // Last one should emit a log
         }
         factory.newProxy(WithArguments.class, "somePrefix"); // This one should not log, because it's a new prefix.
+    }
+
+    interface ConfigWithNestedInterface {
+        int intValue();
+
+        CustomObject customValue();
+
+        interface CustomObject {
+            String value();
+        }
+    }
+
+    @Test
+    public void testNestedInterfaceWithCustomDecoder() {
+        TypeConverter<ConfigWithNestedInterface.CustomObject> customObjectTypeConverter = value -> value::toUpperCase;
+
+        final class CustomDecoder implements Decoder, TypeConverter.Registry {
+            @Override
+            public <T> T decode(Class<T> type, String encoded) {
+                if (type.equals(ConfigWithNestedInterface.CustomObject.class)) {
+                    @SuppressWarnings("unchecked")
+                    T converted = (T) customObjectTypeConverter.convert(encoded);
+                    return converted;
+                }
+                return DefaultDecoder.INSTANCE.decode(type, encoded);
+            }
+
+            @Override
+            public Optional<TypeConverter<?>> get(Type type) {
+                if (type.equals(ConfigWithNestedInterface.CustomObject.class)) {
+                    return Optional.of(customObjectTypeConverter);
+                }
+                return DefaultDecoder.INSTANCE.get(type);
+            }
+        }
+        Config config = MapConfig.builder()
+                .put("intValue", "5")
+                .put("customValue", "blah")
+                .build();
+        config.setDecoder(new CustomDecoder());
+        ConfigProxyFactory proxyFactory = new ConfigProxyFactory(config, config.getDecoder(), DefaultPropertyFactory.from(config));
+
+        ConfigWithNestedInterface proxy = proxyFactory.newProxy(ConfigWithNestedInterface.class);
+        Assert.assertEquals(5, proxy.intValue());
+        Assert.assertEquals("BLAH", proxy.customValue().value());
     }
 }

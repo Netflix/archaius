@@ -85,4 +85,12 @@ public class DefaultDecoderTest {
         Assert.assertEquals(BitSet.valueOf(Hex.decodeHex("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
     }
+
+    @Test
+    public void testTypeConverterRegistry() {
+        Assert.assertTrue(DefaultDecoder.INSTANCE.get(Instant.class).isPresent());
+
+        class Foo {}
+        Assert.assertFalse(DefaultDecoder.INSTANCE.get(Foo.class).isPresent());
+    }
 }
