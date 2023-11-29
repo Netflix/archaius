@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -76,6 +78,8 @@ public final class DefaultTypeConverterFactory implements TypeConverter.Factory 
         converters.put(Instant.class, v -> Instant.from(OffsetDateTime.parse(v)));
         converters.put(Date.class, v -> new Date(Long.parseLong(v)));
         converters.put(Currency.class, Currency::getInstance);
+        converters.put(URI.class, URI::create);
+        converters.put(Locale.class, Locale::forLanguageTag);
 
         converters.put(BitSet.class, v -> {
             try {

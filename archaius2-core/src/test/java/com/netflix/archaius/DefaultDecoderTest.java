@@ -18,6 +18,7 @@ package com.netflix.archaius;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.util.BitSet;
 import java.util.Currency;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -84,5 +86,7 @@ public class DefaultDecoderTest {
         Assert.assertEquals(Currency.getInstance("USD"), decoder.decode(Currency.class, "USD"));
         Assert.assertEquals(BitSet.valueOf(Hex.decodeHex("DEADBEEF00DEADBEEF")), decoder.decode(BitSet.class, "DEADBEEF00DEADBEEF"));
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
+        Assert.assertEquals(URI.create("https://netflix.com"), decoder.decode(URI.class, "https://netflix.com"));
+        Assert.assertEquals(Locale.ENGLISH, decoder.decode(Locale.class, "en"));
     }
 }
