@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -167,6 +168,43 @@ public class PropertyTest {
         // Test proper handling of unset properties
         Property<Map<CustomType, CustomType>> emptyProperty = factory.getMap("fubar", CustomType.class, CustomType.class);
         Assert.assertNull(emptyProperty.get());
+
+        config.setProperty("fubar", "");
+        Property<List<String>> emptyListProperty = factory.getList("fubar", String.class);
+        Assert.assertEquals(Collections.emptyList(), emptyListProperty.get());
+
+        Property<Set<String>> emptySetProperty = factory.getSet("fubar", String.class);
+        Assert.assertEquals(Collections.emptySet(), emptySetProperty.get());
+
+        Property<Map<String, String>> emptyMapProperty = factory.getMap("fubar", String.class, String.class);
+        Assert.assertEquals(Collections.emptyMap(), emptyMapProperty.get());
+    }
+
+    @Test
+    public void testCollectionTypesImmutability() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("foo", "10,13,13,20");
+        config.setProperty("bar", "");
+        config.setProperty("baz", "a=1,b=2");
+
+        List<Integer> list = factory.getList("foo", Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> list.add(100));
+
+        Set<Integer> set = factory.getSet("foo", Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> set.add(100));
+
+        Map<String, Integer> map = factory.getMap("baz", String.class, Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> map.put("c", 3));
+
+        List<Integer> emptyList = factory.getList("bar", Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> emptyList.add(100));
+
+        Set<Integer> emptySet = factory.getSet("bar", Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> emptySet.add(100));
+
+        Map<String, Integer> emptyMap = factory.getMap("bar", String.class, Integer.class).get();
+        Assert.assertThrows(UnsupportedOperationException.class, () -> emptyMap.put("c", 3));
     }
 
     @Test

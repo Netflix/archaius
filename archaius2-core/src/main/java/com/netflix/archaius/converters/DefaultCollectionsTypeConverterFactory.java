@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class DefaultCollectionsTypeConverterFactory implements TypeConverter.Factory {
@@ -27,7 +28,7 @@ public final class DefaultCollectionsTypeConverterFactory implements TypeConvert
     @Override
     public Optional<TypeConverter<?>> get(Type type, TypeConverter.Registry registry) {
         if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType)type;
+            ParameterizedType parameterizedType = (ParameterizedType) type;
             if (parameterizedType.getRawType().equals(Map.class)) {
                 return Optional.of(createMapTypeConverter(
                         registry.get(parameterizedType.getActualTypeArguments()[0]).orElseThrow(() -> new ConverterNotFoundException("No converter found")),
@@ -37,50 +38,70 @@ public final class DefaultCollectionsTypeConverterFactory implements TypeConvert
                 return Optional.of(createCollectionTypeConverter(
                         parameterizedType.getActualTypeArguments()[0],
                         registry,
-                        LinkedHashSet::new));
+                        LinkedHashSet::new,
+                        Collections::emptySet,
+                        Collections::unmodifiableSet));
             } else if (parameterizedType.getRawType().equals(SortedSet.class)) {
                 return Optional.of(createCollectionTypeConverter(
                         parameterizedType.getActualTypeArguments()[0],
                         registry,
-                        TreeSet::new));
+                        TreeSet::new,
+                        Collections::emptySortedSet,
+                        Collections::unmodifiableSortedSet));
             } else if (parameterizedType.getRawType().equals(List.class)) {
                 return Optional.of(createCollectionTypeConverter(
                         parameterizedType.getActualTypeArguments()[0],
                         registry,
-                        ArrayList::new));
+                        ArrayList::new,
+                        Collections::emptyList,
+                        Collections::unmodifiableList));
             } else if (parameterizedType.getRawType().equals(LinkedList.class)) {
                 return Optional.of(createCollectionTypeConverter(
                         parameterizedType.getActualTypeArguments()[0],
                         registry,
-                        LinkedList::new));
+                        LinkedList::new,
+                        LinkedList::new,
+                        Function.identity()));
             }
         }
 
         return Optional.empty();
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private <T> TypeConverter<?> createCollectionTypeConverter(final Type type, TypeConverter.Registry registry, final Supplier<Collection<T>> collectionFactory) {
-        TypeConverter elementConverter = registry.get(type).orElseThrow(() -> new ConverterNotFoundException("No converter found"));
+    private static <E, T extends Collection<E>> TypeConverter<T> createCollectionTypeConverter(final Type elementType,
+                                                                                               final TypeConverter.Registry registry,
+                                                                                               final Supplier<T> collectionFactory,
+                                                                                               final Supplier<T> emptyCollectionFactory,
+                                                                                               final Function<T, T> finisher) {
+        @SuppressWarnings("unchecked")
+        TypeConverter<E> elementConverter = (TypeConverter<E>) registry.get(elementType)
+                .orElseThrow(() -> new ConverterNotFoundException("No converter found"));
 
-        boolean ignoreEmpty = !String.class.equals(type);
+        boolean ignoreEmpty = !String.class.equals(elementType);
 
         return value -> {
-            final Collection collection = collectionFactory.get();
-            if (!value.isEmpty()) {
-                Arrays.asList(value.split("\\s*,\\s*")).forEach(v -> {
-                    if (!v.isEmpty() || !ignoreEmpty) {
-                        collection.add(elementConverter.convert(v));
-                    }
-                });
+            if (value.isEmpty()) {
+                return emptyCollectionFactory.get();
             }
-            return collection;
+            final T collection = collectionFactory.get();
+            for (String item : value.split("\\s*,\\s*")) {
+                if (!item.isEmpty() || !ignoreEmpty) {
+                    collection.add(elementConverter.convert(item));
+                }
+            }
+            return finisher.apply(collection);
         };
     }
 
-    private TypeConverter<?> createMapTypeConverter(final TypeConverter<?> keyConverter, final TypeConverter<?> valueConverter, final Supplier<Map> mapFactory) {
+    private static <K, V> TypeConverter<Map<K, V>> createMapTypeConverter(final TypeConverter<K> keyConverter,
+                                                                          final TypeConverter<V> valueConverter,
+                                                                          final Supplier<Map<K, V>> mapFactory) {
         return s -> {
-            Map result = mapFactory.get();
+            if (s.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Map<K, V> result = mapFactory.get();
+
             Arrays
                     .stream(s.split("\\s*,\\s*"))
                     .filter(pair -> !pair.isEmpty())
