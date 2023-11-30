@@ -4,6 +4,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
+import com.google.inject.spi.ElementSource;
 import com.google.inject.spi.ProvisionListener;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.api.CascadeStrategy;
@@ -23,6 +24,8 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
 
 import javax.inject.Inject;
 
@@ -60,9 +63,22 @@ public class ConfigurationInjectingListener implements ProvisionListener {
         Class<?> clazz = provision.getBinding().getKey().getTypeLiteral().getRawType();
         
         //
-        // Configuration Loading
+        // Configuration Loading via @ConfigurationSource.  @Configuration source may be annotated
+        // on either a class or a @Provides method
         //
-        final ConfigurationSource source = clazz.getDeclaredAnnotation(ConfigurationSource.class);
+        ConfigurationSource source = clazz.getDeclaredAnnotation(ConfigurationSource.class);
+        if (source == null) {
+            if (provision.getBinding().getSource() instanceof ElementSource) {
+                ElementSource elementSource = (ElementSource)provision.getBinding().getSource();
+                if (elementSource.getDeclaringSource() instanceof Method) {
+                    Method method = (Method)elementSource.getDeclaringSource();
+                    if (method != null) {
+                        source = method.getDeclaredAnnotation(ConfigurationSource.class);
+                    }
+                }
+            }
+        }
+        
         if (source != null) {
             if (injector == null) {
                 LOG.warn("Can't inject configuration into {} until ConfigurationInjectingListener has been initialized", clazz.getName());
