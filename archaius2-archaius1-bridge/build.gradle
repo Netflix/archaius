@@ -20,7 +20,7 @@ dependencies {
     api  project(':archaius2-core')
     compileOnly  project(':archaius2-guice')
     api  project(':archaius2-commons-configuration')
-    api  'com.netflix.archaius:archaius-core:0.7.7'
+    api  'com.netflix.archaius:archaius-core:0.7.8'
 	
     testImplementation project(':archaius2-guice')
 }
