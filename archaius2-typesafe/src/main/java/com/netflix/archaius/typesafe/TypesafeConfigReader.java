@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.typesafe;
 
+import java.io.File;
+import java.io.Reader;
 import java.net.URL;
 
 import com.netflix.archaius.api.ConfigReader;
@@ -31,9 +33,24 @@ public class TypesafeConfigReader implements ConfigReader {
         return new TypesafeConfig(config);
     }
 
+    public com.netflix.archaius.api.Config load(String resourceName) throws ConfigException {
+        Config config = ConfigFactory.parseResourcesAnySyntax(resourceName);
+        return new TypesafeConfig(config);
+    }
+
     @Override
     public com.netflix.archaius.api.Config load(ClassLoader loader, URL url, StrInterpolator strInterpolator, StrInterpolator.Lookup lookup) throws ConfigException {
         Config config = ConfigFactory.parseURL(url, ConfigParseOptions.defaults().setClassLoader(loader));
+        return new TypesafeConfig(config);
+    }
+
+    public com.netflix.archaius.api.Config load(File file) throws ConfigException {
+        Config config = ConfigFactory.parseFile(file);
+        return new TypesafeConfig(config);
+    }
+
+    public com.netflix.archaius.api.Config load(Reader reader) throws ConfigException {
+        Config config = ConfigFactory.parseReader(reader);
         return new TypesafeConfig(config);
     }
 
