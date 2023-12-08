@@ -36,11 +36,11 @@ import java.util.stream.Stream;
 
 @Singleton
 public class DefaultDecoder implements Decoder, TypeConverter.Registry {
-    private final Map<Type, TypeConverter> cache = new ConcurrentHashMap<>();
+    private final Map<Type, TypeConverter<?>> cache = new ConcurrentHashMap<>();
 
     private final List<TypeConverter.Factory> factories = new ArrayList<>();
 
-    public static DefaultDecoder INSTANCE = new DefaultDecoder();
+    public static final DefaultDecoder INSTANCE = new DefaultDecoder();
 
     private DefaultDecoder() {
         factories.add(DefaultTypeConverterFactory.INSTANCE);
@@ -83,7 +83,10 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
             if (converter == null) {
                 return null;
             }
-            cache.put(type, converter);
+            TypeConverter<?> existing = cache.putIfAbsent(type, converter);
+            if (existing != null) {
+                converter = existing;
+            }
         }
         return converter;
     }
@@ -111,7 +114,8 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
             return null;
         }
 
-        Class cls = (Class)type;
+        @SuppressWarnings("unchecked")
+        Class<T> cls = (Class<T>) type;
 
         // Next look a valueOf(String) static method
         Method method;
@@ -119,19 +123,19 @@ public class DefaultDecoder implements Decoder, TypeConverter.Registry {
             method = cls.getMethod("valueOf", String.class);
             return value -> {
                 try {
-                    return (T)method.invoke(null, value);
+                    return (T) method.invoke(null, value);
                 } catch (Exception e) {
                     throw new ParseException("Error converting value '" + value + "' to '" + type.getTypeName() + "'", e);
                 }
             };
         } catch (NoSuchMethodException e1) {
             // Next look for a T(String) constructor
-            Constructor c;
+            Constructor<T> c;
             try {
                 c = cls.getConstructor(String.class);
                 return value -> {
                     try {
-                        return (T)c.newInstance(value);
+                        return (T) c.newInstance(value);
                     } catch (Exception e) {
                         throw new ParseException("Error converting value", e);
                     }
