@@ -5,6 +5,7 @@ import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.PropertyRepository;
+import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
@@ -296,9 +297,11 @@ public class ConfigProxyFactory {
             // This object encapsulates the way to get the value for the current property.
             final PropertyValueGetter propertyValueGetter;
 
-            if (!knownCollections.containsKey(returnType) && returnType.isInterface()) {
-                // Our return type is an interface but not a known collection. We treat it as a nested Config proxy
-                // interface and create a proxy with it, with the current property name as the initial prefix for nesting.
+            if (!knownCollections.containsKey(returnType)
+                    && returnType.isInterface()
+                    && !(decoder instanceof TypeConverter.Registry && ((TypeConverter.Registry) decoder).get(m.getGenericReturnType()).isPresent())) {
+                // Our return type is an interface but not a known collection and is also not a type our decoder can handle.
+                // We treat it as a nested Config proxy interface and create a proxy with it, with the current property name as the initial prefix for nesting.
                 propertyValueGetter = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
 
             } else if (m.getParameterCount() > 0) {

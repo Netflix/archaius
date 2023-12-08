@@ -89,4 +89,12 @@ public class DefaultDecoderTest {
         Assert.assertEquals(URI.create("https://netflix.com"), decoder.decode(URI.class, "https://netflix.com"));
         Assert.assertEquals(Locale.ENGLISH, decoder.decode(Locale.class, "en"));
     }
+
+    @Test
+    public void testTypeConverterRegistry() {
+        Assert.assertTrue(DefaultDecoder.INSTANCE.get(Instant.class).isPresent());
+
+        class Foo {}
+        Assert.assertFalse(DefaultDecoder.INSTANCE.get(Foo.class).isPresent());
+    }
 }
