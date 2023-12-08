@@ -300,8 +300,8 @@ public class ConfigProxyFactory {
             if (!knownCollections.containsKey(returnType)
                     && returnType.isInterface()
                     && !(decoder instanceof TypeConverter.Registry && ((TypeConverter.Registry) decoder).get(m.getGenericReturnType()).isPresent())) {
-                // Our return type is an interface but not a known collection. We treat it as a nested Config proxy
-                // interface and create a proxy with it, with the current property name as the initial prefix for nesting.
+                // Our return type is an interface but not a known collection and is also not a type our decoder can handle.
+                // We treat it as a nested Config proxy interface and create a proxy with it, with the current property name as the initial prefix for nesting.
                 propertyValueGetter = createInterfaceProperty(propName, newProxy(returnType, propName, immutable));
 
             } else if (m.getParameterCount() > 0) {
