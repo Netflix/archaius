@@ -588,11 +588,6 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         }
     }
 
-    /** Whether instrumentation is enabled, recording property usage data through this object. */
-    public boolean instrumentationEnabled() {
-        return enableInstrumentation;
-    }
-
     /**
      * Get all the keys contained by sub configurations.
      * 
