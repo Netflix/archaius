@@ -551,12 +551,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         Configuration firstMatchingConfiguration = null;
         for (Configuration config : configList) {
             if (config.containsKey(key)) {
-                if (instrument && enableInstrumentation) {
-                    usedProperties.add(key);
-                    if (enableStackTrace) {
-                        String trace = Arrays.toString(Thread.currentThread().getStackTrace());
-                        stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
-                    }
+                if (instrument) {
+                    recordUsage(key);
                 }
                 firstMatchingConfiguration = config;
                 break;
@@ -576,6 +572,25 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         {
             return null;
         }
+    }
+
+    /**
+     * Manual endpoint for recording usage of a property for instrumentation purposes.
+     * @param key Property whose usage is being reported
+     */
+    public void recordUsage(String key) {
+        if (enableInstrumentation) {
+            usedProperties.add(key);
+            if (enableStackTrace) {
+                String trace = Arrays.toString(Thread.currentThread().getStackTrace());
+                stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+            }
+        }
+    }
+
+    /** Whether instrumentation is enabled, recording property usage data through this object. */
+    public boolean instrumentationEnabled() {
+        return enableInstrumentation;
     }
 
     /**
