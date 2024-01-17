@@ -546,6 +546,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     private Object getProperty(String key, boolean instrument)
     {
         if (overrideProperties.containsKey(key)) {
+            if (instrument) {
+                recordUsage(key);
+            }
             return overrideProperties.getProperty(key);
         }
         Configuration firstMatchingConfiguration = null;
@@ -922,12 +925,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * @param config the configuration to query
      * @param key the key of the property
      */
-    private static void appendListProperty(List<Object> dest, Configuration config,
+    private void appendListProperty(List<Object> dest, Configuration config,
             String key)
     {
         Object value = config.getProperty(key);
         if (value != null)
         {
+            recordUsage(key);
             if (value instanceof Collection)
             {
                 Collection<?> col = (Collection<?>) value;
