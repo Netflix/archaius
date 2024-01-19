@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /** Tracks property usage data and flushes the data periodically to a sink. */
@@ -23,7 +24,7 @@ public class AccessMonitorUtil implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AccessMonitorUtil.class);
 
     // Map from property id to property usage data
-    private final ConcurrentHashMap<String, PropertyUsageData> propertyUsageMap;
+    private final AtomicReference<ConcurrentHashMap<String, PropertyUsageData>> propertyUsageMapRef;
 
     // Map from stack trace to how many times that stack trace appeared
     private final ConcurrentHashMap<String, Integer> stackTrace;
@@ -75,7 +76,7 @@ public class AccessMonitorUtil implements AutoCloseable {
     private AccessMonitorUtil(
             Consumer<PropertiesInstrumentationData> dataFlushConsumer,
             boolean recordStackTrace) {
-        this.propertyUsageMap = new ConcurrentHashMap<>();
+        this.propertyUsageMapRef = new AtomicReference(new ConcurrentHashMap<>());
         this.stackTrace = new ConcurrentHashMap<>();
         this.dataFlushConsumer = dataFlushConsumer;
         this.recordStackTrace = recordStackTrace;
@@ -89,9 +90,9 @@ public class AccessMonitorUtil implements AutoCloseable {
     }
 
     private void startFlushing(int initialDelay, int period) {
-        if (!flushingEnabled()) {
-            LOG.info("Property usage data is being captured, but not flushed as there is no consumer specified.");
-        } else {
+        if (flushingEnabled()) {
+            LOG.info("Starting flushing property usage data in {} seconds and then every {} seconds after.",
+                    initialDelay, period);
             executor.scheduleWithFixedDelay(this::flushUsageData, initialDelay, period, TimeUnit.SECONDS);
         }
     }
@@ -108,8 +109,9 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     /** Merge the results of given accessMonitorUtil into this one. */
     public void merge(AccessMonitorUtil accessMonitorUtil) {
-        for (Map.Entry<String, PropertyUsageData> entry : accessMonitorUtil.propertyUsageMap.entrySet()) {
-            propertyUsageMap.putIfAbsent(entry.getKey(), entry.getValue());
+        Map<String, PropertyUsageData> myMap = propertyUsageMapRef.get();
+        for (Map.Entry<String, PropertyUsageData> entry : accessMonitorUtil.propertyUsageMapRef.get().entrySet()) {
+            myMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
         for (Map.Entry<String, Integer> entry : accessMonitorUtil.stackTrace.entrySet()) {
             stackTrace.merge(entry.getKey(), entry.getValue(), Integer::sum);
@@ -118,7 +120,7 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     public void registerUsage(PropertyDetails propertyDetails) {
         // Initially, we limit the number of events we keep to one event per property id per flush.
-        propertyUsageMap.putIfAbsent(
+        propertyUsageMapRef.get().putIfAbsent(
                 propertyDetails.getId(),
                 new PropertyUsageData(createEventList(new PropertyUsageEvent(System.currentTimeMillis()))));
 
@@ -138,15 +140,12 @@ public class AccessMonitorUtil implements AutoCloseable {
     }
 
     private Map<String, PropertyUsageData> getAndClearUsageMap() {
-        synchronized (propertyUsageMap) {
-            Map<String, PropertyUsageData> ret = getUsageMapImmutable();
-            propertyUsageMap.clear();
-            return ret;
-        }
+        Map<String, PropertyUsageData> map = propertyUsageMapRef.getAndSet(new ConcurrentHashMap<>());
+        return Collections.unmodifiableMap(map);
     }
 
     public Map<String, PropertyUsageData> getUsageMapImmutable() {
-        return Collections.unmodifiableMap(new HashMap<>(propertyUsageMap));
+        return Collections.unmodifiableMap(new HashMap<>(propertyUsageMapRef.get()));
     }
 
     public Map<String, Integer> getStackTracesImmutable() {
