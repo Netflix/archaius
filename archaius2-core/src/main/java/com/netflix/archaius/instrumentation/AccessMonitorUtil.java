@@ -109,8 +109,9 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     /** Merge the results of given accessMonitorUtil into this one. */
     public void merge(AccessMonitorUtil accessMonitorUtil) {
+        Map<String, PropertyUsageData> myMap = propertyUsageMapRef.get();
         for (Map.Entry<String, PropertyUsageData> entry : accessMonitorUtil.propertyUsageMapRef.get().entrySet()) {
-            propertyUsageMapRef.get().putIfAbsent(entry.getKey(), entry.getValue());
+            myMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
         for (Map.Entry<String, Integer> entry : accessMonitorUtil.stackTrace.entrySet()) {
             stackTrace.merge(entry.getKey(), entry.getValue(), Integer::sum);
@@ -140,7 +141,7 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     private Map<String, PropertyUsageData> getAndClearUsageMap() {
         Map<String, PropertyUsageData> map = propertyUsageMapRef.getAndSet(new ConcurrentHashMap<>());
-        return Collections.unmodifiableMap(new HashMap<>(map));
+        return Collections.unmodifiableMap(map);
     }
 
     public Map<String, PropertyUsageData> getUsageMapImmutable() {
