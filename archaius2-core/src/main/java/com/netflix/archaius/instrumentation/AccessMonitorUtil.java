@@ -139,8 +139,7 @@ public class AccessMonitorUtil implements AutoCloseable {
     }
 
     private Map<String, PropertyUsageData> getAndClearUsageMap() {
-        Map<String, PropertyUsageData> map =
-                propertyUsageMapRef.getAndUpdate(unused -> new ConcurrentHashMap<>());
+        Map<String, PropertyUsageData> map = propertyUsageMapRef.getAndSet(new ConcurrentHashMap<>());
         return Collections.unmodifiableMap(new HashMap<>(map));
     }
 
