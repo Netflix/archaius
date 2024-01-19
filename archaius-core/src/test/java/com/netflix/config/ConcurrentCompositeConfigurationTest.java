@@ -18,6 +18,7 @@ package com.netflix.config;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.BaseConfiguration;
@@ -80,11 +81,24 @@ public class ConcurrentCompositeConfigurationTest {
         config.addProperty("prop1", "val1");
         config.addProperty("prop2", "val2");
         assertEquals(config.getProperty("prop1"), "val1");
-        assertEquals(config.getUsedProperties().size(), 1);
-        assertEquals(config.getUsedProperties().iterator().next(), "prop1");
+
+        // Confirm that the usage is captured
+        Set<String> usedProperties = config.getUsedProperties();
+        assertEquals(usedProperties.size(), 1);
+        assertEquals(usedProperties.iterator().next(), "prop1");
+
+        // Confirm that an uninstrumented call is ignored
         assertEquals(config.getPropertyUninstrumented("prop2"), "val2");
-        assertEquals(config.getUsedProperties().size(), 1);
-        assertEquals(config.getUsedProperties().iterator().next(), "prop1");
+        usedProperties = config.getAndClearUsedProperties();
+        assertEquals(usedProperties.size(), 1);
+        assertEquals(usedProperties.iterator().next(), "prop1");
+
+        // Confirm that both usedProperties endpoints respect when the properties have been cleared
+        usedProperties = config.getUsedProperties();
+        assertTrue(usedProperties.isEmpty());
+
+        usedProperties = config.getAndClearUsedProperties();
+        assertTrue(usedProperties.isEmpty());
 
         System.clearProperty(ConcurrentCompositeConfiguration.ENABLE_INSTRUMENTATION);
     }

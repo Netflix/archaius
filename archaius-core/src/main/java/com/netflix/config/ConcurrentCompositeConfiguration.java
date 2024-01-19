@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -109,15 +110,19 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
     private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
 
-    private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<String, AbstractConfiguration>();
+    private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<>();
 
     private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
-    private final Set<String> usedProperties = ConcurrentHashMap.newKeySet();
+    private final AtomicReference<Set<String>> usedPropertiesRef = new AtomicReference<>(ConcurrentHashMap.newKeySet());
 
     public Set<String> getUsedProperties() {
-        return usedProperties;
+        return Collections.unmodifiableSet(new HashSet<>(usedPropertiesRef.get()));
     }
 
+    public Set<String> getAndClearUsedProperties() {
+        Set<String> ret = usedPropertiesRef.getAndSet(ConcurrentHashMap.newKeySet());
+        return Collections.unmodifiableSet(ret);
+    }
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
     
@@ -546,6 +551,9 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     private Object getProperty(String key, boolean instrument)
     {
         if (overrideProperties.containsKey(key)) {
+            if (instrument) {
+                recordUsage(key);
+            }
             return overrideProperties.getProperty(key);
         }
         Configuration firstMatchingConfiguration = null;
@@ -580,7 +588,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      */
     public void recordUsage(String key) {
         if (enableInstrumentation) {
-            usedProperties.add(key);
+            usedPropertiesRef.get().add(key);
             if (enableStackTrace) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
                 stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
@@ -922,12 +930,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
      * @param config the configuration to query
      * @param key the key of the property
      */
-    private static void appendListProperty(List<Object> dest, Configuration config,
+    private void appendListProperty(List<Object> dest, Configuration config,
             String key)
     {
         Object value = config.getProperty(key);
         if (value != null)
         {
+            recordUsage(key);
             if (value instanceof Collection)
             {
                 Collection<?> col = (Collection<?>) value;
