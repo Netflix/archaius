@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.property;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -44,6 +45,10 @@ import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.MapConfig;
+
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertNotEquals;
 
 @SuppressWarnings("deprecation")
 public class PropertyTest {
@@ -533,5 +538,102 @@ public class PropertyTest {
 
         Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
         Assert.assertEquals(1, value.intValue());
+    }
+
+    @Test
+    public void getListShouldReuseKey() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("geralt", "of,rivia");
+
+        List<String> expectedList = Arrays.asList("of", "rivia");
+
+        Property<List<String>> firstReference = factory.getList("geralt", String.class);
+        assertEquals(expectedList, firstReference.get());
+
+        Property<List<String>> secondReference = factory.getList("geralt", String.class);
+        assertEquals(expectedList, secondReference.get());
+
+        ensureReferencesMatch(firstReference, secondReference);
+    }
+
+    @Test
+    public void getSetShouldReuseKey() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("geralt", "of,rivia");
+
+        Set<String> expectedSet = new HashSet<>(Arrays.asList("of", "rivia"));
+
+        Property<Set<String>> firstReference = factory.getSet("geralt", String.class);
+        assertEquals(expectedSet, firstReference.get());
+
+        Property<Set<String>> secondReference = factory.getSet("geralt", String.class);
+        assertEquals(expectedSet, secondReference.get());
+
+        ensureReferencesMatch(firstReference, secondReference);
+    }
+
+    @Test
+    public void getMapShouldReuseKey() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("geralt", "of=rivia");
+
+        Map<String, String> expectedMap = new HashMap<>();
+        expectedMap.put("of", "rivia");
+
+        Property<Map<String, String>> firstReference = factory.getMap("geralt", String.class, String.class);
+        assertEquals(expectedMap, firstReference.get());
+
+        Property<Map<String, String>> secondReference = factory.getMap("geralt", String.class, String.class);
+        assertEquals(expectedMap, secondReference.get());
+
+        ensureReferencesMatch(firstReference, secondReference);
+    }
+
+    @Test
+    public void getCollectionShouldNotReuseKeyWithDifferentTypes() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        config.setProperty("geralt", "of,rivia");
+
+        Property<List<String>> firstReference = factory.getList("geralt", String.class);
+        assertEquals(Arrays.asList("of", "rivia"), firstReference.get());
+
+        Property<Set<String>> secondReference = factory.getSet("geralt", String.class);
+        assertEquals(new HashSet<>(Arrays.asList("of", "rivia")), secondReference.get());
+
+        ensureReferencesDoNotMatch(firstReference, secondReference);
+    }
+
+    private void ensureReferencesMatch(Property<?> firstReference, Property<?> secondReference) {
+        ensureReferencesMatch(firstReference, secondReference, true);
+    }
+
+    private void ensureReferencesDoNotMatch(Property<?> firstReference, Property<?> secondReference) {
+        ensureReferencesMatch(firstReference, secondReference, false);
+    }
+
+    private void ensureReferencesMatch(Property<?> firstReference, Property<?> secondReference, boolean shouldMatch) {
+        try {
+            // inspect the keyAndType private field within DefaultPropertyFactory
+            // to validate that we hold the same reference to the key when caching keys
+            // this ensures that we don't leak references to keys where the key and types match
+            Field keyAndType = firstReference.getClass().getDeclaredField("keyAndType");
+            keyAndType.setAccessible(true);
+            Object firstReferenceValue = keyAndType.get(firstReference);
+            Object secondReferenceValue = keyAndType.get(secondReference);
+            if (shouldMatch) {
+                assertEquals(firstReferenceValue, secondReferenceValue);
+            } else {
+                assertNotEquals(firstReferenceValue, secondReferenceValue);
+            }
+        } catch (Exception e) {
+            fail(String.format(
+                    "Expect references [%s] and [%s] keyAndType to be %s "
+                            + "- this can cause memory leaks and inefficient allocations: %s",
+                    firstReference, secondReference, shouldMatch ? "equal" : "not equal", e.getMessage()));
+        }
     }
 }

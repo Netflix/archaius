@@ -92,4 +92,38 @@ public class ArchaiusType implements ParameterizedType {
         String typeArgumentNames = Arrays.stream(typeArguments).map(Class::getSimpleName).collect(Collectors.joining(","));
         return String.format("parameterizedType for %s<%s>", rawType.getSimpleName(), typeArgumentNames);
     }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result = 31 * result + (this.rawType == null ? 0 : this.rawType.hashCode());
+        result = 31 * result + Arrays.hashCode(this.typeArguments);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj == null) {
+            return false;
+        } else if (this.getClass() != obj.getClass()) {
+            return false;
+        }
+
+        ArchaiusType other = (ArchaiusType) obj;
+        if ((this.rawType == null) && (other.rawType != null)) {
+            return false;
+        } else if (this.rawType != null && !this.rawType.equals(other.rawType)) {
+            return false;
+        }
+
+        if ((this.typeArguments == null) && (other.typeArguments != null)) {
+            return false;
+        } else if (this.typeArguments != null && !Arrays.equals(this.typeArguments, other.typeArguments)) {
+            return false;
+        }
+
+        return true;
+    }
 }
