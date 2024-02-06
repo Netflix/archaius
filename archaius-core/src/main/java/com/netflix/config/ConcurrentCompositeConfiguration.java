@@ -116,6 +116,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<>();
 
     private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> stackTracesAndProperties = new ConcurrentHashMap<>();
     private final AtomicReference<Set<String>> usedPropertiesRef = new AtomicReference<>(ConcurrentHashMap.newKeySet());
 
     private Set<String> convertStringFlag(String properties) {
@@ -138,6 +139,11 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     public Map<String, Integer> getInstrumentationStackTraces() {
         return Collections.unmodifiableMap(new HashMap<>(stackTraces));
+    }
+
+    public Map<String, Set<String>> getInstrumentationStackTracesAndProperties() {
+        // Shallow copy
+        return Collections.unmodifiableMap(new HashMap<>(stackTracesAndProperties));
     }
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
@@ -608,9 +614,25 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
             if (enableStackTrace
                     || (!stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key))) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
-                stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                if (enableStackTrace) {
+                    stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                }
+                if (!stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key)) {
+                    stackTracesAndProperties.merge(trace, createSet(key), this::union);
+                }
             }
         }
+    }
+
+    private Set<String> union(Set<String> s1, Set<String> s2) {
+        s1.addAll(s2);
+        return s1;
+    }
+
+    private Set<String> createSet(String s) {
+        Set<String> ret = new HashSet<>();
+        ret.add(s);
+        return ret;
     }
 
     /**
