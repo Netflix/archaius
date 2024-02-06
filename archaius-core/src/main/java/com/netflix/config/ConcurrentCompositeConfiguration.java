@@ -107,8 +107,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
     public static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
-    public static final String STACK_TRACE_ENABLED_PROPERTIES = "archaius_stack_trace_enabled_properties";
     public static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
+    public static final String STACK_TRACE_ENABLED_PROPERTIES = "archaius_stack_trace_enabled_properties";
     private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
     private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
     private final Set<String> stackTraceEnabledProperties = convertStringFlag(System.getProperty(STACK_TRACE_ENABLED_PROPERTIES));
@@ -611,13 +611,13 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void recordUsage(String key) {
         if (enableInstrumentation) {
             usedPropertiesRef.get().add(key);
-            if (enableStackTrace
-                    || (!stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key))) {
+            boolean isTrackedProperty = !stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key);
+            if (enableStackTrace || isTrackedProperty) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
                 if (enableStackTrace) {
                     stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
                 }
-                if (!stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key)) {
+                if (isTrackedProperty) {
                     stackTracesAndProperties.merge(trace, createSet(key), this::union);
                 }
             }
