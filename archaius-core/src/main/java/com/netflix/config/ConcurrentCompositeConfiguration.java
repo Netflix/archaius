@@ -33,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationRuntimeException;
@@ -123,9 +125,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         if (properties == null) {
             return Collections.emptySet();
         }
-        Set<String> ret = new HashSet<>();
-        Collections.addAll(ret, properties.split(","));
-        return ret;
+
+        return ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings().split(properties));
     }
 
     public Set<String> getUsedProperties() {
@@ -611,7 +612,7 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void recordUsage(String key) {
         if (enableInstrumentation) {
             usedPropertiesRef.get().add(key);
-            boolean isTrackedProperty = !stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key);
+            boolean isTrackedProperty = stackTraceEnabledProperties.contains(key);
             if (enableStackTrace || isTrackedProperty) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
                 if (enableStackTrace) {
