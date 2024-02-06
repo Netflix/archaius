@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -106,14 +107,25 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
         implements AggregatedConfiguration, ConfigurationListener, Cloneable {
 
     public static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
+    public static final String STACK_TRACE_ENABLED_PROPERTIES = "archaius_stack_trace_enabled_properties";
     public static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
     private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
     private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
+    private final Set<String> stackTraceEnabledProperties = convertStringFlag(System.getProperty(STACK_TRACE_ENABLED_PROPERTIES));
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<>();
 
     private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
     private final AtomicReference<Set<String>> usedPropertiesRef = new AtomicReference<>(ConcurrentHashMap.newKeySet());
+
+    private Set<String> convertStringFlag(String properties) {
+        if (properties == null) {
+            return Collections.emptySet();
+        }
+        Set<String> ret = new HashSet<>();
+        Collections.addAll(ret, properties.split(","));
+        return ret;
+    }
 
     public Set<String> getUsedProperties() {
         return Collections.unmodifiableSet(new HashSet<>(usedPropertiesRef.get()));
@@ -122,6 +134,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public Set<String> getAndClearUsedProperties() {
         Set<String> ret = usedPropertiesRef.getAndSet(ConcurrentHashMap.newKeySet());
         return Collections.unmodifiableSet(ret);
+    }
+
+    public Map<String, Integer> getInstrumentationStackTraces() {
+        return Collections.unmodifiableMap(new HashMap<>(stackTraces));
     }
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
@@ -589,7 +605,8 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void recordUsage(String key) {
         if (enableInstrumentation) {
             usedPropertiesRef.get().add(key);
-            if (enableStackTrace) {
+            if (enableStackTrace
+                    || (!stackTraceEnabledProperties.isEmpty() && stackTraceEnabledProperties.contains(key))) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
                 stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
             }
