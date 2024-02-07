@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -32,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationRuntimeException;
@@ -107,13 +110,24 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
     public static final String ENABLE_STACK_TRACE = "archaius_enable_stack_trace";
     public static final String ENABLE_INSTRUMENTATION = "archaius_enable_instrumentation";
+    public static final String STACK_TRACE_ENABLED_PROPERTIES = "archaius_stack_trace_enabled_properties";
     private final boolean enableStackTrace = Boolean.parseBoolean(System.getProperty(ENABLE_STACK_TRACE));
     private final boolean enableInstrumentation = Boolean.parseBoolean(System.getProperty(ENABLE_INSTRUMENTATION));
+    private final Set<String> stackTraceEnabledProperties = convertStringFlag(System.getProperty(STACK_TRACE_ENABLED_PROPERTIES));
 
     private Map<String, AbstractConfiguration> namedConfigurations = new ConcurrentHashMap<>();
 
     private final Map<String, Integer> stackTraces = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> stackTracesAndProperties = new ConcurrentHashMap<>();
     private final AtomicReference<Set<String>> usedPropertiesRef = new AtomicReference<>(ConcurrentHashMap.newKeySet());
+
+    private Set<String> convertStringFlag(String properties) {
+        if (properties == null) {
+            return Collections.emptySet();
+        }
+
+        return ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings().split(properties));
+    }
 
     public Set<String> getUsedProperties() {
         return Collections.unmodifiableSet(new HashSet<>(usedPropertiesRef.get()));
@@ -122,6 +136,15 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public Set<String> getAndClearUsedProperties() {
         Set<String> ret = usedPropertiesRef.getAndSet(ConcurrentHashMap.newKeySet());
         return Collections.unmodifiableSet(ret);
+    }
+
+    public Map<String, Integer> getInstrumentationStackTraces() {
+        return Collections.unmodifiableMap(new HashMap<>(stackTraces));
+    }
+
+    public Map<String, Set<String>> getInstrumentationStackTracesAndProperties() {
+        // Shallow copy
+        return Collections.unmodifiableMap(new HashMap<>(stackTracesAndProperties));
     }
 
     private List<AbstractConfiguration> configList = new CopyOnWriteArrayList<AbstractConfiguration>();
@@ -589,11 +612,28 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
     public void recordUsage(String key) {
         if (enableInstrumentation) {
             usedPropertiesRef.get().add(key);
-            if (enableStackTrace) {
+            boolean isTrackedProperty = stackTraceEnabledProperties.contains(key);
+            if (enableStackTrace || isTrackedProperty) {
                 String trace = Arrays.toString(Thread.currentThread().getStackTrace());
-                stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                if (enableStackTrace) {
+                    stackTraces.merge(trace, 1, (v1, v2) -> v1 + 1);
+                }
+                if (isTrackedProperty) {
+                    stackTracesAndProperties.merge(trace, createSet(key), this::union);
+                }
             }
         }
+    }
+
+    private Set<String> union(Set<String> s1, Set<String> s2) {
+        s1.addAll(s2);
+        return s1;
+    }
+
+    private Set<String> createSet(String s) {
+        Set<String> ret = new HashSet<>();
+        ret.add(s);
+        return ret;
     }
 
     /**
