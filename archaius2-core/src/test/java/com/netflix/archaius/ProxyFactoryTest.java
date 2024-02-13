@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -593,31 +592,18 @@ public class ProxyFactoryTest {
     @Test
     public void testNestedInterfaceWithCustomDecoder() {
         TypeConverter<ConfigWithNestedInterface.CustomObject> customObjectTypeConverter = value -> value::toUpperCase;
-
-        final class CustomDecoder implements Decoder, TypeConverter.Registry {
-            @Override
-            public <T> T decode(Class<T> type, String encoded) {
-                if (type.equals(ConfigWithNestedInterface.CustomObject.class)) {
-                    @SuppressWarnings("unchecked")
-                    T converted = (T) customObjectTypeConverter.convert(encoded);
-                    return converted;
-                }
-                return DefaultDecoder.INSTANCE.decode(type, encoded);
+        TypeConverter.Factory customTypeConverterFactory = (type, registry) -> {
+            if (type.equals(ConfigWithNestedInterface.CustomObject.class)) {
+                return Optional.of(customObjectTypeConverter);
             }
-
-            @Override
-            public Optional<TypeConverter<?>> get(Type type) {
-                if (type.equals(ConfigWithNestedInterface.CustomObject.class)) {
-                    return Optional.of(customObjectTypeConverter);
-                }
-                return DefaultDecoder.INSTANCE.get(type);
-            }
-        }
+            return Optional.empty();
+        };
+        Decoder customDecoder = CustomDecoder.create(Collections.singletonList(customTypeConverterFactory));
         Config config = MapConfig.builder()
                 .put("intValue", "5")
                 .put("customValue", "blah")
                 .build();
-        config.setDecoder(new CustomDecoder());
+        config.setDecoder(customDecoder);
         ConfigProxyFactory proxyFactory = new ConfigProxyFactory(config, config.getDecoder(), DefaultPropertyFactory.from(config));
 
         ConfigWithNestedInterface proxy = proxyFactory.newProxy(ConfigWithNestedInterface.class);

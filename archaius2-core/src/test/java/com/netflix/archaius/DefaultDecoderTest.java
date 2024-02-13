@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius;
 
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
