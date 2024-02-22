@@ -48,7 +48,7 @@ public final class DefaultCollectionsTypeConverterFactory implements TypeConvert
                         TreeSet::new,
                         Collections::emptySortedSet,
                         Collections::unmodifiableSortedSet));
-            } else if (parameterizedType.getRawType().equals(List.class)) {
+            } else if (parameterizedType.getRawType().equals(List.class) || parameterizedType.getRawType().equals(Collection.class)) {
                 return Optional.of(createCollectionTypeConverter(
                         parameterizedType.getActualTypeArguments()[0],
                         registry,
