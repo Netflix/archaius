@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -27,13 +29,24 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.TypeConverter;
+import com.netflix.archaius.converters.ArrayTypeConverterFactory;
+import com.netflix.archaius.converters.EnumTypeConverterFactory;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.Assert;
@@ -41,6 +54,31 @@ import org.junit.Test;
 
 
 public class DefaultDecoderTest {
+    @SuppressWarnings("unused") // accessed via reflection
+    private static Collection<Long> collectionOfLong;
+    @SuppressWarnings("unused") // accessed via reflection
+    private static List<Integer> listOfInteger;
+    @SuppressWarnings("unused") // accessed via reflection
+    private static Set<Long> setOfLong;
+    @SuppressWarnings("unused") // accessed via reflection
+    private static Map<String, Integer> mapOfStringToInteger;
+
+    private static final ParameterizedType collectionOfLongType;
+    private static final ParameterizedType listOfIntegerType;
+    private static final ParameterizedType setOfLongType;
+    private static final ParameterizedType mapofStringToIntegerType;
+
+    static {
+        try {
+            collectionOfLongType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("collectionOfLong").getGenericType();
+            listOfIntegerType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("listOfInteger").getGenericType();
+            setOfLongType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("setOfLong").getGenericType();
+            mapofStringToIntegerType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("mapOfStringToInteger").getGenericType();
+        } catch (NoSuchFieldException exc) {
+            throw new AssertionError("listOfString field not found", exc);
+        }
+    }
+
     @Test
     public void testJavaNumbers() {
         DefaultDecoder decoder = DefaultDecoder.INSTANCE;
@@ -58,8 +96,8 @@ public class DefaultDecoderTest {
         Assert.assertEquals(Double.valueOf(Double.MAX_VALUE), decoder.decode(Double.class, String.valueOf(Double.MAX_VALUE)));
         Assert.assertEquals(BigInteger.valueOf(Long.MAX_VALUE), decoder.decode(BigInteger.class, String.valueOf(Long.MAX_VALUE)));
         Assert.assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), decoder.decode(BigDecimal.class, String.valueOf(Double.MAX_VALUE)));
-        Assert.assertEquals(new AtomicInteger(Integer.MAX_VALUE).intValue(), decoder.decode(AtomicInteger.class, String.valueOf(Integer.MAX_VALUE)).intValue());
-        Assert.assertEquals(new AtomicLong(Long.MAX_VALUE).longValue(), decoder.decode(AtomicLong.class, String.valueOf(Long.MAX_VALUE)).longValue());
+        Assert.assertEquals(Integer.MAX_VALUE, decoder.decode(AtomicInteger.class, String.valueOf(Integer.MAX_VALUE)).get());
+        Assert.assertEquals(Long.MAX_VALUE, decoder.decode(AtomicLong.class, String.valueOf(Long.MAX_VALUE)).get());
     }
     
     @Test
@@ -87,6 +125,50 @@ public class DefaultDecoderTest {
         Assert.assertEquals("testString", decoder.decode(String.class, "testString"));
         Assert.assertEquals(URI.create("https://netflix.com"), decoder.decode(URI.class, "https://netflix.com"));
         Assert.assertEquals(Locale.ENGLISH, decoder.decode(Locale.class, "en"));
+    }
+
+    @Test
+    public void testCollections() {
+        Decoder decoder = DefaultDecoder.INSTANCE;
+        Assert.assertEquals(Collections.emptyList(), decoder.decode(listOfIntegerType, ""));
+        Assert.assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6), decoder.decode(listOfIntegerType, "1,2,3,4,5,6"));
+        Assert.assertEquals(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L), decoder.decode(collectionOfLongType, "1,2,3,4,5,6"));
+        Assert.assertEquals(Collections.singleton(2L), decoder.decode(setOfLongType, "2,2,2,2"));
+        Assert.assertEquals(Collections.emptyMap(), decoder.decode(mapofStringToIntegerType, ""));
+        Assert.assertEquals(Collections.singletonMap("key", 12345), decoder.decode(mapofStringToIntegerType, "key=12345"));
+    }
+
+    @Test
+    public void testArrays() {
+        DefaultDecoder decoder = DefaultDecoder.INSTANCE;
+        Assert.assertArrayEquals(new String[] { "foo", "bar", "baz" }, decoder.decode(String[].class, "foo,bar,baz"));
+        Assert.assertArrayEquals(new Integer[] {1, 2, 3, 4, 5}, decoder.decode(Integer[].class, "1,2,3,4,5"));
+        Assert.assertArrayEquals(new int[] {1, 2, 3, 4, 5}, decoder.decode(int[].class, "1,2,3,4,5"));
+        Assert.assertArrayEquals(new Integer[0], decoder.decode(Integer[].class, ""));
+        Assert.assertArrayEquals(new int[0], decoder.decode(int[].class, ""));
+        Assert.assertArrayEquals(new Long[] {1L, 2L, 3L, 4L, 5L}, decoder.decode(Long[].class, "1,2,3,4,5"));
+        Assert.assertArrayEquals(new long[] {1L, 2L, 3L, 4L, 5L}, decoder.decode(long[].class, "1,2,3,4,5"));
+        Assert.assertArrayEquals(new Long[0], decoder.decode(Long[].class, ""));
+        Assert.assertArrayEquals(new long[0], decoder.decode(long[].class, ""));
+    }
+
+    enum TestEnumType { FOO, BAR, BAZ }
+    @Test
+    public void testEnum() {
+        Decoder decoder = DefaultDecoder.INSTANCE;
+        Assert.assertEquals(TestEnumType.FOO, decoder.decode((Type) TestEnumType.class, "FOO"));
+    }
+
+    @Test
+    public void testArrayConverterIgnoresParameterizedType() {
+        Optional<TypeConverter<?>> maybeConverter = ArrayTypeConverterFactory.INSTANCE.get(listOfIntegerType, DefaultDecoder.INSTANCE);
+        Assert.assertFalse(maybeConverter.isPresent());
+    }
+
+    @Test
+    public void testEnumConverterIgnoresParameterizedType() {
+        Optional<TypeConverter<?>> maybeConverter = EnumTypeConverterFactory.INSTANCE.get(listOfIntegerType, DefaultDecoder.INSTANCE);
+        Assert.assertFalse(maybeConverter.isPresent());
     }
 
     @Test

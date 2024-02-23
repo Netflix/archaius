@@ -10,18 +10,17 @@ public final class EnumTypeConverterFactory implements TypeConverter.Factory {
 
     private EnumTypeConverterFactory() {}
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public Optional<TypeConverter<?>> get(Type type, TypeConverter.Registry registry) {
-        Class clsType = (Class) type;
-
-        if (clsType.isEnum()) {
-            return Optional.of(create(clsType));
+        if (type instanceof Class<?> && ((Class<?>) type).isEnum()) {
+            Class enumClass = (Class<?>) type;
+            return Optional.of(create(enumClass));
         }
-
         return Optional.empty();
     }
 
-    private static TypeConverter<?> create(Class clsType) {
+    private static <T extends Enum<T>> TypeConverter<T> create(Class<T> clsType) {
         return value -> Enum.valueOf(clsType, value);
     }
 }
