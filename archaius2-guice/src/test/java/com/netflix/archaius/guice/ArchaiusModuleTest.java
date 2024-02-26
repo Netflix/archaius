@@ -19,11 +19,6 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 
-import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.api.exceptions.ConfigException;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,6 +42,11 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ArchaiusModuleTest {
     
@@ -131,21 +131,21 @@ public class ArchaiusModuleTest {
                 });
         
         Config config = injector.getInstance(Config.class);
-        Assert.assertEquals("prod", config.getString("env"));
+        assertEquals("prod", config.getString("env"));
         
         config.accept(new PrintStreamVisitor(System.err));
         
         MyService service = injector.getInstance(MyService.class);
-        Assert.assertTrue(service.getValue());
+        assertTrue(service.getValue());
         
         MyServiceConfig serviceConfig = injector.getInstance(MyServiceConfig.class);
-        Assert.assertEquals("str_value", serviceConfig.str_value);
-        Assert.assertEquals(123,   serviceConfig.int_value.intValue());
-        Assert.assertEquals(true,  serviceConfig.bool_value);
-        Assert.assertEquals(456.0, serviceConfig.double_value, 0);
+        assertEquals("str_value", serviceConfig.str_value);
+        assertEquals(123,   serviceConfig.int_value.intValue());
+        assertEquals(true,  serviceConfig.bool_value);
+        assertEquals(456.0, serviceConfig.double_value, 0);
         
-        Assert.assertTrue(config.getBoolean("moduleTest.loaded"));
-        Assert.assertTrue(config.getBoolean("moduleTest-prod.loaded"));
+        assertTrue(config.getBoolean("moduleTest.loaded"));
+        assertTrue(config.getBoolean("moduleTest-prod.loaded"));
     }
     
     @Test
@@ -171,11 +171,11 @@ public class ArchaiusModuleTest {
             );
             
         MyService service = injector.getInstance(MyService.class);
-        Assert.assertTrue(service.getValue());
+        assertTrue(service.getValue());
         
         MyServiceConfig serviceConfig = injector.getInstance(MyServiceConfig.class);
 
-        Assert.assertTrue(serviceConfig.named instanceof Named1);
+        assertTrue(serviceConfig.named instanceof Named1);
     }
 
     @Configuration(prefix="prefix.${name}.${id}", params={"name", "id"}, allowFields=true)
@@ -200,7 +200,7 @@ public class ArchaiusModuleTest {
         
         ChildService service = new ChildService("foo", 123L);
         binder.mapConfig(service, config);
-        Assert.assertEquals("loaded", service.loaded);
+        assertEquals("loaded", service.loaded);
     }
     
     public static interface TestProxyConfig {
@@ -230,21 +230,21 @@ public class ArchaiusModuleTest {
         SettableConfig settableConfig = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
         
         TestProxyConfig object = injector.getInstance(TestProxyConfig.class);
-        Assert.assertEquals("default", object.getString());
-        Assert.assertArrayEquals(new String[]{"foo", "bar"}, object.getStringArray());
-        Assert.assertArrayEquals(new Integer[]{1,2}, object.getIntArray());
+        assertEquals("default", object.getString());
+        assertArrayEquals(new String[]{"foo", "bar"}, object.getStringArray());
+        assertArrayEquals(new Integer[]{1,2}, object.getIntArray());
         
         settableConfig.setProperty("string", "new");
         settableConfig.setProperty("stringArray", "foonew,barnew");
         settableConfig.setProperty("intArray", "3,4");
         config.accept(new PrintStreamVisitor());
         
-        Assert.assertEquals("new", object.getString());
-        Assert.assertArrayEquals(new String[]{"foonew", "barnew"}, object.getStringArray());
-        Assert.assertArrayEquals(new Integer[]{3,4}, object.getIntArray());
+        assertEquals("new", object.getString());
+        assertArrayEquals(new String[]{"foonew", "barnew"}, object.getStringArray());
+        assertArrayEquals(new Integer[]{3,4}, object.getIntArray());
         
         settableConfig.clearProperty("string");
-        Assert.assertEquals("default", object.getString());
+        assertEquals("default", object.getString());
     }
     
     @Test
@@ -272,7 +272,7 @@ public class ArchaiusModuleTest {
                 });
         
         Config config = injector.getInstance(Config.class);
-        Assert.assertEquals("override", config.getString("a"));
+        assertEquals("override", config.getString("a"));
     }
     
     @Test
@@ -284,7 +284,7 @@ public class ArchaiusModuleTest {
         
         injector.getInstance(MyServiceConfig.class);
         Config config = injector.getInstance(Config.class);
-        Assert.assertEquals("fromFile", config.getString("moduleTest.prop1"));
+        assertEquals("fromFile", config.getString("moduleTest.prop1"));
     }
     
     @Test
@@ -312,7 +312,7 @@ public class ArchaiusModuleTest {
         Config config = injector.getInstance(Config.class);
         injector.getInstance(MyServiceConfig.class);
         config.accept(new PrintStreamVisitor());
-        Assert.assertEquals("fromOverride", config.getString("moduleTest.prop1"));
+        assertEquals("fromOverride", config.getString("moduleTest.prop1"));
     }
 
     @Test
@@ -337,12 +337,12 @@ public class ArchaiusModuleTest {
         );
 
         Config config = injector.getInstance(Config.class);
-        Assert.assertEquals("override", config.getString("a"));
+        assertEquals("override", config.getString("a"));
 
         TestProxyConfig configProxy = injector.getInstance(TestProxyConfig.class);
-        Assert.assertEquals("default", configProxy.getString());
-        Assert.assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
-        Assert.assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
+        assertEquals("default", configProxy.getString());
+        assertArrayEquals(new String[]{"foo", "bar"}, configProxy.getStringArray());
+        assertArrayEquals(new Integer[]{1,2}, configProxy.getIntArray());
     }
 
     @Test
@@ -354,8 +354,8 @@ public class ArchaiusModuleTest {
            }
         });
         Config config = injector.getInstance(Config.class);
-        Assert.assertEquals("b_value_no_override", config.getString("b"));
-        Assert.assertEquals("a_value_override", config.getString("a"));
-        Assert.assertEquals("c_value_override", config.getString("c"));
+        assertEquals("b_value_no_override", config.getString("b"));
+        assertEquals("a_value_override", config.getString("a"));
+        assertEquals("c_value_override", config.getString("c"));
     }
 }

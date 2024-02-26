@@ -3,6 +3,11 @@ package com.netflix.archaius;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,9 +25,6 @@ import javax.annotation.Nullable;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.config.MapConfig;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.PropertyFactory;
@@ -32,6 +34,8 @@ import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EmptyConfig;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("deprecation")
 public class ProxyFactoryTest {
@@ -209,7 +213,7 @@ public class ProxyFactoryTest {
 
         try {
             a.getRequiredValue();
-            Assert.fail("should have failed with no value for requiredValue");
+            fail("should have failed with no value for requiredValue");
         }
         catch (Exception expected) {
         }
@@ -231,9 +235,9 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
-        Assert.assertEquals("value1",  withArgs.getProperty("a", 1));
-        Assert.assertEquals("value2",  withArgs.getProperty("b", 2));
-        Assert.assertEquals("default", withArgs.getProperty("a", 2));
+        assertEquals("value1",  withArgs.getProperty("a", 1));
+        assertEquals("value2",  withArgs.getProperty("b", 2));
+        assertEquals("default", withArgs.getProperty("a", 2));
     }
 
     @Configuration(prefix = "foo.bar")
@@ -258,12 +262,12 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArgumentsAndPrefix withArgs = proxy.newProxy(WithArgumentsAndPrefix.class);
 
-        Assert.assertEquals("value1",  withArgs.getPropertyWithPrefix("a", 1));
-        Assert.assertEquals("value1",  withArgs.getPropertyWithoutPrefix("a", 1));
-        Assert.assertEquals("value2",  withArgs.getPropertyWithPrefix("b", 2));
-        Assert.assertEquals("value2",  withArgs.getPropertyWithoutPrefix("b", 2));
-        Assert.assertEquals("default", withArgs.getPropertyWithPrefix("a", 2));
-        Assert.assertEquals("default", withArgs.getPropertyWithoutPrefix("a", 2));
+        assertEquals("value1",  withArgs.getPropertyWithPrefix("a", 1));
+        assertEquals("value1",  withArgs.getPropertyWithoutPrefix("a", 1));
+        assertEquals("value2",  withArgs.getPropertyWithPrefix("b", 2));
+        assertEquals("value2",  withArgs.getPropertyWithoutPrefix("b", 2));
+        assertEquals("default", withArgs.getPropertyWithPrefix("a", 2));
+        assertEquals("default", withArgs.getPropertyWithoutPrefix("a", 2));
     }
 
 
@@ -291,12 +295,12 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArgumentsAndDefaultMethod withArgsAndDefM = proxy.newProxy(WithArgumentsAndDefaultMethod.class);
 
-        Assert.assertEquals("value1",  withArgsAndDefM.getPropertyWith2Placeholders("a", 1));
-        Assert.assertEquals("value2",  withArgsAndDefM.getPropertyWith2Placeholders("b", 2));
-        Assert.assertEquals("defaultFor2", withArgsAndDefM.getPropertyWith2Placeholders("a", 2));
+        assertEquals("value1",  withArgsAndDefM.getPropertyWith2Placeholders("a", 1));
+        assertEquals("value2",  withArgsAndDefM.getPropertyWith2Placeholders("b", 2));
+        assertEquals("defaultFor2", withArgsAndDefM.getPropertyWith2Placeholders("a", 2));
 
-        Assert.assertEquals("value_c", withArgsAndDefM.getPropertyWith1Placeholder("c"));
-        Assert.assertEquals("defaultFor1", withArgsAndDefM.getPropertyWith1Placeholder("q"));
+        assertEquals("value_c", withArgsAndDefM.getPropertyWith1Placeholder("c"));
+        assertEquals("defaultFor1", withArgsAndDefM.getPropertyWith1Placeholder("q"));
     }
 
     public interface ConfigWithMaps {
@@ -320,15 +324,15 @@ public class ProxyFactoryTest {
         long sub1 = withMaps.getStringToLongMap().get("a");
         long sub2 = withMaps.getStringToLongMap().get("b");
 
-        Assert.assertEquals(123, sub1);
-        Assert.assertEquals(456, sub2);
+        assertEquals(123, sub1);
+        assertEquals(456, sub2);
         
         config.setProperty("map", "a=123,b=789");
         sub2 = withMaps.getStringToLongMap().get("b");
-        Assert.assertEquals(789, sub2);
+        assertEquals(789, sub2);
 
-        Assert.assertEquals("a", withMaps.getLongToStringMap().get(1L));
-        Assert.assertEquals("b", withMaps.getLongToStringMap().get(2L));
+        assertEquals("a", withMaps.getLongToStringMap().get(1L));
+        assertEquals("b", withMaps.getLongToStringMap().get(2L));
     }
     
     @Test
@@ -339,11 +343,11 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithMaps withArgs = proxy.newProxy(ConfigWithMaps.class);
         
-        Assert.assertEquals(Collections.singletonMap("default", 0L), withArgs.getStringToLongMap());
+        assertEquals(Collections.singletonMap("default", 0L), withArgs.getStringToLongMap());
         
         config.setProperty("map", "foo=123");
         
-        Assert.assertEquals(Collections.singletonMap("foo", 123L), withArgs.getStringToLongMap());
+        assertEquals(Collections.singletonMap("foo", 123L), withArgs.getStringToLongMap());
     }
     
     public interface ConfigWithCollections {
@@ -368,13 +372,13 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
         
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
+        assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
+        assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
         
         config.setProperty("list", "6,7,8,9,10");
-        Assert.assertEquals(Arrays.asList(6,7,8,9,10), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList(6,7,8,9,10), new ArrayList<>(withCollections.getList()));
     }
 
     @Test
@@ -389,13 +393,13 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class, "", true);
         
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
+        assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList(1,2,3,5,4), new ArrayList<>(withCollections.getSet()));
+        assertEquals(Arrays.asList(1,2,3,4,5), new ArrayList<>(withCollections.getSortedSet()));
         
         config.setProperty("list", "4,7,8,9,10");
-        Assert.assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList(5,4,3,2,1), new ArrayList<>(withCollections.getList()));
     }
 
     @Test
@@ -410,10 +414,10 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
         
-        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getLinkedList()));
-        Assert.assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList(2,5,4), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Arrays.asList(1,2,4), new ArrayList<>(withCollections.getSortedSet()));
+        assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getLinkedList()));
+        assertEquals(Arrays.asList(4,2,1), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList(2,5,4), new ArrayList<>(withCollections.getSet()));
+        assertEquals(Arrays.asList(1,2,4), new ArrayList<>(withCollections.getSortedSet()));
     }
     
     public interface ConfigWithStringCollections {
@@ -438,10 +442,10 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithStringCollections withCollections = proxy.newProxy(ConfigWithStringCollections.class);
         
-        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getLinkedList()));
-        Assert.assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Arrays.asList("" ,"2","5","4"), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Arrays.asList("", "1","2","4"), new ArrayList<>(withCollections.getSortedSet()));
+        assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getLinkedList()));
+        assertEquals(Arrays.asList("", "4","", "2","1"), new ArrayList<>(withCollections.getList()));
+        assertEquals(Arrays.asList("" ,"2","5","4"), new ArrayList<>(withCollections.getSet()));
+        assertEquals(Arrays.asList("", "1","2","4"), new ArrayList<>(withCollections.getSortedSet()));
     }
     
     @Test
@@ -452,10 +456,10 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithStringCollections withCollections = proxy.newProxy(ConfigWithStringCollections.class);
         
-        Assert.assertTrue(withCollections.getLinkedList().isEmpty());
-        Assert.assertTrue(withCollections.getList().isEmpty());
-        Assert.assertTrue(withCollections.getSet().isEmpty());
-        Assert.assertTrue(withCollections.getSortedSet().isEmpty());
+        assertTrue(withCollections.getLinkedList().isEmpty());
+        assertTrue(withCollections.getList().isEmpty());
+        assertTrue(withCollections.getSet().isEmpty());
+        assertTrue(withCollections.getSortedSet().isEmpty());
     }
 
     @Test
@@ -467,10 +471,10 @@ public class ProxyFactoryTest {
         ConfigWithCollections withCollections = proxy.newProxy(ConfigWithCollections.class);
 
         System.out.println(withCollections.toString());
-        Assert.assertTrue(withCollections.getLinkedList().isEmpty());
-        Assert.assertTrue(withCollections.getList().isEmpty());
-        Assert.assertTrue(withCollections.getSet().isEmpty());
-        Assert.assertTrue(withCollections.getSortedSet().isEmpty());
+        assertTrue(withCollections.getLinkedList().isEmpty());
+        assertTrue(withCollections.getList().isEmpty());
+        assertTrue(withCollections.getSet().isEmpty());
+        assertTrue(withCollections.getSortedSet().isEmpty());
     }
     
     @SuppressWarnings("unused")
@@ -479,13 +483,13 @@ public class ProxyFactoryTest {
         LinkedList<Integer> getLinkedList();
     }
     
-    @Test(expected=RuntimeException.class)
+    @Test
     public void testCollectionsWithDefaultValueAnnotation() {
         SettableConfig config = new DefaultSettableConfig();
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
-        proxy.newProxy(ConfigWithCollectionsWithDefaultValueAnnotation.class);
+        assertThrows(RuntimeException.class, () -> proxy.newProxy(ConfigWithCollectionsWithDefaultValueAnnotation.class));
     }
     
     public interface ConfigWithDefaultStringCollections {
@@ -504,9 +508,9 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         ConfigWithDefaultStringCollections withCollections = proxy.newProxy(ConfigWithDefaultStringCollections.class);
         
-        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getList()));
-        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSet()));
-        Assert.assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSortedSet()));
+        assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getList()));
+        assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSet()));
+        assertEquals(Collections.singletonList("default"), new ArrayList<>(withCollections.getSortedSet()));
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -514,14 +518,14 @@ public class ProxyFactoryTest {
         default String getValue() { throw new IllegalStateException("error"); }
     }
     
-    @Test(expected=RuntimeException.class)
+    @Test
     public void interfaceWithBadDefault() {
         SettableConfig config = new DefaultSettableConfig();
         
         PropertyFactory factory = DefaultPropertyFactory.from(config);
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         FailingError c = proxy.newProxy(FailingError.class);
-        c.getValue();
+        assertThrows(RuntimeException.class, c::getValue);
     }
     
     @Test
@@ -532,11 +536,11 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), factory);
         WithArguments withArgs = proxy.newProxy(WithArguments.class);
         
-        Assert.assertEquals("WithArguments[${0}.abc.${1}='default']", withArgs.toString());
+        assertEquals("WithArguments[${0}.abc.${1}='default']", withArgs.toString());
         //noinspection ObviousNullCheck
-        Assert.assertNotNull(withArgs.hashCode());
+        assertNotNull(withArgs.hashCode());
         //noinspection EqualsWithItself
-        Assert.assertEquals(withArgs, withArgs);
+        assertEquals(withArgs, withArgs);
     }
 
     @Test
@@ -550,14 +554,14 @@ public class ProxyFactoryTest {
         // Printing 'null' here is a compromise. The default method in the interface is being called with a bad signature.
         // There's nothing the proxy could return here that isn't a lie, but at least this is a mostly harmless lie.
         // This test depends implicitly on the iteration order for HashMap, which could change on future Java releases.
-        Assert.assertEquals("WithArgumentsAndDefaultMethod[${0}.def='null',${0}.abc.${1}='null']", withArgs.toString());
+        assertEquals("WithArgumentsAndDefaultMethod[${0}.def='null',${0}.abc.${1}='null']", withArgs.toString());
         //noinspection ObviousNullCheck
-        Assert.assertNotNull(withArgs.hashCode());
+        assertNotNull(withArgs.hashCode());
         //noinspection EqualsWithItself
-        Assert.assertEquals(withArgs, withArgs);
+        assertEquals(withArgs, withArgs);
     }
 
-    @Ignore("Manual test. Output is just log entries, can't be verified by CI")
+    @Disabled("Manual test. Output is just log entries, can't be verified by CI")
     @Test
     public void testLogExcessiveUse() {
         SettableConfig config = new DefaultSettableConfig();
@@ -607,7 +611,7 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxyFactory = new ConfigProxyFactory(config, config.getDecoder(), DefaultPropertyFactory.from(config));
 
         ConfigWithNestedInterface proxy = proxyFactory.newProxy(ConfigWithNestedInterface.class);
-        Assert.assertEquals(5, proxy.intValue());
-        Assert.assertEquals("BLAH", proxy.customValue().value());
+        assertEquals(5, proxy.intValue());
+        assertEquals("BLAH", proxy.customValue().value());
     }
 }

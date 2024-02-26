@@ -1,7 +1,7 @@
 package com.netflix.archaius.guice;
 
 import com.google.inject.Guice;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class InternalArchaiusModuleTest {
 

@@ -31,8 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.netflix.archaius.DefaultPropertyFactory;
@@ -46,9 +44,14 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.MapConfig;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.fail;
-import static org.junit.Assert.assertNotEquals;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SuppressWarnings("deprecation")
 public class PropertyTest {
@@ -98,15 +101,15 @@ public class PropertyTest {
 
         MyService service = new MyService(factory);
 
-        Assert.assertEquals(1, (int)service.value.get());
-        Assert.assertEquals(2, (int)service.value2.get());
+        assertEquals(1, (int)service.value.get());
+        assertEquals(2, (int)service.value2.get());
 
         config.setProperty("foo", "123");
 
-        Assert.assertEquals(123, (int)service.value.get());
-        Assert.assertEquals(123, (int)service.value2.get());
+        assertEquals(123, (int)service.value.get());
+        assertEquals(123, (int)service.value2.get());
         // setValue() is called once when we init to 1 and twice when we set foo to 123.
-        Assert.assertEquals(1, service.setValueCallsCounter.get());
+        assertEquals(1, service.setValueCallsCounter.get());
     }
 
     @Test
@@ -131,17 +134,17 @@ public class PropertyTest {
         Property<String> stringProp = factory.getProperty("foo").asType(String.class, "1");
         Property<CustomType> customTypeProp = factory.getProperty("loo").asType(CustomType.class,
                                                                                 CustomType.DEFAULT);
-        Assert.assertEquals(BigDecimal.TEN, bigDecimalProp.get());
-        Assert.assertEquals(BigInteger.TEN, bigIntegerProp.get());
-        Assert.assertEquals(true, booleanProp.get());
-        Assert.assertEquals(10, byteProp.get().byteValue());
-        Assert.assertEquals(10.0, doubleProp.get(), 0.0001);
-        Assert.assertEquals(10.0f, floatProp.get(), 0.0001f);
-        Assert.assertEquals(10, intProp.get().intValue());
-        Assert.assertEquals(10L, longProp.get().longValue());
-        Assert.assertEquals((short) 10, shortProp.get().shortValue());
-        Assert.assertEquals("10", stringProp.get());
-        Assert.assertEquals(CustomType.ONE_TWO, customTypeProp.get());
+        assertEquals(BigDecimal.TEN, bigDecimalProp.get());
+        assertEquals(BigInteger.TEN, bigIntegerProp.get());
+        assertEquals(true, booleanProp.get());
+        assertEquals(10, byteProp.get().byteValue());
+        assertEquals(10.0, doubleProp.get(), 0.0001);
+        assertEquals(10.0f, floatProp.get(), 0.0001f);
+        assertEquals(10, intProp.get().intValue());
+        assertEquals(10L, longProp.get().longValue());
+        assertEquals((short) 10, shortProp.get().shortValue());
+        assertEquals("10", stringProp.get());
+        assertEquals(CustomType.ONE_TWO, customTypeProp.get());
     }
 
     @Test
@@ -153,36 +156,36 @@ public class PropertyTest {
 
         // Test array decoding
         Property<Byte[]> byteArray = factory.get("foo", Byte[].class);
-        Assert.assertEquals(new Byte[] {10, 13, 13, 20}, byteArray.get());
+        assertArrayEquals(new Byte[] {10, 13, 13, 20}, byteArray.get());
 
         // Tests list creation and parsing, decoding of list elements, proper handling if user gives us a primitive type
         Property<List<Integer>> intList = factory.getList("foo", int.class);
-        Assert.assertEquals(Arrays.asList(10, 13, 13, 20), intList.get());
+        assertEquals(Arrays.asList(10, 13, 13, 20), intList.get());
 
         // Tests set creation, parsing non-int elements
         Property<Set<Double>> doubleSet = factory.getSet("foo", Double.class);
-        Assert.assertEquals(new HashSet<>(Arrays.asList(10.0, 13.0, 20.0)), doubleSet.get());
+        assertEquals(new HashSet<>(Arrays.asList(10.0, 13.0, 20.0)), doubleSet.get());
 
         // Test map creation and parsing, keys and values of less-common types
         Property<Map<Short, Duration>> mapProp = factory.getMap("shmoo", Short.class, Duration.class);
         Map<Short, Duration> expectedMap = new HashMap<>();
         expectedMap.put((short) 1, Duration.ofMinutes(15));
         expectedMap.put((short) 0, Duration.ZERO);
-        Assert.assertEquals(expectedMap, mapProp.get());
+        assertEquals(expectedMap, mapProp.get());
 
         // Test proper handling of unset properties
         Property<Map<CustomType, CustomType>> emptyProperty = factory.getMap("fubar", CustomType.class, CustomType.class);
-        Assert.assertNull(emptyProperty.get());
+        assertNull(emptyProperty.get());
 
         config.setProperty("fubar", "");
         Property<List<String>> emptyListProperty = factory.getList("fubar", String.class);
-        Assert.assertEquals(Collections.emptyList(), emptyListProperty.get());
+        assertEquals(Collections.emptyList(), emptyListProperty.get());
 
         Property<Set<String>> emptySetProperty = factory.getSet("fubar", String.class);
-        Assert.assertEquals(Collections.emptySet(), emptySetProperty.get());
+        assertEquals(Collections.emptySet(), emptySetProperty.get());
 
         Property<Map<String, String>> emptyMapProperty = factory.getMap("fubar", String.class, String.class);
-        Assert.assertEquals(Collections.emptyMap(), emptyMapProperty.get());
+        assertEquals(Collections.emptyMap(), emptyMapProperty.get());
     }
 
     @Test
@@ -194,22 +197,22 @@ public class PropertyTest {
         config.setProperty("baz", "a=1,b=2");
 
         List<Integer> list = factory.getList("foo", Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> list.add(100));
+        assertThrows(UnsupportedOperationException.class, () -> list.add(100));
 
         Set<Integer> set = factory.getSet("foo", Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> set.add(100));
+        assertThrows(UnsupportedOperationException.class, () -> set.add(100));
 
         Map<String, Integer> map = factory.getMap("baz", String.class, Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> map.put("c", 3));
+        assertThrows(UnsupportedOperationException.class, () -> map.put("c", 3));
 
         List<Integer> emptyList = factory.getList("bar", Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> emptyList.add(100));
+        assertThrows(UnsupportedOperationException.class, () -> emptyList.add(100));
 
         Set<Integer> emptySet = factory.getSet("bar", Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> emptySet.add(100));
+        assertThrows(UnsupportedOperationException.class, () -> emptySet.add(100));
 
         Map<String, Integer> emptyMap = factory.getMap("bar", String.class, Integer.class).get();
-        Assert.assertThrows(UnsupportedOperationException.class, () -> emptyMap.put("c", 3));
+        assertThrows(UnsupportedOperationException.class, () -> emptyMap.put("c", 3));
     }
 
     @Test
@@ -221,14 +224,14 @@ public class PropertyTest {
         Property<Integer> intProp2 = factory.getProperty("foo").asInteger(2);
         Property<String>  strProp  = factory.getProperty("foo").asString("3");
 
-        Assert.assertEquals(1, (int)intProp1.get());
-        Assert.assertEquals(2, (int)intProp2.get());
+        assertEquals(1, (int)intProp1.get());
+        assertEquals(2, (int)intProp2.get());
 
         config.setProperty("foo", "123");
 
-        Assert.assertEquals("123", strProp.get());
-        Assert.assertEquals((Integer)123, intProp1.get());
-        Assert.assertEquals((Integer)123, intProp2.get());
+        assertEquals("123", strProp.get());
+        assertEquals((Integer)123, intProp1.get());
+        assertEquals((Integer)123, intProp2.get());
     }
 
     @Test
@@ -237,7 +240,7 @@ public class PropertyTest {
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
         Property<Integer> prop = factory.getProperty("foo").asInteger(null);
-        Assert.assertNull(prop.get());
+        assertNull(prop.get());
     }
 
     @Test
@@ -246,7 +249,7 @@ public class PropertyTest {
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
         Property<Integer> prop = factory.getProperty("foo").asInteger(123);
-        Assert.assertEquals(123, prop.get().intValue());
+        assertEquals(123, prop.get().intValue());
     }
 
     @Test
@@ -259,13 +262,13 @@ public class PropertyTest {
         Property<Integer> prop = factory.getProperty("foo").asInteger(123);
         config.setProperty("foo", 1);
 
-        Assert.assertEquals(1, prop.get().intValue());
+        assertEquals(1, prop.get().intValue());
 
         config.clearProperty("foo");
-        Assert.assertEquals(123, prop.get().intValue());
+        assertEquals(123, prop.get().intValue());
 
         config.setProperty("foo", "${goo}");
-        Assert.assertEquals(456, prop.get().intValue());
+        assertEquals(456, prop.get().intValue());
 
     }
 
@@ -290,15 +293,15 @@ public class PropertyTest {
         });
         current.set(prop.get());
 
-        Assert.assertEquals(123, current.get().intValue());
+        assertEquals(123, current.get().intValue());
         config.setProperty("foo", 1);
-        Assert.assertEquals(1, current.get().intValue());
+        assertEquals(1, current.get().intValue());
         config.setProperty("foo", 2);
-        Assert.assertEquals(2, current.get().intValue());
+        assertEquals(2, current.get().intValue());
         config.clearProperty("foo");
-        Assert.assertEquals(123, current.get().intValue());
+        assertEquals(123, current.get().intValue());
         config.setProperty("foo", "${goo}");
-        Assert.assertEquals(456, current.get().intValue());
+        assertEquals(456, current.get().intValue());
     }
 
     @Test
@@ -336,11 +339,11 @@ public class PropertyTest {
         AtomicInteger value = new AtomicInteger();
         prop.subscribe(value::set);
         
-        Assert.assertEquals(2, prop.get().intValue());
-        Assert.assertEquals(0, value.get());
+        assertEquals(2, prop.get().intValue());
+        assertEquals(0, value.get());
         config.setProperty("foo", "1");
-        Assert.assertEquals(1, prop.get().intValue());
-        Assert.assertEquals(1, value.get());
+        assertEquals(1, prop.get().intValue());
+        assertEquals(1, value.get());
     }
     
     @Test
@@ -375,7 +378,7 @@ public class PropertyTest {
                 .get("first", Integer.class)
                 .orElseGet("second");
         
-        Assert.assertNull(prop.get());
+        assertNull(prop.get());
     }
     
     @Test
@@ -388,7 +391,7 @@ public class PropertyTest {
                 .orElseGet("second")
                 .orElse(3);
         
-        Assert.assertEquals(3, prop.get().intValue());
+        assertEquals(3, prop.get().intValue());
     }
     
     @Test
@@ -401,7 +404,7 @@ public class PropertyTest {
                 .orElseGet("second")
                 .orElse(3);
         
-        Assert.assertEquals(2, prop.get().intValue());
+        assertEquals(2, prop.get().intValue());
     }
     
     @Test
@@ -414,7 +417,7 @@ public class PropertyTest {
                 .orElseGet("second")
                 .orElse(3);
         
-        Assert.assertEquals(1, prop.get().intValue());
+        assertEquals(1, prop.get().intValue());
     }
     
     @Test
@@ -477,36 +480,34 @@ public class PropertyTest {
         
         Mockito.verify(mapper, Mockito.never()).apply(Mockito.anyString());
         
-        Assert.assertEquals(1, prop.get().intValue());
+        assertEquals(1, prop.get().intValue());
         Mockito.verify(mapper, Mockito.times(1)).apply("1");
         
-        Assert.assertEquals(1, prop.get().intValue());
+        assertEquals(1, prop.get().intValue());
         Mockito.verify(mapper, Mockito.times(1)).apply("1");
 
         config.setProperty("foo", "2");
         
-        Assert.assertEquals(2, prop.get().intValue());
+        assertEquals(2, prop.get().intValue());
         Mockito.verify(mapper, Mockito.times(1)).apply("1");
         Mockito.verify(mapper, Mockito.times(1)).apply("2");
         
         config.setProperty("bar", "3");
-        Assert.assertEquals(2, prop.get().intValue());
+        assertEquals(2, prop.get().intValue());
         Mockito.verify(mapper, Mockito.times(1)).apply("1");
         Mockito.verify(mapper, Mockito.times(2)).apply("2");
     }
     
-    @Test(expected=IllegalStateException.class)
+    @Test
     public void mapDiscardsType() {
         MapConfig config = MapConfig.builder().build();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
-        //noinspection unused
-        Property<Integer> prop = factory
+        assertThrows(IllegalStateException.class, () -> factory
                 .get("first", String.class)
                 .orElseGet("second")
                 .map(Integer::parseInt)
-                .orElseGet("third")
-                ;
+                .orElseGet("third"));
     }
     
     @Test
@@ -515,7 +516,7 @@ public class PropertyTest {
         PropertyFactory factory = DefaultPropertyFactory.from(config);
 
         Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
-        Assert.assertEquals(1, value.intValue());
+        assertEquals(1, value.intValue());
     }
     
     @Test
@@ -526,7 +527,7 @@ public class PropertyTest {
         PropertyFactory factory = DefaultPropertyFactory.from(config);
 
         Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
-        Assert.assertEquals(2, value.intValue());
+        assertEquals(2, value.intValue());
     }
 
     @Test
@@ -537,7 +538,7 @@ public class PropertyTest {
         PropertyFactory factory = DefaultPropertyFactory.from(config);
 
         Integer value = factory.getProperty("a").asType(Integer::parseInt, "1").get();
-        Assert.assertEquals(1, value.intValue());
+        assertEquals(1, value.intValue());
     }
 
     @Test

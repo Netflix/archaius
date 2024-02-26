@@ -67,6 +67,7 @@ public class PropertiesServerHandler implements HttpHandler {
     
     public void clear() {
         this.props.clear();
+        this.responseCode = 200;
     }
     
     public void remove(String key) {

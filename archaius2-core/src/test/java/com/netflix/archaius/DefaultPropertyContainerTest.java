@@ -1,11 +1,11 @@
 package com.netflix.archaius;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultPropertyContainerTest {
     @Test
@@ -14,9 +14,9 @@ public class DefaultPropertyContainerTest {
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
         Property<String> prop = factory.getProperty("foo").asString("default");
 
-        Assert.assertEquals("default", prop.get());
+        assertEquals("default", prop.get());
         config.setProperty("foo", "value1");
-        Assert.assertEquals("value1", prop.get());
-        Assert.assertEquals("value1", prop.get());
+        assertEquals("value1", prop.get());
+        assertEquals("value1", prop.get());
     }
 }

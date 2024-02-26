@@ -1,11 +1,12 @@
 package com.netflix.archaius.config;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.api.exceptions.ConfigException;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConfigLoaderTest {
     
@@ -15,6 +16,6 @@ public class ConfigLoaderTest {
                 .build();
         
         Config config = loader.newLoader().load("non-existant");
-        Assert.assertTrue(config.isEmpty());
+        assertTrue(config.isEmpty());
     }
 }

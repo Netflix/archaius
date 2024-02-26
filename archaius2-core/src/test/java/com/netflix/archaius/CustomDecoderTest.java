@@ -1,12 +1,13 @@
 package com.netflix.archaius;
 
 import com.netflix.archaius.api.TypeConverter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CustomDecoderTest {
 
@@ -23,11 +24,11 @@ public class CustomDecoderTest {
             return Optional.empty();
         };
         CustomDecoder decoder = CustomDecoder.create(Collections.singletonList(factory));
-        Assert.assertEquals("FOO", decoder.decode((Type) CharSequence.class, "foo"));
-        Assert.assertEquals("FOO", decoder.decode((Type) String.class, "foo"));
+        assertEquals("FOO", decoder.decode((Type) CharSequence.class, "foo"));
+        assertEquals("FOO", decoder.decode((Type) String.class, "foo"));
         // default is overridden
-        Assert.assertEquals(Long.valueOf(6), decoder.decode((Type) Long.class, "3"));
+        assertEquals(Long.valueOf(6), decoder.decode((Type) Long.class, "3"));
         // default converter is used
-        Assert.assertEquals(Integer.valueOf(3), decoder.decode((Type) Integer.class, "3"));
+        assertEquals(Integer.valueOf(3), decoder.decode((Type) Integer.class, "3"));
     }
 }

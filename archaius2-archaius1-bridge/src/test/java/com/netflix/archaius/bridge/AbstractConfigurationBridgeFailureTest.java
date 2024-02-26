@@ -1,16 +1,17 @@
 package com.netflix.archaius.bridge;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.config.ConfigurationManager;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AbstractConfigurationBridgeFailureTest {
     public static class TestModule extends AbstractModule {
@@ -29,26 +30,23 @@ public class AbstractConfigurationBridgeFailureTest {
         }
     }
     
-    @Before
-    public void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    @BeforeEach
+    public void before() throws SecurityException {
         StaticAbstractConfiguration.reset();
         StaticDeploymentContext.reset();
     }
     
     @Test
     public void testStaticInModule() {
-        try {
-            Guice.createInjector(
-                new TestModule(),
-                new BadModule());
-            Assert.fail();
-        } catch (Exception e) { 
-            StringWriter sw = new StringWriter();
-            e.printStackTrace(new PrintWriter(sw));
-            String stack = sw.toString();
+        Exception exception = assertThrows(Exception.class, () ->
+                Guice.createInjector(
+                        new TestModule(),
+                        new BadModule()));
+        StringWriter sw = new StringWriter();
+        exception.printStackTrace(new PrintWriter(sw));
+        String stack = sw.toString();
             
-            Assert.assertTrue(stack.contains("com.netflix.archaius.bridge.AbstractConfigurationBridgeFailureTest$BadModule"));
-            Assert.assertTrue(stack.contains("**** Remove static reference"));
-        }
+        assertTrue(stack.contains("com.netflix.archaius.bridge.AbstractConfigurationBridgeFailureTest$BadModule"));
+        assertTrue(stack.contains("**** Remove static reference"));
     }
 }

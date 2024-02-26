@@ -19,12 +19,16 @@ import java.util.concurrent.Callable;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
 import com.netflix.archaius.instrumentation.AccessMonitorUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -33,7 +37,7 @@ import static org.mockito.Mockito.verify;
 
 public class PrefixedViewTest {
     @Test
-    public void confirmNotifactionOnAnyChange() throws ConfigException {
+    public void confirmNotificactionOnAnyChange() throws ConfigException {
         com.netflix.archaius.api.config.CompositeConfig config = DefaultCompositeConfig.builder()
                 .withConfig("foo", MapConfig.builder().put("foo.bar", "value").build())
                 .build();
@@ -66,13 +70,13 @@ public class PrefixedViewTest {
         prefix.addListener(listener);
         
         // Confirm original state
-        Assert.assertEquals("original", prefix.getString("bar"));
+        assertEquals("original", prefix.getString("bar"));
         Mockito.verify(listener, Mockito.times(0)).onConfigAdded(any());
 
         // Update the property and confirm onConfigUpdated notification
         settable.setProperty("foo.bar", "new");
         Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
-        Assert.assertEquals("new", prefix.getString("bar"));
+        assertEquals("new", prefix.getString("bar"));
         
         // Add a new config and confirm onConfigAdded notification
         config.addConfig("new", MapConfig.builder().put("foo.bar", "new2").build());
@@ -88,8 +92,8 @@ public class PrefixedViewTest {
         Config prefixNoDot = settable.getPrefixedView("foo");
         Config prefixWithDot = settable.getPrefixedView("foo.");
 
-        Assert.assertEquals(prefixNoDot.getString("bar"), "value");
-        Assert.assertEquals(prefixWithDot.getString("bar"), "value");
+        assertEquals(prefixNoDot.getString("bar"), "value");
+        assertEquals(prefixWithDot.getString("bar"), "value");
     }
 
     @Test
@@ -101,7 +105,7 @@ public class PrefixedViewTest {
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it
         prefix = null;
         System.gc();
-        Assert.assertNull(weakReference.get());
+        assertNull(weakReference.get());
     }
 
     @Test
@@ -112,14 +116,15 @@ public class PrefixedViewTest {
                 .build()
                 .getPrefixedView("foo");
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
         Set<String> keySet = new HashSet<>();
         while (keys.hasNext()) {
             keySet.add(keys.next());
         }
-        Assert.assertEquals(2, keySet.size());
-        Assert.assertTrue(keySet.contains("prop1"));
-        Assert.assertTrue(keySet.contains("prop2"));
+        assertEquals(2, keySet.size());
+        assertTrue(keySet.contains("prop1"));
+        assertTrue(keySet.contains("prop2"));
     }
 
     @Test
@@ -130,9 +135,10 @@ public class PrefixedViewTest {
                 .build()
                 .getPrefixedView("foo");
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
         keys.next();
-        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+        assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 
     @Test
@@ -144,8 +150,8 @@ public class PrefixedViewTest {
                 .getPrefixedView("foo");
 
         Iterable<String> keys = config.keys();
-        Assert.assertEquals(2, size(keys));
-        Assert.assertEquals(set("prop1", "prop2"), set(keys));
+        assertEquals(2, size(keys));
+        assertEquals(set("prop1", "prop2"), set(keys));
     }
 
     @Test
@@ -156,8 +162,8 @@ public class PrefixedViewTest {
                 .build()
                 .getPrefixedView("foo");
 
-        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
-        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+        assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 
     @Test
@@ -168,9 +174,9 @@ public class PrefixedViewTest {
                 .build()
                 .getPrefixedView("foo");
 
-        Assert.assertFalse(config.instrumentationEnabled());
-        Assert.assertEquals(config.getRawProperty("prop1"), "value1");
-        Assert.assertEquals(config.getRawProperty("prop2"), "value2");
+        assertFalse(config.instrumentationEnabled());
+        assertEquals(config.getRawProperty("prop1"), "value1");
+        assertEquals(config.getRawProperty("prop2"), "value2");
     }
 
     @Test
@@ -191,7 +197,7 @@ public class PrefixedViewTest {
 
         Config config = baseConfig.getPrefixedView("foo");
 
-        Assert.assertTrue(config.instrumentationEnabled());
+        assertTrue(config.instrumentationEnabled());
 
         config.getRawProperty("prop1");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo.prop1", "1", "foo-value")));

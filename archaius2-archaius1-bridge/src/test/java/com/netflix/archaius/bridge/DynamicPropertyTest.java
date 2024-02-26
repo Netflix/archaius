@@ -1,12 +1,6 @@
 package com.netflix.archaius.bridge;
 
 import org.apache.commons.configuration.AbstractConfiguration;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,36 +16,45 @@ import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
+import java.lang.reflect.Method;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DynamicPropertyTest {
-    @Rule
-    public TestName testName = new TestName();
     
     private Injector injector;
     
-    @Before
+    @BeforeEach
     public void before() {
         injector = Guice.createInjector(new ArchaiusModule(), new StaticArchaiusBridgeModule());
     }
     
-    @After
+    @AfterEach
     public void after() {
         StaticArchaiusBridgeModule.resetStaticBridges();
     }
     
     @Test
-    public void settingOnArchaius2UpdateArchaius1() {
-        Property<String> a2prop = injector.getInstance(PropertyFactory.class).getProperty(testName.getMethodName()).asString("default");
-        DynamicStringProperty a1prop = DynamicPropertyFactory.getInstance().getStringProperty(testName.getMethodName(), "default");
+    public void settingOnArchaius2UpdateArchaius1(TestInfo testInfo) {
+        String methodName = testInfo.getTestMethod().map(Method::getName).orElse("unknown");
+        Property<String> a2prop = injector.getInstance(PropertyFactory.class).getProperty(methodName).asString("default");
+        DynamicStringProperty a1prop = DynamicPropertyFactory.getInstance().getStringProperty(methodName, "default");
         
-        Assert.assertEquals("default", a1prop.get());
-        Assert.assertEquals("default", a2prop.get());
+        assertEquals("default", a1prop.get());
+        assertEquals("default", a2prop.get());
         
         SettableConfig config = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
-        config.setProperty(testName.getMethodName(), "newvalue");
-        
-        Assert.assertEquals("newvalue", a2prop.get());
-        Assert.assertEquals("newvalue", a1prop.get());
+        config.setProperty(methodName, "newvalue");
+
+        assertEquals("newvalue", a2prop.get());
+        assertEquals("newvalue", a1prop.get());
     }
     
     @Test
@@ -64,8 +67,8 @@ public class DynamicPropertyTest {
         
         DynamicIntProperty prop = DynamicPropertyFactory.getInstance().getIntProperty("foo", 2);
         
-        Assert.assertEquals(123, (int)prop2.get());
-        Assert.assertEquals(123, prop.get());
+        assertEquals(123, (int)prop2.get());
+        assertEquals(123, prop.get());
     }
     
     @Test
@@ -77,7 +80,7 @@ public class DynamicPropertyTest {
         
         DynamicStringProperty prop = DynamicPropertyFactory.getInstance().getStringProperty("foo", "default");
         
-        Assert.assertEquals("value", prop.get());
+        assertEquals("value", prop.get());
         
     }
 
@@ -86,12 +89,12 @@ public class DynamicPropertyTest {
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
         Config config2 = injector.getInstance(Config.class);
         config1.setProperty("libA.loaded", "true");
-        Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
-        Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
+        assertTrue(config1.getBoolean("libA.loaded",  false));
+        assertTrue(config2.getBoolean("libA.loaded",  false));
 
         config1.clearProperty("libA.loaded");
-        Assert.assertFalse(config1.getBoolean("libA.loaded",  false));
-        Assert.assertFalse(config2.getBoolean("libA.loaded",  false));
+        assertFalse(config1.getBoolean("libA.loaded",  false));
+        assertFalse(config2.getBoolean("libA.loaded",  false));
 
     }
 }

@@ -5,12 +5,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.netflix.archaius.config.DefaultCompositeConfig;
-import org.junit.Assert;
-import org.junit.Test;
 
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class VisitorTest {
     @Test
@@ -19,7 +21,7 @@ public class VisitorTest {
         
         LinkedHashMap<String, String> sources = config.accept(new PropertyOverrideVisitor("foo"));
         
-        Assert.assertNull(sources);
+        assertNull(sources);
         
     }
     
@@ -29,13 +31,13 @@ public class VisitorTest {
         
         LinkedHashMap<String, String> sources = config.accept(new PropertyOverrideVisitor("foo"));
         
-        Assert.assertEquals("a_foo", config.getString("foo"));
+        assertEquals("a_foo", config.getString("foo"));
 
         LinkedHashMap<String, String> expected = new LinkedHashMap<>();
         expected.put("a", "a_foo");
         expected.put("b", "b_foo");
         expected.put("c/d", "d_foo");
-        Assert.assertEquals(expected, sources);
+        assertEquals(expected, sources);
         
         System.out.println(expected);
     }
@@ -44,7 +46,7 @@ public class VisitorTest {
     public void testFlattenedNames() throws ConfigException {
         CompositeConfig config = createComposite();
         List<String> result = config.accept(new FlattenedNamesVisitor());
-        Assert.assertEquals(Arrays.asList("a", "b", "gap", "c", "d"), result);
+        assertEquals(Arrays.asList("a", "b", "gap", "c", "d"), result);
     }
     
     /*

@@ -17,10 +17,13 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.guice.ArchaiusModuleTest.MyCascadingStrategy;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import javax.inject.Singleton;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ProxyTest {
     public static interface MyConfig {
@@ -36,13 +39,13 @@ public class ProxyTest {
         }
     }
     
-    public static interface MySubConfig {
+    public interface MySubConfig {
         @DefaultValue("0")
         int getInteger();
     }
     
     @Configuration(prefix="foo")
-    public static interface MyConfigWithPrefix {
+    public interface MyConfigWithPrefix {
         @DefaultValue("0")
         int getInteger();
         
@@ -72,13 +75,13 @@ public class ProxyTest {
         
         SettableConfig cfg = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
         MyConfig config = injector.getInstance(MyConfig.class);
-        Assert.assertEquals("bar", config.getString());
-        Assert.assertEquals(1, config.getInteger());
-        Assert.assertEquals(2, config.getSubConfig().getInteger());
-        Assert.assertEquals("1-bar", config.getDefault());
+        assertEquals("bar", config.getString());
+        assertEquals(1, config.getInteger());
+        assertEquals(2, config.getSubConfig().getInteger());
+        assertEquals("1-bar", config.getDefault());
         cfg.setProperty("subConfig.integer", 3);
         
-        Assert.assertEquals(3, config.getSubConfig().getInteger());
+        assertEquals(3, config.getSubConfig().getInteger());
     }
     
     @Test
@@ -101,8 +104,8 @@ public class ProxyTest {
             });
         
         MyConfig config = injector.getInstance(MyConfig.class);
-        Assert.assertEquals("bar", config.getString());
-        Assert.assertEquals(1, config.getInteger());
+        assertEquals("bar", config.getString());
+        assertEquals(1, config.getInteger());
     }
     
     @Configuration(prefix="prefix-${env}", allowFields=true)
@@ -124,13 +127,13 @@ public class ProxyTest {
             });
             
         ModuleTestConfig config = injector.getInstance(ModuleTestConfig.class);
-        Assert.assertTrue(config.isLoaded());
-        Assert.assertEquals("fromFile", config.getProp1());
+        assertTrue(config.isLoaded());
+        assertEquals("fromFile", config.getProp1());
         
         injector.getInstance(Config.class).accept(new PrintStreamVisitor());
     }
     
-    public static interface DefaultMethodWithAnnotation {
+    public interface DefaultMethodWithAnnotation {
         @DefaultValue("fromAnnotation")
         default String getValue() {
             return "fromDefault";
@@ -154,12 +157,12 @@ public class ProxyTest {
                 });
             
             injector.getInstance(DefaultMethodWithAnnotation.class);
-            Assert.fail("Exepcted ProvisionException");
+            fail("Exepcted ProvisionException");
         } catch (ProvisionException e) {
             e.printStackTrace();
-            Assert.assertEquals(IllegalArgumentException.class, e.getCause().getCause().getClass());
+            assertEquals(IllegalArgumentException.class, e.getCause().getCause().getClass());
         } catch (Exception e) {
-            Assert.fail("Expected ProvisionException");
+            fail("Expected ProvisionException");
         }
     }
 }

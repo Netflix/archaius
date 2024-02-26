@@ -3,13 +3,17 @@ package com.netflix.archaius.bridge;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.Assert;
-import org.junit.Test;
 
 import com.netflix.archaius.config.MapConfig;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConfigToCommonsTest {
-    private ConfigToCommonsAdapter config = new ConfigToCommonsAdapter(MapConfig.builder()
+    private final ConfigToCommonsAdapter config = new ConfigToCommonsAdapter(MapConfig.builder()
             .put("boolean", true)
             .put("string", "set")
             .put("interpolated", "${string}")
@@ -18,32 +22,32 @@ public class ConfigToCommonsTest {
     
     @Test
     public void testIsEmptyAPI() {
-        Assert.assertFalse(config.isEmpty());
+        assertFalse(config.isEmpty());
     }
     
     @Test
     public void confirmStringWorks() {
-        Assert.assertEquals("set", config.getString("string"));
+        assertEquals("set", config.getString("string"));
     }
     
     @Test
     public void confirmInterpolationWorks() {
-        Assert.assertEquals("set", config.getString("interpolated"));
+        assertEquals("set", config.getString("interpolated"));
     }
     
     @Test
     public void configNonStringWorks() {
-        Assert.assertEquals(true, config.getBoolean("boolean"));
+        assertTrue(config.getBoolean("boolean"));
     }
     
-    @Test(expected=NoSuchElementException.class)
+    @Test
     public void configNonExistentKeyWorks() {
-        Assert.assertNull(config.getString("nonexistent", null));
+        assertThrows(NoSuchElementException.class, () -> config.getString("nonexistent", null));
     }
     
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void configIsImmutable() {
-        config.setProperty("foo", "bar");
+        assertThrows(UnsupportedOperationException.class, () -> config.setProperty("foo", "bar"));
     }
     
     @Test

@@ -9,14 +9,14 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.readers.PropertiesConfigReader;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -54,7 +54,7 @@ public class DefaultConfigLoaderTest {
                                                         .build();
 
         application.replaceConfig("application", loader.newLoader().load("application"));
-        Assert.assertTrue(config.getBoolean("application.loaded"));
+        assertTrue(config.getBoolean("application.loaded"));
     }
 
     @Test
@@ -62,7 +62,7 @@ public class DefaultConfigLoaderTest {
         CompositeConfig applicationConfig = DefaultConfigLoader.builder().build().newLoader().load("application");
         Config applicationProdConfig = DefaultConfigLoader.builder().build().newLoader().load("application-prod");
         applicationConfig.addConfig("prod", applicationProdConfig);
-        Assert.assertEquals(applicationConfig.getString("application.list2"), "a,b");
-        Assert.assertEquals(applicationConfig.getBoolean("application-prod.loaded"), true);
+        assertEquals("a,b", applicationConfig.getString("application.list2"));
+        assertTrue(applicationConfig.getBoolean("application-prod.loaded"));
     }
 }
