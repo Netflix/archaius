@@ -13,7 +13,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -186,15 +186,15 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
     }
 
     private <T> Property<T> getFromSupplier(String key, Type type, Supplier<T> supplier) {
-        return getFromSupplier(new KeyAndType<T>(key, type), supplier);
+        return getFromSupplier(new KeyAndType<>(key, type), supplier);
     }
 
     @SuppressWarnings("unchecked")
     private <T> Property<T> getFromSupplier(KeyAndType<T> keyAndType, Supplier<T> supplier) {
-        return (Property<T>) properties.computeIfAbsent(keyAndType, (ignore) -> new PropertyImpl<T>(keyAndType, supplier));
+        return (Property<T>) properties.computeIfAbsent(keyAndType, (ignore) -> new PropertyImpl<>(keyAndType, supplier));
     }
-    
-    private class PropertyImpl<T> implements Property<T> {
+
+    private final class PropertyImpl<T> implements Property<T> {
         private final KeyAndType<T> keyAndType;
         private final Supplier<T> supplier;
         private final AtomicStampedReference<T> cache = new AtomicStampedReference<>(null, -1);
@@ -259,14 +259,9 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         }
 
         @Deprecated
+        @Override
         public void addListener(PropertyListener<T> listener) {
-            Subscription cancel = onChange(new Consumer<T>() {
-                @Override
-                public void accept(T t) {
-                    listener.accept(t);
-                }
-            });
-            oldSubscriptions.put(listener, cancel);
+            oldSubscriptions.put(listener, onChange(listener));
         }
 
         /**
@@ -274,15 +269,22 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
          * @param listener
          */
         @Deprecated
+        @Override
         public void removeListener(PropertyListener<T> listener) {
-            Optional.ofNullable(oldSubscriptions.remove(listener)).ifPresent(Subscription::unsubscribe);
+            Subscription subscription = oldSubscriptions.remove(listener);
+            if (subscription != null) {
+                subscription.unsubscribe();
+            }
         }
-        
+
         @Override
         public Property<T> orElse(T defaultValue) {
-            return new PropertyImpl<T>(keyAndType, () -> Optional.ofNullable(supplier.get()).orElse(defaultValue));
+            return new PropertyImpl<>(keyAndType, () -> {
+                T value = supplier.get();
+                return value != null ? value : defaultValue;
+            });
         }
-        
+
         @Override
         public Property<T> orElseGet(String key) {
             if (!keyAndType.hasType()) {
@@ -290,9 +292,12 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
             }
             KeyAndType<T> keyAndType = this.keyAndType.withKey(key);
             Property<T> next = DefaultPropertyFactory.this.get(key, keyAndType.type);
-            return new PropertyImpl<T>(keyAndType, () -> Optional.ofNullable(supplier.get()).orElseGet(next));
+            return new PropertyImpl<>(keyAndType, () -> {
+                T value = supplier.get();
+                return value != null ? value : next.get();
+            });
         }
-        
+
         @Override
         public <S> Property<S> map(Function<T, S> mapper) {
             return new PropertyImpl<>(keyAndType.discardType(), () -> {
@@ -310,7 +315,7 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
             return "Property [Key=" + getKey() + "; value="+get() + "]";
         }
     }
-    
+
     private static final class KeyAndType<T> {
         private final String key;
         private final Type type;
@@ -321,46 +326,48 @@ public class DefaultPropertyFactory implements PropertyFactory, ConfigListener {
         }
 
         public <S> KeyAndType<S> discardType() {
-            return new KeyAndType<S>(key, null);
+            if (type == null) {
+                @SuppressWarnings("unchecked") // safe since type is null
+                KeyAndType<S> keyAndType = (KeyAndType<S>) this;
+                return keyAndType;
+            }
+            return new KeyAndType<>(key, null);
         }
 
         public KeyAndType<T> withKey(String newKey) {
-            return new KeyAndType<T>(newKey, type);
+            return new KeyAndType<>(newKey, type);
         }
-        
+
         public boolean hasType() {
             return type != null;
         }
 
         @Override
         public int hashCode() {
-            final int prime = 31;
             int result = 1;
-            result = prime * result + ((key == null) ? 0 : key.hashCode());
-            result = prime * result + ((type == null) ? 0 : type.hashCode());
+            result = 31 * result + Objects.hashCode(key);
+            result = 31 * result + Objects.hashCode(type);
             return result;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (!(obj instanceof KeyAndType)) {
                 return false;
-            if (getClass() != obj.getClass())
-                return false;
-            KeyAndType other = (KeyAndType) obj;
-            if (key == null) {
-                if (other.key != null)
-                    return false;
-            } else if (!key.equals(other.key))
-                return false;
-            if (type == null) {
-                if (other.type != null)
-                    return false;
-            } else if (!type.equals(other.type))
-                return false;
-            return true;
+            }
+            KeyAndType<?> other = (KeyAndType<?>) obj;
+            return Objects.equals(key, other.key) && Objects.equals(type, other.type);
+        }
+
+        @Override
+        public String toString() {
+            return "KeyAndType{" +
+                    "key='" + key + '\'' +
+                    ", type=" + type +
+                    '}';
         }
     }
 }
