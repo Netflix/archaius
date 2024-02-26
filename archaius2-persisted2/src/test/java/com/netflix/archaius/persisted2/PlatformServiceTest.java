@@ -1,8 +1,5 @@
 package com.netflix.archaius.persisted2;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -12,12 +9,14 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class PlatformServiceTest {
     // TODO: Provide an embedded version of this service.  For now these tests are run
     // manually against internal Netflix systems
     @Test
-    @Ignore
+    @Disabled
     public void test() throws ConfigException {
         final Persisted2ClientConfig config = new DefaultPersisted2ClientConfig()
             .withServiceUrl("http://platformservice.us-east-1.dyntest.netflix.net:7001/platformservice/REST/v2/properties/jsonFilterprops")

@@ -23,16 +23,15 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.exceptions.ParseException;
+import org.junit.jupiter.api.Test;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MapConfigTest {
     private final MapConfig config = MapConfig.builder()
@@ -40,151 +39,148 @@ public class MapConfigTest {
             .put("badnumber", "badnumber")
             .build();
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantString() {
-        config.getString("nonexistent");
+    @Test
+    public void nonExistentString() {
+        assertThrows(NoSuchElementException.class, () -> config.getString("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantBigDecimal() {
-        config.getBigDecimal("nonexistent");
+    @Test
+    public void nonExistentBigDecimal() {
+        assertThrows(NoSuchElementException.class, () -> config.getBigDecimal("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantBigInteger() {
-        config.getBigInteger("nonexistent");
+    @Test
+    public void nonExistentBigInteger() {
+        assertThrows(NoSuchElementException.class, () -> config.getBigInteger("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantBoolean() {
-        config.getBoolean("nonexistent");
+    @Test
+    public void nonExistentBoolean() {
+        assertThrows(NoSuchElementException.class, () -> config.getBoolean("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantByte() {
-        config.getByte("nonexistent");
+    @Test
+    public void nonExistentByte() {
+        assertThrows(NoSuchElementException.class, () -> config.getByte("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantDouble() {
-        config.getDouble("nonexistent");
+    @Test
+    public void nonExistentDouble() {
+        assertThrows(NoSuchElementException.class, () -> config.getDouble("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantFloat() {
-        config.getFloat("nonexistent");
+    @Test
+    public void nonExistentFloat() {
+        assertThrows(NoSuchElementException.class, () -> config.getFloat("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantInteger() {
-        config.getInteger("nonexistent");
+    @Test
+    public void nonExistentInteger() {
+        assertThrows(NoSuchElementException.class, () -> config.getInteger("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantList() {
-        config.getList("nonexistent");
+    @Test
+    public void nonExistentList() {
+        assertThrows(NoSuchElementException.class, () -> config.getList("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantLong() {
-        config.getLong("nonexistent");
+    @Test
+    public void nonExistentLong() {
+        assertThrows(NoSuchElementException.class, () -> config.getLong("nonexistent"));
     }
     
-    @Test(expected=NoSuchElementException.class)
-    public void nonExistantShort() {
-        config.getShort("nonexistent");
+    @Test
+    public void nonExistentShort() {
+        assertThrows(NoSuchElementException.class, () -> config.getShort("nonexistent"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidBigDecimal() {
-        config.getBigDecimal("badnumber");
+        assertThrows(ParseException.class, () -> config.getBigDecimal("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidBigInteger() {
-        config.getBigInteger("badnumber");
+        assertThrows(ParseException.class, () -> config.getBigInteger("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidBoolean() {
-        config.getBoolean("badnumber");
+        assertThrows(ParseException.class, () -> config.getBoolean("badnumber"));
     }
     
-    @Test(expected=Exception.class)
-    @Ignore
+    @Test
     public void invalidByte() {
-        config.getByte("badnumber");
+        assertThrows(ParseException.class, () -> config.getByte("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidDouble() {
-        config.getDouble("badnumber");
+        assertThrows(ParseException.class, () -> config.getDouble("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidFloat() {
-        config.getFloat("badnumber");
+        assertThrows(ParseException.class, () -> config.getFloat("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidInteger() {
-        config.getInteger("badnumber");
+        assertThrows(ParseException.class, () -> config.getInteger("badnumber"));
     }
     
-    @Test(expected=Exception.class)
-    @Ignore
+    @Test
     public void invalidList() {
-        // TODO
+        assertThrows(ParseException.class, () -> config.getList("badnumber", Integer.class));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidLong() {
-        config.getLong("badnumber");
+        assertThrows(ParseException.class, () -> config.getLong("badnumber"));
     }
     
-    @Test(expected=ParseException.class)
+    @Test
     public void invalidShort() {
-        config.getShort("badnumber");
+        assertThrows(ParseException.class, () -> config.getShort("badnumber"));
     }
     
     @Test
-    public void interpolationShouldWork() throws ConfigException {
+    public void interpolationShouldWork() {
         Config config = MapConfig.builder()
                 .put("env",         "prod")
                 .put("replacement", "${env}")
                 .build();
         
-        Assert.assertEquals("prod", config.getString("replacement"));
+        assertEquals("prod", config.getString("replacement"));
     }
     
     @Test
-    public void interpolationWithDefaultReplacement() throws ConfigException {
+    public void interpolationWithDefaultReplacement() {
         Config config = MapConfig.builder()
                 .put("env",         "prod")
                 .put("replacement", "${env}")
                 .build();
         
-        Assert.assertEquals("prod", config.getString("nonexistent", "${env}"));
+       assertEquals("prod", config.getString("nonexistent", "${env}"));
     }
     
-    @Test(expected=IllegalStateException.class)
-    public void infiniteInterpolationRecursionShouldFail() throws ConfigException  {
+    @Test
+    public void infiniteInterpolationRecursionShouldFail() {
         Config config = MapConfig.builder()
                 .put("env", "${env}")
                 .put("replacement.env", "${env}")
                 .build();
-        
-        Assert.assertEquals("prod", config.getString("replacement.env"));
+
+        assertThrows(IllegalStateException.class, () -> config.getString("replacement.env"));
     }
     
     @Test
-    public void numericInterpolationShouldWork() throws ConfigException  {
+    public void numericInterpolationShouldWork() {
         Config config = MapConfig.builder()
                 .put("default",     "123")
                 .put("value",       "${default}")
                 .build();
-        
-        Assert.assertEquals((long)123L, (long)config.getLong("value"));
+        assertEquals(123L, (long) config.getLong("value"));
     }
 
     @Test
@@ -195,16 +191,17 @@ public class MapConfigTest {
 
         Config config = MapConfig.from(props);
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
-        Assert.assertTrue(keys.hasNext());
+        assertTrue(keys.hasNext());
 
         Set<String> keySet = new HashSet<>();
         while (keys.hasNext()) {
             keySet.add(keys.next());
         }
 
-        Assert.assertEquals(2, keySet.size());
-        Assert.assertEquals(props.keySet(), keySet);
+        assertEquals(2, keySet.size());
+        assertEquals(props.keySet(), keySet);
     }
 
     @Test
@@ -213,11 +210,12 @@ public class MapConfigTest {
                 .put("key1", "value1")
                 .put("key2", "value2")
                 .build();
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
 
-        Assert.assertTrue(keys.hasNext());
+        assertTrue(keys.hasNext());
         keys.next();
-        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+        assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 
     @Test
@@ -228,8 +226,8 @@ public class MapConfigTest {
                 .build();
         Iterable<String> keys = config.keys();
 
-        Assert.assertEquals(2, size(keys));
-        Assert.assertEquals(set("key1", "key2"), set(keys));
+        assertEquals(2, size(keys));
+        assertEquals(set("key1", "key2"), set(keys));
     }
 
     @Test
@@ -239,7 +237,7 @@ public class MapConfigTest {
                 .put("key2", "value2")
                 .build();
 
-        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
-        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+        assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 }

@@ -5,9 +5,9 @@ import com.google.inject.Injector;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ConfigurationInjectingListenerTest {
     
@@ -23,6 +23,6 @@ public class ConfigurationInjectingListenerTest {
         
         Config config = injector.getInstance(Config.class);
         config.accept(new PrintStreamVisitor());
-        Assert.assertEquals("prod", config.getString("moduleTest.value"));
+        assertEquals("prod", config.getString("moduleTest.value"));
     }
 }

@@ -18,11 +18,10 @@ package com.netflix.archaius.loaders;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
-
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Collections;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.StrInterpolator;
@@ -32,6 +31,8 @@ import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+
+import org.junit.jupiter.api.Test;
 
 public class PropertyConfigReaderTest {
     @Test
@@ -46,7 +47,7 @@ public class PropertyConfigReaderTest {
         
         config.accept(new PrintStreamVisitor());
         
-        assertThat(Arrays.asList("b"), is(config.getList("application.list", String.class)));
+        assertThat(Collections.singletonList("b"), is(config.getList("application.list", String.class)));
         assertThat(Arrays.asList("a", "b"), equalTo(config.getList("application.list2", String.class)));
 //        assertThat(Arrays.asList("b"), config.getList("application.map"));
         assertThat(Arrays.asList("a", "b"), is(config.getList("application.set", String.class)));
@@ -65,7 +66,7 @@ public class PropertyConfigReaderTest {
         Config config = reader.load(null, "test", CommonsStrInterpolator.INSTANCE, ConfigStrLookup.from(mainConfig));
         config.accept(new PrintStreamVisitor());
 
-        Assert.assertEquals("test-us-east-1.properties", config.getString("cascaded.property"));
+        assertEquals("test-us-east-1.properties", config.getString("cascaded.property"));
     }
     
     @Test
@@ -76,7 +77,7 @@ public class PropertyConfigReaderTest {
         Config config = reader.load(null, "override", CommonsStrInterpolator.INSTANCE, ConfigStrLookup.from(mainConfig));
         config.accept(new PrintStreamVisitor());
 
-        Assert.assertEquals("200", config.getString("cascaded.property"));
-        Assert.assertEquals("true", config.getString("override.internal.style.next"));
+        assertEquals("200", config.getString("cascaded.property"));
+        assertEquals("true", config.getString("override.internal.style.next"));
     }
 }

@@ -27,13 +27,12 @@ import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.EmptyConfig;
 import com.netflix.archaius.config.MapConfig;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
 public class ProxyFactoryTest {
-    public static interface MyConfigWithInterpolation {
+    public interface MyConfigWithInterpolation {
         @DefaultValue("default")
         String getString();
         
@@ -169,8 +168,8 @@ public class ProxyFactoryTest {
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
         MyConfigWithInterpolation c = proxy.newProxy(MyConfigWithInterpolation.class);
 
-        assertThat((long)c.getLong(),    equalTo(1L));
-        
+        assertThat(c.getLong(),    equalTo(1L));
+
         assertThat(c.getString(),        equalTo("loaded"));
         assertThat(c.getInterpolatedDefaultValue(),        equalTo("replaced"));
         assertThat(c.getRenamed(),       equalTo("loaded"));
@@ -195,7 +194,7 @@ public class ProxyFactoryTest {
     }
     
     @Test
-    public void testProxyWithDefaults() throws ConfigException{
+    public void testProxyWithDefaults() {
         Config config = EmptyConfig.INSTANCE;
         
         ConfigProxyFactory proxy = new ConfigProxyFactory(config, config.getDecoder(), new DefaultPropertyFactory(config.getPrefixedView("prefix")));
@@ -218,7 +217,5 @@ public class ProxyFactoryTest {
         
         assertThat(c.getDouble(),       equalTo(3.1));
         assertThat(c.getDouble2(),      nullValue());
-        
-        System.out.println(c.toString());
     }
 }

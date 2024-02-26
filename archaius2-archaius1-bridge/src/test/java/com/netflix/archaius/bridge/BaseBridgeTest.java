@@ -2,20 +2,22 @@ package com.netflix.archaius.bridge;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.ConfigurationManager;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Ignore
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Disabled
 public class BaseBridgeTest {
     @Singleton
     public static class SomeClient {
@@ -34,16 +36,14 @@ public class BaseBridgeTest {
     	ConfigurationManager.loadPropertiesFromConfiguration(
     			new PropertiesConfiguration("AbstractConfigurationBridgeTest_libA_legacy.properties"));
     	
-        Assert.assertTrue(config.getBoolean("libA.legacy.loaded",  false));
-        Assert.assertEquals("libA", config.getString("lib.legacy.override", null));
-    	Assert.assertTrue(config.getBoolean("libA.legacy.loaded"));
+        assertTrue(config.getBoolean("libA.legacy.loaded",  false));
+        assertEquals("libA", config.getString("lib.legacy.override", null));
+        assertTrue(config.getBoolean("libA.legacy.loaded"));
         
         ConfigurationManager.loadPropertiesFromConfiguration(
         		new PropertiesConfiguration("AbstractConfigurationBridgeTest_libB_legacy.properties"));
-        Assert.assertTrue(config.getBoolean("libB.legacy.loaded", false));
-        Assert.assertEquals("libA", config.getString("lib.legacy.override", null));
-    	Assert.assertTrue(config.getBoolean("libB.legacy.loaded"));
-
+        assertTrue(config.getBoolean("libB.legacy.loaded", false));
+        assertEquals("libA", config.getString("lib.legacy.override", null));
+        assertTrue(config.getBoolean("libB.legacy.loaded"));
     }
-
 }

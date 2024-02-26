@@ -9,8 +9,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
 import com.netflix.archaius.instrumentation.AccessMonitorUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.lang.ref.Reference;
@@ -23,11 +22,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -91,13 +94,13 @@ public class PrivateViewTest {
         privateView.addListener(listener);
         
         // Confirm original state
-        Assert.assertEquals("original", privateView.getString("foo.bar"));
+        assertEquals("original", privateView.getString("foo.bar"));
         Mockito.verify(listener, Mockito.times(0)).onConfigAdded(any());
 
         // Update the property and confirm onConfigUpdated notification
         settable.setProperty("foo.bar", "new");
         Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
-        Assert.assertEquals("new", privateView.getString("foo.bar"));
+        assertEquals("new", privateView.getString("foo.bar"));
         
         // Add a new config and confirm onConfigAdded notification
         config.addConfig("new", MapConfig.builder().put("foo.bar", "new2").build());
@@ -113,7 +116,7 @@ public class PrivateViewTest {
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it
         privateView = null;
         System.gc();
-        Assert.assertNull(weakReference.get());
+        assertNull(weakReference.get());
     }
 
     @Test
@@ -124,14 +127,15 @@ public class PrivateViewTest {
                 .build()
                 .getPrivateView();
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
         Set<String> keySet = new HashSet<>();
         while (keys.hasNext()) {
             keySet.add(keys.next());
         }
-        Assert.assertEquals(2, keySet.size());
-        Assert.assertTrue(keySet.contains("foo"));
-        Assert.assertTrue(keySet.contains("bar"));
+        assertEquals(2, keySet.size());
+        assertTrue(keySet.contains("foo"));
+        assertTrue(keySet.contains("bar"));
     }
 
     @Test
@@ -142,9 +146,10 @@ public class PrivateViewTest {
                 .build()
                 .getPrivateView();
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
         keys.next();
-        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+        assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 
     @Test
@@ -156,8 +161,8 @@ public class PrivateViewTest {
                 .getPrivateView();
 
         Iterable<String> keys = config.keys();
-        Assert.assertEquals(2, size(keys));
-        Assert.assertEquals(set("foo", "bar"), set(keys));
+        assertEquals(2, size(keys));
+        assertEquals(set("foo", "bar"), set(keys));
     }
 
     @Test
@@ -168,8 +173,8 @@ public class PrivateViewTest {
                 .build()
                 .getPrivateView();
 
-        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
-        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+        assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 
     @Test
@@ -180,9 +185,9 @@ public class PrivateViewTest {
                 .build()
                 .getPrivateView();
 
-        Assert.assertFalse(config.instrumentationEnabled());
-        Assert.assertEquals(config.getRawProperty("foo.prop1"), "value1");
-        Assert.assertEquals(config.getRawProperty("foo.prop2"), "value2");
+        assertFalse(config.instrumentationEnabled());
+        assertEquals(config.getRawProperty("foo.prop1"), "value1");
+        assertEquals(config.getRawProperty("foo.prop2"), "value2");
     }
 
     @Test
@@ -203,7 +208,7 @@ public class PrivateViewTest {
 
         Config config = baseConfig.getPrivateView();
 
-        Assert.assertTrue(config.instrumentationEnabled());
+        assertTrue(config.instrumentationEnabled());
 
         config.getRawProperty("foo.prop1");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo.prop1", "1", "foo-value")));

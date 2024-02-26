@@ -1,7 +1,6 @@
 package com.netflix.archaius.test;
 
 import com.netflix.archaius.api.Config;
-
 import org.junit.Test;
 
 import java.util.HashMap;

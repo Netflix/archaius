@@ -28,21 +28,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.config.polling.PollingResponse;
 import com.netflix.archaius.instrumentation.AccessMonitorUtil;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.junit.TestHttpServer;
 import com.netflix.archaius.property.PropertiesServerHandler;
 import com.netflix.archaius.readers.URLConfigReader;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -50,17 +54,29 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class PollingDynamicConfigTest {
-    
-    private final PropertiesServerHandler prop1 = new PropertiesServerHandler();
-    private final PropertiesServerHandler prop2 = new PropertiesServerHandler();
-    
-    @Rule
-    public TestHttpServer server = new TestHttpServer()
+
+    private static final PropertiesServerHandler prop1 = new PropertiesServerHandler();
+    private static final PropertiesServerHandler prop2 = new PropertiesServerHandler();
+
+    @RegisterExtension
+    static TestHttpServer HTTP_SERVER = new TestHttpServer()
             .handler("/prop1", prop1)
-            .handler("/prop2", prop2)
-            ;
-    
-    @Test(timeout=1000)
+            .handler("/prop2", prop2);
+
+    private final TestHttpServer server;
+
+    PollingDynamicConfigTest(TestHttpServer server) {
+        this.server = server;
+    }
+
+    @AfterEach
+    public void tearDown() {
+        prop1.clear();
+        prop2.clear();
+    }
+
+    @Test
+    @Timeout(1000)
     public void testBasicRead() throws Exception {
         URLConfigReader reader = new URLConfigReader(
                 server.getServerPathURI("/prop1").toURL()
@@ -70,16 +86,17 @@ public class PollingDynamicConfigTest {
         
         prop1.setProperty("a", "a_value");
         result = reader.call().getToAdd();
-        Assert.assertFalse(result.isEmpty());
+        assertFalse(result.isEmpty());
         assertEquals("a_value", result.get("a"));
         
         prop1.setProperty("a", "b_value");
         result = reader.call().getToAdd();
-        Assert.assertFalse(result.isEmpty());
+        assertFalse(result.isEmpty());
         assertEquals("b_value", result.get("a"));
     }
 
-    @Test(timeout=1000)
+    @Test
+    @Timeout(1000)
     public void testCombineSources() throws Exception {
         URLConfigReader reader = new URLConfigReader(
                 server.getServerPathURI("/prop1").toURL(),
@@ -99,18 +116,18 @@ public class PollingDynamicConfigTest {
         assertEquals("B", result.get("b"));
     }
     
-    @Test(timeout=1000, expected=IOException.class)
+    @Test
+    @Timeout(1000)
     public void testFailure() throws Exception {
         URLConfigReader reader = new URLConfigReader(
                 server.getServerPathURI("/prop1").toURL());
         
         prop1.setResponseCode(500);
-        reader.call();
-        
-        Assert.fail("Should have failed with 500 error");
+        assertThrows(IOException.class, reader::call);
     }
     
-    @Test(timeout=1000)
+    @Test
+    @Timeout(1000)
     public void testDynamicConfig() throws Exception {
         URLConfigReader reader = new URLConfigReader(
                 server.getServerPathURI("/prop1").toURL(),
@@ -131,7 +148,7 @@ public class PollingDynamicConfigTest {
         // Modify
         //  a=ANew
         //  b=BNew
-        Assert.assertFalse(config.isEmpty());
+        assertFalse(config.isEmpty());
         assertEquals("A", config.getString("a"));
         assertEquals("B", config.getString("b"));
         
@@ -151,11 +168,12 @@ public class PollingDynamicConfigTest {
         prop2.setProperty("b", "BNew");
         
         strategy.fire();
-        Assert.assertNull(config.getString("a", null));
+        assertNull(config.getString("a", null));
         assertEquals("BNew", config.getString("b"));
     }
     
-    @Test(timeout=1000)
+    @Test
+    @Timeout(1000)
     public void testDynamicConfigFailures() throws Exception {
         URLConfigReader reader = new URLConfigReader(
                 server.getServerPathURI("/prop1").toURL(),
@@ -195,7 +213,7 @@ public class PollingDynamicConfigTest {
 
         try {
             strategy.fire();
-            Assert.fail("Should have thrown an exception");
+            fail("Should have thrown an exception");
         }
         catch (Exception expected) {
             
@@ -205,7 +223,7 @@ public class PollingDynamicConfigTest {
         assertEquals(1, updateCount.get());
         assertEquals("A", config.getString("a"));
 
-        // Confim state updates after failure
+        // Confirm state updates after failure
         prop1.setResponseCode(200);
         
         strategy.fire();
@@ -226,7 +244,7 @@ public class PollingDynamicConfigTest {
         };
         PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
         Iterator<String> emptyKeys = config.getKeys();
-        Assert.assertFalse(emptyKeys.hasNext());
+        assertFalse(emptyKeys.hasNext());
 
         strategy.fire();
 
@@ -236,9 +254,9 @@ public class PollingDynamicConfigTest {
             keySet.add(keys.next());
         }
 
-        Assert.assertEquals(2, keySet.size());
-        Assert.assertTrue(keySet.contains("foo"));
-        Assert.assertTrue(keySet.contains("bar"));
+        assertEquals(2, keySet.size());
+        assertTrue(keySet.contains("foo"));
+        assertTrue(keySet.contains("bar"));
     }
 
     @Test
@@ -254,9 +272,9 @@ public class PollingDynamicConfigTest {
         strategy.fire();
         Iterator<String> keys = config.getKeys();
 
-        Assert.assertTrue(keys.hasNext());
+        assertTrue(keys.hasNext());
         keys.next();
-        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+        assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 
     @Test
@@ -272,8 +290,8 @@ public class PollingDynamicConfigTest {
         strategy.fire();
 
         Iterable<String> keys = config.keys();
-        Assert.assertEquals(2, size(keys));
-        Assert.assertEquals(set("foo", "bar"), set(keys));
+        assertEquals(2, size(keys));
+        assertEquals(set("foo", "bar"), set(keys));
     }
 
     @Test
@@ -288,8 +306,8 @@ public class PollingDynamicConfigTest {
         PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy);
         strategy.fire();
 
-        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
-        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+        assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 
     @Test
@@ -308,7 +326,7 @@ public class PollingDynamicConfigTest {
         PollingDynamicConfig config = new PollingDynamicConfig(reader, strategy, accessMonitorUtil);
         strategy.fire();
 
-        Assert.assertTrue(config.instrumentationEnabled());
+        assertTrue(config.instrumentationEnabled());
 
         config.getRawProperty("foo");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("foo", "1", "foo-value")));

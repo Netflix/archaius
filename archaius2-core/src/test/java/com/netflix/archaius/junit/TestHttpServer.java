@@ -30,9 +30,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 
 import com.netflix.archaius.util.ThreadFactories;
 import com.sun.net.httpserver.HttpExchange;
@@ -59,7 +62,7 @@ import com.sun.net.httpserver.HttpServer;
  * @author elandau
  *
  */
-public class TestHttpServer implements TestRule {
+public class TestHttpServer implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
     public static final String INTERNALERROR_PATH = "/internalerror";
     public static final String NORESPONSE_PATH = "/noresponse";
     public static final String STATUS_PATH = "/status";
@@ -73,41 +76,41 @@ public class TestHttpServer implements TestRule {
     private int localHttpServerPort = 0;
     private ExecutorService service;
     private int threadCount = DEFAULT_THREAD_COUNT;
-    private LinkedHashMap<String, HttpHandler> handlers = new LinkedHashMap<String, HttpHandler>();
+    private final LinkedHashMap<String, HttpHandler> handlers = new LinkedHashMap<>();
     
-    private String GENERIC_RESPONSE = "GenericTestHttpServer Response";
-    
+    private final String GENERIC_RESPONSE = "GenericTestHttpServer Response";
+
     public TestHttpServer() {
         handlers.put(ROOT_PATH, new TestHttpHandler() {
             @Override
             protected void handle(RequestContext context) throws IOException {
                 context.response(200, GENERIC_RESPONSE);
             }});
-        
+
         handlers.put(OK_PATH, new TestHttpHandler() {
             @Override
             protected void handle(RequestContext context) throws IOException {
                 context.response(200, GENERIC_RESPONSE);
             }});
-        
+
         handlers.put(STATUS_PATH, new TestHttpHandler() {
             @Override
             protected void handle(RequestContext context) throws IOException {
                 context.response(Integer.parseInt(context.query("code")), GENERIC_RESPONSE);
             }});
-        
+
         handlers.put(NORESPONSE_PATH, new TestHttpHandler() {
             @Override
             protected void handle(RequestContext context) throws IOException {
             }});
-        
+
         handlers.put(INTERNALERROR_PATH, new TestHttpHandler() {
             @Override
             protected void handle(RequestContext context) throws IOException {
                 throw new RuntimeException("InternalError");
             }});
     }
-    
+
     public TestHttpServer handler(String path, HttpHandler handler) {
         handlers.put(path, handler);
         return this;
@@ -122,23 +125,46 @@ public class TestHttpServer implements TestRule {
         this.threadCount = threads;
         return this;
     }
-    
+
     @Override
-    public Statement apply(final Statement statement, final Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                before(description);
-                try {
-                    statement.evaluate();
-                } finally {
-                    after(description);
-                }
-            }
-        };
+    public void beforeAll(ExtensionContext context) throws Exception {
+        this.service = Executors.newFixedThreadPool(
+                threadCount,
+                ThreadFactories.newNamedDaemonThreadFactory("TestHttpServer-%d"));
+
+        InetSocketAddress inetSocketAddress = new InetSocketAddress("localhost", 0);
+        server = HttpServer.create(inetSocketAddress, 0);
+        server.setExecutor(service);
+
+        for (Entry<String, HttpHandler> handler : handlers.entrySet()) {
+            server.createContext(handler.getKey(), handler.getValue());
+        }
+
+        server.start();
+        localHttpServerPort = server.getAddress().getPort();
+
+        System.out.println("TestServer is started: " + getServerUrl());
     }
 
-    private static interface RequestContext {
+    @Override
+    public void afterAll(ExtensionContext context) {
+        server.stop(0);
+        ((ExecutorService) server.getExecutor()).shutdownNow();
+
+        System.out.println("TestServer is shutdown: " + getServerUrl());
+    }
+
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        return parameterContext.getParameter().getType().equals(TestHttpServer.class);
+    }
+
+    @Override
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        return this;
+    }
+
+    private interface RequestContext {
         void response(int code, String body) throws IOException;
         String query(String key);
     }
@@ -150,13 +176,11 @@ public class TestHttpServer implements TestRule {
                 final Map<String, String> queryParameters = queryToMap(t);
                 
                 if (queryParameters.containsKey(DELAY_QUERY_PARAM)) {
-                    Long delay = Long.parseLong(queryParameters.get(DELAY_QUERY_PARAM));
-                    if (delay != null) {
-                        try {
-                            TimeUnit.MILLISECONDS.sleep(delay);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
+                    long delay = Long.parseLong(queryParameters.get(DELAY_QUERY_PARAM));
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(delay);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
                 }
                 
@@ -192,11 +216,11 @@ public class TestHttpServer implements TestRule {
         
         private static Map<String, String> queryToMap(HttpExchange t) {
             String queryString = t.getRequestURI().getQuery();
-            Map<String, String> result = new HashMap<String, String>();
+            Map<String, String> result = new HashMap<>();
             if (queryString != null) {
                 for (String param : queryString.split("&")) {
-                    String pair[] = param.split("=");
-                    if (pair.length>1) {
+                    String[] pair = param.split("=");
+                    if (pair.length > 1) {
                         result.put(pair[0], pair[1]);
                     }
                     else{
@@ -207,36 +231,6 @@ public class TestHttpServer implements TestRule {
             return result;
         }
 
-    }
-    
-    public void before(final Description description) throws Exception {
-        this.service = Executors.newFixedThreadPool(
-                threadCount, 
-                ThreadFactories.newNamedDaemonThreadFactory("TestHttpServer-%d"));
-        
-        InetSocketAddress inetSocketAddress = new InetSocketAddress("localhost", 0);
-        server = HttpServer.create(inetSocketAddress, 0);
-        server.setExecutor(service);
-
-        for (Entry<String, HttpHandler> handler : handlers.entrySet()) {
-            server.createContext(handler.getKey(), handler.getValue());
-        }
-        
-        server.start();
-        localHttpServerPort = server.getAddress().getPort();
-        
-        System.out.println(description.getClassName() + " TestServer is started: " + getServerUrl());
-    }
-
-    public void after(final Description description) {
-        try{
-            server.stop(0);
-            ((ExecutorService) server.getExecutor()).shutdownNow();
-            
-            System.out.println(description.getClassName() + " TestServer is shutdown: " + getServerUrl());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**

@@ -4,11 +4,8 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.MapConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.google.inject.AbstractModule;
@@ -27,6 +24,12 @@ import com.netflix.config.DeploymentContext.ContextKey;
 
 import java.io.IOException;
 import java.util.Properties;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
     public static class TestModule extends AbstractModule {
@@ -47,17 +50,13 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
             bind(SomeClient.class).asEagerSingleton();
         }
     }
-    
-    @Rule
-    public TestName testName = new TestName();
-    
     private static SettableConfig settable;
     private static Injector injector;
     private static AbstractConfiguration commonsConfig;
     private static Config config;
     
-    @BeforeClass
-    public static void before() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    @BeforeAll
+    public static void before() {
         final Properties props = new Properties();
         props.setProperty("app.override.foo", "bar");
         props.setProperty(ContextKey.environment.getKey(), "test");
@@ -73,16 +72,16 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         
         config = injector.getInstance(Config.class);
         settable = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
-        Assert.assertTrue(ConfigurationManager.isConfigurationInstalled());
+        assertTrue(ConfigurationManager.isConfigurationInstalled());
         commonsConfig = ConfigurationManager.getConfigInstance();
-        Assert.assertEquals(StaticAbstractConfiguration.class, commonsConfig.getClass());
+        assertEquals(StaticAbstractConfiguration.class, commonsConfig.getClass());
     }
     
     @Test
     public void testBasicWiring() {
         SomeClient client = injector.getInstance(SomeClient.class);
-        Assert.assertNotNull(ConfigurationManager.getConfigInstance());
-        Assert.assertEquals("bar", client.fooValue);
+        assertNotNull(ConfigurationManager.getConfigInstance());
+        assertEquals("bar", client.fooValue);
     }
     
     @ConfigurationSource(value={"AbstractConfigurationBridgeTest_libA"})
@@ -94,32 +93,32 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
     }
     
     @Test
-    public void lastLoadedLibraryWins() throws IOException {
+    public void lastLoadedLibraryWins() {
         Config config = injector.getInstance(Config.class);
         
         injector.getInstance(LibA.class);
         
-        Assert.assertTrue(config.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        assertTrue(config.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config.getString("lib.override", null));
         
         injector.getInstance(LibB.class);
         
-        Assert.assertTrue(config.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        assertTrue(config.getBoolean("libB.loaded", false));
+        assertEquals("libA", config.getString("lib.override", null));
     }
     
     @Test
     public void basicBridgeTest() throws IOException {
         DeploymentContext context1 = ConfigurationManager.getDeploymentContext();
-        Assert.assertNotNull(context1);
-        Assert.assertEquals("test", context1.getDeploymentEnvironment());
+        assertNotNull(context1);
+        assertEquals("test", context1.getDeploymentEnvironment());
         
         AbstractConfiguration config1 = ConfigurationManager.getConfigInstance();
         DeploymentContext contextDi = injector.getInstance(DeploymentContext.class);
-        Assert.assertNotSame(contextDi, context1);
+        assertNotSame(contextDi, context1);
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
-        Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config1.getString("lib.override", null));
+        assertTrue(config1.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config1.getString("lib.override", null));
         
         Config config2 = injector.getInstance(Config.class);
         SettableConfig settable = injector.getInstance(Key.get(SettableConfig.class, RuntimeLayer.class));
@@ -127,19 +126,19 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         
         DeploymentContext context2 = ConfigurationManager.getDeploymentContext();
         
-        Assert.assertEquals("foo", ConfigurationManager.getDeploymentContext().getDeploymentEnvironment());
-        Assert.assertEquals("foo", context2.getDeploymentEnvironment());
-        Assert.assertNotSame(contextDi, context1);
-        Assert.assertEquals("foo", context1.getDeploymentEnvironment());
+        assertEquals("foo", ConfigurationManager.getDeploymentContext().getDeploymentEnvironment());
+        assertEquals("foo", context2.getDeploymentEnvironment());
+        assertNotSame(contextDi, context1);
+        assertEquals("foo", context1.getDeploymentEnvironment());
         
-        Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config2.getString("lib.override", null));
+        assertTrue(config2.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config2.getString("lib.override", null));
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
-        Assert.assertTrue(config1.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config1.getString("lib.override", null));
-        Assert.assertTrue(config2.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config2.getString("lib.override", null));
+        assertTrue(config1.getBoolean("libB.loaded", false));
+        assertEquals("libA", config1.getString("lib.override", null));
+        assertTrue(config2.getBoolean("libB.loaded", false));
+        assertEquals("libA", config2.getString("lib.override", null));
         
     }
     
@@ -155,16 +154,16 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         Config                config2 = injector.getInstance(Config.class);
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
-        Assert.assertTrue(config1.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config1.getString("lib.override", null));
-        Assert.assertTrue(config2.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config2.getString("lib.override", null));
+        assertTrue(config1.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config1.getString("lib.override", null));
+        assertTrue(config2.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config2.getString("lib.override", null));
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
-        Assert.assertTrue(config1.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config1.getString("lib.override", null));
-        Assert.assertTrue(config2.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config2.getString("lib.override", null));
+        assertTrue(config1.getBoolean("libB.loaded", false));
+        assertEquals("libA", config1.getString("lib.override", null));
+        assertTrue(config2.getBoolean("libB.loaded", false));
+        assertEquals("libA", config2.getString("lib.override", null));
 
     }
 
@@ -179,12 +178,12 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libA");
-        Assert.assertTrue(config.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        assertTrue(config.getBoolean("libA.loaded",  false));
+        assertEquals("libA", config.getString("lib.override", null));
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
-        Assert.assertTrue(config.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", config.getString("lib.override", null));
+        assertTrue(config.getBoolean("libB.loaded", false));
+        assertEquals("libA", config.getString("lib.override", null));
         
         ConfigurationManager.loadCascadedPropertiesFromResources("AbstractConfigurationBridgeTest_libB");
     }
@@ -200,9 +199,9 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
     public void confirmLegacyOverrideOrderResources() throws IOException, ConfigurationException {
     	super.confirmLegacyOverrideOrderResources();
     	
-    	Assert.assertEquals("libA", config.getString("lib.legacy.override"));
-    	Assert.assertTrue(config.getBoolean("libA.legacy.loaded"));
-    	Assert.assertTrue(config.getBoolean("libB.legacy.loaded"));
+    	assertEquals("libA", config.getString("lib.legacy.override"));
+        assertTrue(config.getBoolean("libA.legacy.loaded"));
+        assertTrue(config.getBoolean("libB.legacy.loaded"));
     }
     
     /**
@@ -220,16 +219,16 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         p1.setProperty("libA.loaded", "true");
         aggregatedConfig.addConfiguration(new MapConfiguration(p1));
         
-        Assert.assertTrue(aggregatedConfig.getBoolean("libA.loaded",  false));
-        Assert.assertEquals("libA", aggregatedConfig.getString("lib.override", null));
+        assertTrue(aggregatedConfig.getBoolean("libA.loaded",  false));
+        assertEquals("libA", aggregatedConfig.getString("lib.override", null));
         
         Properties p2 = new Properties();
         p2.setProperty("lib.override", "libB");
         p2.setProperty("libB.loaded", "true");
         aggregatedConfig.addConfiguration(new MapConfiguration(p2));
         
-        Assert.assertTrue(aggregatedConfig.getBoolean("libB.loaded", false));
-        Assert.assertEquals("libA", aggregatedConfig.getString("lib.override", null));
+        assertTrue(aggregatedConfig.getBoolean("libB.loaded", false));
+        assertEquals("libA", aggregatedConfig.getString("lib.override", null));
     }
     
     @Test
@@ -250,13 +249,13 @@ public class AbstractConfigurationBridgeTest extends BaseBridgeTest  {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         config.setProperty("foo", "${ABC:true}");
         boolean value = config.getBoolean("foo");
-        Assert.assertTrue(value);
+        assertTrue(value);
     }
 
     @Test
     public void verifyMissingProperty() {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         Boolean value = config.getBoolean("foo", null);
-        Assert.assertNull(value);
+        assertNull(value);
     }
 }

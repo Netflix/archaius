@@ -2,14 +2,15 @@ package com.netflix.archaius.persisted2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.archaius.config.polling.PollingResponse;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JsonPersistedV2ReaderTest {
     @Test
@@ -33,13 +34,13 @@ public class JsonPersistedV2ReaderTest {
 
         PollingResponse response = reader.call();
         Map<String, String> props = response.getToAdd();
-        Assert.assertEquals(2, props.size());
-        Assert.assertEquals("value1", props.get("key1"));
-        Assert.assertEquals("value2", props.get("key2"));
+        assertEquals(2, props.size());
+        assertEquals("value1", props.get("key1"));
+        assertEquals("value2", props.get("key2"));
         Map<String, String> propIds = response.getNameToIdsMap();
-        Assert.assertEquals(2, propIds.size());
-        Assert.assertEquals("id1", propIds.get("key1"));
-        Assert.assertEquals("id2", propIds.get("key2"));
+        assertEquals(2, propIds.size());
+        assertEquals("id1", propIds.get("key1"));
+        assertEquals("id2", propIds.get("key2"));
     }
     @Test
     public void idFieldAbsent() throws Exception {
@@ -61,10 +62,10 @@ public class JsonPersistedV2ReaderTest {
 
         PollingResponse response = reader.call();
         Map<String, String> props = response.getToAdd();
-        Assert.assertEquals(2, props.size());
-        Assert.assertEquals("value1", props.get("key1"));
-        Assert.assertEquals("value2", props.get("key2"));
-        Assert.assertTrue(response.getNameToIdsMap().isEmpty());
+        assertEquals(2, props.size());
+        assertEquals("value1", props.get("key1"));
+        assertEquals("value2", props.get("key2"));
+        assertTrue(response.getNameToIdsMap().isEmpty());
     }
 
     public static class TestPropertyList {

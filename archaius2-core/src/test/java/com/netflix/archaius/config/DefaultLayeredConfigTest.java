@@ -10,8 +10,7 @@ import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
 import com.netflix.archaius.config.polling.PollingResponse;
 import com.netflix.archaius.instrumentation.AccessMonitorUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.lang.ref.Reference;
@@ -24,6 +23,11 @@ import java.util.concurrent.Callable;
 
 import static com.netflix.archaius.TestUtils.set;
 import static com.netflix.archaius.TestUtils.size;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -35,8 +39,8 @@ public class DefaultLayeredConfigTest {
     public void validateApiOnEmptyConfig() {
         LayeredConfig config = new DefaultLayeredConfig();
         
-        Assert.assertFalse(config.getProperty("propname").isPresent());
-        Assert.assertNull(config.getRawProperty("propname"));
+        assertFalse(config.getProperty("propname").isPresent());
+        assertNull(config.getRawProperty("propname"));
         
         LayeredConfig.LayeredVisitor<String> visitor = Mockito.mock(LayeredConfig.LayeredVisitor.class);
         config.accept(visitor);
@@ -70,15 +74,15 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.APPLICATION, child);
         
         // Validate initial state
-        Assert.assertEquals("propvalue", config.getProperty("propname").get());
-        Assert.assertEquals("propvalue", config.getRawProperty("propname"));
+        assertEquals("propvalue", config.getProperty("propname").get());
+        assertEquals("propvalue", config.getRawProperty("propname"));
         
         // Update the property value
         child.setProperty("propname", "propvalue2");
         
         // Validate new state
-        Assert.assertEquals("propvalue2", config.getProperty("propname").get());
-        Assert.assertEquals("propvalue2", config.getRawProperty("propname"));
+        assertEquals("propvalue2", config.getProperty("propname").get());
+        assertEquals("propvalue2", config.getRawProperty("propname"));
         
         Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(any());
     }
@@ -97,15 +101,15 @@ public class DefaultLayeredConfigTest {
         Mockito.verify(listener, Mockito.times(1)).onConfigUpdated(any());
         
         // Validate initial state
-        Assert.assertEquals("propvalue", config.getProperty("propname").get());
-        Assert.assertEquals("propvalue", config.getRawProperty("propname"));
+        assertEquals("propvalue", config.getProperty("propname").get());
+        assertEquals("propvalue", config.getRawProperty("propname"));
         
         // Remove the child
         config.removeConfig(Layers.APPLICATION, child.getName());
         
         // Validate new state
-        Assert.assertFalse(config.getProperty("propname").isPresent());
-        Assert.assertNull(config.getRawProperty("propname"));
+        assertFalse(config.getProperty("propname").isPresent());
+        assertNull(config.getRawProperty("propname"));
         
         Mockito.verify(listener, Mockito.times(2)).onConfigUpdated(any());
     }
@@ -132,22 +136,22 @@ public class DefaultLayeredConfigTest {
                 .build();
         
         LayeredConfig config = new DefaultLayeredConfig();
-        Assert.assertFalse(config.getProperty("propname").isPresent());
+        assertFalse(config.getProperty("propname").isPresent());
 
         config.addConfig(Layers.LIBRARY, lib1Config);
-        Assert.assertEquals(lib1Config.getName(), config.getRawProperty("propname"));
+        assertEquals(lib1Config.getName(), config.getRawProperty("propname"));
         
         config.addConfig(Layers.LIBRARY, lib2Config);
-        Assert.assertEquals(lib2Config.getName(), config.getRawProperty("propname"));
+        assertEquals(lib2Config.getName(), config.getRawProperty("propname"));
 
         config.addConfig(Layers.RUNTIME, runtimeConfig);
-        Assert.assertEquals(runtimeConfig.getName(), config.getRawProperty("propname"));
+        assertEquals(runtimeConfig.getName(), config.getRawProperty("propname"));
         
         config.addConfig(Layers.APPLICATION, appConfig);
-        Assert.assertEquals(runtimeConfig.getName(), config.getRawProperty("propname"));
+        assertEquals(runtimeConfig.getName(), config.getRawProperty("propname"));
         
         config.removeConfig(Layers.RUNTIME, runtimeConfig.getName());
-        Assert.assertEquals(appConfig.getName(), config.getRawProperty("propname"));
+        assertEquals(appConfig.getName(), config.getRawProperty("propname"));
     }
 
     @Test
@@ -160,7 +164,7 @@ public class DefaultLayeredConfigTest {
         // No more pointers to prefix means this should be garbage collected and any additional listeners on it
         config = null;
         System.gc();
-        Assert.assertNull(weakReference.get());
+        assertNull(weakReference.get());
     }
 
     @Test
@@ -178,10 +182,11 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.APPLICATION, appConfig);
         config.addConfig(Layers.LIBRARY, libConfig);
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
-        Assert.assertTrue(keys.hasNext());
-        Assert.assertEquals("propname", keys.next());
-        Assert.assertFalse(keys.hasNext());
+        assertTrue(keys.hasNext());
+        assertEquals("propname", keys.next());
+        assertFalse(keys.hasNext());
     }
 
     @Test
@@ -199,10 +204,11 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.APPLICATION, appConfig);
         config.addConfig(Layers.LIBRARY, libConfig);
 
+        @SuppressWarnings("deprecation")
         Iterator<String> keys = config.getKeys();
-        Assert.assertTrue(keys.hasNext());
+        assertTrue(keys.hasNext());
         keys.next();
-        Assert.assertThrows(UnsupportedOperationException.class, keys::remove);
+        assertThrows(UnsupportedOperationException.class, keys::remove);
     }
 
     @Test
@@ -221,8 +227,8 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.LIBRARY, libConfig);
 
         Iterable<String> keys = config.keys();
-        Assert.assertEquals(1, size(keys));
-        Assert.assertEquals(set("propname"), set(keys));
+        assertEquals(1, size(keys));
+        assertEquals(set("propname"), set(keys));
     }
 
     @Test
@@ -240,8 +246,8 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.APPLICATION, appConfig);
         config.addConfig(Layers.LIBRARY, libConfig);
 
-        Assert.assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
-        Assert.assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
+        assertThrows(UnsupportedOperationException.class, config.keys().iterator()::remove);
+        assertThrows(UnsupportedOperationException.class, ((Collection<String>) config.keys())::clear);
     }
 
     @Test
@@ -250,9 +256,9 @@ public class DefaultLayeredConfigTest {
 
         config.addConfig(Layers.DEFAULT, createPollingDynamicConfig("a1", "1", "b1", "2", null));
 
-        Assert.assertFalse(config.instrumentationEnabled());
-        Assert.assertEquals(config.getRawProperty("a1"), "1");
-        Assert.assertEquals(config.getRawProperty("b1"), "2");
+        assertFalse(config.instrumentationEnabled());
+        assertEquals(config.getRawProperty("a1"), "1");
+        assertEquals(config.getRawProperty("b1"), "2");
     }
 
     @Test
@@ -271,30 +277,30 @@ public class DefaultLayeredConfigTest {
         layered.addConfig(Layers.ENVIRONMENT, MapConfig.builder().put("c1", "4").put("d1",  "5").build());
 
         // Properties (a1: 1) and (b1: 2) are covered by the first polling config
-        Assert.assertEquals(layered.getRawProperty("a1"), "1");
+        assertEquals(layered.getRawProperty("a1"), "1");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("a1", "a1", "1")));
 
-        Assert.assertEquals(layered.getRawPropertyUninstrumented("a1"), "1");
+        assertEquals(layered.getRawPropertyUninstrumented("a1"), "1");
         verify(accessMonitorUtil, times(1)).registerUsage(any());
 
-        Assert.assertEquals(layered.getRawProperty("b1"), "2");
+        assertEquals(layered.getRawProperty("b1"), "2");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("b1", "b1", "2")));
 
-        Assert.assertEquals(layered.getRawPropertyUninstrumented("b1"), "2");
+        assertEquals(layered.getRawPropertyUninstrumented("b1"), "2");
         verify(accessMonitorUtil, times(2)).registerUsage(any());
 
         // Property (c1: 3) is covered by the composite config over the polling config
-        Assert.assertEquals(layered.getRawProperty("c1"), "3");
+        assertEquals(layered.getRawProperty("c1"), "3");
         verify(accessMonitorUtil).registerUsage(eq(new PropertyDetails("c1", "c1", "3")));
 
-        Assert.assertEquals(layered.getRawPropertyUninstrumented("c1"), "3");
+        assertEquals(layered.getRawPropertyUninstrumented("c1"), "3");
         verify(accessMonitorUtil, times(3)).registerUsage(any());
 
         // Property (d1: 5) is covered by the final, uninstrumented MapConfig
-        Assert.assertEquals(layered.getRawProperty("d1"), "5");
+        assertEquals(layered.getRawProperty("d1"), "5");
         verify(accessMonitorUtil, times(3)).registerUsage(any());
 
-        Assert.assertEquals(layered.getRawPropertyUninstrumented("d1"), "5");
+        assertEquals(layered.getRawPropertyUninstrumented("d1"), "5");
         verify(accessMonitorUtil, times(3)).registerUsage(any());
 
         // The instrumented forEachProperty endpoint updates the counts for every property
