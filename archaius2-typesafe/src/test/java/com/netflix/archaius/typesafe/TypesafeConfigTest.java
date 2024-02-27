@@ -16,81 +16,84 @@
 package com.netflix.archaius.typesafe;
 
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.test.ConfigInterfaceTest;
 import com.typesafe.config.ConfigFactory;
-import org.junit.Assert;
-import org.junit.Test;
 
 import com.netflix.archaius.config.MapConfig;
-import com.netflix.archaius.api.exceptions.ConfigException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
-import java.util.Map;
 
-public class TypesafeConfigTest extends ConfigInterfaceTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class TypesafeConfigTest {
     @Test
-    public void simple() throws ConfigException {
+    public void simple() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a=b"));
-        Assert.assertEquals("b", config.getString("a"));
-        Assert.assertTrue(config.containsKey("a"));
+        assertEquals("b", config.getString("a"));
+        assertTrue(config.containsKey("a"));
+        assertFalse(config.containsKey("foo"));
+        assertEquals("bar", config.getString("foo", "bar"));
     }
 
     @Test
-    public void simplePath() throws ConfigException {
+    public void simplePath() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a.b.c=foo"));
-        Assert.assertEquals("foo", config.getString("a.b.c"));
-        Assert.assertTrue(config.containsKey("a.b.c"));
+        assertEquals("foo", config.getString("a.b.c"));
+        assertTrue(config.containsKey("a.b.c"));
     }
 
     @Test
-    public void nested() throws ConfigException {
+    public void nested() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a { b { c=foo } }"));
-        Assert.assertEquals("foo", config.getString("a.b.c"));
-        Assert.assertTrue(config.containsKey("a.b.c"));
+        assertEquals("foo", config.getString("a.b.c"));
+        assertTrue(config.containsKey("a.b.c"));
     }
 
     @Test
-    public void keyWithAt() throws ConfigException {
+    public void keyWithAt() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("\"@a\"=b"));
-        Assert.assertEquals("b", config.getString("@a"));
-        Assert.assertTrue(config.containsKey("@a"));
+        assertEquals("b", config.getString("@a"));
+        assertTrue(config.containsKey("@a"));
     }
 
     @Test
-    public void pathWithAt() throws ConfigException {
+    public void pathWithAt() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a.\"@b\".c=foo"));
-        Assert.assertEquals("foo", config.getString("a.@b.c"));
-        Assert.assertTrue(config.containsKey("a.@b.c"));
+        assertEquals("foo", config.getString("a.@b.c"));
+        assertTrue(config.containsKey("a.@b.c"));
     }
 
     @Test
-    public void specialChars() throws ConfigException {
+    public void specialChars() {
         for (char c = '!'; c <= '~'; ++c) {
             if (c == '.') continue;
             String k = c + "a";
             String escaped = k.replace("\\", "\\\\").replace("\"", "\\\"");
             Config mc = MapConfig.builder().put(k, "b").build();
             Config tc = new TypesafeConfig(ConfigFactory.parseString("\"" + escaped + "\"=b"));
-            Assert.assertEquals(mc.getString(k), tc.getString(k));
-            Assert.assertEquals(mc.containsKey(k), tc.containsKey(k));
+            assertEquals(mc.getString(k), tc.getString(k));
+            assertEquals(mc.containsKey(k), tc.containsKey(k));
         }
     }
 
     @Test
-    public void iterate() throws Exception {
+    public void iterate() {
         Config config = new TypesafeConfig(ConfigFactory.parseString("a { \"@env\"=prod }"));
-        Assert.assertEquals("prod", config.getString("a.@env"));
+        assertEquals("prod", config.getString("a.@env"));
 
         // Make sure we can get all keys we get back from the iterator
+        @SuppressWarnings("deprecation")
         Iterator<String> ks = config.getKeys();
         while (ks.hasNext()) {
             String k = ks.next();
             config.getString(k);
         }
-    }
 
-    @Override
-    protected Config getInstance(Map<String, String> properties) {
-        return new TypesafeConfig(ConfigFactory.parseMap(properties));
+        Iterable<String> keysIterable = config.keys();
+        for (String key : keysIterable) {
+            config.getString(key);
+        }
     }
 }

@@ -16,14 +16,15 @@
 package com.netflix.archaius.typesafe;
 
 import com.netflix.archaius.config.DefaultCompositeConfig;
-import org.junit.Assert;
-import org.junit.Test;
 
 import com.netflix.archaius.DefaultConfigLoader;
 import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TypesafeConfigLoaderTest {
     @Test
@@ -43,9 +44,8 @@ public class TypesafeConfigLoaderTest {
               .withCascadeStrategy(ConcatCascadeStrategy.from("${env}", "${region}"))
               .load("foo"));
 
-        Assert.assertEquals("prod", config.getString("@environment"));
-        Assert.assertEquals("foo-prod", config.getString("foo.prop1"));
-        Assert.assertEquals("foo", config.getString("foo.prop2"));
+        assertEquals("prod", config.getString("@environment"));
+        assertEquals("foo-prod", config.getString("foo.prop1"));
+        assertEquals("foo", config.getString("foo.prop2"));
     }
-
 }
