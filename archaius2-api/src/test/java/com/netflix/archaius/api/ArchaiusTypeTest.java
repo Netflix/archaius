@@ -1,7 +1,6 @@
 package com.netflix.archaius.api;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -9,36 +8,40 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+
 public class ArchaiusTypeTest {
     @Test
     public void testEquals() {
         ParameterizedType archaiusType = ArchaiusType.forListOf(String.class);
-        Assert.assertEquals(archaiusType, listOfString);
-        Assert.assertEquals(listOfString, archaiusType);
-        Assert.assertEquals(archaiusType, ArchaiusType.forListOf(String.class));
-        Assert.assertNotEquals(archaiusType, ArchaiusType.forListOf(Integer.class));
-        Assert.assertNotEquals(archaiusType, setOfLong);
+        assertEquals(archaiusType, listOfString);
+        assertEquals(listOfString, archaiusType);
+        assertEquals(archaiusType, ArchaiusType.forListOf(String.class));
+        assertNotEquals(archaiusType, ArchaiusType.forListOf(Integer.class));
+        assertNotEquals(archaiusType, setOfLong);
     }
 
     @Test
     public void testHashCode() {
-        Assert.assertEquals(listOfString.hashCode(), ArchaiusType.forListOf(String.class).hashCode());
-        Assert.assertEquals(ArchaiusType.forListOf(String.class).hashCode(), ArchaiusType.forListOf(String.class).hashCode());
-        Assert.assertEquals(setOfLong.hashCode(), ArchaiusType.forSetOf(Long.class).hashCode());
-        Assert.assertEquals(ArchaiusType.forMapOf(Integer.class, CharSequence.class).hashCode(), mapOfIntToCharSequence.hashCode());
+        assertEquals(listOfString.hashCode(), ArchaiusType.forListOf(String.class).hashCode());
+        assertEquals(ArchaiusType.forListOf(String.class).hashCode(), ArchaiusType.forListOf(String.class).hashCode());
+        assertEquals(setOfLong.hashCode(), ArchaiusType.forSetOf(Long.class).hashCode());
+        assertEquals(ArchaiusType.forMapOf(Integer.class, CharSequence.class).hashCode(), mapOfIntToCharSequence.hashCode());
     }
 
     @Test
     public void testToString() {
-        Assert.assertEquals("java.util.List<java.lang.String>", ArchaiusType.forListOf(String.class).toString());
-        Assert.assertEquals(listOfString.toString(), ArchaiusType.forListOf(String.class).toString());
-        Assert.assertEquals(setOfLong.toString(), ArchaiusType.forSetOf(Long.class).toString());
-        Assert.assertEquals(mapOfIntToCharSequence.toString(), ArchaiusType.forMapOf(Integer.class, CharSequence.class).toString());
+        assertEquals("java.util.List<java.lang.String>", ArchaiusType.forListOf(String.class).toString());
+        assertEquals(listOfString.toString(), ArchaiusType.forListOf(String.class).toString());
+        assertEquals(setOfLong.toString(), ArchaiusType.forSetOf(Long.class).toString());
+        assertEquals(mapOfIntToCharSequence.toString(), ArchaiusType.forMapOf(Integer.class, CharSequence.class).toString());
     }
 
     @Test
     public void testPrimitiveType() {
-        Assert.assertEquals(setOfLong, ArchaiusType.forSetOf(long.class));
+        assertEquals(setOfLong, ArchaiusType.forSetOf(long.class));
     }
 
     @Test
@@ -46,9 +49,9 @@ public class ArchaiusTypeTest {
         ParameterizedType archaiusType = ArchaiusType.forSetOf(Long.class);
         Type[] typeArguments = archaiusType.getActualTypeArguments();
         // check that returned array is defensively copied
-        Assert.assertNotSame(typeArguments, archaiusType.getActualTypeArguments());
-        Assert.assertEquals(1, typeArguments.length);
-        Assert.assertEquals(Long.class, typeArguments[0]);
+        assertNotSame(typeArguments, archaiusType.getActualTypeArguments());
+        assertEquals(1, typeArguments.length);
+        assertEquals(Long.class, typeArguments[0]);
     }
 
     private static List<String> listOfString() { throw new AssertionError(); }
