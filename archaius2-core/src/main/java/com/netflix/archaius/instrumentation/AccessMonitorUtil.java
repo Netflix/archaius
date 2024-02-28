@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,6 +30,10 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     // Map from stack trace to how many times that stack trace appeared
     private final ConcurrentHashMap<String, Integer> stackTrace;
+    // Property keys that we will keep the stack traces for
+    private Set<String> propertiesToTrack;
+    // Map from property key to stack traces map for tracked properties
+    private final ConcurrentHashMap<String, Set<String>> trackedPropertyStackTraces;
 
     private static final AtomicInteger counter = new AtomicInteger();
 
@@ -41,6 +47,7 @@ public class AccessMonitorUtil implements AutoCloseable {
         private boolean recordStackTrace = false;
         private int initialFlushDelaySeconds = 30;
         private int flushPeriodSeconds = 120;
+        private Set<String> propertiesToTrack = Collections.emptySet();
 
         public Builder setDataFlushConsumer(Consumer<PropertiesInstrumentationData> dataFlushConsumer) {
             this.dataFlushConsumer = dataFlushConsumer;
@@ -62,8 +69,14 @@ public class AccessMonitorUtil implements AutoCloseable {
             return this;
         }
 
+        public Builder setPropertiesToTrack(Set<String> propertiesToTrack) {
+            this.propertiesToTrack = propertiesToTrack;
+            return this;
+        }
+
         public AccessMonitorUtil build() {
-            AccessMonitorUtil accessMonitorUtil = new AccessMonitorUtil(dataFlushConsumer, recordStackTrace);
+            AccessMonitorUtil accessMonitorUtil =
+                    new AccessMonitorUtil(dataFlushConsumer, recordStackTrace, propertiesToTrack);
             accessMonitorUtil.startFlushing(initialFlushDelaySeconds, flushPeriodSeconds);
             return accessMonitorUtil;
         }
@@ -75,11 +88,14 @@ public class AccessMonitorUtil implements AutoCloseable {
 
     private AccessMonitorUtil(
             Consumer<PropertiesInstrumentationData> dataFlushConsumer,
-            boolean recordStackTrace) {
+            boolean recordStackTrace,
+            Set<String> propertiesToTrack) {
         this.propertyUsageMapRef = new AtomicReference(new ConcurrentHashMap<>());
         this.stackTrace = new ConcurrentHashMap<>();
         this.dataFlushConsumer = dataFlushConsumer;
         this.recordStackTrace = recordStackTrace;
+        this.propertiesToTrack = propertiesToTrack;
+        this.trackedPropertyStackTraces = new ConcurrentHashMap<>();
         this.executor = Executors.newSingleThreadScheduledExecutor(
                 runnable -> {
                     Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -87,6 +103,14 @@ public class AccessMonitorUtil implements AutoCloseable {
                     thread.setName(String.format("Archaius-Instrumentation-Flusher-%d", counter.incrementAndGet()));
                     return thread;
                 });
+    }
+
+    public void setPropertiesToTrack(Set<String> propertiesToTrack) {
+        this.propertiesToTrack = propertiesToTrack;
+    }
+
+    public Map<String, Set<String>> getTrackedPropertyTraces() {
+        return trackedPropertyStackTraces;
     }
 
     private void startFlushing(int initialDelay, int period) {
@@ -124,12 +148,23 @@ public class AccessMonitorUtil implements AutoCloseable {
                 propertyDetails.getId(),
                 new PropertyUsageData(createEventList(new PropertyUsageEvent(System.currentTimeMillis()))));
 
-        // Very crude and will have a very noticeable performance impact, but is
-        // particularly useful for finding out call sites that iterate over all
-        // properties.
-        if (recordStackTrace) {
+        boolean isTrackedProperty = propertiesToTrack.contains(propertyDetails.getKey());
+        if (recordStackTrace || isTrackedProperty) {
             String trace = Arrays.toString(Thread.currentThread().getStackTrace());
-            stackTrace.merge(trace, 1, (v1, v2) -> v1 + 1);
+
+            // Very crude and will have a very noticeable performance impact, but is
+            // particularly useful for finding out call sites that iterate over all
+            // properties.
+            if (recordStackTrace) {
+                stackTrace.merge(trace, 1, (v1, v2) -> v1 + 1);
+            }
+            if (isTrackedProperty) {
+                String key = propertyDetails.getKey();
+                if (!trackedPropertyStackTraces.containsKey(key)) {
+                    trackedPropertyStackTraces.put(key, ConcurrentHashMap.newKeySet());
+                }
+                trackedPropertyStackTraces.get(key).add(trace);
+            }
         }
     }
 
