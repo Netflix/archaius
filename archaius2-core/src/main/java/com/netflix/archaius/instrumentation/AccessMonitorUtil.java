@@ -140,6 +140,15 @@ public class AccessMonitorUtil implements AutoCloseable {
         for (Map.Entry<String, Integer> entry : accessMonitorUtil.stackTrace.entrySet()) {
             stackTrace.merge(entry.getKey(), entry.getValue(), Integer::sum);
         }
+        for (Map.Entry<String, Set<String>> entry : accessMonitorUtil.trackedPropertyStackTraces.entrySet()) {
+            trackedPropertyStackTraces.merge(
+                    entry.getKey(),
+                    entry.getValue(),
+                    (oldSet, newSet) -> {
+                         oldSet.addAll(newSet);
+                         return oldSet;
+                    });
+        }
     }
 
     public void registerUsage(PropertyDetails propertyDetails) {
