@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +30,7 @@ public class AccessMonitorUtil implements AutoCloseable {
     // Map from stack trace to how many times that stack trace appeared
     private final ConcurrentHashMap<String, Integer> stackTrace;
     // Property keys that we will keep the stack traces for
-    private Set<String> propertiesToTrack;
+    private volatile Set<String> propertiesToTrack;
     // Map from property key to stack traces map for tracked properties
     private final ConcurrentHashMap<String, Set<String>> trackedPropertyStackTraces;
 
