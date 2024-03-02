@@ -23,12 +23,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.exceptions.ParseException;
 import org.junit.jupiter.api.Test;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -226,8 +226,8 @@ public class MapConfigTest {
                 .build();
         Iterable<String> keys = config.keys();
 
-        assertEquals(2, size(keys));
-        assertEquals(set("key1", "key2"), set(keys));
+        assertEquals(2, Iterables.size(keys));
+        assertEquals(Sets.newHashSet("key1", "key2"), Sets.newHashSet(keys));
     }
 
     @Test

@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.PropertyDetails;
 import com.netflix.archaius.config.polling.PollingResponse;
 import com.netflix.archaius.instrumentation.AccessMonitorUtil;
@@ -39,8 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -290,8 +290,8 @@ public class PollingDynamicConfigTest {
         strategy.fire();
 
         Iterable<String> keys = config.keys();
-        assertEquals(2, size(keys));
-        assertEquals(set("foo", "bar"), set(keys));
+        assertEquals(2, Iterables.size(keys));
+        assertEquals(Sets.newHashSet("foo", "bar"), Sets.newHashSet(keys));
     }
 
     @Test

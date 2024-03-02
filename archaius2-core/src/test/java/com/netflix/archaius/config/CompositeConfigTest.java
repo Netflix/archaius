@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.polling.ManualPollingStrategy;
@@ -37,8 +39,6 @@ import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 import org.junit.jupiter.api.Test;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -151,18 +151,18 @@ public class CompositeConfigTest {
         composite.addConfig("b", MapConfig.builder().put("b1", "A").put("b2",  "B").build());
         
         iter = composite.getKeys();
-        assertEquals(set("b1", "b2"), set(iter));
+        assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
         
         composite.addConfig("c", EmptyConfig.INSTANCE);
         
         iter = composite.getKeys();
-        assertEquals(set("b1", "b2"), set(iter));
+        assertEquals(Sets.newHashSet("b1", "b2"), Sets.newHashSet(iter));
         
         composite.addConfig("d", MapConfig.builder().put("d1", "A").put("d2",  "B").build());
         composite.addConfig("e", MapConfig.builder().put("e1", "A").put("e2",  "B").build());
         
         iter = composite.getKeys();
-        assertEquals(set("b1", "b2", "d1", "d2", "e1", "e2"), set(iter));
+        assertEquals(Sets.newHashSet("b1", "b2", "d1", "d2", "e1", "e2"), Sets.newHashSet(iter));
     }
 
     @Test
@@ -189,8 +189,8 @@ public class CompositeConfigTest {
 
         Iterable<String> keys = composite.keys();
 
-        assertEquals(4, size(keys));
-        assertEquals(set("d1", "d2", "e1", "e2"), set(keys));
+        assertEquals(4, Iterables.size(keys));
+        assertEquals(Sets.newHashSet("d1", "d2", "e1", "e2"), Sets.newHashSet(keys));
     }
 
     @Test

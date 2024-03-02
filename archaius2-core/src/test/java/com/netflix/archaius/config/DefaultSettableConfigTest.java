@@ -1,13 +1,13 @@
 package com.netflix.archaius.config;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.config.SettableConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Properties;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,18 +25,18 @@ public class DefaultSettableConfigTest {
         config.setProperty("prop2", "value2");
         config.setProperty("prop3", "value3");
 
-        assertEquals(set("prop1", "prop2", "prop3"), set(config.getKeys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop3"), Sets.newHashSet(config.getKeys()));
 
         config.clearProperty("prop3");
-        assertEquals(set("prop1", "prop2"), set(config.getKeys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2"), Sets.newHashSet(config.getKeys()));
 
         config.setProperties(MapConfig.builder().put("prop4", "value4").build());
-        assertEquals(set("prop1", "prop2", "prop4"), set(config.getKeys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop4"), Sets.newHashSet(config.getKeys()));
 
         Properties props = new Properties();
         props.put("prop5", "value5");
         config.setProperties(props);
-        assertEquals(set("prop1", "prop2", "prop4", "prop5"), set(config.getKeys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop4", "prop5"), Sets.newHashSet(config.getKeys()));
     }
 
     @SuppressWarnings("deprecation")
@@ -68,24 +68,24 @@ public class DefaultSettableConfigTest {
     public void testKeysIterable() {
         SettableConfig config = new DefaultSettableConfig();
 
-        assertEquals(0, size(config.keys()));
+        assertEquals(0, Iterables.size(config.keys()));
 
         config.setProperty("prop1", "value1");
         config.setProperty("prop2", "value2");
         config.setProperty("prop3", "value3");
 
-        assertEquals(set("prop1", "prop2", "prop3"), set(config.keys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop3"), Sets.newHashSet(config.keys()));
 
         config.clearProperty("prop3");
-        assertEquals(set("prop1", "prop2"), set(config.keys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2"), Sets.newHashSet(config.keys()));
 
         config.setProperties(MapConfig.builder().put("prop4", "value4").build());
-        assertEquals(set("prop1", "prop2", "prop4"), set(config.keys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop4"), Sets.newHashSet(config.keys()));
 
         Properties props = new Properties();
         props.put("prop5", "value5");
         config.setProperties(props);
-        assertEquals(set("prop1", "prop2", "prop4", "prop5"), set(config.keys()));
+        assertEquals(Sets.newHashSet("prop1", "prop2", "prop4", "prop5"), Sets.newHashSet(config.keys()));
     }
 
     @Test

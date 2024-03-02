@@ -1,5 +1,7 @@
 package com.netflix.archaius.api;
 
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.ParameterizedType;
@@ -13,6 +15,15 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 public class ArchaiusTypeTest {
+
+    private static final Type listOfString = new TypeToken<List<String>>() {}.getType();
+    private static final Type setOfLong = new TypeToken<Set<Long>>() {}.getType();
+    private static final Type mapOfIntToCharSequence = new TypeToken<Map<Integer, CharSequence>>() {}.getType();
+
+    private static <T> TypeToken<List<T>> listOfType(Class<T> klazz) {
+        return new TypeToken<List<T>>() {}.where(new TypeParameter<T>() {}, klazz);
+    }
+
     @Test
     public void testEquals() {
         ParameterizedType archaiusType = ArchaiusType.forListOf(String.class);
@@ -21,6 +32,9 @@ public class ArchaiusTypeTest {
         assertEquals(archaiusType, ArchaiusType.forListOf(String.class));
         assertNotEquals(archaiusType, ArchaiusType.forListOf(Integer.class));
         assertNotEquals(archaiusType, setOfLong);
+
+        // Test against Guava's ParameterizedType implementation
+        assertEquals(archaiusType, listOfType(String.class).getType());
     }
 
     @Test
@@ -29,6 +43,9 @@ public class ArchaiusTypeTest {
         assertEquals(ArchaiusType.forListOf(String.class).hashCode(), ArchaiusType.forListOf(String.class).hashCode());
         assertEquals(setOfLong.hashCode(), ArchaiusType.forSetOf(Long.class).hashCode());
         assertEquals(ArchaiusType.forMapOf(Integer.class, CharSequence.class).hashCode(), mapOfIntToCharSequence.hashCode());
+
+        // Test against Guava's ParameterizedType implementation
+        assertEquals(ArchaiusType.forListOf(String.class).hashCode(), listOfType(String.class).getType().hashCode());
     }
 
     @Test
@@ -52,22 +69,5 @@ public class ArchaiusTypeTest {
         assertNotSame(typeArguments, archaiusType.getActualTypeArguments());
         assertEquals(1, typeArguments.length);
         assertEquals(Long.class, typeArguments[0]);
-    }
-
-    private static List<String> listOfString() { throw new AssertionError(); }
-    private static Set<Long> setOfLong() { throw new AssertionError(); }
-    private static Map<Integer, CharSequence> mapOfIntToCharSequence() { throw new AssertionError(); }
-    private static final ParameterizedType listOfString;
-    private static final ParameterizedType setOfLong;
-    private static final ParameterizedType mapOfIntToCharSequence;
-
-    static {
-        try {
-            listOfString = (ParameterizedType) ArchaiusTypeTest.class.getDeclaredMethod("listOfString").getGenericReturnType();
-            setOfLong = (ParameterizedType) ArchaiusTypeTest.class.getDeclaredMethod("setOfLong").getGenericReturnType();
-            mapOfIntToCharSequence = (ParameterizedType) ArchaiusTypeTest.class.getDeclaredMethod("mapOfIntToCharSequence").getGenericReturnType();
-        } catch (NoSuchMethodException exc) {
-            throw new AssertionError("Method not found", exc);
-        }
     }
 }
