@@ -26,6 +26,7 @@ subprojects {
     }
 
     dependencies {
+        testImplementation 'com.google.guava:guava:33.+'
         testImplementation 'org.slf4j:slf4j-reload4j:1.7.36'
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.+'
         testImplementation 'org.hamcrest:hamcrest-all:1.3'

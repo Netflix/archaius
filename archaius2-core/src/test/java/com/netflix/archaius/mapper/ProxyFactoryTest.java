@@ -189,8 +189,6 @@ public class ProxyFactoryTest {
         assertThat(c.getFloat2(),        equalTo(2.1f));
         assertThat(c.getDouble(),        equalTo(1.1));
         assertThat(c.getDouble2(),       equalTo(2.1));
-        
-        System.out.println(c.toString());
     }
     
     @Test

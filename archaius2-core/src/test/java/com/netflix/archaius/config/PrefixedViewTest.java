@@ -1,5 +1,7 @@
 package com.netflix.archaius.config;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.PropertyDetails;
@@ -22,8 +24,6 @@ import com.netflix.archaius.instrumentation.AccessMonitorUtil;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -150,8 +150,8 @@ public class PrefixedViewTest {
                 .getPrefixedView("foo");
 
         Iterable<String> keys = config.keys();
-        assertEquals(2, size(keys));
-        assertEquals(set("prop1", "prop2"), set(keys));
+        assertEquals(2, Iterables.size(keys));
+        assertEquals(Sets.newHashSet("prop1", "prop2"), Sets.newHashSet(keys));
     }
 
     @Test

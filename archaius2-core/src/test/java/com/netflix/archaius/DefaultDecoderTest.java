@@ -15,7 +15,6 @@
  */
 package com.netflix.archaius;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.reflect.TypeToken;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.converters.ArrayTypeConverterFactory;
@@ -58,30 +58,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class DefaultDecoderTest {
-    @SuppressWarnings("unused") // accessed via reflection
-    private static Collection<Long> collectionOfLong;
-    @SuppressWarnings("unused") // accessed via reflection
-    private static List<Integer> listOfInteger;
-    @SuppressWarnings("unused") // accessed via reflection
-    private static Set<Long> setOfLong;
-    @SuppressWarnings("unused") // accessed via reflection
-    private static Map<String, Integer> mapOfStringToInteger;
-
-    private static final ParameterizedType collectionOfLongType;
-    private static final ParameterizedType listOfIntegerType;
-    private static final ParameterizedType setOfLongType;
-    private static final ParameterizedType mapofStringToIntegerType;
-
-    static {
-        try {
-            collectionOfLongType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("collectionOfLong").getGenericType();
-            listOfIntegerType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("listOfInteger").getGenericType();
-            setOfLongType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("setOfLong").getGenericType();
-            mapofStringToIntegerType = (ParameterizedType) DefaultDecoderTest.class.getDeclaredField("mapOfStringToInteger").getGenericType();
-        } catch (NoSuchFieldException exc) {
-            throw new AssertionError("listOfString field not found", exc);
-        }
-    }
+    private static final Type collectionOfLongType = new TypeToken<Collection<Long>>() {}.getType();
+    private static final Type listOfIntegerType = new TypeToken<List<Integer>>() {}.getType();
+    private static final Type setOfLongType = new TypeToken<Set<Long>>() {}.getType();
+    private static final Type mapofStringToIntegerType = new TypeToken<Map<String, Integer>>() {}.getType();
 
     @Test
     public void testJavaNumbers() {

@@ -1,5 +1,7 @@
 package com.netflix.archaius.config;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Decoder;
@@ -22,8 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -161,8 +161,8 @@ public class PrivateViewTest {
                 .getPrivateView();
 
         Iterable<String> keys = config.keys();
-        assertEquals(2, size(keys));
-        assertEquals(set("foo", "bar"), set(keys));
+        assertEquals(2, Iterables.size(keys));
+        assertEquals(Sets.newHashSet("foo", "bar"), Sets.newHashSet(keys));
     }
 
     @Test

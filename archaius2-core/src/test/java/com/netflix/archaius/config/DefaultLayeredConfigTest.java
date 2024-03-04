@@ -1,5 +1,7 @@
 package com.netflix.archaius.config;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.netflix.archaius.Layers;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -16,13 +18,12 @@ import org.mockito.Mockito;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static com.netflix.archaius.TestUtils.set;
-import static com.netflix.archaius.TestUtils.size;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -41,7 +42,8 @@ public class DefaultLayeredConfigTest {
         
         assertFalse(config.getProperty("propname").isPresent());
         assertNull(config.getRawProperty("propname"));
-        
+
+        @SuppressWarnings("unchecked")
         LayeredConfig.LayeredVisitor<String> visitor = Mockito.mock(LayeredConfig.LayeredVisitor.class);
         config.accept(visitor);
         Mockito.verify(visitor, Mockito.never()).visitConfig(any(), any());
@@ -227,8 +229,8 @@ public class DefaultLayeredConfigTest {
         config.addConfig(Layers.LIBRARY, libConfig);
 
         Iterable<String> keys = config.keys();
-        assertEquals(1, size(keys));
-        assertEquals(set("propname"), set(keys));
+        assertEquals(1, Iterables.size(keys));
+        assertEquals(Collections.singleton("propname"), Sets.newHashSet(keys));
     }
 
     @Test
