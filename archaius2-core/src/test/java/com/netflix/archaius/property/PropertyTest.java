@@ -95,20 +95,32 @@ public class PropertyTest {
     }
 
     @Test
-    public void test() throws ConfigException {
+    public void testServiceInitializationWithDefaultProperties() {
         SettableConfig config = new DefaultSettableConfig();
         DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
 
         MyService service = new MyService(factory);
 
-        assertEquals(1, (int)service.value.get());
-        assertEquals(2, (int)service.value2.get());
+        // Verify initial property values
+        assertEquals(1, (int) service.value.get());
+        assertEquals(2, (int) service.value2.get());
+        // Verify setValue() was called once for each initialization
+        assertEquals(0, service.setValueCallsCounter.get());
+    }
 
+    @Test
+    public void testPropertyValuesUpdateAndEffect() {
+        SettableConfig config = new DefaultSettableConfig();
+        DefaultPropertyFactory factory = DefaultPropertyFactory.from(config);
+        MyService service = new MyService(factory);
+
+        // Setting up properties
         config.setProperty("foo", "123");
 
+        // Assertions after properties update
         assertEquals(123, (int)service.value.get());
         assertEquals(123, (int)service.value2.get());
-        // setValue() is called once when we init to 1 and twice when we set foo to 123.
+        // setValue() is called once for each property update
         assertEquals(1, service.setValueCallsCounter.get());
     }
 
