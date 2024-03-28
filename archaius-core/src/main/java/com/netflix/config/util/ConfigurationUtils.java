@@ -123,19 +123,36 @@ public class ConfigurationUtils {
      * @return properties extracted from the configuration
      */
     public static Properties getProperties(Configuration config) {
- 	   Properties p = new Properties();
- 	   if (config != null){
-	 	   Iterator<String> it = config.getKeys();	 	   
-	 	   while (it.hasNext()){
-	 		   String key = it.next();
-	 		   if (key != null) {
-	 		      Object value = config.getProperty(key);
-                  if (value != null) {
-                      p.put(key, value);
-                  }	 		   }
-	 	   }
- 	   }
-  	   return p;
+        return getPropertiesInternal(config, true);
+    }
+
+    /**
+     * If possible, returns the Properties while avoiding instrumented fast property usage endpoints.
+     * @param config Configuration to get the properties
+     * @return properties extracted from the configuration
+     */
+    public static Properties getPropertiesUninstrumented(Configuration config) {
+        return getPropertiesInternal(config, false);
+    }
+
+    private static Properties getPropertiesInternal(Configuration config, boolean instrumented) {
+        Properties p = new Properties();
+        if (config != null){
+            Iterator<String> it = config.getKeys();
+            while (it.hasNext()){
+                String key = it.next();
+                if (key != null) {
+                    Object value =
+                            !instrumented && config instanceof InstrumentationAware
+                                    ? ((InstrumentationAware) config).getPropertyUninstrumented(key)
+                                    : config.getProperty(key);
+                    if (value != null) {
+                        p.put(key, value);
+                    }
+                }
+            }
+        }
+        return p;
     }
     
     public static void loadProperties(Properties props, Configuration config) {
