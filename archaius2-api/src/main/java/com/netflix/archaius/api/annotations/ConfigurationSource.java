@@ -36,7 +36,7 @@ import java.util.List;
  * @author elandau
  *
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigurationSource {
     /**
