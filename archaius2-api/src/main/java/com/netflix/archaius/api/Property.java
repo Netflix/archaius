@@ -99,7 +99,7 @@ public interface Property<T> extends Supplier<T> {
      * @return Subscription that may be unsubscribed to no longer get change notifications
      */
     default Subscription subscribe(Consumer<T> consumer) {
-        PropertyListener<T> listener = (PropertyListener<T>) consumer;
+        PropertyListener<T> listener = consumer::accept;
         
         addListener(listener);
         return () -> removeListener(listener);
