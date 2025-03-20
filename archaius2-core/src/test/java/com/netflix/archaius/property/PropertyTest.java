@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -664,6 +665,40 @@ public class PropertyTest {
         assertEquals(expectedMap, secondReference.get());
 
         ensureReferencesMatch(firstReference, secondReference);
+    }
+
+    @Test
+    public void testDefaultInterfaceSubscription() {
+        List<PropertyListener<?>> listeners = new CopyOnWriteArrayList<>();
+
+        Property<Integer> prop = new Property<Integer>() {
+            @Override
+            public Integer get() {
+                return 0;
+            }
+
+            @Override
+            public String getKey() {
+                return "";
+            }
+
+            @Override
+            public void addListener(PropertyListener<Integer> listener) {
+                listeners.add(listener);
+            }
+
+            @Override
+            public void removeListener(PropertyListener<Integer> listener) {
+                listeners.remove(listener);
+            }
+        };
+
+
+        Subscription s = prop.subscribe((ignore) -> {});
+        assertEquals(1, listeners.size(), "We expected to see a listener after subscribing");
+
+        s.unsubscribe();
+        assertEquals(0, listeners.size(), "We expected to see no listeners after unsubscribing");
     }
 
     @Test
