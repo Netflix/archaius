@@ -8,6 +8,11 @@ plugins {
     id 'com.netflix.nebula.netflixoss' version '11.6.0'
 }
 
+group = 'com.rapid7'
+version = '1.0.0'
+
+archivesBaseName = 'rapid7-archaius-patched'
+
 // Establish version and status
 ext.githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
 
@@ -29,7 +34,10 @@ allprojects {
     dependencies {
         api 'com.google.code.findbugs:jsr305:3.0.1'
         api 'org.slf4j:slf4j-api:1.7.36'
-        api 'commons-configuration:commons-configuration:1.10'
+        api('commons-configuration:commons-configuration:1.10') {
+            exclude group: 'commons-lang', module: 'commons-lang'
+        }
+        implementation 'org.apache.commons:commons-lang3:3.18.0'
         testImplementation 'org.slf4j:slf4j-reload4j:1.7.36'
     }
 
@@ -71,6 +79,11 @@ project(':archaius-core') {
         testImplementation files('src/test/resources/classpathTestResources.jar')
 
     }
+
+    tasks.named('jar') {
+        archiveBaseName.set('rapid7-archaius-patched')
+        archiveVersion.set(version)
+    }
 }
 
 project(':archaius-aws') {
@@ -83,14 +96,6 @@ project(':archaius-aws') {
         testImplementation 'org.mockito:mockito-all:1.9.5'
     }
 }
-
-//project(':archaius-jclouds') {
-//    dependencies {
-//        compile project(':archaius-core')
-//        compile 'org.jclouds:jclouds-blobstore:1.6.0'
-//        testCompile 'junit:junit:4.13.1'
-//    }
-//}
 
 project(':archaius-typesafe') {
     dependencies {
@@ -125,38 +130,3 @@ project(':archaius-etcd') {
         testImplementation 'org.mockito:mockito-all:1.9.5'
     }
 }
-
-//project(':archaius-scala') {
-//    apply plugin: 'scala'
-//
-//    dependencies {
-//        implementation project(':archaius-core')
-//        implementation 'org.scala-lang:scala-library:2.10.4'
-//        testImplementation 'org.scalatest:scalatest_2.10:2.2.5'
-//        testImplementation 'junit:junit:4.13.1'
-//
-//        implementation "org.scala-lang.modules:scala-java8-compat_2.10:0.9.0"
-//
-//        compileOnly "org.scala-lang:scala-reflect:2.10.4"
-//        compileOnly "org.scala-lang:scala-compiler:2.10.4"
-//    }
-//}
-//
-//project(':archaius-samplelibrary') {
-//    apply plugin: 'scala'
-//
-//    dependencies {
-//        implementation project(':archaius-scala')
-//
-//        implementation 'org.scala-lang:scala-library:2.10.1'
-//
-//        testImplementation 'org.scalatest:scalatest_2.10.0:1.8'
-//        testImplementation 'junit:junit:4.13.1'
-//    }
-//    jar {
-//        from('src/main/java') {
-//            include 'META-INF/conf/springbeans.xml'
-//            include 'META-INF/conf/config.properties'
-//        }
-//    }
-//}
