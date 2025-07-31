@@ -198,6 +198,7 @@ public abstract class AbstractConfig implements Config {
         }
 
         if (value instanceof String) {
+            // todo: inconsistent with above
             return resolve(value.toString());
         } else {
             return value.toString();

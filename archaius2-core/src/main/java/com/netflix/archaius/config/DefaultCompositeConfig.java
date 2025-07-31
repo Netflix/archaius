@@ -247,7 +247,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
     protected void postConfigAdded(Config child) {
         child.setStrInterpolator(getStrInterpolator());
         child.setDecoder(getDecoder());
-        notifyConfigAdded(child);
+        notifyConfigAdded(this);
         child.addListener(listener);
     }
 
@@ -267,7 +267,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
         if (child != null) {
             state = state.removeConfig(name);
             child.removeListener(listener);
-            this.notifyConfigRemoved(child);
+            this.notifyConfigRemoved(this);
         }
         return child;
     }    
