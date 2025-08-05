@@ -15,12 +15,13 @@
  */
 package com.netflix.config;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -28,23 +29,21 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationRuntimeException;
 import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.event.ConfigurationEvent;
 import org.apache.commons.configuration.event.ConfigurationListener;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 
 
 /**
@@ -892,10 +891,10 @@ public class ConcurrentCompositeConfiguration extends ConcurrentMapConfiguration
 
             return copy;
         }
-        catch (CloneNotSupportedException cnex)
+        catch (Exception cnex)
         {
             // cannot happen
-            throw new ConfigurationRuntimeException(cnex);
+            throw new RuntimeException(cnex);
         }
     }
 
