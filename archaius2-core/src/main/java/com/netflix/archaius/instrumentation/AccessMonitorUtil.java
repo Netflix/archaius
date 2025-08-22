@@ -202,6 +202,5 @@ public class AccessMonitorUtil implements AutoCloseable {
     @Override
     public void close() {
         executor.shutdown();
-        flushUsageData();
     }
 }
