@@ -14,25 +14,25 @@ jobs:
         java: [ 8, 9, 11, 17, 21]
     name: CI with Java ${{ matrix.java }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup jdk
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           # Install both the version we'll test with AND 8, which goes later so that it's the default for gradle to run with.
           java-version: |
             ${{ matrix.java }}
             8
           distribution: 'zulu'
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: gradle-cache
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/dependency-locks/*.lockfile') }}
           restore-keys: |
             - ${{ runner.os }}-gradle-
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: gradle-wrapper-cache
         with:
           path: ~/.gradle/wrapper
