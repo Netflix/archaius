@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(./update-github-actions.sh:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}
