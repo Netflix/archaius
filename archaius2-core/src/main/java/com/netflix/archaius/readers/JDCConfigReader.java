@@ -135,7 +135,7 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
                 rs.close();
             }
         } catch (SQLException e) {
-            log.error("An error occured on closing the ResultSet", e);
+            log.error("An error occurred on closing the ResultSet", e);
         }
 
         try {
@@ -143,7 +143,7 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
                 stmt.close();
             }
         } catch (SQLException e) {
-            log.error("An error occured on closing the statement", e);
+            log.error("An error occurred on closing the statement", e);
         }
 
         try {
@@ -151,7 +151,7 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
                 conn.close();
             }
         } catch (SQLException e) {
-            log.error("An error occured on closing the connection", e);
+            log.error("An error occurred on closing the connection", e);
         }
     }
 }
