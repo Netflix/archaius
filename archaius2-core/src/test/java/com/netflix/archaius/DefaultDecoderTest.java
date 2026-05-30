@@ -51,9 +51,12 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Test;
 
+import com.netflix.archaius.exceptions.ParseException;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -132,6 +135,8 @@ public class DefaultDecoderTest {
         assertEquals(Collections.singleton(2L), decoder.decode(setOfLongType, "2,2,2,2"));
         assertEquals(Collections.emptyMap(), decoder.decode(mapofStringToIntegerType, ""));
         assertEquals(Collections.singletonMap("key", 12345), decoder.decode(mapofStringToIntegerType, "key=12345"));
+        // A map entry without a '=' separator is rejected with a clear error instead of crashing
+        assertThrows(ParseException.class, () -> decoder.decode(mapofStringToIntegerType, "key=12345,bogus"));
     }
 
     @Test
