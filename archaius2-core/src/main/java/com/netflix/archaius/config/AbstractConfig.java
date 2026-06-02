@@ -51,8 +51,8 @@ public abstract class AbstractConfig implements Config {
     private static final Logger log = LoggerFactory.getLogger(AbstractConfig.class);
     private final CopyOnWriteArrayList<ConfigListener> listeners = new CopyOnWriteArrayList<>();
     private final Lookup lookup;
-    private Decoder decoder;
-    private StrInterpolator interpolator;
+    private volatile Decoder decoder;
+    private volatile StrInterpolator interpolator;
     private String listDelimiter = ",";
     private final String name;
     
