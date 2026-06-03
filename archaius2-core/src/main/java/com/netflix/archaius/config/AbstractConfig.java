@@ -53,7 +53,7 @@ public abstract class AbstractConfig implements Config {
     private final Lookup lookup;
     private volatile Decoder decoder;
     private volatile StrInterpolator interpolator;
-    private String listDelimiter = ",";
+    private volatile String listDelimiter = ",";
     private final String name;
     
     private static final AtomicInteger idCounter = new AtomicInteger();
