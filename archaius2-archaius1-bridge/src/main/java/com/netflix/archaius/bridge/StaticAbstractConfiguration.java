@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import com.netflix.config.util.InstrumentationAware;
 import org.apache.commons.configuration.AbstractConfiguration;

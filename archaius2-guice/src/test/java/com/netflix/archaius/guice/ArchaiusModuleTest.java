@@ -17,7 +17,7 @@ package com.netflix.archaius.guice;
 
 import java.util.Properties;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

@@ -12,7 +12,7 @@ import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.guice.ArchaiusModule;
 import com.netflix.config.ConfigurationManager;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StaticBridgeAddConfigurationTest {
 	private static ConfigurationListener listener = Mockito.mock(ConfigurationListener.class);

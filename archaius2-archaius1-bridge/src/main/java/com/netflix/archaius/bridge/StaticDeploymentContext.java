@@ -2,7 +2,7 @@ package com.netflix.archaius.bridge;
 
 import com.netflix.config.DeploymentContext;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public final class StaticDeploymentContext implements DeploymentContext {
     private static final StaticDeploymentContext INSTANCE = new StaticDeploymentContext();

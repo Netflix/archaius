@@ -20,7 +20,7 @@ dependencies {
     api  project(':archaius2-core')
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.7'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.7'
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.0.0'
     implementation 'org.apache.commons:commons-lang3:3.3.2'
     implementation 'org.slf4j:slf4j-api:1.7.36'
 

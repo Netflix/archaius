@@ -17,7 +17,7 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.guice.ArchaiusModuleTest.MyCascadingStrategy;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.junit.jupiter.api.Test;
 

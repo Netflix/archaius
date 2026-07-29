@@ -21,7 +21,7 @@ import com.netflix.archaius.converters.DefaultCollectionsTypeConverterFactory;
 import com.netflix.archaius.converters.DefaultTypeConverterFactory;
 import com.netflix.archaius.converters.EnumTypeConverterFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

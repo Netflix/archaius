@@ -18,9 +18,11 @@ apply plugin: 'java-library'
 
 dependencies {
     api  project(':archaius2-core')
-    api  'javax.inject:javax.inject:1'
-    api  'com.google.inject:guice:4.1.0'
-    api  'com.google.inject.extensions:guice-multibindings:4.1.0'
+    api  'jakarta.inject:jakarta.inject-api:2.0.1'
+    // Guice 6.0.0 is the first release that understands jakarta.inject annotations while still
+    // supporting Java 8. guice-multibindings was folded into guice core in 4.2, so it is no longer
+    // a separate artifact (the com.google.inject.multibindings.* classes now ship in guice itself).
+    api  'com.google.inject:guice:6.0.0'
 
     implementation  'org.slf4j:slf4j-api:1.7.36'
 }

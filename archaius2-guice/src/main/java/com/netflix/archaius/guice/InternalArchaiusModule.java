@@ -36,8 +36,8 @@ import com.netflix.archaius.readers.PropertiesConfigReader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.inject.Named;
-import javax.inject.Provider;
+import jakarta.inject.Named;
+import jakarta.inject.Provider;
 
 final class InternalArchaiusModule extends AbstractModule {
     static final String CONFIG_NAME_KEY         = "archaius.config.name";
