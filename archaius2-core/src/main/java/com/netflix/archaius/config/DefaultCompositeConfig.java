@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import com.netflix.archaius.util.Maps;
 import org.slf4j.Logger;
@@ -139,6 +140,10 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
         boolean containsConfig(String name) {
             return getConfig(name) != null;
         }
+
+        boolean containsConfig(Config config) {
+            return children.values().stream().anyMatch(child -> child == config);
+        }
     }
 
     /**
@@ -176,7 +181,11 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
     
     private final ConfigListener listener;
     private final boolean reversed;
+    // Refreshes run under child locks, so use CAS rather than taking the parent monitor.
+    // Update the field in place so reads need only one volatile load.
     private volatile State state;
+    private static final AtomicReferenceFieldUpdater<DefaultCompositeConfig, State> STATE =
+            AtomicReferenceFieldUpdater.newUpdater(DefaultCompositeConfig.class, State.class, "state");
     public DefaultCompositeConfig() {
         this(false);
     }
@@ -194,7 +203,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
     }
 
     private void refreshState() {
-        this.state = state.refresh();
+        STATE.updateAndGet(this, State::refresh);
     }
 
 
@@ -220,7 +229,8 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
             return false;
         }
 
-        state = state.addConfig(name, child);
+        addChild(child, listener, state.containsConfig(child),
+                () -> STATE.updateAndGet(this, current -> current.addConfig(name, child)));
         postConfigAdded(child);
         return true;
     }
@@ -245,10 +255,7 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
     }
     
     protected void postConfigAdded(Config child) {
-        child.setStrInterpolator(getStrInterpolator());
-        child.setDecoder(getDecoder());
         notifyConfigAdded(this);
-        child.addListener(listener);
     }
 
     @Override
@@ -265,8 +272,10 @@ public class DefaultCompositeConfig extends AbstractDependentConfig implements c
     public synchronized Config internalRemoveConfig(String name) {
         Config child = state.getConfig(name);
         if (child != null) {
-            state = state.removeConfig(name);
-            child.removeListener(listener);
+            State updated = STATE.updateAndGet(this, current -> current.removeConfig(name));
+            if (!updated.containsConfig(child)) {
+                child.removeListener(listener);
+            }
             this.notifyConfigRemoved(this);
         }
         return child;
