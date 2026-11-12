@@ -111,7 +111,7 @@ public class PropertiesConfigReader implements ConfigReader {
 
     @Override
     public boolean canLoad(ClassLoader loader, String name) {
-        return getResources(loader, name) != null;
+        return !getResources(loader, name).isEmpty();
     }
 
     @Override
