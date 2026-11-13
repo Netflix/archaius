@@ -4,6 +4,7 @@ import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Layer;
 import com.netflix.archaius.api.config.LayeredConfig;
+import com.netflix.archaius.util.Maps;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +14,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.stream.Collectors;
 
 /**
@@ -30,7 +34,11 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
     private static final Logger LOG = LoggerFactory.getLogger(DefaultLayeredConfig.class);
     
     private final ConfigListener listener;
+    // Refreshes run under child locks, so use CAS rather than taking the parent monitor.
+    // Update the field in place so reads need only one volatile load.
     private volatile ImmutableCompositeState state = new ImmutableCompositeState(Collections.emptyList());
+    private static final AtomicReferenceFieldUpdater<DefaultLayeredConfig, ImmutableCompositeState> STATE =
+            AtomicReferenceFieldUpdater.newUpdater(DefaultLayeredConfig.class, ImmutableCompositeState.class, "state");
 
     /**
      * Listener to be added to any component configs which updates the config map and triggers updates on all listeners
@@ -75,7 +83,7 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
     }
     
     private void refreshState() {
-        this.state = state.refresh();
+        STATE.updateAndGet(this, ImmutableCompositeState::refresh);
     }
 
     @Override
@@ -91,11 +99,9 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
             return;
         }
         
-        state = state.addChild(new LayerAndConfig(layer, child, position));
-        child.setStrInterpolator(getStrInterpolator());
-        child.setDecoder(getDecoder());
+        addChild(child, listener, state.containsConfig(child),
+                () -> STATE.updateAndGet(this, current -> current.addChild(new LayerAndConfig(layer, child, position))));
         notifyConfigUpdated(this);
-        child.addListener(listener);
     }
     
     @Override
@@ -109,9 +115,18 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
     @Override
     public synchronized Optional<Config> removeConfig(Layer layer, String name) {
         LOG.info("Removing property source '{}' from layer '{}'", name, layer);
-        Optional<Config> previous = state.findChild(layer, name);
+        ImmutableCompositeState before = state;
+        Optional<Config> previous = before.findChild(layer, name);
         if (previous.isPresent()) {
-            this.state = state.removeChild(layer, name);
+            ImmutableCompositeState updated = STATE.updateAndGet(this, current -> current.removeChild(layer, name));
+            Set<Config> detached = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (LayerAndConfig source : before.children) {
+                detached.add(source.config);
+            }
+            for (LayerAndConfig source : updated.children) {
+                detached.remove(source.config);
+            }
+            detached.forEach(child -> child.removeListener(listener));
             this.notifyConfigUpdated(this);
         }
         return previous;
@@ -197,9 +212,19 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
         private final CachedState cachedState;
         
         ImmutableCompositeState(List<LayerAndConfig> entries) {
-            this.children = entries;
-            this.children.sort(ByPriorityAndInsertionOrder);
-            Map<String, Object> data = new HashMap<>();
+            this(sortedCopy(entries), 0);
+        }
+
+        private static List<LayerAndConfig> sortedCopy(List<LayerAndConfig> entries) {
+            // A refresh may reuse a published list while another refresh is iterating it.
+            List<LayerAndConfig> sorted = new ArrayList<>(entries);
+            sorted.sort(ByPriorityAndInsertionOrder);
+            return Collections.unmodifiableList(sorted);
+        }
+
+        private ImmutableCompositeState(List<LayerAndConfig> children, int size) {
+            this.children = children;
+            Map<String, Object> data = size > 0 ? Maps.newHashMap(size) : new HashMap<>();
             Map<String, Config> instrumentedKeys = new HashMap<>();
             for (LayerAndConfig child : children) {
                 boolean instrumented = child.config.instrumentationEnabled();
@@ -233,9 +258,8 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
         public ImmutableCompositeState removeChild(Layer layer, String name) {
             List<LayerAndConfig> newChildren = new ArrayList<>(this.children.size());
             this.children.stream()
-                .filter(source -> !(source.getLayer().equals(layer) && source.getConfig().getName() != null))
+                .filter(source -> !(source.getLayer().equals(layer) && name.equals(source.getConfig().getName())))
                 .forEach(newChildren::add);
-            newChildren.sort(ByPriorityAndInsertionOrder);
             return new ImmutableCompositeState(newChildren);
         }
         
@@ -247,8 +271,13 @@ public class DefaultLayeredConfig extends AbstractDependentConfig implements Lay
                     .map(LayerAndConfig::getConfig);
         }
 
+        boolean containsConfig(Config config) {
+            return children.stream().anyMatch(child -> child.config == config);
+        }
+
         ImmutableCompositeState refresh() {
-            return new ImmutableCompositeState(children);
+            // The published child list is already immutable and sorted.
+            return new ImmutableCompositeState(children, cachedState.getData().size());
         }
     }
 

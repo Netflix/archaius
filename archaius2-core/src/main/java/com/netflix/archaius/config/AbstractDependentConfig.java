@@ -1,7 +1,10 @@
 package com.netflix.archaius.config;
 
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.PropertyDetails;
+import com.netflix.archaius.api.StrInterpolator;
 
 import java.util.Iterator;
 import java.util.function.BiConsumer;
@@ -25,6 +28,27 @@ public abstract class AbstractDependentConfig extends AbstractConfig {
     }
 
     abstract CachedState getState();
+
+    void addChild(Config child, ConfigListener listener, boolean alreadyPresent, Runnable updateState) {
+        StrInterpolator previousInterpolator = child.getStrInterpolator();
+        Decoder previousDecoder = child.getDecoder();
+        try {
+            child.setStrInterpolator(getStrInterpolator());
+            child.setDecoder(getDecoder());
+            // Register once per child before snapshotting so overlapping updates invalidate the CAS.
+            if (!alreadyPresent) {
+                child.addListener(listener);
+            }
+            updateState.run();
+        } catch (RuntimeException | Error failure) {
+            if (!alreadyPresent) {
+                child.removeListener(listener);
+            }
+            child.setDecoder(previousDecoder);
+            child.setStrInterpolator(previousInterpolator);
+            throw failure;
+        }
+    }
 
     @Override
     public Object getRawProperty(String key) {

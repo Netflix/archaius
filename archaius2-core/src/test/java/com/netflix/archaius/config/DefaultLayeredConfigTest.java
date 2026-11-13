@@ -162,6 +162,47 @@ public class DefaultLayeredConfigTest {
     }
 
     @Test
+    public void removeConfigRemovesOnlyTheNamedChildInLayer() {
+        MapConfig removed = MapConfig.builder().put("removed", "value").name("removed").build();
+        MapConfig retained = MapConfig.builder().put("retained", "value").name("retained").build();
+        LayeredConfig config = new DefaultLayeredConfig();
+        config.addConfig(Layers.LIBRARY, removed);
+        config.addConfig(Layers.LIBRARY, retained);
+
+        assertEquals(removed, config.removeConfig(Layers.LIBRARY, "removed").orElse(null));
+
+        assertEquals(Collections.singletonList(retained), config.getConfigsAtLayer(Layers.LIBRARY));
+        assertNull(config.getRawProperty("removed"));
+        assertEquals("value", config.getRawProperty("retained"));
+    }
+
+    @Test
+    public void removeConfigDetachesAllRemovedInstancesButKeepsSharedChildren() {
+        DefaultSettableConfig shared = new DefaultSettableConfig("same-name");
+        DefaultSettableConfig removed = new DefaultSettableConfig("same-name");
+        LayeredConfig config = new DefaultLayeredConfig();
+        config.addConfig(Layers.APPLICATION, shared);
+        config.addConfig(Layers.APPLICATION, shared);
+        config.addConfig(Layers.APPLICATION, removed);
+        config.addConfig(Layers.LIBRARY, shared);
+
+        config.removeConfig(Layers.APPLICATION, "same-name");
+        ConfigListener observer = Mockito.mock(ConfigListener.class);
+        config.addListener(observer);
+        removed.setProperty("removed", "value");
+
+        assertTrue(config.getConfigsAtLayer(Layers.APPLICATION).isEmpty());
+        assertEquals(0, removed.getListeners().size());
+        Mockito.verifyNoInteractions(observer);
+
+        shared.setProperty("shared", "value");
+
+        assertEquals(1, shared.getListeners().size());
+        verify(observer, times(1)).onConfigUpdated(config);
+        assertEquals("value", config.getRawProperty("shared"));
+    }
+
+    @Test
     public void unusedLayeredConfigIsGarbageCollected() {
         SettableConfig sourceConfig = new DefaultSettableConfig();
         LayeredConfig config = new DefaultLayeredConfig();
