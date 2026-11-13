@@ -2,6 +2,7 @@ package com.netflix.archaius.converters;
 
 import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.exceptions.ConverterNotFoundException;
+import com.netflix.archaius.exceptions.ParseException;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -106,9 +107,13 @@ public final class DefaultCollectionsTypeConverterFactory implements TypeConvert
                     .stream(s.split("\\s*,\\s*"))
                     .filter(pair -> !pair.isEmpty())
                     .map(pair -> pair.split("\\s*=\\s*"))
-                    .forEach(kv -> result.put(
-                            keyConverter.convert(kv[0]),
-                            valueConverter.convert(kv[1])));
+                    .forEach(kv -> {
+                        if (kv.length != 2) {
+                            throw new ParseException("Error parsing map entry '" + String.join("=", kv) + "'",
+                                    new Exception("Expected 'key=value'"));
+                        }
+                        result.put(keyConverter.convert(kv[0]), valueConverter.convert(kv[1]));
+                    });
             return Collections.unmodifiableMap(result);
         };
     }
