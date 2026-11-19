@@ -42,7 +42,7 @@ public final class DefaultTypeConverterFactory implements TypeConverter.Factory 
         else if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("off")) {
             return Boolean.FALSE;
         }
-        throw new ParseException("Error parsing value '" + value + "'", new Exception("Expected one of [true, yes, on, false, no, off]"));
+        throw new ParseException("Error parsing value '" + value + "'. Expected one of [true, yes, on, false, no, off]");
     }
 
     private final Map<Type, TypeConverter<?>> converters;
