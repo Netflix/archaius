@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -47,6 +48,7 @@ import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.TypeConverter;
 import com.netflix.archaius.converters.ArrayTypeConverterFactory;
 import com.netflix.archaius.converters.EnumTypeConverterFactory;
+import com.netflix.archaius.exceptions.ParseException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Test;
@@ -54,6 +56,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -62,6 +65,8 @@ public class DefaultDecoderTest {
     private static final Type listOfIntegerType = new TypeToken<List<Integer>>() {}.getType();
     private static final Type setOfLongType = new TypeToken<Set<Long>>() {}.getType();
     private static final Type mapofStringToIntegerType = new TypeToken<Map<String, Integer>>() {}.getType();
+    private static final Type mapOfStringToStringType = new TypeToken<Map<String, String>>() {}.getType();
+    private static final Type mapOfStringToUriType = new TypeToken<Map<String, URI>>() {}.getType();
 
     @Test
     public void testJavaNumbers() {
@@ -132,6 +137,57 @@ public class DefaultDecoderTest {
         assertEquals(Collections.singleton(2L), decoder.decode(setOfLongType, "2,2,2,2"));
         assertEquals(Collections.emptyMap(), decoder.decode(mapofStringToIntegerType, ""));
         assertEquals(Collections.singletonMap("key", 12345), decoder.decode(mapofStringToIntegerType, "key=12345"));
+        /// Maps should be lenient with whitespace around both separators, same as collections
+        Map<String, Integer> twoEntries = new LinkedHashMap<>();
+        twoEntries.put("a", 1);
+        twoEntries.put("b", 2);
+        assertEquals(twoEntries, decoder.decode(mapofStringToIntegerType, "a = 1, b = 2"));
+        /// Trailing and doubled commas produce empty pairs, which are filtered out
+        assertEquals(Collections.singletonMap("a", 1), decoder.decode(mapofStringToIntegerType, "a=1,"));
+        assertEquals(twoEntries, decoder.decode(mapofStringToIntegerType, "a=1,,b=2"));
+    }
+
+    /**
+     * Map entries are split on their first '=' only. An entry with no '=' at all is malformed and is
+     * rejected; anything after the first '=' is part of the value, and it is left to the value
+     * converter to accept or reject it.
+     */
+    @Test
+    public void testMapDecodingEdgeCases() {
+        Decoder decoder = DefaultDecoder.INSTANCE;
+
+        /// An entry with no '=' cannot be read as a key/value pair at all, so it is rejected. The
+        /// message names the offending entry rather than the whole property value.
+        ParseException e = assertThrows(ParseException.class,
+                () -> decoder.decode(mapofStringToIntegerType, "key=12345,bogus"));
+        assertTrue(e.getMessage().contains("'bogus'"), e.getMessage());
+        assertTrue(e.getMessage().contains("Expected 'key=value'"), e.getMessage());
+        assertThrows(ParseException.class, () -> decoder.decode(mapofStringToIntegerType, "bogus"));
+
+        /// An empty value is well formed as a pair, so it reaches the value converter, which is what
+        /// rejects it here. A Map<String, String> would accept the same input and yield "".
+        assertThrows(ParseException.class, () -> decoder.decode(mapofStringToIntegerType, "key="));
+        assertEquals(Collections.singletonMap("key", ""), decoder.decode(mapOfStringToStringType, "key="));
+
+        /// Likewise for a bare '=': an empty key and an empty value, rejected by the value converter.
+        assertThrows(ParseException.class, () -> decoder.decode(mapofStringToIntegerType, "="));
+        assertEquals(Collections.singletonMap("", ""), decoder.decode(mapOfStringToStringType, "="));
+
+        /// Values may contain '='. For a String value it is preserved verbatim; for an Integer value
+        /// the whole thing is handed to the numeric parser, which rejects it on its own terms.
+        assertEquals(Collections.singletonMap("key", "a=b"), decoder.decode(mapOfStringToStringType, "key=a=b"));
+        assertThrows(ParseException.class, () -> decoder.decode(mapofStringToIntegerType, "key=1=2"));
+
+        /// Consequently base64 padding survives, and URIs keep their query strings.
+        assertEquals(Collections.singletonMap("token", "abc=="), decoder.decode(mapOfStringToStringType, "token=abc=="));
+        assertEquals(Collections.singletonMap("home", URI.create("http://x/p?q=b")),
+                decoder.decode(mapOfStringToUriType, "home=http://x/p?q=b"));
+
+        /// Keys are not trimmed at the boundaries of the whole string, because the key converter for
+        /// String is identity. Integer values survive only because the numeric parsers trim; a String
+        /// value keeps its surrounding whitespace.
+        assertEquals(Collections.singletonMap(" a", 1), decoder.decode(mapofStringToIntegerType, " a = 1 "));
+        assertEquals(Collections.singletonMap(" a", "1 "), decoder.decode(mapOfStringToStringType, " a = 1 "));
     }
 
     @Test
