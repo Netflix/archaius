@@ -19,6 +19,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +37,17 @@ import com.netflix.archaius.visitor.PrintStreamVisitor;
 import org.junit.jupiter.api.Test;
 
 public class PropertyConfigReaderTest {
+    @Test
+    public void canLoadOnlyExistingResources() {
+        PropertiesConfigReader reader = new PropertiesConfigReader();
+        ClassLoader loader = getClass().getClassLoader();
+
+        assertTrue(reader.canLoad(loader, "application"));
+        assertTrue(reader.canLoad(loader, "application.properties"));
+        assertFalse(reader.canLoad(loader, "does-not-exist"));
+        assertFalse(reader.canLoad(loader, "does-not-exist.properties"));
+    }
+
     @Test
     public void readerTest() throws ConfigException{
         PropertiesConfigReader reader = new PropertiesConfigReader();
