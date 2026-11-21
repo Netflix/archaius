@@ -27,8 +27,8 @@ public interface CompositeConfig extends Config {
     }
     
     /**
-     * Add a named configuration.  The newly added configuration takes precedence over all
-     * previously added configurations.  Duplicate configurations are not allowed
+     * Add a named configuration. The implementation determines the precedence of
+     * the new configuration. Duplicate configurations are not allowed.
      * <p>
      * This will trigger an onConfigAdded event.
      *
@@ -50,8 +50,8 @@ public interface CompositeConfig extends Config {
     void replaceConfig(String name, Config child) throws ConfigException;
 
     /**
-     * Add a map of named configurations.  The newly added configurations takes precedence over all
-     * previously added configurations.  Duplicate configurations are not allowed
+     * Add a map of named configurations. The implementation determines their
+     * precedence, as with {@link #addConfig(String, Config)}. Duplicate configurations are not allowed.
      * <p>
      * This will trigger an onConfigAdded event.
      *

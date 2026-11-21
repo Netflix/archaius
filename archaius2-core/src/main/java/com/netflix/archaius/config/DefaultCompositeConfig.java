@@ -33,12 +33,12 @@ import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
 /**
- * Config that is a composite of multiple configuration and as such doesn't track 
- * properties of its own.  The composite does not merge the configurations but instead
- * treats them as overrides so that a property existing in a configuration supersedes
- * the same property in configuration that was added later.  It is however possible
- * to set a flag that reverses the override order.
- * 
+ * Combines child configurations without storing properties of its own.
+ * When multiple children define a property, the first child added wins by default.
+ * With {@link #DefaultCompositeConfig(boolean) reversed ordering}, the last child
+ * added wins instead. {@link #addConfigs(LinkedHashMap)} adds children in the map's
+ * iteration order.
+ *
  * TODO: Optional cache of queried properties
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
