@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -169,7 +170,7 @@ public class DefaultPropertyContainer implements PropertyContainer {
                         return;
                     }
 
-                    if (prev != value) {
+                    if (!Objects.equals(prev, value)) {
                         if (last.compareAndSet(prev, value)) {
                             listener.onChange(value);
                         }
