@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.readers;
 
+import com.netflix.archaius.config.polling.PollingResponse;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,7 +31,7 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JDCConfigReader implements Callable<Map<String, Object>> {
+public class JDCConfigReader implements Callable<PollingResponse> {
 
     private static Logger log = LoggerFactory.getLogger(JDCConfigReader.class);
 
@@ -70,10 +72,13 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
         this.valueColumnName = valueColumnName;
     }
 
-    // ...
+    /**
+     * Read a complete configuration snapshot for use with PollingDynamicConfig.
+     * Values are read as strings, matching the polling response contract.
+     */
     @Override
-    public Map<String, Object> call() throws Exception {
-        Map<String, Object> map = new HashMap<String, Object>();
+    public PollingResponse call() throws Exception {
+        Map<String, String> map = new HashMap<String, String>();
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -84,7 +89,7 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String key = (String) rs.getObject(keyColumnName);
-                Object value = rs.getObject(valueColumnName);
+                String value = rs.getString(valueColumnName);
                 map.put(key, value);
             }
 
@@ -93,7 +98,7 @@ public class JDCConfigReader implements Callable<Map<String, Object>> {
         } finally {
             close(conn, pstmt, rs);
         }
-        return map;
+        return PollingResponse.forSnapshot(map);
     }
 
     /**
